@@ -1,0 +1,805 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  FileText,
+  TrendingUp,
+  Plus,
+  Edit,
+  Trash2,
+  Download,
+  Eye,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  BarChart3,
+  LayoutGrid,
+  TableIcon,
+} from "lucide-react"
+import { Header } from "@/components/layout/header"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+
+// Mock data - in real implementation, this would come from your database
+const mockOKRs = [
+  {
+    id: 1,
+    title: "Improve Patent Examination Efficiency",
+    description: "Reduce average patent examination time by 25% through AI-powered tools",
+    category: "Operational Excellence",
+    status: "active",
+    progress: 65,
+  },
+  {
+    id: 2,
+    title: "Enhance Trademark Search Accuracy",
+    description: "Implement ML-based trademark similarity detection to improve search precision",
+    category: "Customer Experience",
+    status: "active",
+    progress: 40,
+  },
+  {
+    id: 3,
+    title: "Modernize IT Infrastructure",
+    description: "Migrate legacy systems to cloud-based solutions for improved scalability",
+    category: "Data-Driven Decisioning & Modern IT",
+    status: "planning",
+    progress: 15,
+  },
+]
+
+const mockDrafts = [
+  {
+    id: "draft-001",
+    title: "NLP-Powered Prior Art Search Enhancement",
+    submitter: "Jane Smith",
+    department: "Patents",
+    lastUpdated: "2025-03-15",
+    status: "in_progress",
+    completionRate: 85,
+    step: 8,
+    publicIndicator: "excluded",
+  },
+  {
+    id: "draft-002",
+    title: "Automated Trademark Classification System",
+    submitter: "Mike Johnson",
+    department: "Trademarks",
+    lastUpdated: "2025-02-28",
+    status: "needs_review",
+    completionRate: 100,
+    step: 10,
+    publicIndicator: "public",
+  },
+  {
+    id: "draft-003",
+    title: "Predictive Analytics for Application Routing",
+    submitter: "Sarah Davis",
+    department: "OCIO",
+    lastUpdated: "2025-01-22",
+    status: "stalled",
+    completionRate: 45,
+    step: 5,
+    publicIndicator: "public",
+  },
+]
+
+const mockSubmitted = [
+  {
+    id: "sub-001",
+    title: "AI-Enhanced Patent Prior Art Search System",
+    submitter: "Dr. Emily Chen",
+    department: "Patents",
+    submissionDate: "2024-01-10",
+    status: "under_review",
+    priority: "high",
+    assignedReviewer: "John Martinez",
+    estimatedReviewDate: "2024-01-25",
+    routedTo: ["AI Governance Council", "Rally"],
+  },
+  {
+    id: "sub-002",
+    title: "Trademark Similarity Detection ML Model",
+    submitter: "Alex Rodriguez",
+    department: "Trademarks",
+    submissionDate: "2024-01-08",
+    status: "approved",
+    priority: "medium",
+    assignedReviewer: "Sarah Kim",
+    estimatedReviewDate: "2024-01-20",
+    routedTo: ["Rally"],
+  },
+  {
+    id: "sub-003",
+    title: "Automated Application Routing Intelligence",
+    submitter: "Michael Thompson",
+    department: "OCIO",
+    submissionDate: "2024-01-05",
+    status: "in_development",
+    priority: "high",
+    assignedReviewer: "Lisa Wang",
+    estimatedReviewDate: "2024-01-18",
+    routedTo: ["AI Governance Council"],
+  },
+  {
+    id: "sub-004",
+    title: "Natural Language Processing for Legal Documents",
+    submitter: "Jennifer Davis",
+    department: "OGC",
+    submissionDate: "2024-01-03",
+    status: "deployed",
+    priority: "low",
+    assignedReviewer: "Robert Brown",
+    estimatedReviewDate: "2024-01-15",
+    routedTo: ["Rally", "AI Governance Council"],
+  },
+  {
+    id: "sub-005",
+    title: "Predictive Analytics Dashboard for Examination Workflow",
+    submitter: "David Wilson",
+    department: "Patents",
+    submissionDate: "2023-12-28",
+    status: "rejected",
+    priority: "medium",
+    assignedReviewer: "Amanda Taylor",
+    estimatedReviewDate: "2024-01-12",
+    routedTo: ["AI Governance Council"],
+  },
+]
+
+const pipelineStats = {
+  totalSubmissions: 128,
+  inProgress: 42,
+  underReview: 23,
+  approved: 15,
+  deployed: 7,
+  avgCompletionTime: "12.5 days",
+  successRate: "78%",
+}
+
+export default function AdminPage() {
+  const [okrs, setOKRs] = useState(mockOKRs)
+  const [editingOKR, setEditingOKR] = useState<number | null>(null)
+  const [newOKR, setNewOKR] = useState({ title: "", description: "", category: "" })
+  const [draftsViewMode, setDraftsViewMode] = useState<"cards" | "table">("cards")
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "in_progress":
+        return (
+          <Badge variant="secondary">
+            <Clock className="w-3 h-3 mr-1" />
+            In Progress
+          </Badge>
+        )
+      case "needs_review":
+        return (
+          <Badge variant="default">
+            <Eye className="w-3 h-3 mr-1" />
+            Needs Review
+          </Badge>
+        )
+      case "stalled":
+        return (
+          <Badge variant="destructive">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Stalled
+          </Badge>
+        )
+      case "under_review":
+        return (
+          <Badge variant="secondary">
+            <Eye className="w-3 h-3 mr-1" />
+            Under Review
+          </Badge>
+        )
+      case "approved":
+        return (
+          <Badge className="bg-green-600">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Approved
+          </Badge>
+        )
+      case "in_development":
+        return (
+          <Badge className="bg-blue-600">
+            <Clock className="w-3 h-3 mr-1" />
+            In Development
+          </Badge>
+        )
+      case "deployed":
+        return (
+          <Badge className="bg-green-800">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Deployed
+          </Badge>
+        )
+      case "rejected":
+        return (
+          <Badge variant="destructive">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        )
+      case "active":
+        return (
+          <Badge variant="default">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Active
+          </Badge>
+        )
+      case "planning":
+        return (
+          <Badge variant="secondary">
+            <Clock className="w-3 h-3 mr-1" />
+            Planning
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  const getPublicIndicatorBadge = (indicator: string) => {
+    switch (indicator) {
+      case "public":
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            Public
+          </Badge>
+        )
+      case "excluded":
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+            Excluded
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">Not Set</Badge>
+    }
+  }
+
+  const addOKR = () => {
+    if (newOKR.title && newOKR.description) {
+      setOKRs([
+        ...okrs,
+        {
+          id: Date.now(),
+          ...newOKR,
+          status: "planning",
+          progress: 0,
+        },
+      ])
+      setNewOKR({ title: "", description: "", category: "" })
+    }
+  }
+
+  const deleteOKR = (id: number) => {
+    setOKRs(okrs.filter((okr) => okr.id !== id))
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <div className="container py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage USPTO OKRs, monitor submissions, and oversee platform operations
+          </p>
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="okrs">USPTO OKRs</TabsTrigger>
+            <TabsTrigger value="drafts">All Drafts</TabsTrigger>
+            <TabsTrigger value="submitted">Submitted</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{pipelineStats.totalSubmissions}</div>
+                  <p className="text-xs text-muted-foreground">+12% from last month</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{pipelineStats.inProgress}</div>
+                  <p className="text-xs text-muted-foreground">Active drafts</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{pipelineStats.successRate}</div>
+                  <p className="text-xs text-muted-foreground">Approval to deployment</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg. Completion</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{pipelineStats.avgCompletionTime}</div>
+                  <p className="text-xs text-muted-foreground">From draft to review</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">New submission: AI-Powered Patent Search</p>
+                        <p className="text-xs text-muted-foreground">2 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Draft completed: Trademark Classification</p>
+                        <p className="text-xs text-muted-foreground">5 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">OKR updated: IT Infrastructure Modernization</p>
+                        <p className="text-xs text-muted-foreground">1 day ago</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Department Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Patents</span>
+                      <span className="text-sm font-medium">45 submissions</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Trademarks</span>
+                      <span className="text-sm font-medium">32 submissions</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">OCIO</span>
+                      <span className="text-sm font-medium">28 submissions</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">OGC</span>
+                      <span className="text-sm font-medium">12 submissions</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="okrs" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">USPTO OKRs Management</h2>
+              <Button onClick={() => setEditingOKR(-1)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add New OKR
+              </Button>
+            </div>
+
+            {editingOKR === -1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New OKR</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="okr-title">Title</Label>
+                    <Input
+                      id="okr-title"
+                      value={newOKR.title}
+                      onChange={(e) => setNewOKR({ ...newOKR, title: e.target.value })}
+                      placeholder="Enter OKR title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="okr-description">Description</Label>
+                    <Textarea
+                      id="okr-description"
+                      value={newOKR.description}
+                      onChange={(e) => setNewOKR({ ...newOKR, description: e.target.value })}
+                      placeholder="Enter OKR description"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="okr-category">Category</Label>
+                    <Input
+                      id="okr-category"
+                      value={newOKR.category}
+                      onChange={(e) => setNewOKR({ ...newOKR, category: e.target.value })}
+                      placeholder="e.g., Operational Excellence"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={addOKR}>Add OKR</Button>
+                    <Button variant="outline" onClick={() => setEditingOKR(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-4">
+              {okrs.map((okr) => (
+                <Card key={okr.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{okr.title}</CardTitle>
+                        <CardDescription className="mt-2">{okr.description}</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        {getStatusBadge(okr.status)}
+                        <Button variant="ghost" size="sm">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => deleteOKR(okr.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span>{okr.progress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-uspto-blue-primary h-2 rounded-full"
+                          style={{ width: `${okr.progress}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Category: {okr.category}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="drafts" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">All User Drafts</h2>
+              <div className="flex gap-2">
+                <div className="flex border rounded-md">
+                  <Button
+                    variant={draftsViewMode === "cards" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setDraftsViewMode("cards")}
+                    className="rounded-r-none"
+                  >
+                    <LayoutGrid className="w-4 h-4 mr-2" />
+                    Card View
+                  </Button>
+                  <Button
+                    variant={draftsViewMode === "table" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setDraftsViewMode("table")}
+                    className="rounded-l-none"
+                  >
+                    <TableIcon className="w-4 h-4 mr-2" />
+                    Table View
+                  </Button>
+                </div>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export All
+                </Button>
+              </div>
+            </div>
+
+            {draftsViewMode === "cards" ? (
+              <div className="grid gap-4">
+                {mockDrafts.map((draft) => (
+                  <Card key={draft.id}>
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{draft.title}</h3>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                            <span>Submitter: {draft.submitter}</span>
+                            <span>Department: {draft.department}</span>
+                            <span>Last Updated: {draft.lastUpdated}</span>
+                            <span>Step {draft.step}/11</span>
+                            <div className="flex items-center gap-1">
+                              <span>Classification:</span>
+                              {getPublicIndicatorBadge(draft.publicIndicator)}
+                            </div>
+                          </div>
+                          <div className="mt-3">
+                            <div className="flex justify-between text-sm mb-1">
+                              <span>Completion Rate</span>
+                              <span>{draft.completionRate}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-green-500 h-2 rounded-full"
+                                style={{ width: `${draft.completionRate}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          {getStatusBadge(draft.status)}
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[300px]">Title</TableHead>
+                        <TableHead>Submitter</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Progress</TableHead>
+                        <TableHead>Current Step</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                        <TableHead>Classification</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {mockDrafts.map((draft) => (
+                        <TableRow key={draft.id}>
+                          <TableCell className="font-medium">
+                            <div className="max-w-[280px] truncate" title={draft.title}>
+                              {draft.title}
+                            </div>
+                          </TableCell>
+                          <TableCell>{draft.submitter}</TableCell>
+                          <TableCell>{draft.department}</TableCell>
+                          <TableCell>{getStatusBadge(draft.status)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-green-500 h-2 rounded-full"
+                                  style={{ width: `${draft.completionRate}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-muted-foreground">{draft.completionRate}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{draft.step}/11</Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{draft.lastUpdated}</TableCell>
+                          <TableCell>{getPublicIndicatorBadge(draft.publicIndicator)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="submitted" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Submitted Use Cases</h2>
+              <div className="flex gap-2">
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Submitted
+                </Button>
+                <Button variant="outline">Filter by Status</Button>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {mockSubmitted.map((submission) => (
+                <Card key={submission.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{submission.title}</h3>
+                        <div className="grid grid-cols-2 gap-4 mt-3 text-sm text-muted-foreground">
+                          <div>
+                            <span className="font-medium">Submitter:</span> {submission.submitter}
+                          </div>
+                          <div>
+                            <span className="font-medium">Department:</span> {submission.department}
+                          </div>
+                          <div>
+                            <span className="font-medium">Submitted:</span> {submission.submissionDate}
+                          </div>
+                          <div>
+                            <span className="font-medium">Reviewer:</span> {submission.assignedReviewer}
+                          </div>
+                          <div>
+                            <span className="font-medium">Est. Review:</span> {submission.estimatedReviewDate}
+                          </div>
+                          <div>
+                            <span className="font-medium">Priority:</span>
+                            <Badge
+                              variant={
+                                submission.priority === "high"
+                                  ? "destructive"
+                                  : submission.priority === "medium"
+                                    ? "default"
+                                    : "secondary"
+                              }
+                              className="ml-2"
+                            >
+                              {submission.priority}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <span className="text-sm font-medium">Routed to:</span>
+                          <div className="flex gap-2 mt-1">
+                            {submission.routedTo.map((route) => (
+                              <Badge key={route} variant="outline" className="text-xs">
+                                {route}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        {getStatusBadge(submission.status)}
+                        <Button variant="ghost" size="sm">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <h2 className="text-2xl font-bold">Platform Analytics</h2>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Submission Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Submission volume over time chart would go here</p>
+                  <div className="h-32 bg-gray-100 rounded mt-4 flex items-center justify-center">
+                    <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Completion Rates by Step</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((step) => (
+                      <div key={step} className="flex justify-between items-center">
+                        <span className="text-sm">Step {step}</span>
+                        <span className="text-sm font-medium">{Math.floor(Math.random() * 30 + 70)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <h2 className="text-2xl font-bold">System Settings</h2>
+
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Platform Configuration</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Default Submission Timeout (days)</Label>
+                    <Input type="number" defaultValue="30" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label>AI Co-Pilot Model</Label>
+                    <Input defaultValue="gpt-4o" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label>Rally Integration Endpoint</Label>
+                    <Input defaultValue="https://rally1.rallydev.com/..." className="mt-1" />
+                  </div>
+                  <Button>Save Settings</Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span>Total Active Users</span>
+                      <span className="font-medium">247</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Admin Users</span>
+                      <span className="font-medium">12</span>
+                    </div>
+                    <Button variant="outline">Manage Users</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}
