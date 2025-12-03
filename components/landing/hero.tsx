@@ -9,7 +9,7 @@ export function Hero() {
         <div className="flex items-center gap-4 mb-8">
           <Rocket className="h-16 w-16 text-uspto-blue-primary" />
           <div className="flex flex-col items-start">
-            <span className="text-5xl font-bold text-uspto-gray-text">LaunchPad</span>
+            <span className="text-5xl font-bold text-uspto-gray-text">LaunchPad!</span>
             <p className="text-lg text-gray-500">USPTO AI Use Case Platform</p>
           </div>
         </div>
