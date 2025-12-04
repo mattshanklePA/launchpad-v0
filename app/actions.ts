@@ -1,7 +1,6 @@
 "use server"
 
 import { generateText, type CoreMessage } from "ai"
-import { openai } from "@ai-sdk/openai"
 import { formSteps, type FormData } from "@/lib/steps"
 
 type Message = {
@@ -112,18 +111,11 @@ export async function validateAndRefineInput(
   step: number,
   conversationHistory: Message[],
 ): Promise<{ feedback: string; suggestion: string }> {
-  const apiKey = process.env.OPENAI_API_KEY
   const currentStepInfo = formSteps.find((s) => s.step === step)
   if (!currentStepInfo) throw new Error("Invalid step number")
 
   const currentField = getInputFieldForStep(step)
   const userInput = currentField ? (formData[currentField] as string) : ""
-
-  // If no API key is configured, return mock response
-  if (!apiKey) {
-    console.log("OpenAI API key not configured, using mock response")
-    return getMockResponse(step, userInput)
-  }
 
   const isFollowUp = conversationHistory.length > 0
 
@@ -157,7 +149,7 @@ Your entire response MUST be a JSON object with two keys: "feedback" (your conve
 
   try {
     const { text } = await generateText({
-      model: openai("gpt-4o", { apiKey }),
+      model: "openai/gpt-4o-mini",
       system: systemPrompt,
       messages: messages,
     })
