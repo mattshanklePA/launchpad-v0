@@ -19,7 +19,7 @@ export function Hero() {
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-lg text-gray-600">
           Use LaunchPad to transform your ideas into structured, actionable business cases. Connect operational needs
-          with formal AI pipelines to drive USPTO’s mission forward.
+          with formal AI pipelines to drive USPTO's mission forward.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Button
@@ -27,7 +27,7 @@ export function Hero() {
             size="lg"
             className="bg-uspto-blue-primary h-12 px-8 text-base text-primary-foreground hover:bg-uspto-blue-primary/90 hover:scale-105 transition-transform"
           >
-            <Link href="/submit">
+            <Link href="/submit?new=true">
               Start Use Case Submission <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>

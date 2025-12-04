@@ -14,6 +14,8 @@ interface FormContextType {
   isFirstStep: boolean
   isLastStep: boolean
   totalSteps: number
+  currentDraftId: string | null
+  setCurrentDraftId: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 const FormContext = createContext<FormContextType | undefined>(undefined)
@@ -41,6 +43,7 @@ const arrayFields: (keyof FormData)[] = [
 
 export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStep] = useState(1)
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null)
   const [formData, setFormData] = useState<FormData>(() => {
     if (typeof window !== "undefined") {
       const savedData = localStorage.getItem("aid-form-data")
@@ -102,6 +105,8 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         isFirstStep,
         isLastStep,
         totalSteps: reviewStepNumber,
+        currentDraftId,
+        setCurrentDraftId,
       }}
     >
       {children}
