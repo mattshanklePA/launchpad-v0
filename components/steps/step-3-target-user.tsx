@@ -73,7 +73,7 @@ export function Step3TargetUser() {
               />
             </div>
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg text-uspto-gray-text">Provide Context</h3>
+              <h3 className="font-semibold text-lg text-uspto-gray-text">User Profile</h3>
               <TextareaAutosize
                 id="targetUserContext"
                 value={formData.targetUserContext}
