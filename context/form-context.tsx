@@ -77,7 +77,11 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   }, [currentStep])
 
   useEffect(() => {
-    localStorage.setItem("aid-form-data", JSON.stringify(formData))
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem("aid-form-data", JSON.stringify(formData))
+    }, 100)
+
+    return () => clearTimeout(timeoutId)
   }, [formData])
 
   useEffect(() => {
@@ -89,27 +93,18 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   }, [currentStep])
 
   useEffect(() => {
-    if (autoSaveTimerRef.current) {
-      clearInterval(autoSaveTimerRef.current)
-    }
+    if (!currentDraftId) return
 
-    if (currentDraftId) {
-      autoSaveTimerRef.current = setInterval(() => {
-        console.log("[v0] Auto-saving draft...")
-        updateDraft(currentDraftId, {
-          formData: formDataRef.current,
-          currentStep: currentStepRef.current,
-          title: formDataRef.current.useCaseTitle || "Untitled Draft",
-        })
-      }, 60000) // 60 seconds
+    const autoSaveInterval = setInterval(() => {
+      updateDraft(currentDraftId, {
+        formData,
+        currentStep,
+        title: formData.useCaseTitle || "Untitled Draft",
+      })
+    }, 30000) // 30 seconds
 
-      return () => {
-        if (autoSaveTimerRef.current) {
-          clearInterval(autoSaveTimerRef.current)
-        }
-      }
-    }
-  }, [currentDraftId])
+    return () => clearInterval(autoSaveInterval)
+  }, [currentDraftId, formData, currentStep])
 
   const totalSteps = formSteps.length
   const reviewStepNumber = 11
