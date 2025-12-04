@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { type FormData, initialFormData, formSteps } from "@/lib/steps"
-import { updateDraft } from "@/lib/draft-storage"
 
 interface FormContextType {
   formData: FormData
@@ -15,8 +14,6 @@ interface FormContextType {
   isFirstStep: boolean
   isLastStep: boolean
   totalSteps: number
-  currentDraftId: string | null
-  setCurrentDraftId: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 const FormContext = createContext<FormContextType | undefined>(undefined)
@@ -44,7 +41,6 @@ const arrayFields: (keyof FormData)[] = [
 
 export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStep] = useState(1)
-  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null)
   const [formData, setFormData] = useState<FormData>(() => {
     if (typeof window !== "undefined") {
       const savedData = localStorage.getItem("aid-form-data")
@@ -64,24 +60,8 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     return initialFormData
   })
 
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const formDataRef = useRef(formData)
-  const currentStepRef = useRef(currentStep)
-
   useEffect(() => {
-    formDataRef.current = formData
-  }, [formData])
-
-  useEffect(() => {
-    currentStepRef.current = currentStep
-  }, [currentStep])
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      localStorage.setItem("aid-form-data", JSON.stringify(formData))
-    }, 100)
-
-    return () => clearTimeout(timeoutId)
+    localStorage.setItem("aid-form-data", JSON.stringify(formData))
   }, [formData])
 
   useEffect(() => {
@@ -91,20 +71,6 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem("aid-current-step")
     }
   }, [currentStep])
-
-  useEffect(() => {
-    if (!currentDraftId) return
-
-    const autoSaveInterval = setInterval(() => {
-      updateDraft(currentDraftId, {
-        formData,
-        currentStep,
-        title: formData.useCaseTitle || "Untitled Draft",
-      })
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(autoSaveInterval)
-  }, [currentDraftId, formData, currentStep])
 
   const totalSteps = formSteps.length
   const reviewStepNumber = 11
@@ -136,8 +102,6 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         isFirstStep,
         isLastStep,
         totalSteps: reviewStepNumber,
-        currentDraftId,
-        setCurrentDraftId,
       }}
     >
       {children}

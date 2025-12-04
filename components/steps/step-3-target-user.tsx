@@ -2,29 +2,12 @@
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Toggle } from "@/components/ui/toggle"
 import TextareaAutosize from "react-textarea-autosize"
 import { AIdChatPanel } from "@/components/launchpad/chat-panel"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
-const painPointsOptions = [
-  { value: "time_consuming", label: "Time-consuming tasks" },
-  { value: "lack_of_integration", label: "Lack of integration" },
-  { value: "poor_visibility", label: "Poor visibility" },
-  { value: "policy_gaps", label: "Policy gaps" },
-  { value: "other", label: "Other" },
-]
-
 export function Step3TargetUser() {
   const { formData, setFormData } = useForm()
-
-  const handlePainPointToggle = (point: string) => {
-    const currentPoints = formData.painPoints || []
-    const newPoints = currentPoints.includes(point)
-      ? currentPoints.filter((p) => p !== point)
-      : [...currentPoints, point]
-    setFormData((prev) => ({ ...prev, painPoints: newPoints }))
-  }
 
   const handleSuggestion = (suggestion: string) => {
     setFormData((prev) => ({ ...prev, targetUserContext: suggestion }))
@@ -80,19 +63,14 @@ export function Step3TargetUser() {
             </div>
             <div className="space-y-4">
               <h3 className="font-semibold text-lg text-uspto-gray-text">Identify Key Pain Points</h3>
-              <div className="flex flex-wrap gap-2">
-                {painPointsOptions.map((option) => (
-                  <Toggle
-                    key={option.value}
-                    pressed={formData.painPoints.includes(option.value)}
-                    onPressedChange={() => handlePainPointToggle(option.value)}
-                    variant="outline"
-                    className="rounded-full px-3 py-1 text-sm h-auto"
-                  >
-                    {option.label}
-                  </Toggle>
-                ))}
-              </div>
+              <TextareaAutosize
+                id="painPoints"
+                value={formData.painPoints}
+                onChange={(e) => setFormData((prev) => ({ ...prev, painPoints: e.target.value }))}
+                placeholder="Describe the key pain points your users are experiencing..."
+                minRows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+              />
             </div>
             <div className="space-y-4">
               <h3 className="font-semibold text-lg text-uspto-gray-text">Provide Context</h3>

@@ -108,9 +108,9 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
 
   return (
     <TooltipProvider>
-      <div className="sticky top-24 max-h-[calc(100vh-7rem)]">
+      <div className="sticky top-24 h-full">
         <div className="flex flex-col rounded-lg border bg-white shadow-sm h-full">
-          <div className="flex items-center justify-between p-3 border-b flex-shrink-0">
+          <div className="flex items-center justify-between p-3 border-b">
             <h3 className="font-semibold text-lg flex items-center gap-2">
               <Bot className="h-6 w-6 text-uspto-blue-primary" />
               LaunchPad Co-Pilot
@@ -125,7 +125,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
             </Tooltip>
           </div>
 
-          <ScrollArea className="flex-1 p-4 max-h-[calc(100vh-18rem)] overflow-y-auto" ref={scrollAreaRef}>
+          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground p-8">
@@ -166,7 +166,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
             </div>
           </ScrollArea>
 
-          <div className="p-3 border-t bg-white flex-shrink-0">
+          <div className="p-3 border-t bg-white">
             {messages.length === 0 ? (
               <Button
                 onClick={handleInitialValidation}

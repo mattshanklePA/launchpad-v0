@@ -7,19 +7,19 @@ const templates = [
     title: "New AI Tool",
     icon: Lightbulb,
     description: "Propose a brand new AI-powered tool or capability.",
-    href: "/submit?new=true&template=new-tool",
+    href: "/submit?template=new-tool",
   },
   {
     title: "Process Improvement",
     icon: Zap,
     description: "Use AI to enhance an existing workflow or process.",
-    href: "/submit?new=true&template=improvement",
+    href: "/submit?template=improvement",
   },
   {
     title: "Data Analysis Initiative",
     icon: Wrench,
     description: "Suggest a project focused on new data insights.",
-    href: "/submit?new=true&template=data-analysis",
+    href: "/submit?template=data-analysis",
   },
 ]
 
