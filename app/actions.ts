@@ -1,5 +1,6 @@
 "use server"
 
+import { generateText } from "ai"
 import { formSteps, type FormData } from "@/lib/steps"
 
 type Message = {
@@ -116,6 +117,39 @@ export async function validateAndRefineInput(
   const currentField = getInputFieldForStep(step)
   const userInput = currentField ? (formData[currentField] as string) : ""
 
-  // This avoids the need for AI Gateway credit card requirement
-  return getMockResponse(step, userInput)
+  try {
+    // Try using real AI Gateway
+    const { text } = await generateText({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are an AI assistant helping USPTO employees write business case submissions. 
+Current step: ${currentStepInfo.title}
+Guidelines: ${currentStepInfo.guidelines}
+
+Analyze the user's input and provide:
+1. Constructive feedback (2-3 sentences)
+2. An enhanced version of their input that incorporates best practices
+
+Respond in JSON format: {"feedback": "...", "suggestion": "..."}`,
+        },
+        ...conversationHistory,
+        {
+          role: "user",
+          content: `User input for "${currentStepInfo.title}": ${userInput || "[No input provided yet]"}`,
+        },
+      ],
+    })
+
+    const result = JSON.parse(text)
+    return {
+      feedback: result.feedback || "Input received",
+      suggestion: result.suggestion || userInput,
+    }
+  } catch (error) {
+    console.error("AI Gateway error, falling back to mock:", error)
+    // Fallback to mock responses if AI Gateway fails
+    return getMockResponse(step, userInput)
+  }
 }
