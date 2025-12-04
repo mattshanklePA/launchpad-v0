@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "../launchpad/chat-panel"
+import TextareaAutosize from "react-textarea-autosize"
 
 const problemTypeOptions = [
   { value: "process_inefficiency", label: "Process inefficiency" },
@@ -105,26 +106,26 @@ export function Step3ProblemStatement() {
           </div>
           <div className="space-y-2 pt-4 border-t">
             <Label htmlFor="problemDefinition" className="text-base font-semibold">
-              Final Problem Definition
+              Problem Definition Summary
             </Label>
             <p className="text-sm text-muted-foreground">
-              The refined problem statement generated with help from the AI co-pilot.
+              This field is for the AI-generated refined problem statement.
             </p>
-            <Textarea
+            <TextareaAutosize
               id="problemDefinition"
               value={formData.problemDefinition || ""}
               onChange={(e) => setFormData((prev) => ({ ...prev, problemDefinition: e.target.value }))}
-              placeholder="Enter or paste the final problem definition here..."
-              rows={4}
-              className="resize-none"
+              placeholder="AI-generated summary will appear here..."
+              minRows={4}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
             />
           </div>
         </div>
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={3}
-          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, coreProblem: suggestion }))}
+          step={4}
+          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, problemDefinition: suggestion }))}
         />
       </div>
     </div>

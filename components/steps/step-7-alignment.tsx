@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "../launchpad/chat-panel"
+import TextareaAutosize from "react-textarea-autosize"
 
 const focusAreaOptions = [
   { value: "operational_excellence", label: "Operational Excellence" },
@@ -51,12 +52,29 @@ export function Step7Alignment() {
               rows={3}
             />
           </div>
+
+          <div className="pt-6 mt-6 border-t space-y-2">
+            <Label htmlFor="alignmentSummary" className="text-base font-semibold">
+              Alignment Summary
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              This field is for the AI-generated refined summary of strategic alignment with USPTO goals.
+            </p>
+            <TextareaAutosize
+              id="alignmentSummary"
+              value={formData.alignmentSummary || ""}
+              onChange={(e) => setFormData((prev) => ({ ...prev, alignmentSummary: e.target.value }))}
+              placeholder="AI-generated summary will appear here..."
+              minRows={4}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+            />
+          </div>
         </div>
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
           step={7}
-          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, relevantOkrs: suggestion }))}
+          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, alignmentSummary: suggestion }))}
         />
       </div>
     </div>

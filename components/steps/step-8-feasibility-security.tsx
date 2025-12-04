@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "../launchpad/chat-panel"
+import TextareaAutosize from "react-textarea-autosize"
 
 const resourceOptions = [
   { value: "dev_staff", label: "Development staff" },
@@ -133,12 +134,30 @@ export function Step8FeasibilitySecurity() {
               </div>
             </>
           )}
+
+          <div className="pt-6 mt-6 border-t space-y-2">
+            <Label htmlFor="feasibilitySummary" className="text-base font-semibold">
+              Feasibility & Security Summary
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              This field is for the AI-generated refined summary of implementation feasibility and security
+              considerations.
+            </p>
+            <TextareaAutosize
+              id="feasibilitySummary"
+              value={formData.feasibilitySummary || ""}
+              onChange={(e) => setFormData((prev) => ({ ...prev, feasibilitySummary: e.target.value }))}
+              placeholder="AI-generated summary will appear here..."
+              minRows={4}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+            />
+          </div>
         </div>
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
           step={8}
-          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, dependencies: suggestion }))}
+          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, feasibilitySummary: suggestion }))}
         />
       </div>
     </div>

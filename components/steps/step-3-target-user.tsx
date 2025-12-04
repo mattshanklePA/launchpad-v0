@@ -10,7 +10,7 @@ export function Step3TargetUser() {
   const { formData, setFormData } = useForm()
 
   const handleSuggestion = (suggestion: string) => {
-    setFormData((prev) => ({ ...prev, targetUserContext: suggestion }))
+    setFormData((prev) => ({ ...prev, targetUserSummary: suggestion }))
   }
 
   return (
@@ -80,6 +80,23 @@ export function Step3TargetUser() {
                 onChange={(e) => setFormData((prev) => ({ ...prev, targetUserContext: e.target.value }))}
                 placeholder="Add more details here..."
                 minRows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+              />
+            </div>
+
+            <div className="pt-6 mt-6 border-t space-y-2">
+              <Label htmlFor="targetUserSummary" className="text-base font-semibold">
+                Target User Summary
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                This field is for the AI-generated refined summary of your target user analysis.
+              </p>
+              <TextareaAutosize
+                id="targetUserSummary"
+                value={formData.targetUserSummary}
+                onChange={(e) => setFormData((prev) => ({ ...prev, targetUserSummary: e.target.value }))}
+                placeholder="AI-generated summary will appear here..."
+                minRows={4}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
               />
             </div>

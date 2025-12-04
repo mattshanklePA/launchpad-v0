@@ -7,6 +7,7 @@ import { X } from "lucide-react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { useState } from "react"
+import TextareaAutosize from "react-textarea-autosize"
 
 const MAX_FEATURES = 3
 
@@ -66,12 +67,29 @@ export function Step4ProposedSolution() {
               ))}
             </div>
           </div>
+
+          <div className="pt-6 mt-6 border-t space-y-2">
+            <Label htmlFor="solutionSummary" className="text-base font-semibold">
+              Solution Summary
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              This field is for the AI-generated refined summary of your proposed solution.
+            </p>
+            <TextareaAutosize
+              id="solutionSummary"
+              value={formData.solutionSummary || ""}
+              onChange={(e) => setFormData((prev) => ({ ...prev, solutionSummary: e.target.value }))}
+              placeholder="AI-generated summary will appear here..."
+              minRows={4}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+            />
+          </div>
         </div>
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
           step={4}
-          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, proposedSolution: suggestion }))}
+          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, solutionSummary: suggestion }))}
         />
       </div>
     </div>

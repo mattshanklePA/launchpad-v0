@@ -40,6 +40,7 @@ export type FormData = {
   impactedUsersCount: "lt_10" | "10_50" | "50_500" | "gt_500" | ""
   painPoints: string[]
   targetUserContext: string
+  targetUserSummary: string
 
   // Step 4
   coreProblem: string
@@ -47,24 +48,29 @@ export type FormData = {
   affectedSystem: "patents" | "trademarks" | "it_systems" | "cross_functional" | "other" | ""
   problemType: string[]
   severity: "low" | "medium" | "high" | ""
+  problemDefinition: string
 
   // Step 5
   proposedSolution: string
   keyFunctionality: string[]
+  solutionSummary: string
 
   // Step 6
   userValue: string
   userTimeSavings: "lt_1" | "1_5" | "5_10" | "gt_10" | ""
   otherUserImprovements: string[]
+  userValueSummary: string
 
   // Step 7
   businessValue: string
   costSavings: "lt_50k" | "50k_250k" | "250k_1m" | "gt_1m" | ""
   strategicBenefit: string[]
+  businessValueSummary: string
 
   // Step 8
   usptoFocusArea: string[]
   relevantOkrs: string
+  alignmentSummary: string
 
   // Step 9
   implementationComplexity: "low" | "medium" | "high" | ""
@@ -73,11 +79,13 @@ export type FormData = {
   involvesSensitiveData: "yes" | "no" | ""
   securityClassification: "internal" | "external" | "controlled" | ""
   accessControlRequirements: string[]
+  feasibilitySummary: string
 
   // Step 10
   successMetrics: string
   keyMetrics: string[]
   timelineForResults: "lt_3" | "3_6" | "6_12" | "gt_12" | ""
+  metricsSummary: string
 
   // Step 11
   routeTo: string[]
@@ -96,30 +104,38 @@ export const initialFormData: FormData = {
   impactedUsersCount: "",
   painPoints: [],
   targetUserContext: "",
+  targetUserSummary: "",
   coreProblem: "",
   problemImpact: "",
   affectedSystem: "",
   problemType: [],
   severity: "",
+  problemDefinition: "",
   proposedSolution: "",
   keyFunctionality: [],
+  solutionSummary: "",
   userValue: "",
   userTimeSavings: "",
   otherUserImprovements: [],
+  userValueSummary: "",
   businessValue: "",
   costSavings: "",
   strategicBenefit: [],
+  businessValueSummary: "",
   usptoFocusArea: [],
   relevantOkrs: "",
+  alignmentSummary: "",
   implementationComplexity: "",
   resourcesNeeded: [],
   dependencies: "",
   involvesSensitiveData: "",
   securityClassification: "",
   accessControlRequirements: [],
+  feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],
   timelineForResults: "",
+  metricsSummary: "",
   routeTo: [],
   reviewerNotes: "",
 }

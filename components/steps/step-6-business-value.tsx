@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "../launchpad/chat-panel"
+import TextareaAutosize from "react-textarea-autosize"
 
 const benefitOptions = [
   { value: "improve_quality", label: "Improve patent/trademark quality" },
@@ -69,12 +70,29 @@ export function Step6BusinessValue() {
               ))}
             </div>
           </div>
+
+          <div className="pt-6 mt-6 border-t space-y-2">
+            <Label htmlFor="businessValueSummary" className="text-base font-semibold">
+              Business Value Summary
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              This field is for the AI-generated refined summary of business value and impact.
+            </p>
+            <TextareaAutosize
+              id="businessValueSummary"
+              value={formData.businessValueSummary || ""}
+              onChange={(e) => setFormData((prev) => ({ ...prev, businessValueSummary: e.target.value }))}
+              placeholder="AI-generated summary will appear here..."
+              minRows={4}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+            />
+          </div>
         </div>
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
           step={6}
-          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, businessValue: suggestion }))}
+          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, businessValueSummary: suggestion }))}
         />
       </div>
     </div>
