@@ -43,19 +43,9 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>(() => {
     if (typeof window !== "undefined") {
-      const savedData = localStorage.getItem("aid-form-data")
-      if (savedData) {
-        const parsedData = JSON.parse(savedData)
-
-        // Ensure all fields that are supposed to be arrays are, in fact, arrays.
-        for (const field of arrayFields) {
-          if (!Array.isArray(parsedData[field])) {
-            parsedData[field] = []
-          }
-        }
-
-        return { ...initialFormData, ...parsedData }
-      }
+      // Clear the saved form data
+      localStorage.removeItem("aid-form-data")
+      localStorage.removeItem("aid-current-step")
     }
     return initialFormData
   })
