@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react"
 import { type FormData, initialFormData, formSteps } from "@/lib/steps"
+import { updateDraft } from "@/lib/draft-storage"
 
 interface FormContextType {
   formData: FormData
@@ -63,6 +64,8 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     return initialFormData
   })
 
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   useEffect(() => {
     localStorage.setItem("aid-form-data", JSON.stringify(formData))
   }, [formData])
@@ -74,6 +77,29 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem("aid-current-step")
     }
   }, [currentStep])
+
+  useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      clearInterval(autoSaveTimerRef.current)
+    }
+
+    if (currentDraftId) {
+      autoSaveTimerRef.current = setInterval(() => {
+        console.log("[v0] Auto-saving draft...")
+        updateDraft(currentDraftId, {
+          formData,
+          currentStep,
+          title: formData.title || "Untitled Draft",
+        })
+      }, 60000) // 60 seconds
+
+      return () => {
+        if (autoSaveTimerRef.current) {
+          clearInterval(autoSaveTimerRef.current)
+        }
+      }
+    }
+  }, [currentDraftId, formData, currentStep])
 
   const totalSteps = formSteps.length
   const reviewStepNumber = 11
