@@ -23,11 +23,11 @@ function getInputFieldForStep(step: number): keyof FormData | null {
     case 7:
       return "businessValue"
     case 8:
-      return "relevantOkrs"
+      return "dependencies" // Changed from relevantOkrs to dependencies for feasibility
     case 9:
-      return "dependencies"
-    case 10:
       return "successMetrics"
+    case 10:
+      return "relevantOkrs" // OKRs moved to step 10 where they belong
     default:
       return null
   }
@@ -76,24 +76,24 @@ function getMockResponse(step: number, userInput: string): { feedback: string; s
     },
     8: {
       feedback:
-        "Good alignment with USPTO priorities. Consider being more specific about which OKRs this supports and how success will be measured.",
+        "You've identified important considerations. Consider being more specific about technical requirements, security compliance needs, and realistic resource estimates.",
       suggestion: userInput
-        ? `${userInput} This initiative specifically supports the Operational Excellence focus area and aligns with OKRs related to examination efficiency and quality improvements.`
-        : "This initiative directly supports USPTO's Operational Excellence focus area, particularly OKRs related to improving patent examination efficiency and quality. It also contributes to the Data-Driven Decisioning goal by leveraging AI to enhance decision-making processes.",
+        ? `${userInput} Additional considerations include FedRAMP compliance requirements, accessibility standards (508 compliance), data privacy protections, and the need for specialized AI/ML expertise on the team.`
+        : "**Technical Feasibility:** Requires access to patent examination data APIs and integration with existing search tools. **Security & Compliance:** Must meet FedRAMP Moderate standards, Section 508 accessibility requirements, and USPTO data handling policies. **Resources:** Needs AI/ML engineers, security specialists, and 6-8 months development time. **Primary Risks:** Data quality issues and user adoption challenges can be mitigated through phased rollout and comprehensive training.",
     },
     9: {
       feedback:
-        "You've identified key dependencies. Consider also addressing potential risks, mitigation strategies, and resource requirements.",
+        "Your success metrics provide a good foundation. Consider adding both leading and lagging indicators, with clear baseline measurements and realistic timelines.",
       suggestion: userInput
-        ? `${userInput} Additional considerations include ensuring data security compliance, managing change management for user adoption, and establishing clear success metrics for evaluation.`
-        : "Key dependencies include access to patent database APIs, integration with existing examination tools, and collaboration with IT security teams for compliance. Risk mitigation includes phased rollout, comprehensive user training, and fallback procedures.",
+        ? `${userInput} Include both early adoption metrics and long-term quality improvements, with quarterly measurement checkpoints.`
+        : "**Leading Indicators:** Weekly active users, search queries per user, feature adoption rate (target: 80% within 3 months). **Lagging Indicators:** 20% reduction in average search time, 15% improvement in prior art relevance, examination quality scores. **Baseline:** Current average search time is 45 minutes per case. **Timeline:** Measure leading indicators monthly, lagging indicators quarterly over 12 months.",
     },
     10: {
       feedback:
-        "Your success metrics provide a good foundation. Consider adding both quantitative and qualitative measures, including user satisfaction indicators.",
+        "Good identification of key factors. Consider being more specific about organizational dependencies, OKR alignment, and proactive risk mitigation strategies.",
       suggestion: userInput
-        ? `${userInput} Additional metrics should include user adoption rates, search accuracy improvements, and qualitative feedback on user experience and satisfaction.`
-        : "Success will be measured through: 1) 20% reduction in average search time, 2) 15% improvement in prior art relevance scores, 3) 90% user adoption rate within 6 months, 4) User satisfaction scores above 4.0/5.0, and 5) Reduction in examination rework due to missed prior art.",
+        ? `${userInput} Ensure clear alignment with USPTO's strategic OKRs around operational excellence and examination quality.`
+        : "**Dependencies:** Requires IT Security approval (3-4 weeks), integration with Patent Center APIs, and coordination with Training & Development team for user onboarding. **Alignment:** Directly supports USPTO OKR 2.1 (Improve examination efficiency) and OKR 3.2 (Enhance data-driven decision making). **Risks:** Mitigate potential user resistance through early stakeholder engagement and pilot program with volunteer examiners.",
     },
   }
 
@@ -124,9 +124,9 @@ export async function validateAndRefineInput(
     5: `Format your suggestion as 2-3 sentences with specific, measurable user benefits. Include quantified improvements where possible.`,
     6: `Format your suggestion as 2-3 sentences with quantified efficiency gains, quality impact, and strategic alignment.`,
     7: `Format your suggestion as 2-3 sentences describing alignment with USPTO OKRs and strategic priorities.`,
-    8: `Format your suggestion with bullet points listing: data availability, technical complexity, resource requirements, dependencies, and primary risks.`,
-    9: `Format your suggestion with bullet points for: leading indicators, lagging indicators, baseline measurements needed, and realistic timeline.`,
-    10: `Format your suggestion as 2-3 sentences describing key dependencies, risks, and mitigation strategies.`,
+    8: `Format your suggestion with bullet points covering: **Technical Feasibility** (data availability, technical complexity), **Security & Compliance** (FedRAMP, accessibility, privacy), **Resources** (team skills, infrastructure needs), and **Primary Risks** with mitigation strategies.`,
+    9: `Format your suggestion with bullet points for: **Leading Indicators** (early success signals), **Lagging Indicators** (long-term outcomes), **Baseline Measurements** (current state), and **Timeline** (realistic measurement periods).`,
+    10: `Format your suggestion as 2-3 sentences describing key **dependencies** (technical, organizational, approval), **alignment** with USPTO OKRs, and **risks** with mitigation strategies.`,
   }
 
   try {
