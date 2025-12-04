@@ -1,6 +1,7 @@
 "use server"
 
-import { generateText } from "ai"
+import { generateObject } from "ai"
+import { z } from "zod"
 import { formSteps, type FormData } from "@/lib/steps"
 
 type Message = {
@@ -118,8 +119,12 @@ export async function validateAndRefineInput(
   const userInput = currentField ? (formData[currentField] as string) : ""
 
   try {
-    const { text } = await generateText({
+    const { object } = await generateObject({
       model: "anthropic/claude-sonnet-4.5",
+      schema: z.object({
+        feedback: z.string().describe("Constructive feedback in 2-3 sentences"),
+        suggestion: z.string().describe("Enhanced version of user input incorporating best practices"),
+      }),
       messages: [
         {
           role: "system",
@@ -129,9 +134,7 @@ Guidelines: ${currentStepInfo.guidelines}
 
 Analyze the user's input and provide:
 1. Constructive feedback (2-3 sentences)
-2. An enhanced version of their input that incorporates best practices
-
-Respond in JSON format: {"feedback": "...", "suggestion": "..."}`,
+2. An enhanced version of their input that incorporates best practices`,
         },
         ...conversationHistory,
         {
@@ -141,10 +144,9 @@ Respond in JSON format: {"feedback": "...", "suggestion": "..."}`,
       ],
     })
 
-    const result = JSON.parse(text)
     return {
-      feedback: result.feedback || "Input received",
-      suggestion: result.suggestion || userInput,
+      feedback: object.feedback || "Input received",
+      suggestion: object.suggestion || userInput,
     }
   } catch (error) {
     console.error("AI Gateway error, falling back to mock:", error)
