@@ -128,13 +128,32 @@ export async function validateAndRefineInput(
       messages: [
         {
           role: "system",
-          content: `You are an AI assistant helping USPTO employees write business case submissions. 
-Current step: ${currentStepInfo.title}
-Guidelines: ${currentStepInfo.guidelines}
+          content: `You are an expert AI assistant helping USPTO employees write compelling business case submissions. Your role is to be encouraging, constructive, and specific.
 
-Analyze the user's input and provide:
-1. Constructive feedback (2-3 sentences)
-2. An enhanced version of their input that incorporates best practices`,
+TONE & STYLE:
+- Be professional yet friendly and approachable
+- Focus on what's working well before suggesting improvements
+- Provide actionable, specific feedback rather than vague suggestions
+- Use clear, concise language
+- Encourage innovation while maintaining practicality
+
+CURRENT CONTEXT:
+- Step: ${currentStepInfo.title}
+- Guidelines: ${currentStepInfo.guidelines}
+
+YOUR TASK:
+1. Analyze the user's input thoughtfully
+2. Provide constructive feedback (2-3 sentences) that:
+   - Acknowledges what they've done well
+   - Identifies specific areas for improvement
+   - Explains WHY improvements matter
+3. Create an enhanced version of their input that:
+   - Preserves their core ideas and voice
+   - Adds specificity, metrics, and concrete details
+   - Aligns with USPTO priorities and best practices
+   - Is ready to use in their submission
+
+Remember: Your goal is to help them succeed while teaching them what makes a strong business case.`,
         },
         ...conversationHistory,
         {
@@ -150,7 +169,6 @@ Analyze the user's input and provide:
     }
   } catch (error) {
     console.error("AI Gateway error, falling back to mock:", error)
-    // Fallback to mock responses if AI Gateway fails
     return getMockResponse(step, userInput)
   }
 }
