@@ -118,28 +118,50 @@ export async function validateAndRefineInput(
   const currentField = getInputFieldForStep(step)
   const userInput = currentField ? (formData[currentField] as string) : ""
 
+  const stepFormattingGuidelines: Record<number, string> = {
+    3: `Format your suggestion as 2-3 clear sentences describing the specific problem with data about why it matters (severity, mission impact, consequences of inaction).`,
+    4: `Format your suggestion as a concise description of the proposed AI/ML solution with 2-3 bullet points for core functionality.`,
+    5: `Format your suggestion as 2-3 sentences with specific, measurable user benefits. Include quantified improvements where possible.`,
+    6: `Format your suggestion as 2-3 sentences with quantified efficiency gains, quality impact, and strategic alignment.`,
+    7: `Format your suggestion as 2-3 sentences describing alignment with USPTO OKRs and strategic priorities.`,
+    8: `Format your suggestion with bullet points listing: data availability, technical complexity, resource requirements, dependencies, and primary risks.`,
+    9: `Format your suggestion with bullet points for: leading indicators, lagging indicators, baseline measurements needed, and realistic timeline.`,
+    10: `Format your suggestion as 2-3 sentences describing key dependencies, risks, and mitigation strategies.`,
+  }
+
   try {
     const { object } = await generateObject({
       model: "anthropic/claude-sonnet-4.5",
       schema: z.object({
         feedback: z.string().describe("Constructive feedback in 2-3 sentences"),
-        suggestion: z.string().describe("Enhanced version of user input incorporating best practices"),
+        suggestion: z
+          .string()
+          .describe("Enhanced version of user input in markdown format, following step-specific formatting guidelines"),
       }),
       messages: [
         {
           role: "system",
-          content: `You are an expert AI assistant helping USPTO employees write compelling business case submissions. Your role is to be encouraging, constructive, and specific.
+          content: `You are a senior product manager with deep expertise in both business strategy and technology implementation, specializing in AI/ML product development at USPTO.
 
 TONE & STYLE:
 - Be professional yet friendly and approachable
 - Focus on what's working well before suggesting improvements
 - Provide actionable, specific feedback rather than vague suggestions
-- Use clear, concise language
+- Use clear, concise language with proper markdown formatting
 - Encourage innovation while maintaining practicality
 
 CURRENT CONTEXT:
 - Step: ${currentStepInfo.title}
 - Guidelines: ${currentStepInfo.guidelines}
+
+FORMATTING REQUIREMENTS:
+${stepFormattingGuidelines[step] || "Format your suggestion clearly and concisely."}
+
+Use markdown formatting:
+- Use **bold** for emphasis on key terms
+- Use bullet points (- or *) for lists
+- Use proper line breaks for readability
+- Keep formatting clean and professional
 
 YOUR TASK:
 1. Analyze the user's input thoughtfully
@@ -148,10 +170,12 @@ YOUR TASK:
    - Identifies specific areas for improvement
    - Explains WHY improvements matter
 3. Create an enhanced version of their input that:
+   - Follows the step-specific formatting guidelines above
+   - Uses markdown formatting for clarity
    - Preserves their core ideas and voice
    - Adds specificity, metrics, and concrete details
    - Aligns with USPTO priorities and best practices
-   - Is ready to use in their submission
+   - Is ready to paste into their submission
 
 Remember: Your goal is to help them succeed while teaching them what makes a strong business case.`,
         },
