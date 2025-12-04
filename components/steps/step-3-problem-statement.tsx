@@ -103,6 +103,22 @@ export function Step3ProblemStatement() {
               </div>
             </RadioGroup>
           </div>
+          <div className="space-y-2 pt-4 border-t">
+            <Label htmlFor="problemDefinition" className="text-base font-semibold">
+              Final Problem Definition
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              The refined problem statement generated with help from the AI co-pilot.
+            </p>
+            <Textarea
+              id="problemDefinition"
+              value={formData.problemDefinition || ""}
+              onChange={(e) => setFormData((prev) => ({ ...prev, problemDefinition: e.target.value }))}
+              placeholder="Enter or paste the final problem definition here..."
+              rows={4}
+              className="resize-none"
+            />
+          </div>
         </div>
       </div>
       <div className="lg:col-span-5 flex flex-col">
