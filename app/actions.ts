@@ -149,7 +149,7 @@ Your entire response MUST be a JSON object with two keys: "feedback" (your conve
 
   try {
     const { text } = await generateText({
-      model: "openai/gpt-4o-mini",
+      model: "openai:gpt-4o-mini",
       system: systemPrompt,
       messages: messages,
     })
