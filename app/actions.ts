@@ -1,6 +1,5 @@
 "use server"
 
-import { generateText } from "ai"
 import { formSteps, type FormData } from "@/lib/steps"
 
 type Message = {
@@ -117,52 +116,6 @@ export async function validateAndRefineInput(
   const currentField = getInputFieldForStep(step)
   const userInput = currentField ? (formData[currentField] as string) : ""
 
-  const isFollowUp = conversationHistory.length > 0
-
-  const systemPrompt = `You are "LaunchPad", an expert assistant helping USPTO employees write strong business cases for AI initiatives. Your goal is to ensure every input is specific, complete, and clear.
-
-The user is working on the step: "${currentStepInfo.title}".
-The prompt for this step is: "${currentStepInfo.prompt}".
-The user's input for this specific step is: "${userInput}"
-
-**IMPORTANT**: Your feedback and suggestions MUST be strictly limited to helping the user improve their response for the current step: "${currentStepInfo.title}". For example, if the step is "Identify the Target User", only provide feedback that helps them better define that user. Do not give feedback on other topics.
-
-${
-  isFollowUp
-    ? "The user has a follow-up question. Provide a conversational response and, if appropriate, offer a new refined suggestion based on their latest request, keeping your response focused only on the current step's topic."
-    : "This is the user's first request for this input. Analyze their input. Provide brief, constructive feedback and a refined suggestion. The feedback should be encouraging and guide the user. The suggestion should be a well-written version of their input that they can use."
-}
-
-Your entire response MUST be a JSON object with two keys: "feedback" (your conversational message to the user) and "suggestion" (the refined text for them to use).`
-
-  const messages: Message[] = conversationHistory.map((msg) => ({
-    role: msg.role,
-    content: msg.content,
-  }))
-
-  if (!isFollowUp) {
-    messages.unshift({
-      role: "user",
-      content: `Here is my input for this step: "${userInput}"`,
-    })
-  }
-
-  try {
-    const { text } = await generateText({
-      model: "openai/gpt-4o-mini",
-      system: systemPrompt,
-      messages: messages,
-    })
-
-    const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1)
-    const parsed = JSON.parse(jsonString)
-    return {
-      feedback: parsed.feedback || "Here is a refined suggestion.",
-      suggestion: parsed.suggestion || "Could not generate a suggestion.",
-    }
-  } catch (e) {
-    console.error("Failed to call OpenAI API or parse response:", e)
-    // Fallback to mock response if API call fails
-    return getMockResponse(step, userInput)
-  }
+  // This avoids the need for AI Gateway credit card requirement
+  return getMockResponse(step, userInput)
 }
