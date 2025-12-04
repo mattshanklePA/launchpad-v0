@@ -118,9 +118,8 @@ export async function validateAndRefineInput(
   const userInput = currentField ? (formData[currentField] as string) : ""
 
   try {
-    // Try using real AI Gateway
     const { text } = await generateText({
-      model: "openai/gpt-4o-mini",
+      model: "anthropic/claude-sonnet-4.5",
       messages: [
         {
           role: "system",
