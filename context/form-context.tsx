@@ -43,22 +43,40 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>(() => {
     if (typeof window !== "undefined") {
-      // Clear the saved form data
-      localStorage.removeItem("aid-form-data")
-      localStorage.removeItem("aid-current-step")
+      const saved = localStorage.getItem("aid-form-data")
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {
+          return initialFormData
+        }
+      }
     }
     return initialFormData
   })
 
   useEffect(() => {
-    localStorage.setItem("aid-form-data", JSON.stringify(formData))
+    if (typeof window !== "undefined") {
+      const savedStep = localStorage.getItem("aid-current-step")
+      if (savedStep) {
+        setCurrentStep(Number.parseInt(savedStep, 10))
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("aid-form-data", JSON.stringify(formData))
+    }
   }, [formData])
 
   useEffect(() => {
-    if (currentStep > 1) {
-      localStorage.setItem("aid-current-step", currentStep.toString())
-    } else {
-      localStorage.removeItem("aid-current-step")
+    if (typeof window !== "undefined") {
+      if (currentStep > 1) {
+        localStorage.setItem("aid-current-step", currentStep.toString())
+      } else {
+        localStorage.removeItem("aid-current-step")
+      }
     }
   }, [currentStep])
 
