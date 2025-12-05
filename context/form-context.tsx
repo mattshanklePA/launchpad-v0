@@ -43,26 +43,11 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("aid-form-data")
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch {
-          return initialFormData
-        }
-      }
+      localStorage.removeItem("aid-form-data")
+      localStorage.removeItem("aid-current-step")
     }
     return initialFormData
   })
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedStep = localStorage.getItem("aid-current-step")
-      if (savedStep) {
-        setCurrentStep(Number.parseInt(savedStep, 10))
-      }
-    }
-  }, [])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
