@@ -13,21 +13,21 @@ type Message = {
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
     case 3:
-      return "targetUserContext"
+      return "targetUserContext" // Step 3: Target User
     case 4:
-      return "coreProblem"
+      return "coreProblem" // Step 4: Problem Statement
     case 5:
-      return "proposedSolution"
+      return "proposedSolution" // Step 5: Proposed Solution
     case 6:
-      return "userValue"
+      return "userValue" // Step 6: User Value
     case 7:
-      return "businessValue"
+      return "businessValue" // Step 7: Business Value
     case 8:
-      return "dependencies" // Changed from relevantOkrs to dependencies for feasibility
+      return "relevantOkrs" // Step 8: Strategic Alignment
     case 9:
-      return "successMetrics"
+      return "dependencies" // Step 9: Feasibility & Security
     case 10:
-      return "relevantOkrs" // OKRs moved to step 10 where they belong
+      return "successMetrics" // Step 10: Outcome Measurements
     default:
       return null
   }
@@ -78,8 +78,8 @@ function getMockResponse(step: number, userInput: string): { feedback: string; s
       feedback:
         "You've identified important considerations. Consider being more specific about technical requirements, security compliance needs, and realistic resource estimates.",
       suggestion: userInput
-        ? `${userInput} Additional considerations include FedRAMP compliance requirements, accessibility standards (508 compliance), data privacy protections, and the need for specialized AI/ML expertise on the team.`
-        : "**Technical Feasibility:** Requires access to patent examination data APIs and integration with existing search tools. **Security & Compliance:** Must meet FedRAMP Moderate standards, Section 508 accessibility requirements, and USPTO data handling policies. **Resources:** Needs AI/ML engineers, security specialists, and 6-8 months development time. **Primary Risks:** Data quality issues and user adoption challenges can be mitigated through phased rollout and comprehensive training.",
+        ? `${userInput} Ensure clear alignment with USPTO's strategic OKRs around operational excellence and examination quality.`
+        : "**Dependencies:** Requires IT Security approval (3-4 weeks), integration with Patent Center APIs, and coordination with Training & Development team for user onboarding. **Alignment:** Directly supports USPTO OKR 2.1 (Improve examination efficiency) and OKR 3.2 (Enhance data-driven decision making). **Risks:** Mitigate potential user resistance through early stakeholder engagement and pilot program with volunteer examiners.",
     },
     9: {
       feedback:
@@ -119,14 +119,14 @@ export async function validateAndRefineInput(
   const userInput = currentField ? (formData[currentField] as string) : ""
 
   const stepFormattingGuidelines: Record<number, string> = {
-    3: `Format your suggestion as 2-3 clear sentences describing the specific problem with data about why it matters (severity, mission impact, consequences of inaction).`,
-    4: `Format your suggestion as a concise description of the proposed AI/ML solution with 2-3 bullet points for core functionality.`,
-    5: `Format your suggestion as 2-3 sentences with specific, measurable user benefits. Include quantified improvements where possible.`,
-    6: `Format your suggestion as 2-3 sentences with quantified efficiency gains, quality impact, and strategic alignment.`,
-    7: `Format your suggestion as 2-3 sentences describing alignment with USPTO OKRs and strategic priorities.`,
-    8: `Format your suggestion with bullet points covering: **Technical Feasibility** (data availability, technical complexity), **Security & Compliance** (FedRAMP, accessibility, privacy), **Resources** (team skills, infrastructure needs), and **Primary Risks** with mitigation strategies.`,
-    9: `Format your suggestion with bullet points for: **Leading Indicators** (early success signals), **Lagging Indicators** (long-term outcomes), **Baseline Measurements** (current state), and **Timeline** (realistic measurement periods).`,
-    10: `Format your suggestion as 2-3 sentences describing key **dependencies** (technical, organizational, approval), **alignment** with USPTO OKRs, and **risks** with mitigation strategies.`,
+    3: `Format your suggestion as 2-3 paragraphs describing the target users, their roles, workflows, and specific pain points they experience.`,
+    4: `Format your suggestion as 2-3 clear sentences describing the specific problem with data about why it matters (severity, mission impact, consequences of inaction).`,
+    5: `Format your suggestion as a concise description of the proposed AI/ML solution with 2-3 bullet points for core functionality.`,
+    6: `Format your suggestion as 2-3 sentences with specific, measurable user benefits. Include quantified improvements where possible.`,
+    7: `Format your suggestion as 2-3 sentences with quantified efficiency gains, quality impact, and strategic alignment.`,
+    8: `Format your suggestion as 2-3 sentences describing alignment with USPTO strategic focus areas and specific OKRs this initiative supports.`,
+    9: `Format your suggestion with bullet points covering: **Technical Feasibility** (complexity, resources needed), **Security & Compliance** (FedRAMP, accessibility, data privacy), **Dependencies** (technical, organizational), and **Primary Risks** with mitigation strategies.`,
+    10: `Format your suggestion with bullet points for: **Success Metrics** (specific, measurable KPIs), **Leading Indicators** (early signals), **Lagging Indicators** (long-term outcomes), and **Timeline** (when results will be visible).`,
   }
 
   try {

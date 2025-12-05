@@ -26,21 +26,21 @@ type LaunchPadChatPanelProps = {
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
     case 3:
-      return "targetUserContext"
+      return "targetUserContext" // Step 3: Target User
     case 4:
-      return "coreProblem"
+      return "coreProblem" // Step 4: Problem Statement
     case 5:
-      return "proposedSolution"
+      return "proposedSolution" // Step 5: Proposed Solution
     case 6:
-      return "userValue"
+      return "userValue" // Step 6: User Value
     case 7:
-      return "businessValue"
+      return "businessValue" // Step 7: Business Value
     case 8:
-      return "relevantOkrs"
+      return "relevantOkrs" // Step 8: Strategic Alignment
     case 9:
-      return "dependencies"
+      return "dependencies" // Step 9: Feasibility & Security
     case 10:
-      return "successMetrics"
+      return "successMetrics" // Step 10: Outcome Measurements
     default:
       return null
   }
