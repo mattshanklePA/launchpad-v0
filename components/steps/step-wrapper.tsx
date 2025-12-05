@@ -13,7 +13,7 @@ export function StepWrapper({ children }: { children: React.ReactNode }) {
   // Guard against invalid steps
   if (!stepInfo) {
     return (
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-7xl mx-auto">
         <CardHeader>
           <CardTitle>Error: Invalid Step</CardTitle>
           <CardDescription>The requested step does not exist.</CardDescription>
@@ -23,7 +23,7 @@ export function StepWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Card className="max-w-4xl mx-auto">
+    <Card className="max-w-7xl mx-auto">
       <CardHeader>
         <CardTitle>{stepInfo.title}</CardTitle>
         <CardDescription>{stepInfo.prompt}</CardDescription>
