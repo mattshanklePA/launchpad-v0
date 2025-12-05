@@ -25,21 +25,21 @@ type LaunchPadChatPanelProps = {
 // Helper to get the primary input field for a given step
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
-    case 2:
-      return "targetUserContext"
     case 3:
-      return "coreProblem"
+      return "targetUserContext"
     case 4:
-      return "proposedSolution"
+      return "coreProblem"
     case 5:
-      return "userValue"
+      return "proposedSolution"
     case 6:
-      return "businessValue"
+      return "userValue"
     case 7:
-      return "relevantOkrs"
+      return "businessValue"
     case 8:
-      return "dependencies"
+      return "relevantOkrs"
     case 9:
+      return "dependencies"
+    case 10:
       return "successMetrics"
     default:
       return null
