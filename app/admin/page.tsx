@@ -22,7 +22,11 @@ import {
   BarChart3,
   LayoutGrid,
   TableIcon,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
 } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Header } from "@/components/layout/header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -65,6 +69,7 @@ const mockDrafts = [
     completionRate: 85,
     step: 8,
     publicIndicator: "excluded",
+    readinessScore: "ready" as const,
   },
   {
     id: "draft-002",
@@ -76,6 +81,7 @@ const mockDrafts = [
     completionRate: 100,
     step: 10,
     publicIndicator: "public",
+    readinessScore: "ready" as const,
   },
   {
     id: "draft-003",
@@ -87,6 +93,7 @@ const mockDrafts = [
     completionRate: 45,
     step: 5,
     publicIndicator: "public",
+    readinessScore: "early_stage" as const,
   },
 ]
 
@@ -102,6 +109,7 @@ const mockSubmitted = [
     assignedReviewer: "John Martinez",
     estimatedReviewDate: "2024-01-25",
     routedTo: ["AI Governance Council", "Rally"],
+    executiveSummary: "Proposes an NLP-powered enhancement to prior art search that would reduce examiner search time by 30-40% across 8,000+ patent examiners. Directly supports OKR 2.1 (examination efficiency) with a realistic 12-month implementation timeline. Feasibility is strong given existing Patent Center API infrastructure.",
   },
   {
     id: "sub-002",
@@ -114,6 +122,7 @@ const mockSubmitted = [
     assignedReviewer: "Sarah Kim",
     estimatedReviewDate: "2024-01-20",
     routedTo: ["Rally"],
+    executiveSummary: "ML-based trademark similarity detection to replace manual visual comparison. Targets 32 trademark examiners with estimated 2-hour daily time savings. Moderate implementation complexity with dependency on image processing infrastructure.",
   },
   {
     id: "sub-003",
@@ -126,6 +135,7 @@ const mockSubmitted = [
     assignedReviewer: "Lisa Wang",
     estimatedReviewDate: "2024-01-18",
     routedTo: ["AI Governance Council"],
+    executiveSummary: "Predictive routing system to auto-assign incoming applications based on examiner expertise and workload. High strategic value for pendency reduction, but significant integration complexity with legacy assignment systems.",
   },
   {
     id: "sub-004",
@@ -138,6 +148,7 @@ const mockSubmitted = [
     assignedReviewer: "Robert Brown",
     estimatedReviewDate: "2024-01-15",
     routedTo: ["Rally", "AI Governance Council"],
+    executiveSummary: "NLP tool for OGC attorneys to accelerate legal document review and extract key provisions. Narrow user base but high per-user impact. Successfully deployed with positive adoption metrics.",
   },
   {
     id: "sub-005",
@@ -150,6 +161,7 @@ const mockSubmitted = [
     assignedReviewer: "Amanda Taylor",
     estimatedReviewDate: "2024-01-12",
     routedTo: ["AI Governance Council"],
+    executiveSummary: "Dashboard concept for examination workflow analytics. Rejected due to overlap with existing BI tools and insufficient differentiation from current reporting capabilities.",
   },
 ]
 
@@ -168,6 +180,48 @@ export default function AdminPage() {
   const [editingOKR, setEditingOKR] = useState<number | null>(null)
   const [newOKR, setNewOKR] = useState({ title: "", description: "", category: "" })
   const [draftsViewMode, setDraftsViewMode] = useState<"cards" | "table">("cards")
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set())
+
+  const toggleSummary = (id: string) => {
+    setExpandedSummaries(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }
+
+  const getReadinessBadge = (score: string | undefined) => {
+    switch (score) {
+      case "ready":
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-300">
+            Ready
+          </Badge>
+        )
+      case "needs_work":
+        return (
+          <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+            Needs Work
+          </Badge>
+        )
+      case "early_stage":
+        return (
+          <Badge className="bg-gray-100 text-gray-600 border-gray-300">
+            Early Stage
+          </Badge>
+        )
+      default:
+        return (
+          <Badge variant="outline" className="text-muted-foreground">
+            Not Assessed
+          </Badge>
+        )
+    }
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -352,6 +406,65 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Pipeline Funnel Visualization */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Idea Pipeline Funnel</CardTitle>
+                <CardDescription>Flow of ideas from submission to production</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
+                  {/* Ideas Submitted */}
+                  <div className="flex-1 min-w-[140px]">
+                    <div className="bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-700">{pipelineStats.totalSubmissions}</div>
+                      <div className="text-sm font-medium text-blue-600">Ideas Submitted</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                  
+                  {/* In Vetting */}
+                  <div className="flex-1 min-w-[140px]">
+                    <div className="bg-blue-200 border-2 border-blue-400 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-800">{pipelineStats.inProgress}</div>
+                      <div className="text-sm font-medium text-blue-700">In Vetting</div>
+                      <div className="text-xs text-blue-600 mt-1">{Math.round((pipelineStats.inProgress / pipelineStats.totalSubmissions) * 100)}% of submitted</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                  
+                  {/* Vetted & Submitted */}
+                  <div className="flex-1 min-w-[140px]">
+                    <div className="bg-blue-300 border-2 border-blue-500 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-900">{pipelineStats.underReview}</div>
+                      <div className="text-sm font-medium text-blue-800">Vetted & Submitted</div>
+                      <div className="text-xs text-blue-700 mt-1">{Math.round((pipelineStats.underReview / pipelineStats.inProgress) * 100)}% of in vetting</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                  
+                  {/* Approved */}
+                  <div className="flex-1 min-w-[140px]">
+                    <div className="bg-green-100 border-2 border-green-400 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-green-700">{pipelineStats.approved}</div>
+                      <div className="text-sm font-medium text-green-600">Approved</div>
+                      <div className="text-xs text-green-500 mt-1">{Math.round((pipelineStats.approved / pipelineStats.underReview) * 100)}% of vetted</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                  
+                  {/* In Production */}
+                  <div className="flex-1 min-w-[140px]">
+                    <div className="bg-green-200 border-2 border-green-500 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-green-800">{pipelineStats.deployed}</div>
+                      <div className="text-sm font-medium text-green-700">In Production</div>
+                      <div className="text-xs text-green-600 mt-1">{Math.round((pipelineStats.deployed / pipelineStats.approved) * 100)}% of approved</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
@@ -568,6 +681,7 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 ml-4">
+                          {getReadinessBadge(draft.readinessScore)}
                           {getStatusBadge(draft.status)}
                           <Button variant="ghost" size="sm">
                             <Eye className="w-4 h-4" />
@@ -592,6 +706,7 @@ export default function AdminPage() {
                         <TableHead>Current Step</TableHead>
                         <TableHead>Last Updated</TableHead>
                         <TableHead>Classification</TableHead>
+                        <TableHead>Readiness</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -622,6 +737,7 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell className="text-muted-foreground">{draft.lastUpdated}</TableCell>
                           <TableCell>{getPublicIndicatorBadge(draft.publicIndicator)}</TableCell>
+                          <TableCell>{getReadinessBadge(draft.readinessScore)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm">
@@ -702,6 +818,29 @@ export default function AdminPage() {
                             ))}
                           </div>
                         </div>
+                        
+                        {/* Executive Summary Collapsible */}
+                        <Collapsible 
+                          open={expandedSummaries.has(submission.id)} 
+                          onOpenChange={() => toggleSummary(submission.id)}
+                          className="mt-4"
+                        >
+                          <CollapsibleTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-2">
+                              {expandedSummaries.has(submission.id) ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                              View Executive Summary
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3">
+                            <div className="bg-gray-50 border rounded-lg p-4 text-sm text-muted-foreground leading-relaxed">
+                              {submission.executiveSummary}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
                         {getStatusBadge(submission.status)}
