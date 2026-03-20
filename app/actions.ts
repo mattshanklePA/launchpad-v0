@@ -33,7 +33,7 @@ function getInputFieldForStep(step: number): keyof FormData | null {
   }
 }
 
-// Mock responses for when API key is not available
+// Mock responses for when API key is not available - uses vetting/challenging tone
 function getMockResponse(step: number, userInput: string): { feedback: string; suggestion: string } {
   const currentStepInfo = formSteps.find((s) => s.step === step)
   const stepTitle = currentStepInfo?.title || "this step"
@@ -41,68 +41,68 @@ function getMockResponse(step: number, userInput: string): { feedback: string; s
   const mockResponses = {
     3: {
       feedback:
-        "Your target user description provides a good foundation. Consider adding more specific details about their daily workflow and the specific challenges they face in their role.",
+        "You've identified the right audience, but your description reads like a job title, not a user story. A reviewer will want to know: what does their day look like? Where does the current process break down for them? Without that, the 'pain' feels abstract.",
       suggestion: userInput
-        ? `${userInput} Additionally, these users typically work with multiple systems daily and would benefit from streamlined processes that reduce context switching and manual data entry.`
-        : "Patent examiners who conduct prior art searches and need more efficient tools to identify relevant references while maintaining high accuracy standards.",
+        ? `${userInput} These users typically spend 40-60% of their day on manual search tasks across disconnected systems. The biggest friction points are context-switching between databases, inconsistent search results across tools, and no way to track which references have already been reviewed — leading to duplicated effort and examiner frustration.`
+        : "Patent examiners conducting prior art searches who currently spend 3-4 hours per case navigating disconnected search tools. Their core frustration: inconsistent results force repeated searches, with no systematic way to build on previous work — resulting in duplicated effort and variable examination quality.",
     },
     4: {
       feedback:
-        "Your problem statement captures the core issue well. To strengthen it, consider quantifying the impact and being more specific about the root causes.",
+        "This captures the symptom, but not the root cause. A reviewer will ask: 'How big is this problem? What's the cost of doing nothing?' Quantify the impact — processing time, error rates, examiner attrition — to make the case undeniable.",
       suggestion: userInput
-        ? `${userInput} This results in increased processing time, potential inconsistencies in examination quality, and examiner frustration due to inefficient workflows.`
-        : "Current prior art search processes are time-consuming and often yield inconsistent results, leading to longer examination times and potential quality issues.",
+        ? `${userInput} This affects approximately [X] examiners across [Y] art units, resulting in an estimated [Z] hours of redundant work per week. Without intervention, the problem compounds as application volumes increase, directly impacting USPTO's ability to meet pendency targets and maintain examination quality standards.`
+        : "Current prior art search processes require examiners to navigate 4+ disconnected systems per case, with no unified interface. This results in 2-3 hours of redundant work per examiner per week — roughly 50,000 lost hours annually across the corps. The cost of inaction: continued pendency growth and inconsistent examination quality as application volumes increase 8% year-over-year.",
     },
     5: {
       feedback:
-        "Your proposed solution shows promise. Consider breaking it down into more specific, actionable components and addressing potential implementation challenges.",
+        "The concept is solid, but it's too high-level to evaluate. A reviewer needs to understand: what specifically does the AI do? What's the user interaction model? What existing systems does it need to connect to? Without these, it reads as 'we'll use AI to fix it' — which isn't a proposal.",
       suggestion: userInput
-        ? `${userInput} The solution would include an intuitive user interface, integration with existing USPTO systems, and comprehensive training materials for smooth adoption.`
-        : "Implement an AI-powered search enhancement tool that uses natural language processing to improve search query accuracy and provides ranked, relevant results with confidence scores.",
+        ? `${userInput}\n\n**Core Functionality:**\n- Unified search interface connecting [specific systems] via existing APIs\n- AI-powered query expansion using patent classification ontologies\n- Results ranking with confidence scores and relevance explanations\n\n**User Interaction:** Examiners enter natural language queries; system returns ranked results with one-click export to examination record.`
+        : "An AI-powered search assistant that consolidates USPTO's existing search tools into a unified interface.\n\n**Core Functionality:**\n- Single search box connecting EAST, WEST, and NPL databases via existing APIs\n- AI query expansion using CPC/USPC classification ontologies to surface related terms\n- Results ranked by relevance with confidence scores and citation network visualization\n\n**User Interaction:** Examiner enters case-specific query; system returns deduplicated, ranked results with one-click export to PALM.",
     },
     6: {
       feedback:
-        "You've identified good user benefits. Try to be more specific about measurable outcomes and how users' daily work will improve.",
+        "Good instinct on the benefits, but the numbers feel aspirational rather than grounded. Where do the time savings estimates come from? A reviewer will challenge any metric that isn't tied to a baseline. Consider: what's the current state, and what specifically changes?",
       suggestion: userInput
-        ? `${userInput} Users will experience reduced search time, improved accuracy in finding relevant prior art, and less frustration with manual processes, ultimately leading to higher job satisfaction.`
-        : "Users will save 2-3 hours per week on search activities, achieve 25% better accuracy in identifying relevant prior art, and experience reduced cognitive load from manual search processes.",
+        ? `${userInput}\n\n**Baseline:** Examiners currently spend [X] minutes per search across [Y] systems.\n**Expected Improvement:** Unified interface reduces context-switching by [Z]%, saving [N] minutes per case.\n**Confidence Level:** Based on [pilot data / comparable implementation / subject matter expert estimate].`
+        : "**Baseline:** Examiners currently spend 45 minutes per prior art search, navigating 4 separate systems with significant context-switching overhead.\n\n**Expected Improvement:** Unified search reduces active search time by 30% (13.5 minutes per case) by eliminating redundant queries and system navigation. For an examiner handling 80 cases/year, this recovers 18 hours annually.\n\n**Confidence:** Estimate based on time-motion study of 12 examiners in Art Unit 2100 (Q3 2024).",
     },
     7: {
       feedback:
-        "Your business value proposition is solid. Consider adding more specific metrics and connecting to USPTO's strategic objectives.",
+        "You've connected to strategic goals, which is strong. But the cost savings feel like a guess — and reviewers can tell. Ground the business case in observable data: current processing volumes, average time-per-task, and what a realistic improvement percentage would mean in hours and dollars.",
       suggestion: userInput
-        ? `${userInput} This directly supports USPTO's goal of improving examination quality and timeliness while reducing operational costs through increased efficiency.`
-        : "The solution will reduce average examination time by 15-20%, improve consistency in prior art identification, and support USPTO's strategic goal of enhancing patent quality while managing increasing application volumes.",
+        ? `${userInput}\n\n**Quantified Impact:**\n- [X] examiners × [Y] hours saved/year = [Z] total hours recovered\n- At fully-loaded examiner cost of ~$85/hour, annual value = $[N]\n- Secondary benefits: [quality improvements, reduced rework, etc.]\n\n**Strategic Alignment:** Directly supports [specific USPTO goal/OKR].`
+        : "**Quantified Impact:**\n- 8,500 examiners × 18 hours saved/year = 153,000 hours recovered annually\n- At fully-loaded examiner cost of $85/hour, annual value = $13M+ in examiner capacity\n- Secondary benefits: Reduced rework from missed prior art (estimated 5% quality improvement)\n\n**Strategic Alignment:** Directly supports USPTO Strategic Goal 1 (Optimize Patent Quality and Timeliness) and enables absorption of 8% YoY application growth without proportional headcount increase.",
     },
     8: {
       feedback:
-        "You've identified important considerations. Consider being more specific about technical requirements, security compliance needs, and realistic resource estimates.",
+        "You've named the OKRs, but naming isn't alignment. A reviewer will ask: 'How does this specifically move the needle on these objectives?' Connect the dots between your expected outcomes and the metrics USPTO actually tracks.",
       suggestion: userInput
-        ? `${userInput} Ensure clear alignment with USPTO's strategic OKRs around operational excellence and examination quality.`
-        : "**Dependencies:** Requires IT Security approval (3-4 weeks), integration with Patent Center APIs, and coordination with Training & Development team for user onboarding. **Alignment:** Directly supports USPTO OKR 2.1 (Improve examination efficiency) and OKR 3.2 (Enhance data-driven decision making). **Risks:** Mitigate potential user resistance through early stakeholder engagement and pilot program with volunteer examiners.",
+        ? `${userInput}\n\n**Specific Alignment:**\n- OKR [X]: This initiative contributes by [specific mechanism] with expected impact of [quantified outcome]\n- OKR [Y]: Supports this objective through [specific connection]\n\n**Dependencies:** Requires alignment with [related initiatives] to avoid duplication.`
+        : "**Specific Alignment:**\n- **OKR 1.2 (Reduce Patent Pendency):** 13.5 minutes saved per search × 650,000 annual disposals = potential to reduce average pendency by [X] days through increased examiner throughput\n- **OKR 1.4 (Improve First-Action Quality):** Unified search reduces missed prior art by surfacing cross-database results, directly supporting the 85% first-action allowance rate target\n\n**Dependencies:** Requires coordination with PE2E modernization to ensure API compatibility; complements (doesn't duplicate) the AI/ML Center of Excellence search initiatives.",
     },
     9: {
       feedback:
-        "Your success metrics provide a good foundation. Consider adding both leading and lagging indicators, with clear baseline measurements and realistic timelines.",
+        "This reads like a checklist, not an assessment. A reviewer needs to know: what's the hardest part? What could kill this project? Be honest about the real risks — FedRAMP timeline, data access, union coordination — and show you've thought through mitigation.",
       suggestion: userInput
-        ? `${userInput} Include both early adoption metrics and long-term quality improvements, with quarterly measurement checkpoints.`
-        : "**Leading Indicators:** Weekly active users, search queries per user, feature adoption rate (target: 80% within 3 months). **Lagging Indicators:** 20% reduction in average search time, 15% improvement in prior art relevance, examination quality scores. **Baseline:** Current average search time is 45 minutes per case. **Timeline:** Measure leading indicators monthly, lagging indicators quarterly over 12 months.",
+        ? `${userInput}\n\n**Critical Path Items:**\n- [Biggest technical risk]: Mitigation = [specific approach]\n- [Biggest organizational risk]: Mitigation = [specific approach]\n\n**FedRAMP/Security:** [Specific compliance requirements and timeline]\n\n**Honest Assessment:** The feasibility hinges on [X]. If that doesn't work, the fallback is [Y].`
+        : "**Technical Feasibility:** Medium complexity. Core risk is API integration with legacy EAST system (COBOL backend). Mitigation: Wrapper service approach proven in Patent Center modernization.\n\n**Security/Compliance:** Requires ATO amendment (8-12 weeks). No new PII/CUI handling; uses existing search infrastructure. 508 compliance requires screen reader testing of new UI.\n\n**Organizational Dependencies:** IT Services API team capacity (currently constrained); Union notification required for workflow changes per CBA Article 37.\n\n**Honest Assessment:** Feasibility hinges on IT Services prioritization. If delayed, fallback is browser extension approach using existing authenticated sessions.",
     },
     10: {
       feedback:
-        "Good identification of key factors. Consider being more specific about organizational dependencies, OKR alignment, and proactive risk mitigation strategies.",
+        "You've listed metrics, but they're not connected to a measurement plan. A reviewer will ask: 'How will you actually collect this data? When will we know if it's working?' Define baselines, collection methods, and decision points.",
       suggestion: userInput
-        ? `${userInput} Ensure clear alignment with USPTO's strategic OKRs around operational excellence and examination quality.`
-        : "**Dependencies:** Requires IT Security approval (3-4 weeks), integration with Patent Center APIs, and coordination with Training & Development team for user onboarding. **Alignment:** Directly supports USPTO OKR 2.1 (Improve examination efficiency) and OKR 3.2 (Enhance data-driven decision making). **Risks:** Mitigate potential user resistance through early stakeholder engagement and pilot program with volunteer examiners.",
+        ? `${userInput}\n\n**Measurement Plan:**\n- Baseline data source: [specific system/method]\n- Collection frequency: [timeline]\n- Decision point: At [X weeks], if [metric] hasn't reached [threshold], we will [action]\n\n**Leading vs. Lagging:** Leading indicators tell us if adoption is working; lagging indicators tell us if it's creating value.`
+        : "**Success Metrics with Measurement Plan:**\n\n**Leading Indicators (Monthly):**\n- Adoption rate: Target 50% of pilot group within 4 weeks (measured via application telemetry)\n- Search volume per user: Baseline = 12 searches/day; target = 15+ (indicates tool is useful enough to use more)\n\n**Lagging Indicators (Quarterly):**\n- Time-per-search: Baseline = 45 min (from Q3 time study); target = 32 min (-30%)\n- First-action quality scores: Baseline = current art unit average; target = 5% improvement\n\n**Decision Point:** At Week 8, if adoption < 30% or user satisfaction < 3.5/5, pause rollout and conduct user research.",
     },
   }
 
   return (
     mockResponses[step as keyof typeof mockResponses] || {
-      feedback: `Your input for ${stepTitle} looks good. Consider adding more specific details and measurable outcomes to strengthen your response.`,
+      feedback: `A reviewer would push back on this: the input lacks specificity. What's the measurable impact? What's the risk if we don't do this? Add concrete details to make the case compelling.`,
       suggestion: userInput
-        ? `${userInput} [Enhanced with additional context and specificity]`
-        : `[Mock suggestion for ${stepTitle}]`,
+        ? `${userInput}\n\n[Add specificity: quantify the impact, name the stakeholders, define success criteria, and address the obvious objections a reviewer would raise.]`
+        : `[This section needs concrete details. A reviewer will ask: "So what?" Add metrics, baselines, and specific outcomes for ${stepTitle}.]`,
     }
   )
 }
@@ -133,26 +133,25 @@ export async function validateAndRefineInput(
     const { object } = await generateObject({
       model: "anthropic/claude-sonnet-4.5",
       schema: z.object({
-        feedback: z.string().describe("Constructive feedback in 2-3 sentences"),
+        feedback: z.string().describe("Honest assessment: what's strong, what's the biggest gap, and what would a reviewer challenge"),
         suggestion: z
           .string()
-          .describe("Enhanced version of user input in markdown format, following step-specific formatting guidelines"),
+          .describe("Strengthened version that addresses identified gaps, in markdown format following step-specific guidelines"),
       }),
       messages: [
         {
           role: "system",
-          content: `You are a senior product manager with deep expertise in both business strategy and technology implementation, specializing in AI/ML product development at USPTO.
+          content: `You are a senior AI strategist at USPTO who vets AI ideas before they reach leadership. Your job is to pressure-test this idea — not just polish the language, but challenge whether it holds up under scrutiny.
 
 TONE & STYLE:
-- Be professional yet friendly and approachable
-- Focus on what's working well before suggesting improvements
-- Provide actionable, specific feedback rather than vague suggestions
-- Use clear, concise language with proper markdown formatting
-- Encourage innovation while maintaining practicality
+- Supportive but rigorous — you want this idea to succeed, which means being honest about gaps
+- Lead with what's strong, then challenge what's weak or vague
+- Ask yourself: "Would a CIO or CAIO find this convincing?" If not, say so.
+- Be specific — "this needs more detail" is not helpful; "you haven't addressed how this handles CUI data" is
 
 CURRENT CONTEXT:
 - Step: ${currentStepInfo.title}
-- Guidelines: ${currentStepInfo.guidelines}
+- This is an AI idea being vetted, not a finished proposal
 
 FORMATTING REQUIREMENTS:
 ${stepFormattingGuidelines[step] || "Format your suggestion clearly and concisely."}
@@ -161,23 +160,18 @@ Use markdown formatting:
 - Use **bold** for emphasis on key terms
 - Use bullet points (- or *) for lists
 - Use proper line breaks for readability
-- Keep formatting clean and professional
 
 YOUR TASK:
-1. Analyze the user's input thoughtfully
-2. Provide constructive feedback (2-3 sentences) that:
-   - Acknowledges what they've done well
-   - Identifies specific areas for improvement
-   - Explains WHY improvements matter
-3. Create an enhanced version of their input that:
-   - Follows the step-specific formatting guidelines above
-   - Uses markdown formatting for clarity
-   - Preserves their core ideas and voice
+1. Assess the idea honestly — what's strong? What would a reviewer push back on?
+2. Provide direct feedback (2-3 sentences) that identifies the biggest gap or weakness and explains why it matters
+3. Create an enhanced version that:
+   - Addresses the gaps you identified
    - Adds specificity, metrics, and concrete details
-   - Aligns with USPTO priorities and best practices
+   - Pressure-tests against USPTO realities (federal constraints, FedRAMP, 508, union considerations, procurement)
+   - Preserves the submitter's core idea and voice
    - Is ready to paste into their submission
 
-Remember: Your goal is to help them succeed while teaching them what makes a strong business case.`,
+Remember: A weak idea that gets polished is still a weak idea. Your job is to make it genuinely stronger — or flag that it isn't ready.`,
         },
         ...conversationHistory,
         {
