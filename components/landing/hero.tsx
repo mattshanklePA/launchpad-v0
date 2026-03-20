@@ -18,7 +18,7 @@ export function Hero() {
           Submit Your AI Idea
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-lg text-gray-600">
-          Use LaunchPad to vet your rough AI ideas into structured, decision-ready use cases. The guided workflow and AI Co-Pilot pressure-test every idea for value, feasibility, and strategic alignment — so leadership only reviews what's worth their time.
+          Turn rough AI ideas into vetted, decision-ready use cases.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Button
