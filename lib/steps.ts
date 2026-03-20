@@ -90,6 +90,11 @@ export type FormData = {
   // Step 11
   routeTo: string[]
   reviewerNotes: string
+
+  // Readiness assessment
+  readinessScore: "ready" | "needs_work" | "early_stage" | ""
+  readinessSummary: string
+  executiveSummary: string
 }
 
 export const initialFormData: FormData = {
@@ -138,6 +143,9 @@ export const initialFormData: FormData = {
   metricsSummary: "",
   routeTo: [],
   reviewerNotes: "",
+  readinessScore: "",
+  readinessSummary: "",
+  executiveSummary: "",
 }
 
 export const formSteps: FormStep[] = [

@@ -107,6 +107,97 @@ function getMockResponse(step: number, userInput: string): { feedback: string; s
   )
 }
 
+// Assess readiness for leadership review
+export async function assessReadiness(
+  formData: FormData
+): Promise<{ readinessScore: "ready" | "needs_work" | "early_stage"; readinessSummary: string; executiveSummary: string }> {
+  // Build summary of all form fields, preferring AI-refined summaries over raw input
+  const targetUser = formData.targetUserSummary || formData.targetUserContext || "[Not provided]"
+  const problem = formData.problemDefinition || formData.coreProblem || "[Not provided]"
+  const solution = formData.solutionSummary || formData.proposedSolution || "[Not provided]"
+  const userValue = formData.userValueSummary || formData.userValue || "[Not provided]"
+  const businessValue = formData.businessValueSummary || formData.businessValue || "[Not provided]"
+  const alignment = formData.alignmentSummary || formData.relevantOkrs || "[Not provided]"
+  const feasibility = formData.feasibilitySummary || formData.dependencies || "[Not provided]"
+  const metrics = formData.metricsSummary || formData.successMetrics || "[Not provided]"
+
+  const submissionSummary = `
+## Idea: ${formData.useCaseTitle || "Untitled"}
+
+### Description
+${formData.useCaseDescription || "[Not provided]"}
+
+### Target Users
+${targetUser}
+
+### Problem Statement
+${problem}
+
+### Proposed Solution
+${solution}
+
+### User Value
+${userValue}
+
+### Business Value
+${businessValue}
+
+### Strategic Alignment
+${alignment}
+
+### Feasibility & Security
+${feasibility}
+
+### Success Metrics
+${metrics}
+`
+
+  try {
+    const { object } = await generateObject({
+      model: "anthropic/claude-sonnet-4.5",
+      schema: z.object({
+        readinessScore: z.enum(["ready", "needs_work", "early_stage"]).describe("Overall readiness rating for leadership review"),
+        readinessSummary: z.string().describe("2-3 sentences explaining the rating and key gaps if any"),
+        executiveSummary: z.string().describe("One paragraph executive brief of the idea for a 30-second review"),
+      }),
+      messages: [
+        {
+          role: "system",
+          content: `You are a senior AI strategist at USPTO evaluating whether an AI idea is ready for leadership review.
+
+You are given the complete submission across all dimensions: target users, problem, solution, user value, business value, strategic alignment, feasibility, and success metrics.
+
+EVALUATE THE IDEA HONESTLY:
+
+Rate it as one of:
+- "ready" — All dimensions are substantive and well-supported. A CAIO or CIO could make an informed decision based on this submission. Strategic alignment is clear, feasibility is realistic, and success metrics are measurable.
+- "needs_work" — The core idea has merit, but 1-2 dimensions have significant gaps (vague value proposition, unaddressed feasibility concerns, missing metrics). Worth pursuing but needs strengthening before leadership review.
+- "early_stage" — The idea is too vague or underdeveloped for leadership review. Multiple dimensions lack substance. The submitter should continue refining before submitting.
+
+Also generate a one-paragraph EXECUTIVE SUMMARY that a reviewer can read in 30 seconds to understand: what the idea is, who it helps, what problem it solves, and whether it's strategically aligned. Write this as if briefing a CIO.`,
+        },
+        {
+          role: "user",
+          content: submissionSummary,
+        },
+      ],
+    })
+
+    return {
+      readinessScore: object.readinessScore,
+      readinessSummary: object.readinessSummary,
+      executiveSummary: object.executiveSummary,
+    }
+  } catch (error) {
+    console.error("AI Gateway error for readiness assessment, falling back to mock:", error)
+    return {
+      readinessScore: "needs_work",
+      readinessSummary: "This idea has a strong problem statement and clear target users, but the feasibility assessment and success metrics need more specificity. The business value claims should be grounded in baseline data before this goes to leadership.",
+      executiveSummary: `"${formData.useCaseTitle || 'Untitled Idea'}" proposes an AI-driven approach to improve operations for USPTO staff. The idea targets a real operational pain point and aligns with strategic modernization goals, but requires additional detail on implementation feasibility and measurable success criteria before it's ready for executive decision-making.`
+    }
+  }
+}
+
 export async function validateAndRefineInput(
   formData: FormData,
   step: number,
