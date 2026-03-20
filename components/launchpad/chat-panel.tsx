@@ -22,6 +22,57 @@ type LaunchPadChatPanelProps = {
   onApplySuggestion: (suggestion: string) => void
 }
 
+// Helper to get step-specific button label and empty message
+function getStepContext(step: number): { buttonLabel: string; emptyMessage: string } {
+  switch (step) {
+    case 3:
+      return { 
+        buttonLabel: "Vet My Target Users", 
+        emptyMessage: "Describe your target users, then click below to pressure-test whether your audience is well-defined." 
+      }
+    case 4:
+      return { 
+        buttonLabel: "Challenge My Problem Statement", 
+        emptyMessage: "Define the problem, then click below to see if it would hold up under leadership scrutiny." 
+      }
+    case 5:
+      return { 
+        buttonLabel: "Vet My Solution", 
+        emptyMessage: "Describe your proposed solution, then click below to check if it's specific enough to evaluate." 
+      }
+    case 6:
+      return { 
+        buttonLabel: "Challenge My Value Claim", 
+        emptyMessage: "Describe the user value, then click below to see if your claims are grounded and measurable." 
+      }
+    case 7:
+      return { 
+        buttonLabel: "Vet My Business Case", 
+        emptyMessage: "Describe the business value, then click below to pressure-test your ROI and strategic argument." 
+      }
+    case 8:
+      return { 
+        buttonLabel: "Check My Alignment", 
+        emptyMessage: "Describe strategic alignment, then click below to verify it connects to real USPTO priorities." 
+      }
+    case 9:
+      return { 
+        buttonLabel: "Challenge My Feasibility", 
+        emptyMessage: "Describe feasibility and security considerations, then click below for a reality check." 
+      }
+    case 10:
+      return { 
+        buttonLabel: "Vet My Metrics", 
+        emptyMessage: "Define your success metrics, then click below to see if they're measurable and realistic." 
+      }
+    default:
+      return { 
+        buttonLabel: "Validate & Refine", 
+        emptyMessage: "Click the button below to get started." 
+      }
+  }
+}
+
 // Helper to get the primary input field for a given step
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
@@ -120,7 +171,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                 <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Use LaunchPad to improve clarity, specificity, and impact.</p>
+                <p>The Co-Pilot pressure-tests your idea at each step to make sure it's ready for leadership review.</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -129,7 +180,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground p-8">
-                  <p>Click "Validate & Refine" to get started.</p>
+                  <p>{getStepContext(step).emptyMessage}</p>
                 </div>
               )}
               {messages.map((msg, index) => (
@@ -174,7 +225,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                 className="w-full bg-uspto-blue-primary hover:bg-uspto-blue-primary/90"
               >
                 <Wand2 className="mr-2 h-4 w-4" />
-                {isLoading ? "Analyzing..." : "Validate & Refine"}
+                {isLoading ? "Analyzing..." : getStepContext(step).buttonLabel}
               </Button>
             ) : (
               <form onSubmit={handleChatSubmit} className="flex items-center gap-2">
