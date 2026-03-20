@@ -20,7 +20,7 @@ const drafts = [
   {
     title: "Predictive Analytics for Application Routing",
     updated: "1 week ago",
-    status: "Needs Refinement",
+    status: "Needs More Detail",
     quality: "Poor",
   },
 ]
@@ -42,14 +42,14 @@ export function RecentDrafts() {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Recent Drafts</CardTitle>
-        <CardDescription>Continue working on your saved submissions.</CardDescription>
+        <CardTitle>Your Ideas in Progress</CardTitle>
+        <CardDescription>Continue refining your AI ideas.</CardDescription>
       </CardHeader>
       <CardContent>
         <Alert className="mb-6">
           <Info className="h-4 w-4" />
-          <AlertTitle>You have {drafts.length} drafts in progress!</AlertTitle>
-          <AlertDescription>Complete your submissions to move them to the review stage.</AlertDescription>
+          <AlertTitle>You have {drafts.length} ideas in progress!</AlertTitle>
+          <AlertDescription>Complete the vetting steps to submit your ideas for review.</AlertDescription>
         </Alert>
         <ul className="space-y-4">
           {drafts.map((draft) => (
@@ -60,7 +60,7 @@ export function RecentDrafts() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={getQualityBadgeVariant(draft.quality)}>
-                  {draft.quality} Quality
+                  {draft.quality}
                 </Badge>
                 <Button variant="ghost" size="icon">
                   <FileEdit className="h-4 w-4" />

@@ -11,13 +11,13 @@ export function Step11ExportTracking() {
   return (
     <div className="max-w-2xl mx-auto text-center py-12">
       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-      <h1 className="text-3xl font-bold mb-2">Submission Received!</h1>
-      <p className="text-muted-foreground mb-8">Your AI use case has been successfully submitted for review.</p>
+      <h1 className="text-3xl font-bold mb-2">Idea Submitted for Vetting!</h1>
+      <p className="text-muted-foreground mb-8">Your AI idea has been submitted. The review team will vet it for feasibility, value, and strategic alignment.</p>
       <Card>
         <CardHeader>
-          <CardTitle>Next Steps & Tracking</CardTitle>
+          <CardTitle>What Happens Next</CardTitle>
           <CardDescription>
-            Your submission is now marked as:{" "}
+            Your idea is now marked as:{" "}
             <span className="font-semibold text-primary">
               {formData.routeTo.includes("draft") ? "Draft" : "Under Review"}
             </span>

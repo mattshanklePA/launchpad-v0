@@ -8,9 +8,9 @@ import { Toggle } from "../ui/toggle"
 import { Textarea } from "../ui/textarea"
 
 const routeOptions = [
-  { value: "rally", label: "Submit to Rally" },
-  { value: "governance", label: "Submit to AI Governance Council" },
-  { value: "draft", label: "Save as draft" },
+  { value: "rally", label: "Export to Rally" },
+  { value: "governance", label: "Submit for Governance Vetting" },
+  { value: "draft", label: "Save as Draft (continue later)" },
 ]
 
 export function Step10ReviewSubmit() {
@@ -62,7 +62,7 @@ export function Step10ReviewSubmit() {
       ))}
       <Card>
         <CardHeader>
-          <CardTitle>Final Submission</CardTitle>
+          <CardTitle>Submit for Vetting</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -82,7 +82,7 @@ export function Step10ReviewSubmit() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reviewerNotes">Optional notes for reviewers</Label>
+            <Label htmlFor="reviewerNotes">Anything the vetting team should know?</Label>
             <Textarea
               id="reviewerNotes"
               value={formData.reviewerNotes}

@@ -11,23 +11,23 @@ export function Step2UseCaseOverview() {
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="useCaseTitle">Use Case Title</Label>
+        <Label htmlFor="useCaseTitle">Idea Title</Label>
         <Input
           id="useCaseTitle"
           value={formData.useCaseTitle}
           onChange={(e) => setFormData((prev) => ({ ...prev, useCaseTitle: e.target.value }))}
-          placeholder="e.g., AI-Powered Patent Prior Art Search Enhancement"
+          placeholder="Give it a working title — e.g., Smarter Prior Art Search"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="useCaseDescription">Use Case Description</Label>
+        <Label htmlFor="useCaseDescription">Describe Your Idea</Label>
         <Textarea
           id="useCaseDescription"
           value={formData.useCaseDescription}
           onChange={(e) => setFormData((prev) => ({ ...prev, useCaseDescription: e.target.value }))}
-          placeholder="Provide a brief overview of your AI use case..."
-          rows={4}
+          placeholder="What's the idea? Describe it in your own words — rough is fine..."
+          rows={6}
         />
       </div>
 
