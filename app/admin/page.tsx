@@ -175,21 +175,21 @@ export default function AdminPage() {
         return (
           <Badge variant="secondary">
             <Clock className="w-3 h-3 mr-1" />
-            In Progress
+            In Vetting
           </Badge>
         )
       case "needs_review":
         return (
           <Badge variant="default">
             <Eye className="w-3 h-3 mr-1" />
-            Needs Review
+            Vetting Complete
           </Badge>
         )
       case "stalled":
         return (
           <Badge variant="destructive">
             <AlertCircle className="w-3 h-3 mr-1" />
-            Stalled
+            Needs Input
           </Badge>
         )
       case "under_review":
@@ -292,7 +292,7 @@ export default function AdminPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Manage USPTO OKRs, monitor submissions, and oversee platform operations
+            Manage USPTO OKRs, monitor the AI idea pipeline, and oversee vetting operations
           </p>
         </div>
 
@@ -300,8 +300,8 @@ export default function AdminPage() {
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="okrs">USPTO OKRs</TabsTrigger>
-            <TabsTrigger value="drafts">All Drafts</TabsTrigger>
-            <TabsTrigger value="submitted">Submitted</TabsTrigger>
+            <TabsTrigger value="drafts">Idea Pipeline</TabsTrigger>
+            <TabsTrigger value="submitted">Vetted & Submitted</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -310,7 +310,7 @@ export default function AdminPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+                  <CardTitle className="text-sm font-medium">Ideas Submitted</CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -326,7 +326,7 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{pipelineStats.inProgress}</div>
-                  <p className="text-xs text-muted-foreground">Active drafts</p>
+                  <p className="text-xs text-muted-foreground">In Vetting</p>
                 </CardContent>
               </Card>
 
@@ -337,7 +337,7 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{pipelineStats.successRate}</div>
-                  <p className="text-xs text-muted-foreground">Approval to deployment</p>
+                  <p className="text-xs text-muted-foreground">Ideas vetted to approved</p>
                 </CardContent>
               </Card>
 
@@ -348,7 +348,7 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{pipelineStats.avgCompletionTime}</div>
-                  <p className="text-xs text-muted-foreground">From draft to review</p>
+                  <p className="text-xs text-muted-foreground">Avg. vetting time</p>
                 </CardContent>
               </Card>
             </div>
@@ -363,14 +363,14 @@ export default function AdminPage() {
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">New submission: AI-Powered Patent Search</p>
+                        <p className="text-sm font-medium">New idea: AI-Powered Patent Search</p>
                         <p className="text-xs text-muted-foreground">2 hours ago</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Draft completed: Trademark Classification</p>
+                        <p className="text-sm font-medium">Vetting complete: Trademark Classification</p>
                         <p className="text-xs text-muted-foreground">5 hours ago</p>
                       </div>
                     </div>
@@ -507,7 +507,7 @@ export default function AdminPage() {
 
           <TabsContent value="drafts" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">All User Drafts</h2>
+              <h2 className="text-2xl font-bold">Idea Pipeline</h2>
               <div className="flex gap-2">
                 <div className="flex border rounded-md">
                   <Button
