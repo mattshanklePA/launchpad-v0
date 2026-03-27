@@ -153,8 +153,9 @@ ${metrics}
 `
 
   try {
+    console.log("[v0] assessReadiness called for:", formData.useCaseTitle)
     const { object } = await generateObject({
-      model: "anthropic/claude-sonnet-4.5",
+      model: "anthropic/claude-sonnet-4.6",
       schema: z.object({
         readinessScore: z.enum(["ready", "needs_work", "early_stage"]).describe("Overall readiness rating for leadership review"),
         readinessSummary: z.string().describe("2-3 sentences explaining the rating and key gaps if any"),
@@ -183,13 +184,15 @@ Also generate a one-paragraph EXECUTIVE SUMMARY that a reviewer can read in 30 s
       ],
     })
 
+    console.log("[v0] assessReadiness succeeded, score:", object.readinessScore)
     return {
       readinessScore: object.readinessScore,
       readinessSummary: object.readinessSummary,
       executiveSummary: object.executiveSummary,
     }
   } catch (error) {
-    console.error("AI Gateway error for readiness assessment, falling back to mock:", error)
+    console.error("[v0] AI Gateway error for readiness assessment, falling back to mock:", error)
+    console.error("[v0] Error details:", error instanceof Error ? error.message : String(error))
     return {
       readinessScore: "needs_work",
       readinessSummary: "This idea has a strong problem statement and clear target users, but the feasibility assessment and success metrics need more specificity. The business value claims should be grounded in baseline data before this goes to leadership.",
@@ -221,8 +224,12 @@ export async function validateAndRefineInput(
   }
 
   try {
+    console.log("[v0] validateAndRefineInput called with step:", step)
+    console.log("[v0] User input:", userInput?.substring(0, 100))
+    console.log("[v0] Calling generateObject with model: anthropic/claude-sonnet-4.6")
+    
     const { object } = await generateObject({
-      model: "anthropic/claude-sonnet-4.5",
+      model: "anthropic/claude-sonnet-4.6",
       schema: z.object({
         feedback: z.string().describe("Honest assessment: what's strong, what's the biggest gap, and what would a reviewer challenge"),
         suggestion: z
@@ -272,12 +279,14 @@ Remember: A weak idea that gets polished is still a weak idea. Your job is to ma
       ],
     })
 
+    console.log("[v0] generateObject succeeded, feedback length:", object.feedback?.length)
     return {
       feedback: object.feedback || "Input received",
       suggestion: object.suggestion || userInput,
     }
   } catch (error) {
-    console.error("AI Gateway error, falling back to mock:", error)
+    console.error("[v0] AI Gateway error, falling back to mock:", error)
+    console.error("[v0] Error details:", error instanceof Error ? error.message : String(error))
     return getMockResponse(step, userInput)
   }
 }

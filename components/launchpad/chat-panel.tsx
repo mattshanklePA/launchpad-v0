@@ -112,10 +112,11 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
   }, [messages])
 
   const handleError = (error: unknown) => {
-    console.error("LaunchPad Co-Pilot Error:", error)
+    console.error("[v0] LaunchPad Co-Pilot Error:", error)
     let errorMessage = "An unexpected error occurred."
     if (error instanceof Error) {
       errorMessage = error.message
+      console.error("[v0] Error stack:", error.stack)
     }
     toast({
       variant: "destructive",
