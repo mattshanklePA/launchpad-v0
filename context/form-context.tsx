@@ -14,7 +14,11 @@ interface FormContextType {
   isFirstStep: boolean
   isLastStep: boolean
   totalSteps: number
+  resetForm: () => void
 }
+
+const STORAGE_KEY_FORM = "aid-form-data"
+const STORAGE_KEY_STEP = "aid-current-step"
 
 const FormContext = createContext<FormContextType | undefined>(undefined)
 
@@ -39,30 +43,85 @@ const arrayFields: (keyof FormData)[] = [
 ]
 
 export const FormProvider = ({ children }: { children: ReactNode }) => {
-  const [currentStep, setCurrentStep] = useState(1)
+  // Hydrate from localStorage if a saved draft exists; otherwise start fresh.
+  // This is what lets a submitter close the tab and resume later.
+  //
+  // If the saved step is 12 (confirmation page), the previous session was
+  // already submitted — clear it and start fresh on this visit.
   const [formData, setFormData] = useState<FormData>(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("aid-form-data")
-      localStorage.removeItem("aid-current-step")
+    if (typeof window === "undefined") return initialFormData
+    try {
+      const savedStep = localStorage.getItem(STORAGE_KEY_STEP)
+      if (savedStep === "12") {
+        localStorage.removeItem(STORAGE_KEY_FORM)
+        localStorage.removeItem(STORAGE_KEY_STEP)
+        return initialFormData
+      }
+      const saved = localStorage.getItem(STORAGE_KEY_FORM)
+      if (!saved) return initialFormData
+      const parsed = JSON.parse(saved)
+      // Merge with initialFormData so any new fields added since the draft was
+      // saved get default values instead of being undefined.
+      return { ...initialFormData, ...parsed }
+    } catch (error) {
+      console.error("Failed to hydrate form data from localStorage:", error)
+      return initialFormData
     }
-    return initialFormData
   })
 
+  const [currentStep, setCurrentStep] = useState<number>(() => {
+    if (typeof window === "undefined") return 1
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_STEP)
+      if (!saved) return 1
+      // Already-submitted state — treat next visit as fresh
+      if (saved === "12") return 1
+      const parsed = parseInt(saved, 10)
+      return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1
+    } catch {
+      return 1
+    }
+  })
+
+  // Persist on every change
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("aid-form-data", JSON.stringify(formData))
+      try {
+        localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData))
+      } catch (error) {
+        console.error("Failed to persist form data:", error)
+      }
     }
   }, [formData])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (currentStep > 1) {
-        localStorage.setItem("aid-current-step", currentStep.toString())
-      } else {
-        localStorage.removeItem("aid-current-step")
+      try {
+        if (currentStep > 1) {
+          localStorage.setItem(STORAGE_KEY_STEP, currentStep.toString())
+        } else {
+          localStorage.removeItem(STORAGE_KEY_STEP)
+        }
+      } catch (error) {
+        console.error("Failed to persist current step:", error)
       }
     }
   }, [currentStep])
+
+  // Called after successful submission to clear the in-progress draft
+  // so the user starts fresh next time they open /submit.
+  const resetForm = () => {
+    setFormData(initialFormData)
+    setCurrentStep(1)
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(STORAGE_KEY_FORM)
+        localStorage.removeItem(STORAGE_KEY_STEP)
+      } catch (error) {
+        console.error("Failed to clear form storage:", error)
+      }
+    }
+  }
 
   const totalSteps = formSteps.length
   const reviewStepNumber = 11
@@ -94,6 +153,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         isFirstStep,
         isLastStep,
         totalSteps: reviewStepNumber,
+        resetForm,
       }}
     >
       {children}

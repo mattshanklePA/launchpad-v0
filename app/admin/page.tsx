@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { getSubmissions, type Submission } from "@/lib/submissions"
 import {
   FileText,
   TrendingUp,
@@ -181,6 +182,46 @@ export default function AdminPage() {
   const [newOKR, setNewOKR] = useState({ title: "", description: "", category: "" })
   const [draftsViewMode, setDraftsViewMode] = useState<"cards" | "table">("cards")
   const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set())
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [hydrated, setHydrated] = useState(false)
+
+  // Hydrate real submissions from localStorage on mount
+  useEffect(() => {
+    setSubmissions(getSubmissions())
+    setHydrated(true)
+  }, [])
+
+  // Shape submissions to match the UI's expected "draft" structure so the
+  // existing rendering code works unchanged.
+  const officeLabel = (o: string): string => {
+    const map: Record<string, string> = {
+      patents: "Patents",
+      trademarks: "Trademarks",
+      ocio: "OCIO",
+      ogc: "OGC",
+      other: "Other",
+    }
+    return map[o] || (o ? o : "Unknown")
+  }
+  const realDrafts = submissions.map((s) => ({
+    id: s.id,
+    title: s.formData.useCaseTitle || "Untitled idea",
+    submitter: s.formData.submitterName || "Anonymous",
+    department: officeLabel(s.formData.submitterOffice || ""),
+    lastUpdated: new Date(s.submittedAt).toLocaleDateString(),
+    status: "needs_review" as const,
+    completionRate: 100,
+    step: 11,
+    publicIndicator: s.formData.publicIndicator || "",
+    readinessScore: (s.formData.readinessScore || "needs_work") as
+      | "ready"
+      | "needs_work"
+      | "early_stage",
+  }))
+
+  // Prefer real submissions; fall back to mocks only if there are none yet,
+  // so the demo still shows visual content on a fresh browser.
+  const drafts = hydrated && realDrafts.length > 0 ? realDrafts : mockDrafts
 
   const toggleSummary = (id: string) => {
     setExpandedSummaries(prev => {
@@ -651,7 +692,7 @@ export default function AdminPage() {
 
             {draftsViewMode === "cards" ? (
               <div className="grid gap-4">
-                {mockDrafts.map((draft) => (
+                {drafts.map((draft) => (
                   <Card key={draft.id}>
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-start">
@@ -711,7 +752,7 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockDrafts.map((draft) => (
+                      {drafts.map((draft) => (
                         <TableRow key={draft.id}>
                           <TableCell className="font-medium">
                             <div className="max-w-[280px] truncate" title={draft.title}>

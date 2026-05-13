@@ -2,11 +2,23 @@
 import { useForm } from "@/context/form-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, FileDown, Rocket } from "lucide-react"
-import Link from "next/link"
+import { CheckCircle, FileDown, Rocket, Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export function Step11ExportTracking() {
-  const { formData } = useForm()
+  const { formData, resetForm } = useForm()
+  const router = useRouter()
+
+  const handleReturnToDashboard = () => {
+    resetForm()
+    router.push("/")
+  }
+
+  const handleStartNewIdea = () => {
+    resetForm()
+    // resetForm sets currentStep back to 1, no navigation needed —
+    // the FormContainer will re-render Step 1 automatically.
+  }
 
   return (
     <div className="max-w-2xl mx-auto text-center py-12">
@@ -32,9 +44,15 @@ export function Step11ExportTracking() {
           </Button>
         </CardContent>
       </Card>
-      <Button asChild variant="link" className="mt-8">
-        <Link href="/">Return to Dashboard</Link>
-      </Button>
+      <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <Button variant="outline" onClick={handleStartNewIdea}>
+          <Plus className="mr-2 h-4 w-4" />
+          Start a New Idea
+        </Button>
+        <Button variant="link" onClick={handleReturnToDashboard}>
+          Return to Dashboard
+        </Button>
+      </div>
     </div>
   )
 }
