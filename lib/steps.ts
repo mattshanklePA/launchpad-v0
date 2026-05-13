@@ -38,7 +38,7 @@ export type FormData = {
     | "other"
     | ""
   impactedUsersCount: "lt_10" | "10_50" | "50_500" | "gt_500" | ""
-  painPoints: string[]
+  painPoints: string
   targetUserContext: string
   targetUserSummary: string
 
@@ -107,7 +107,7 @@ export const initialFormData: FormData = {
   publicIndicator: "",
   targetAudience: "",
   impactedUsersCount: "",
-  painPoints: [],
+  painPoints: "",
   targetUserContext: "",
   targetUserSummary: "",
   coreProblem: "",

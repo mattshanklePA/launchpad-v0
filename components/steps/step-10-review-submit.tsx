@@ -2,6 +2,8 @@
 import { useState } from "react"
 import { useForm } from "@/context/form-context"
 import { formSteps } from "@/lib/steps"
+import { saveSubmission } from "@/lib/submissions"
+import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "../ui/label"
@@ -9,7 +11,7 @@ import { Toggle } from "../ui/toggle"
 import { Textarea } from "../ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCircle } from "lucide-react"
+import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCircle, Send } from "lucide-react"
 import { assessReadiness } from "@/app/actions"
 
 const routeOptions = [
@@ -21,12 +23,38 @@ const routeOptions = [
 export function Step10ReviewSubmit() {
   const { formData, setCurrentStep, setFormData } = useForm()
   const [isAssessing, setIsAssessing] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showExecutiveSummary, setShowExecutiveSummary] = useState(false)
+  const { toast } = useToast()
 
   const handleRouteToggle = (item: string) => {
     const currentItems = formData.routeTo || []
     const newItems = currentItems.includes(item) ? currentItems.filter((i) => i !== item) : [...currentItems, item]
     setFormData((prev) => ({ ...prev, routeTo: newItems }))
+  }
+
+  const handleSubmitForVetting = async () => {
+    setIsSubmitting(true)
+    try {
+      // Persist the submission to localStorage (last 5 are retained)
+      saveSubmission(formData)
+      toast({
+        title: "Submitted for vetting",
+        description: "Your idea has been saved and routed for review.",
+      })
+      // Brief delay so the toast registers before the page transitions
+      setTimeout(() => {
+        setCurrentStep(12)
+      }, 400)
+    } catch (error) {
+      console.error("Submission failed:", error)
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: "Something went wrong. Please try again.",
+      })
+      setIsSubmitting(false)
+    }
   }
 
   const handleAssessReadiness = async () => {
@@ -212,6 +240,31 @@ export function Step10ReviewSubmit() {
               onChange={(e) => setFormData((prev) => ({ ...prev, reviewerNotes: e.target.value }))}
               rows={3}
             />
+          </div>
+          <div className="pt-2">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={handleSubmitForVetting}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Submit for Vetting
+                </>
+              )}
+            </Button>
+            {formData.readinessScore === "early_stage" && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Note: Readiness assessment marked this as early stage. You can still submit, but consider refining first.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

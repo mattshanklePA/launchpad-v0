@@ -19,7 +19,6 @@ interface FormContextType {
 const FormContext = createContext<FormContextType | undefined>(undefined)
 
 const arrayFields: (keyof FormData)[] = [
-  "painPoints",
   "problemType",
   "keyFunctionality",
   "otherUserImprovements",
