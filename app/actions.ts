@@ -10,6 +10,92 @@ type Message = {
   content: string
 }
 
+// ============================================================
+// USPTO STRATEGIC CONTEXT
+// Injected into every co-pilot critique so feedback maps to
+// real published USPTO priorities, not generic platitudes.
+// Update this block if USPTO publishes a new strategic plan or
+// AI strategy revision.
+// ============================================================
+const USPTO_STRATEGIC_CONTEXT = `
+USPTO operates under two published strategic frameworks. Every AI idea pursued by USPTO should clearly advance at least one priority from these:
+
+**USPTO 2022-2026 Strategic Plan goals:**
+- Drive inclusive U.S. innovation and global competitiveness
+- Promote the efficient delivery of reliable IP rights
+- Promote the protection of IP against new and persistent threats
+- Bring innovation to impact for the public good
+- Generate impactful employee and customer experiences by maximizing agency operations
+
+**USPTO AI Strategy (January 2025) priorities:**
+- Advance IP policies for inclusive AI innovation
+- Enhance AI capabilities through infrastructure and resources
+- Promote responsible AI use (bias mitigation, explainability, human oversight)
+- Develop AI expertise within the workforce
+- Collaborate with governmental and international partners on AI
+
+A serious AI idea names the specific priorities it advances, describes the mechanism by which it does so, and acknowledges what it does not prioritize. Vague gestures like "modernization," "efficiency," or "improving outcomes" are not alignment — they are buzzwords.
+`
+
+// ============================================================
+// STEP-SPECIFIC RUBRICS
+// Each step has a rubric describing what "strong" looks like
+// and what a USPTO reviewer would push back on.
+// ============================================================
+const stepRubrics: Record<number, string> = {
+  3: `For TARGET USERS, evaluate whether:
+- The user role is named with specific workflow context (not just a job title)
+- The estimated number of users impacted is realistic and tied to USPTO scale
+- Pain points are observable, frequent, and have a clear severity
+- The user experience aligns with USPTO's goal of impactful employee and customer experiences`,
+
+  4: `For PROBLEM STATEMENT, evaluate whether:
+- The root cause is named, not just symptoms
+- The cost of inaction is quantified (hours, dollars, errors, pendency days)
+- The problem connects to a real USPTO operational priority — most often efficient delivery of reliable IP rights
+- The magnitude is established (how many examiners, how many cases, how often)`,
+
+  5: `For PROPOSED SOLUTION, evaluate whether:
+- The AI/ML mechanism is specific (NLP query expansion, classification model, RAG, etc.) — not just "we'll use AI"
+- The user interaction model is defined (what does the user do, what does the system return)
+- Existing USPTO systems/APIs that must be touched are named
+- The approach aligns with USPTO's priority of enhancing AI capabilities through infrastructure and resources`,
+
+  6: `For USER VALUE, evaluate whether:
+- The current-state baseline is quantified (how long does the user spend today)
+- The expected improvement is grounded in data (pilot, benchmark, comparable system) — not a guess
+- The confidence level is acknowledged (high/medium/low and why)
+- The benefit is specific to USPTO users, not abstract`,
+
+  7: `For BUSINESS VALUE, evaluate whether:
+- Examiner-hour savings or dollar savings are quantified with a defensible baseline
+- The strategic link to a named USPTO priority is explicit (most often efficient delivery of reliable IP rights or impactful employee experiences)
+- Secondary benefits (quality, consistency, reduced rework) are identified
+- The ROI claim is realistic — overly aggressive estimates undermine credibility`,
+
+  8: `For STRATEGIC ALIGNMENT, evaluate whether:
+- The submitter names 1-2 specific USPTO priorities — not vague gestures like "modernization" or "efficiency"
+- The mechanism connecting the idea to each priority is explicit (how, exactly, does this advance it?)
+- Expected contribution is quantified where possible
+- Responsible AI considerations are addressed — bias mitigation, human oversight, explainability
+- The submitter shows focus by naming what this idea does NOT prioritize`,
+
+  9: `For FEASIBILITY & SECURITY, evaluate whether:
+- The hardest technical risk is named honestly (not buried)
+- FedRAMP/ATO timeline implications are realistic (typically 8-12+ weeks for amendments)
+- Data sensitivity and 508 accessibility are addressed
+- Union/CBA considerations are flagged where workflows change
+- Critical-path dependencies (other systems, teams, procurement) are identified
+- A fallback plan exists if the biggest risk materializes`,
+
+  10: `For SUCCESS METRICS, evaluate whether:
+- Baseline data source is named (current system telemetry, time-motion study, etc.)
+- Leading indicators (adoption, usage frequency) are distinguished from lagging indicators (time saved, quality)
+- A decision point is defined (at week X, if metric < threshold, we will Y)
+- The collection method is realistic (not "we'll figure out how to measure later")
+- Metrics tie back to the USPTO priority the idea is meant to advance`,
+}
+
 // Helper to get the primary input field for a given step
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
@@ -166,16 +252,18 @@ ${metrics}
           role: "system",
           content: `You are a senior AI strategist at USPTO evaluating whether an AI idea is ready for leadership review.
 
+${USPTO_STRATEGIC_CONTEXT}
+
 You are given the complete submission across all dimensions: target users, problem, solution, user value, business value, strategic alignment, feasibility, and success metrics.
 
 EVALUATE THE IDEA HONESTLY:
 
 Rate it as one of:
-- "ready" — All dimensions are substantive and well-supported. A CAIO or CIO could make an informed decision based on this submission. Strategic alignment is clear, feasibility is realistic, and success metrics are measurable.
-- "needs_work" — The core idea has merit, but 1-2 dimensions have significant gaps (vague value proposition, unaddressed feasibility concerns, missing metrics). Worth pursuing but needs strengthening before leadership review.
-- "early_stage" — The idea is too vague or underdeveloped for leadership review. Multiple dimensions lack substance. The submitter should continue refining before submitting.
+- "ready" — All dimensions are substantive and well-supported. A CAIO or CIO could make an informed decision based on this submission. Strategic alignment to a specific, named USPTO priority is clear, feasibility is realistic with FedRAMP/security considerations addressed, and success metrics are measurable with named baselines.
+- "needs_work" — The core idea has merit, but 1-2 dimensions have significant gaps (vague value proposition, unaddressed feasibility concerns, missing metrics, or only nominal strategic alignment). Worth pursuing but needs strengthening before leadership review.
+- "early_stage" — The idea is too vague or underdeveloped for leadership review. Multiple dimensions lack substance, or alignment is only nominal (buzzwords like "modernization" without explicit mechanism). The submitter should continue refining before submitting.
 
-Also generate a one-paragraph EXECUTIVE SUMMARY that a reviewer can read in 30 seconds to understand: what the idea is, who it helps, what problem it solves, and whether it's strategically aligned. Write this as if briefing a CIO.`,
+Also generate a one-paragraph EXECUTIVE SUMMARY that a reviewer can read in 30 seconds to understand: what the idea is, who it helps, what specific USPTO priority it advances, and whether it's strategically and operationally ready. Write this as if briefing a CIO. Reference USPTO priorities by name, not number.`,
         },
         {
           role: "user",
@@ -193,8 +281,8 @@ Also generate a one-paragraph EXECUTIVE SUMMARY that a reviewer can read in 30 s
     console.error("AI Gateway error for readiness assessment, falling back to mock:", error)
     return {
       readinessScore: "needs_work",
-      readinessSummary: "This idea has a strong problem statement and clear target users, but the feasibility assessment and success metrics need more specificity. The business value claims should be grounded in baseline data before this goes to leadership.",
-      executiveSummary: `"${formData.useCaseTitle || 'Untitled Idea'}" proposes an AI-driven approach to improve operations for USPTO staff. The idea targets a real operational pain point and aligns with strategic modernization goals, but requires additional detail on implementation feasibility and measurable success criteria before it's ready for executive decision-making.`
+      readinessSummary: "This idea has a strong problem statement and clear target users, but the feasibility assessment and success metrics need more specificity. The business value claims should be grounded in baseline data, and the strategic alignment should explicitly name a USPTO priority (e.g., efficient delivery of IP rights, impactful employee experiences) before this goes to leadership.",
+      executiveSummary: `"${formData.useCaseTitle || 'Untitled Idea'}" proposes an AI-driven approach to improve operations for USPTO staff. The idea targets a real operational pain point and connects to USPTO's published priorities, but requires additional detail on the specific priority it advances, implementation feasibility, and measurable success criteria before it's ready for executive decision-making.`
     }
   }
 }
@@ -233,37 +321,40 @@ export async function validateAndRefineInput(
       messages: [
         {
           role: "system",
-          content: `You are a senior AI strategist at USPTO who vets AI ideas before they reach leadership. Your job is to pressure-test this idea — not just polish the language, but challenge whether it holds up under scrutiny.
+          content: `You are a senior AI strategist at USPTO who pressure-tests AI ideas before they reach leadership. Your job is to challenge whether this idea holds up under scrutiny — not just polish the language.
 
-TONE & STYLE:
-- Supportive but rigorous — you want this idea to succeed, which means being honest about gaps
-- Lead with what's strong, then challenge what's weak or vague
-- Ask yourself: "Would a CIO or CAIO find this convincing?" If not, say so.
-- Be specific — "this needs more detail" is not helpful; "you haven't addressed how this handles CUI data" is
+${USPTO_STRATEGIC_CONTEXT}
 
-CURRENT CONTEXT:
-- Step: ${currentStepInfo.title}
-- This is an AI idea being vetted, not a finished proposal
+CURRENT STEP: ${currentStepInfo.title}
+
+EVALUATION RUBRIC FOR THIS STEP:
+${stepRubrics[step] || "Apply general rigor: specificity, quantification, and explicit alignment with a named USPTO priority."}
+
+TONE & APPROACH:
+- Constructive but firm. Lead with what's working, then directly challenge what's vague or weak.
+- Reference USPTO priorities by name (e.g., "efficient delivery of IP rights"), not by number.
+- Avoid corporate jargon. Be specific. "Needs more detail" is not helpful; "you haven't addressed how this handles CUI data" is.
+- Pressure-test against federal realities: FedRAMP/ATO timelines, 508 accessibility, CBA/union considerations, OMB AI use case inventory requirements.
 
 FORMATTING REQUIREMENTS:
 ${stepFormattingGuidelines[step] || "Format your suggestion clearly and concisely."}
 
 Use markdown formatting:
-- Use **bold** for emphasis on key terms
+- Use **bold** for emphasis on USPTO priorities and key claims
 - Use bullet points (- or *) for lists
 - Use proper line breaks for readability
 
 YOUR TASK:
-1. Assess the idea honestly — what's strong? What would a reviewer push back on?
-2. Provide direct feedback (2-3 sentences) that identifies the biggest gap or weakness and explains why it matters
-3. Create an enhanced version that:
+1. Identify what's strong in the submitter's current input — be specific
+2. Name the biggest gap or weakness (2-3 sentences) and explain why it matters in USPTO terms
+3. Provide an enhanced version that:
    - Addresses the gaps you identified
-   - Adds specificity, metrics, and concrete details
-   - Pressure-tests against USPTO realities (federal constraints, FedRAMP, 508, union considerations, procurement)
+   - References specific USPTO priorities by name where alignment is claimed
+   - Adds quantified, observable metrics
    - Preserves the submitter's core idea and voice
    - Is ready to paste into their submission
 
-Remember: A weak idea that gets polished is still a weak idea. Your job is to make it genuinely stronger — or flag that it isn't ready.`,
+Remember: A weak idea that gets polished is still a weak idea. Your job is to make it genuinely stronger — or honestly flag that it isn't ready.`,
         },
         ...conversationHistory,
         {
