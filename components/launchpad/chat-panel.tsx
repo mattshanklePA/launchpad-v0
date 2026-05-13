@@ -17,7 +17,7 @@ type ApiMessage = {
   content: string
 }
 
-// Local message format for UI rendering — supports rich assistant responses
+// Local message format for UI rendering â€” supports rich assistant responses
 type ChatMessage =
   | { role: "user"; content: string }
   | { role: "assistant"; response: CoPilotResponse }
@@ -153,13 +153,13 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
       })
       return
     }
-    // Start the conversation with no user messages yet — the system prompt already
+    // Start the conversation with no user messages yet â€” the system prompt already
     // includes the draft text. The first AI response should be a question.
     await callAI([])
   }
 
   const handleOptionClick = async (label: string) => {
-    if (label === "Other — let me type my own") {
+    if (label === "Other â€” let me type my own") {
       setOtherInputOpen(true)
       return
     }
@@ -205,7 +205,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                 <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p>The Co-Pilot coaches you one question at a time. It does not invent facts — your specifics stay yours.</p>
+                <p>The Co-Pilot coaches you one question at a time. It does not invent facts â€” your specifics stay yours.</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -232,7 +232,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                   )
                 }
 
-                // Assistant — question or scaffold
+                // Assistant â€” question or scaffold
                 if (msg.response.mode === "question") {
                   return (
                     <div key={index} className="flex items-start gap-3">
@@ -283,7 +283,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                   )
                 }
 
-                // Assistant — scaffold
+                // Assistant â€” scaffold
                 return (
                   <div key={index} className="flex items-start gap-3">
                     <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
@@ -371,127 +371,3 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
     </TooltipProvider>
   )
 }
-
-                              disabled={!isLast || isLoading}
-                              onClick={() => handleOptionClick(opt.label)}
-                            >
-                              <span className="flex-1">
-                                {opt.label}
-                                {opt.isRecommended && (
-                                  <span className="ml-2 text-xs opacity-80">(Recommended)</span>
-                                )}
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-
-                        {isLast && otherInputOpen && (
-                          <form onSubmit={handleOtherSubmit} className="mt-3 flex items-end gap-2">
-                            <Textarea
-                              value={chatInput}
-                              onChange={(e) => setChatInput(e.target.value)}
-                              placeholder="Type your own answer..."
-                              rows={2}
-                              className="flex-1 text-sm"
-                              disabled={isLoading}
-                              autoFocus
-                            />
-                            <Button type="submit" size="icon" disabled={isLoading || !chatInput.trim()}>
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </form>
-                        )}
-                      </div>
-                    </div>
-                  )
-                }
-
-                // Assistant — scaffold
-                return (
-                  <div key={index} className="flex items-start gap-3">
-                    <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
-                    <div className="rounded-lg p-3 bg-gray-100 text-sm w-full">
-                      {msg.response.summary && (
-                        <p className="mb-3 whitespace-pre-wrap">{msg.response.summary}</p>
-                      )}
-                      <div className="pt-3 border-t">
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">SCAFFOLD TO FILL IN:</p>
-                        <p className="text-xs text-muted-foreground italic mb-2">
-                          Replace each [BRACKETED PLACEHOLDER] with specifics only you can provide.
-                        </p>
-                        <p className="text-sm bg-white p-2 rounded border whitespace-pre-wrap">
-                          {msg.response.scaffoldText}
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="mt-2 w-full"
-                          onClick={() => {
-                            onApplySuggestion(msg.response.mode === "scaffold" ? msg.response.scaffoldText : "")
-                            toast({
-                              title: "Scaffold copied to response",
-                              description: "Now fill in the bracketed placeholders with your specifics.",
-                            })
-                          }}
-                        >
-                          <ClipboardCheck className="mr-2 h-4 w-4" /> Use as Starting Point
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-
-              {isLoading && (
-                <div className="flex items-start gap-3">
-                  <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
-                  <div className="rounded-lg p-3 bg-gray-100 text-sm">
-                    <Sparkles className="h-4 w-4 inline animate-pulse mr-1" />
-                    Thinking...
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-
-          <div className="p-3 border-t bg-white flex-shrink-0">
-            {messages.length === 0 ? (
-              <Button
-                onClick={handleInitialClick}
-                disabled={isLoading}
-                className="w-full bg-uspto-blue-primary hover:bg-uspto-blue-primary/90"
-              >
-                <Wand2 className="mr-2 h-4 w-4" />
-                {isLoading ? "Thinking..." : getStepContext(step).buttonLabel}
-              </Button>
-            ) : isWaitingOnOptions && !otherInputOpen ? (
-              <p className="text-xs text-center text-muted-foreground">
-                Pick an option above to continue.
-              </p>
-            ) : hasScaffold ? (
-              <form onSubmit={handleFollowUpSubmit} className="flex items-end gap-2">
-                <Textarea
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask a follow-up or request a revised scaffold..."
-                  rows={1}
-                  className="flex-1"
-                  disabled={isLoading}
-                />
-                <Button type="submit" size="icon" disabled={isLoading || !chatInput.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
-            ) : (
-              <p className="text-xs text-center text-muted-foreground">
-                <Pencil className="h-3 w-3 inline mr-1" />
-                Typing your own answer above...
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </TooltipProvider>
-  )
-}
-
