@@ -192,8 +192,11 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.role === "assistant" && msg.suggestion && (
                       <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs font-semibold text-muted-foreground mb-2">REFINED SUGGESTION:</p>
-                        <p className="text-sm bg-white p-2 rounded border">{msg.suggestion}</p>
+                        <p className="text-xs font-semibold text-muted-foreground mb-1">SCAFFOLD TO FILL IN:</p>
+                        <p className="text-xs text-muted-foreground mb-2 italic">
+                          Replace each [BRACKETED PLACEHOLDER] with details only you can provide.
+                        </p>
+                        <p className="text-sm bg-white p-2 rounded border whitespace-pre-wrap">{msg.suggestion}</p>
                         <Button
                           size="sm"
                           variant="secondary"
@@ -201,12 +204,12 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                           onClick={() => {
                             onApplySuggestion(msg.suggestion || "")
                             toast({
-                              title: "Suggestion Applied!",
-                              description: "The main text field has been updated.",
+                              title: "Scaffold copied to response",
+                              description: "Now fill in the bracketed placeholders with your specifics.",
                             })
                           }}
                         >
-                          <ClipboardCheck className="mr-2 h-4 w-4" /> Paste to Response
+                          <ClipboardCheck className="mr-2 h-4 w-4" /> Use as Starting Point
                         </Button>
                       </div>
                     )}

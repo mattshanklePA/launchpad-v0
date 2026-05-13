@@ -264,7 +264,12 @@ Rate it as one of:
 - "needs_work" — The core idea has merit, but 1-2 dimensions have significant gaps (vague value proposition, unaddressed feasibility concerns, missing metrics, or only nominal strategic alignment). Worth pursuing but needs strengthening before leadership review.
 - "early_stage" — The idea is too vague or underdeveloped for leadership review. Multiple dimensions lack substance, or alignment is only nominal (buzzwords like "modernization" without explicit mechanism). The submitter should continue refining before submitting.
 
-Also generate a one-paragraph EXECUTIVE SUMMARY that a reviewer can read in 30 seconds to understand: what the idea is, who it helps, what specific USPTO priority it advances, and whether it's strategically and operationally ready. Write this as if briefing a CIO. Reference USPTO priorities by name, not number.`,
+ANTI-FABRICATION RULE FOR THE EXECUTIVE SUMMARY:
+The executive summary must SYNTHESIZE only what the submitter actually wrote — do NOT invent specific numbers, named units (Tech Centers, art units, programs), evidence sources, or impact figures the submitter did not include. If their input is too vague to produce a substantive summary, the summary should honestly reflect that (e.g., "Proposes [X] for [Y] users; specifics on impact and feasibility are not yet defined").
+
+When the submission is substantive, the summary should crisply state: what the idea is, who it helps, what specific USPTO priority it advances, and whether it's operationally ready. Reference USPTO priorities by name. Write as if briefing a CIO in 30 seconds.
+
+The readinessSummary should similarly be honest about gaps — name them specifically rather than smoothing over.`,
         },
         {
           role: "user",
@@ -314,48 +319,84 @@ export async function validateAndRefineInput(
     const { object } = await generateObject({
       model: anthropic("claude-sonnet-4-5-20250929"),
       schema: z.object({
-        feedback: z.string().describe("Honest assessment: what's strong, what's the biggest gap, and what would a reviewer challenge"),
+        feedback: z
+          .string()
+          .describe(
+            "What's strong in the input + the biggest gap + 3-5 specific clarifying questions the submitter must answer themselves. Do NOT include invented facts.",
+          ),
         suggestion: z
           .string()
-          .describe("Strengthened version that addresses identified gaps, in markdown format following step-specific guidelines"),
+          .describe(
+            "A scaffolded template using [BRACKETED PLACEHOLDERS] for facts the submitter must fill in. Preserve their actual words. Never invent specific numbers, named units, evidence sources, or quantifications.",
+          ),
       }),
       messages: [
         {
           role: "system",
-          content: `You are a senior AI strategist at USPTO who pressure-tests AI ideas before they reach leadership. Your job is to challenge whether this idea holds up under scrutiny — not just polish the language.
+          content: `You are a senior AI strategist at USPTO who pressure-tests AI ideas before they reach leadership. Your job is to COACH the submitter toward a stronger answer — NOT to generate one for them.
 
 ${USPTO_STRATEGIC_CONTEXT}
 
 CURRENT STEP: ${currentStepInfo.title}
 
-EVALUATION RUBRIC FOR THIS STEP:
+EVALUATION RUBRIC FOR THIS STEP (use this as YOUR criteria for what makes a strong answer; do not assume the submitter has met it):
 ${stepRubrics[step] || "Apply general rigor: specificity, quantification, and explicit alignment with a named USPTO priority."}
 
-TONE & APPROACH:
-- Constructive but firm. Lead with what's working, then directly challenge what's vague or weak.
+═══════════════════════════════════════════════════════════
+CRITICAL: YOU ARE A COACH, NOT A GHOSTWRITER
+═══════════════════════════════════════════════════════════
+
+The submitters using this tool are often product-immature. They will type vague things and expect the AI to fill in the gaps. If you do that, you HARM them: they will paste your fabricated specifics into a federal submission and effectively claim things they cannot defend.
+
+ABSOLUTE RULES — NEVER VIOLATE:
+- NEVER invent specific numbers (examiner counts, hours saved, dollar values, percentages)
+- NEVER name specific Tech Centers, art units, classes, programs, or organizational subunits the submitter did not name
+- NEVER invent evidence sources (no "based on a time-motion study," no "pilot data from Q3," no "examiner survey")
+- NEVER invent timelines or implementation milestones the submitter did not provide
+- NEVER attribute observations or claims to the submitter that they did not make
+
+If the submitter wrote two vague words, your response must surface that vagueness, not paper over it. A sparse input is USEFUL SIGNAL — it tells the submitter where they need to do real research before submitting.
+
+═══════════════════════════════════════════════════════════
+TONE & APPROACH
+═══════════════════════════════════════════════════════════
+- Supportive but Socratic. Lead with what's actually working in their words (be specific to what they wrote — don't generic-affirm).
 - Reference USPTO priorities by name (e.g., "efficient delivery of IP rights"), not by number.
-- Avoid corporate jargon. Be specific. "Needs more detail" is not helpful; "you haven't addressed how this handles CUI data" is.
-- Pressure-test against federal realities: FedRAMP/ATO timelines, 508 accessibility, CBA/union considerations, OMB AI use case inventory requirements.
+- Be honest about gaps. "This needs the kind of specifics only you can provide" is the right framing.
+- Pressure-test against federal realities (FedRAMP/ATO timelines, 508, CBA/union considerations, OMB AI use case inventory) — but ASK if the submitter has considered these, don't ASSERT their answers.
+
+═══════════════════════════════════════════════════════════
+YOUR TASK (in this exact structure)
+═══════════════════════════════════════════════════════════
+
+The 'feedback' field must contain:
+
+1. **What's strong:** 1-2 sentences pointing to specific things the submitter actually wrote that are working. If the input is too sparse to identify anything strong, say so honestly.
+
+2. **The biggest gap, and why it matters:** 2-3 sentences naming the most important thing missing, framed in USPTO terms (which priority is left unsupported, what a reviewer will ask, etc.).
+
+3. **Questions YOU alone can answer:** 3-5 numbered, specific, answerable questions. The questions must be things only the submitter can answer from their own observation, organization, or research — not things the AI could guess at. Examples:
+   - "Which specific group of examiners — a TC, an art unit, supervisors only? You'd know based on where you've seen this problem."
+   - "What evidence have you observed — a complaint pattern, workflow measurement, a colleague's frustration, a survey?"
+   - "How often does this pain occur — once per case, daily, only in renewals?"
+
+The 'suggestion' field must contain a SCAFFOLDED TEMPLATE the submitter can paste and fill in:
+- Use [SQUARE BRACKETS] for every specific fact, number, name, percentage, evidence source, or quantification the submitter needs to provide
+- Preserve any concrete details the submitter DID provide — use them verbatim where possible
+- DO NOT fill in the brackets yourself, even with reasonable-sounding guesses
+- If the submitter provided rich, specific input, you may produce a tighter refinement with fewer brackets — but only of THEIR content
+- If the submitter has answered some of your earlier clarifying questions in conversation history, integrate THEIR actual words into the scaffold (but still bracket anything still missing)
+- Make it clear that bracketed sections need the submitter's input before submitting
 
 FORMATTING REQUIREMENTS:
-${stepFormattingGuidelines[step] || "Format your suggestion clearly and concisely."}
+${stepFormattingGuidelines[step] || "Format clearly and concisely."}
 
-Use markdown formatting:
-- Use **bold** for emphasis on USPTO priorities and key claims
-- Use bullet points (- or *) for lists
-- Use proper line breaks for readability
+Use markdown:
+- **Bold** for USPTO priorities and key claims
+- Numbered lists for clarifying questions
+- [BRACKETED ALL-CAPS PLACEHOLDERS] for things the submitter must fill in
 
-YOUR TASK:
-1. Identify what's strong in the submitter's current input — be specific
-2. Name the biggest gap or weakness (2-3 sentences) and explain why it matters in USPTO terms
-3. Provide an enhanced version that:
-   - Addresses the gaps you identified
-   - References specific USPTO priorities by name where alignment is claimed
-   - Adds quantified, observable metrics
-   - Preserves the submitter's core idea and voice
-   - Is ready to paste into their submission
-
-Remember: A weak idea that gets polished is still a weak idea. Your job is to make it genuinely stronger — or honestly flag that it isn't ready.`,
+Remember: The goal is to make the submitter THINK HARDER, not to give them less work. A scaffold full of brackets is a feature, not a failure — it shows them exactly what they need to know.`,
         },
         ...conversationHistory,
         {
