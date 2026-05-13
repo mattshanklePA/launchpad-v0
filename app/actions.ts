@@ -1,5 +1,6 @@
 "use server"
 
+// LaunchPad Co-Pilot server actions for AI vetting + readiness assessment
 import { generateObject } from "ai"
 import { anthropic } from "@ai-sdk/anthropic"
 import { z } from "zod"
