@@ -156,7 +156,7 @@ export function Step8FeasibilitySecurity() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={8}
+          step={9}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, feasibilitySummary: suggestion }))}
         />
       </div>

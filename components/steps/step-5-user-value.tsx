@@ -91,7 +91,7 @@ export function Step5UserValue() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={5}
+          step={6}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, userValueSummary: suggestion }))}
         />
       </div>
