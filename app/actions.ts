@@ -1,6 +1,7 @@
 "use server"
 
 import { generateObject } from "ai"
+import { anthropic } from "@ai-sdk/anthropic"
 import { z } from "zod"
 import { formSteps, type FormData } from "@/lib/steps"
 
@@ -154,7 +155,7 @@ ${metrics}
 
   try {
     const { object } = await generateObject({
-      model: "anthropic/claude-sonnet-4.5",
+      model: anthropic("claude-sonnet-4-5-20250929"),
       schema: z.object({
         readinessScore: z.enum(["ready", "needs_work", "early_stage"]).describe("Overall readiness rating for leadership review"),
         readinessSummary: z.string().describe("2-3 sentences explaining the rating and key gaps if any"),
@@ -222,7 +223,7 @@ export async function validateAndRefineInput(
 
   try {
     const { object } = await generateObject({
-      model: "anthropic/claude-sonnet-4.5",
+      model: anthropic("claude-sonnet-4-5-20250929"),
       schema: z.object({
         feedback: z.string().describe("Honest assessment: what's strong, what's the biggest gap, and what would a reviewer challenge"),
         suggestion: z
