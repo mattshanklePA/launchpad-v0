@@ -494,3 +494,4 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
     </TooltipProvider>
   )
 }
+
