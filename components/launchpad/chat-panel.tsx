@@ -17,7 +17,7 @@ type ApiMessage = {
   content: string
 }
 
-// Local message format for UI rendering Ã¢â‚¬â€ supports rich assistant responses
+// Local message format for UI rendering — supports rich assistant responses
 type ChatMessage =
   | { role: "user"; content: string }
   | { role: "assistant"; response: CoPilotResponse }
@@ -153,13 +153,13 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
       })
       return
     }
-    // Start the conversation with no user messages yet Ã¢â‚¬â€ the system prompt already
+    // Start the conversation with no user messages yet — the system prompt already
     // includes the draft text. The first AI response should be a question.
     await callAI([])
   }
 
   const handleOptionClick = async (label: string) => {
-    if (label === "Other Ã¢â‚¬â€ let me type my own") {
+    if (label === "Other — let me type my own") {
       setOtherInputOpen(true)
       return
     }
@@ -205,7 +205,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                 <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p>The Co-Pilot coaches you one question at a time. It does not invent facts Ã¢â‚¬â€ your specifics stay yours.</p>
+                <p>The Co-Pilot coaches you one question at a time. It does not invent facts — your specifics stay yours.</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -232,7 +232,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                   )
                 }
 
-                // Assistant Ã¢â‚¬â€ question or scaffold
+                // Assistant — question or scaffold
                 if (msg.response.mode === "question") {
                   return (
                     <div key={index} className="flex items-start gap-3">
@@ -283,7 +283,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                   )
                 }
 
-                // Assistant Ã¢â‚¬â€ scaffold
+                // Assistant — scaffold
                 return (
                   <div key={index} className="flex items-start gap-3">
                     <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
