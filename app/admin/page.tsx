@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getSubmissions, type Submission } from "@/lib/submissions"
+import { ComparisonView } from "@/components/admin/comparison-view"
+import { CheckCircle2, Circle, Scale } from "lucide-react"
 import {
   FileText,
   TrendingUp,
@@ -184,6 +186,22 @@ export default function AdminPage() {
   const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set())
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [hydrated, setHydrated] = useState(false)
+  const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set())
+  const [showComparison, setShowComparison] = useState(false)
+
+  const toggleCompareSelect = (id: string) => {
+    setSelectedForCompare((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else if (next.size < 4) next.add(id)
+      return next
+    })
+  }
+
+  const clearCompareSelect = () => {
+    setSelectedForCompare(new Set())
+    setShowComparison(false)
+  }
 
   // Hydrate real submissions from localStorage on mount
   useEffect(() => {
@@ -660,6 +678,34 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="drafts" className="space-y-6">
+            {showComparison && selectedForCompare.size >= 2 && (
+              <ComparisonView
+                submissions={submissions.filter((s) => selectedForCompare.has(s.id))}
+                onClose={clearCompareSelect}
+              />
+            )}
+            {selectedForCompare.size > 0 && !showComparison && (
+              <div className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/40 bg-primary/5">
+                <p className="text-sm">
+                  <span className="font-semibold">{selectedForCompare.size}</span> selected for comparison
+                  {selectedForCompare.size === 1 && " — pick 1 more to compare"}
+                  {selectedForCompare.size >= 4 && " (max 4)"}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={clearCompareSelect}>
+                    Clear
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowComparison(true)}
+                    disabled={selectedForCompare.size < 2}
+                  >
+                    <Scale className="w-4 h-4 mr-2" />
+                    Compare {selectedForCompare.size}
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Idea Pipeline</h2>
               <div className="flex gap-2">
@@ -724,6 +770,20 @@ export default function AdminPage() {
                         <div className="flex items-center gap-2 ml-4">
                           {getReadinessBadge(draft.readinessScore)}
                           {getStatusBadge(draft.status)}
+                          {submissions.some((s) => s.id === draft.id) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleCompareSelect(draft.id)}
+                              title={selectedForCompare.has(draft.id) ? "Remove from comparison" : "Select for comparison"}
+                            >
+                              {selectedForCompare.has(draft.id) ? (
+                                <CheckCircle2 className="w-4 h-4 text-primary" />
+                              ) : (
+                                <Circle className="w-4 h-4" />
+                              )}
+                            </Button>
+                          )}
                           <Button variant="ghost" size="sm">
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -876,7 +936,6 @@ export default function AdminPage() {
                               View Executive Summary
                             </Button>
                           </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-3">
                             <div className="bg-gray-50 border rounded-lg p-4 text-sm text-muted-foreground leading-relaxed">
                               {submission.executiveSummary}
                             </div>

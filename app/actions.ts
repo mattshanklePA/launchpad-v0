@@ -119,9 +119,9 @@ const stepRubrics: Record<number, string> = {
 - The benefit is specific to USPTO users, not abstract`,
 
   7: `For BUSINESS VALUE, evaluate whether:
-- Examiner-hour savings or dollar savings are quantified with a defensible baseline
-- The strategic link to a named USPTO priority is explicit (most often efficient delivery of reliable IP rights or impactful employee experiences)
-- Secondary benefits (quality, consistency, reduced rework) are identified
+- Labor-hour savings, dollar savings, throughput gains, or public-facing improvements are quantified with a defensible baseline (whoever the users are — examiners, IT staff, attorneys, applicants, the public)
+- The strategic link to a named USPTO priority is explicit
+- Secondary benefits (quality, consistency, reduced rework, public access) are identified
 - The ROI claim is realistic — overly aggressive estimates undermine credibility`,
 
   8: `For STRATEGIC ALIGNMENT, evaluate whether:
@@ -469,7 +469,7 @@ Ask ONE specific question that ONLY the submitter can answer from their own obse
 Provide a 1-sentence rationale explaining why this question matters in USPTO terms.
 
 Provide 4-5 options. Structure them like this:
-- 2-3 specific likely answers
+- 2-3 specific likely answers (vary the user group based on what the submission actually says — examiners, IT staff, OGC attorneys, applicants, the public, contract admins, etc. — do NOT default to "examiners")
 - Then: "Other — let me type my own"
 - Then: "I have enough — give me the scaffold"
 
@@ -530,3 +530,11 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
   }
 }
 
+.scaffoldText || userInput || "[Add your content here]",
+      summary: object.summary || "",
+    }
+  } catch (error) {
+    console.error("AI Gateway error, falling back to mock:", error)
+    return getMockResponse(step, userInput)
+  }
+}
