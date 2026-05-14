@@ -2,8 +2,9 @@
 import { useForm } from "@/context/form-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, FileDown, Rocket, Plus } from "lucide-react"
+import { CheckCircle, Rocket, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { PDFExportButton } from "@/components/steps/pdf-export-button"
 
 export function Step11ExportTracking() {
   const { formData, resetForm } = useForm()
@@ -36,9 +37,7 @@ export function Step11ExportTracking() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="secondary">
-            <FileDown className="mr-2 h-4 w-4" /> Export to PDF
-          </Button>
+          <PDFExportButton formData={formData} variant="secondary" label="Download Submission as PDF" />
           <Button disabled>
             <Rocket className="mr-2 h-4 w-4" /> View in Rally
           </Button>
@@ -53,6 +52,6 @@ export function Step11ExportTracking() {
           Return to Dashboard
         </Button>
       </div>
-    </div>
+      </div>
   )
 }
