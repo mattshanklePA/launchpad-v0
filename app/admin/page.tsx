@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
+import { DecisionCenter } from "@/components/admin/decision-center"
 import { CheckCircle2, Circle, Scale } from "lucide-react"
 import {
   FileText,
@@ -288,14 +289,14 @@ export default function AdminPage() {
         return (
           <Badge variant="secondary">
             <Clock className="w-3 h-3 mr-1" />
-            In Vetting
+            Draft (In Progress)
           </Badge>
         )
       case "needs_review":
         return (
           <Badge variant="default">
             <Eye className="w-3 h-3 mr-1" />
-            Vetting Complete
+            Submitted for Vetting
           </Badge>
         )
       case "stalled":
@@ -413,8 +414,8 @@ export default function AdminPage() {
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="okrs">USPTO OKRs</TabsTrigger>
-            <TabsTrigger value="drafts">Idea Pipeline</TabsTrigger>
-            <TabsTrigger value="submitted">Vetted & Submitted</TabsTrigger>
+            <TabsTrigger value="drafts">Submissions</TabsTrigger>
+            <TabsTrigger value="submitted">Decision Center</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -859,104 +860,7 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="submitted" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Submitted Use Cases</h2>
-              <div className="flex gap-2">
-                <Button variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Submitted
-                </Button>
-                <Button variant="outline">Filter by Status</Button>
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              {mockSubmitted.map((submission) => (
-                <Card key={submission.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{submission.title}</h3>
-                        <div className="grid grid-cols-2 gap-4 mt-3 text-sm text-muted-foreground">
-                          <div>
-                            <span className="font-medium">Submitter:</span> {submission.submitter}
-                          </div>
-                          <div>
-                            <span className="font-medium">Department:</span> {submission.department}
-                          </div>
-                          <div>
-                            <span className="font-medium">Submitted:</span> {submission.submissionDate}
-                          </div>
-                          <div>
-                            <span className="font-medium">Reviewer:</span> {submission.assignedReviewer}
-                          </div>
-                          <div>
-                            <span className="font-medium">Est. Review:</span> {submission.estimatedReviewDate}
-                          </div>
-                          <div>
-                            <span className="font-medium">Priority:</span>
-                            <Badge
-                              variant={
-                                submission.priority === "high"
-                                  ? "destructive"
-                                  : submission.priority === "medium"
-                                    ? "default"
-                                    : "secondary"
-                              }
-                              className="ml-2"
-                            >
-                              {submission.priority}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <span className="text-sm font-medium">Routed to:</span>
-                          <div className="flex gap-2 mt-1">
-                            {submission.routedTo.map((route) => (
-                              <Badge key={route} variant="outline" className="text-xs">
-                                {route}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {/* Executive Summary Collapsible */}
-                        <Collapsible 
-                          open={expandedSummaries.has(submission.id)} 
-                          onOpenChange={() => toggleSummary(submission.id)}
-                          className="mt-4"
-                        >
-                          <CollapsibleTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2">
-                              {expandedSummaries.has(submission.id) ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4" />
-                              )}
-                              View Executive Summary
-                            </Button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-3">
-                            <div className="bg-gray-50 border rounded-lg p-4 text-sm text-muted-foreground leading-relaxed">
-                              {submission.executiveSummary}
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        {getStatusBadge(submission.status)}
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <DecisionCenter />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
@@ -1037,7 +941,7 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+            </TabsContent>
         </Tabs>
       </div>
     </div>
