@@ -936,6 +936,7 @@ export default function AdminPage() {
                               View Executive Summary
                             </Button>
                           </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3">
                             <div className="bg-gray-50 border rounded-lg p-4 text-sm text-muted-foreground leading-relaxed">
                               {submission.executiveSummary}
                             </div>
