@@ -1,6 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { getSession, hasAdminAccess, isAdmin, logout, ensureSeeded, type Session } from "@/lib/auth"
+import { UserManagement } from "@/components/admin/user-management"
+import { LogOut } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -261,6 +265,26 @@ export default function AdminPage() {
   const [hydrated, setHydrated] = useState(false)
   const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set())
   const [showComparison, setShowComparison] = useState(false)
+  const [session, setSession] = useState<Session | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+  const router = useRouter()
+
+  // ─── Auth gate: redirect to /login if not an admin or reviewer ───
+  useEffect(() => {
+    ensureSeeded()
+    const s = getSession()
+    if (!hasAdminAccess(s)) {
+      router.replace("/login?next=/admin")
+      return
+    }
+    setSession(s)
+    setAuthChecked(true)
+  }, [router])
+
+  const handleLogout = () => {
+    logout()
+    router.replace("/login")
+  }
 
   const toggleCompareSelect = (id: string) => {
     setSelectedForCompare((prev) => {
@@ -470,16 +494,35 @@ export default function AdminPage() {
     setOKRs(okrs.filter((okr) => okr.id !== id))
   }
 
+  // Don't render the dashboard until the auth check has run — prevents flash
+  if (!authChecked) {
+    return <div className="min-h-screen bg-gray-50" />
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
 
       <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage USPTO OKRs, monitor the AI idea pipeline, and oversee vetting operations
-          </p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage USPTO OKRs, monitor the AI idea pipeline, and oversee vetting operations
+            </p>
+          </div>
+          {session && (
+            <div className="text-right text-sm flex flex-col items-end gap-2">
+              <div>
+                <p className="font-medium">{session.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">{session.role}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-3 h-3 mr-1" />
+                Sign out
+              </Button>
+            </div>
+          )}
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
@@ -994,24 +1037,20 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>Total Active Users</span>
-                      <span className="font-medium">247</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Admin Users</span>
-                      <span className="font-medium">12</span>
-                    </div>
-                    <Button variant="outline">Manage Users</Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {isAdmin(session) ? (
+                <UserManagement />
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Management</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      User management is restricted to Admin role. Contact your administrator to request changes.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
             </TabsContent>
         </Tabs>
