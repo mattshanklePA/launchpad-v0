@@ -1019,38 +1019,3 @@ export default function AdminPage() {
     </div>
   )
 }
-           <Input defaultValue="claude-sonnet-4-5" className="mt-1" />
-                  </div>
-                  <div>
-                    <Label>Rally Integration Endpoint</Label>
-                    <Input defaultValue="https://rally1.rallydev.com/..." className="mt-1" />
-                  </div>
-                  <Button>Save Settings</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span>Total Active Users</span>
-                      <span className="font-medium">247</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Admin Users</span>
-                      <span className="font-medium">12</span>
-                    </div>
-                    <Button variant="outline">Manage Users</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  )
-}
