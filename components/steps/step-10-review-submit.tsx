@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCircle, Send } from "lucide-react"
 import { assessReadiness } from "@/app/actions"
+import { SubmissionGate } from "@/components/steps/submission-gate"
 
 const routeOptions = [
   { value: "rally", label: "Export to Rally" },
@@ -241,33 +242,54 @@ export function Step10ReviewSubmit() {
               rows={3}
             />
           </div>
-          <div className="pt-2">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto"
-              onClick={handleSubmitForVetting}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit for Vetting
-                </>
-              )}
-            </Button>
-            {formData.readinessScore === "early_stage" && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Note: Readiness assessment marked this as early stage. You can still submit, but consider refining first.
-              </p>
-            )}
-          </div>
+          <SubmissionGate
+            formData={formData}
+            onJumpToStep={(s) => setCurrentStep(s)}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmitForVetting}
+          />
         </CardContent>
       </Card>
     </div>
   )
+}
+>Route to</Label>
+            <div className="flex flex-wrap gap-2">
+              {routeOptions.map((option) => (
+                <Toggle
+                  key={option.value}
+                  pressed={formData.routeTo.includes(option.value)}
+                  onPressedChange={() => handleRouteToggle(option.value)}
+                  variant="outline"
+                  className="rounded-full px-3 py-1 text-sm h-auto"
+                >
+                  {option.label}
+                </Toggle>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="reviewerNotes">Anything the vetting team should know?</Label>
+            <Textarea
+              id="reviewerNotes"
+              value={formData.reviewerNotes}
+              onChange={(e) => setFormData((prev) => ({ ...prev, reviewerNotes: e.target.value }))}
+              rows={3}
+            />
+          </div>
+          <SubmissionGate
+            formData={formData}
+            onJumpToStep={(s) => setCurrentStep(s)}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmitForVetting}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+      </Card>
+    </div>
+  )
+}
 }
