@@ -147,6 +147,76 @@ const stepRubrics: Record<number, string> = {
 - Metrics tie back to the USPTO priority the idea is meant to advance`,
 }
 
+// ============================================================
+// Build a labeled block of ALL inputs the submitter has filled
+// for the current step (textareas + dropdowns + multi-selects).
+// This is what the co-pilot reads so it can coach on the FULL
+// picture, not just the primary textarea.
+// ============================================================
+function fmt(v: string | undefined | string[]): string {
+  if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : "(none selected)"
+  return v && v.trim() !== "" ? v : "(not provided)"
+}
+
+function buildStepInputs(formData: FormData, step: number): string {
+  switch (step) {
+    case 3:
+      return [
+        `- Target audience: ${fmt(formData.targetAudience)}`,
+        `- Impacted users count: ${fmt(formData.impactedUsersCount)}`,
+        `- Key pain points (textarea): ${fmt(formData.painPoints)}`,
+        `- User profile / context (textarea): ${fmt(formData.targetUserContext)}`,
+      ].join("\n")
+    case 4:
+      return [
+        `- Core problem (textarea): ${fmt(formData.coreProblem)}`,
+        `- Problem impact (textarea): ${fmt(formData.problemImpact)}`,
+        `- Affected system: ${fmt(formData.affectedSystem)}`,
+        `- Problem type tags: ${fmt(formData.problemType)}`,
+        `- Severity: ${fmt(formData.severity)}`,
+      ].join("\n")
+    case 5:
+      return [
+        `- Proposed solution (textarea): ${fmt(formData.proposedSolution)}`,
+        `- Key functionality tags: ${fmt(formData.keyFunctionality)}`,
+      ].join("\n")
+    case 6:
+      return [
+        `- User value (textarea): ${fmt(formData.userValue)}`,
+        `- User time savings range: ${fmt(formData.userTimeSavings)}`,
+        `- Other user improvements: ${fmt(formData.otherUserImprovements)}`,
+      ].join("\n")
+    case 7:
+      return [
+        `- Business value (textarea): ${fmt(formData.businessValue)}`,
+        `- Cost savings range: ${fmt(formData.costSavings)}`,
+        `- Strategic benefit tags: ${fmt(formData.strategicBenefit)}`,
+      ].join("\n")
+    case 8:
+      return [
+        `- USPTO focus areas selected: ${fmt(formData.usptoFocusArea)}`,
+        `- Relevant OKRs / alignment text: ${fmt(formData.relevantOkrs)}`,
+      ].join("\n")
+    case 9:
+      return [
+        `- Implementation complexity: ${fmt(formData.implementationComplexity)}`,
+        `- Resources needed: ${fmt(formData.resourcesNeeded)}`,
+        `- Dependencies (textarea): ${fmt(formData.dependencies)}`,
+        `- Involves sensitive data: ${fmt(formData.involvesSensitiveData)}`,
+        `- Security classification: ${fmt(formData.securityClassification)}`,
+        `- Access control requirements: ${fmt(formData.accessControlRequirements)}`,
+      ].join("\n")
+    case 10:
+      return [
+        `- Success metrics description (textarea): ${fmt(formData.successMetrics)}`,
+        `- Key metrics tags: ${fmt(formData.keyMetrics)}`,
+        `- Timeline for results: ${fmt(formData.timelineForResults)}`,
+      ].join("\n")
+    default:
+      return "(no inputs for this step)"
+  }
+}
+
 // Helper to get the primary input field for a given step
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
@@ -379,8 +449,10 @@ CURRENT STEP: ${currentStepInfo.title}
 EVALUATION CRITERIA (what "strong" looks like for this step):
 ${stepRubrics[step] || "Apply general rigor: specificity, quantification, and explicit alignment with a named USPTO priority."}
 
-The submitter's current draft text for this step:
-"${userInput || "[no input yet]"}"
+═══ THE SUBMITTER'S CURRENT INPUTS FOR THIS STEP (every field) ═══
+${buildStepInputs(formData, step)}
+
+When coaching: consider ALL inputs above, not just the textarea. Dropdowns and tag selections are real signal — if the submitter selected "Severity: high" but wrote a vague textarea, that mismatch is worth surfacing. If they tagged "Strategic Benefit: efficiency" and the textarea says nothing measurable, that's a gap to question.
 
 Q&A turns completed so far in this session: ${assistantTurns}
 
@@ -457,3 +529,4 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
     return getMockResponse(step, userInput)
   }
 }
+
