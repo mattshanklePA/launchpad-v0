@@ -35,7 +35,7 @@ export function Header() {
   const handleSignOut = () => {
     logout()
     setSession(null)
-    router.refresh()
+    router.replace("/login")
   }
 
   return (
