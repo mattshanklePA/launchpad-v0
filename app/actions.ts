@@ -529,12 +529,3 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
     return getMockResponse(step, userInput)
   }
 }
-
-.scaffoldText || userInput || "[Add your content here]",
-      summary: object.summary || "",
-    }
-  } catch (error) {
-    console.error("AI Gateway error, falling back to mock:", error)
-    return getMockResponse(step, userInput)
-  }
-}
