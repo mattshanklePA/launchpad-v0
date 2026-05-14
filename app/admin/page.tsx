@@ -34,31 +34,103 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Header } from "@/components/layout/header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-// Mock data - in real implementation, this would come from your database
+// Real USPTO strategic objectives:
+//   - 2022-2026 Strategic Plan — 5 agency-wide goals
+//   - January 2025 AI Strategy — 5 AI-specific priorities
+// Sources: uspto.gov/about-us/performance-and-planning/strategy-and-reporting
+//          uspto.gov/initiatives/artificial-intelligence/ai-strategy
 const mockOKRs = [
+  // ───── USPTO 2022-2026 Strategic Plan ─────
   {
     id: 1,
-    title: "Improve Patent Examination Efficiency",
-    description: "Reduce average patent examination time by 25% through AI-powered tools",
-    category: "Operational Excellence",
+    title: "Drive U.S. innovation and global competitiveness",
+    description:
+      "Expand outreach to under-represented innovators, strengthen U.S. leadership in emerging tech, and ensure broad access to the IP system.",
+    category: "USPTO Strategic Goal",
     status: "active",
-    progress: 65,
+    progress: 45,
   },
   {
     id: 2,
-    title: "Enhance Trademark Search Accuracy",
-    description: "Implement ML-based trademark similarity detection to improve search precision",
-    category: "Customer Experience",
+    title: "Promote the efficient delivery of reliable IP rights",
+    description:
+      "Reduce pendency, improve first-action quality, and modernize the examination experience across patents and trademarks.",
+    category: "USPTO Strategic Goal",
+    status: "active",
+    progress: 60,
+  },
+  {
+    id: 3,
+    title: "Promote IP protection against new and persistent threats",
+    description:
+      "Strengthen anti-counterfeiting capabilities, support enforcement, and defend the integrity of issued IP rights.",
+    category: "USPTO Strategic Goal",
+    status: "active",
+    progress: 35,
+  },
+  {
+    id: 4,
+    title: "Bring innovation to impact for the public good",
+    description:
+      "Leverage the IP and innovation system to address national priorities including climate, public health, and equity.",
+    category: "USPTO Strategic Goal",
+    status: "active",
+    progress: 30,
+  },
+  {
+    id: 5,
+    title: "Generate impactful employee and customer experiences",
+    description:
+      "Maximize agency operations to create rewarding experiences for the USPTO workforce and the applicants and public it serves.",
+    category: "USPTO Strategic Goal",
+    status: "active",
+    progress: 50,
+  },
+  // ───── USPTO AI Strategy (January 2025) ─────
+  {
+    id: 6,
+    title: "Advance IP policies for inclusive AI innovation",
+    description:
+      "Shape patent, trademark, and copyright policies that support U.S. AI leadership while remaining inclusive of all innovators.",
+    category: "AI Strategy Priority",
     status: "active",
     progress: 40,
   },
   {
-    id: 3,
-    title: "Modernize IT Infrastructure",
-    description: "Migrate legacy systems to cloud-based solutions for improved scalability",
-    category: "Data-Driven Decisioning & Modern IT",
-    status: "planning",
-    progress: 15,
+    id: 7,
+    title: "Build AI capabilities through infrastructure and resources",
+    description:
+      "Invest in the compute, data, and tooling infrastructure required to deploy AI responsibly across USPTO operations.",
+    category: "AI Strategy Priority",
+    status: "active",
+    progress: 25,
+  },
+  {
+    id: 8,
+    title: "Promote responsible AI use",
+    description:
+      "Ensure all AI systems include bias mitigation, explainability, and meaningful human oversight in line with federal AI guidance.",
+    category: "AI Strategy Priority",
+    status: "active",
+    progress: 35,
+  },
+  {
+    id: 9,
+    title: "Develop AI expertise within the workforce",
+    description:
+      "Train USPTO staff across roles to evaluate, deploy, and oversee AI capabilities relevant to their work.",
+    category: "AI Strategy Priority",
+    status: "active",
+    progress: 20,
+  },
+  {
+    id: 10,
+    title: "Collaborate with government and international partners on AI",
+    description:
+      "Coordinate with peer federal agencies, OMB, and international IP offices on AI governance and shared technical standards.",
+    category: "AI Strategy Priority",
+    status: "active",
+    progress: 30,
   },
 ]
 
@@ -942,6 +1014,41 @@ export default function AdminPage() {
               </Card>
             </div>
             </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}
+           <Input defaultValue="claude-sonnet-4-5" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label>Rally Integration Endpoint</Label>
+                    <Input defaultValue="https://rally1.rallydev.com/..." className="mt-1" />
+                  </div>
+                  <Button>Save Settings</Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span>Total Active Users</span>
+                      <span className="font-medium">247</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Admin Users</span>
+                      <span className="font-medium">12</span>
+                    </div>
+                    <Button variant="outline">Manage Users</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
