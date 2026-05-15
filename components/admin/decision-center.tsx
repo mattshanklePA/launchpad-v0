@@ -53,6 +53,41 @@ function fmt(v: string | string[] | undefined): string {
   return v && v.trim() !== "" ? v : "—"
 }
 
+// Human-readable labels for the enum fields shown in the at-a-glance grid.
+// Keep these in lockstep with the Select options in step-3, step-5, step-6, step-9.
+const ENUM_LABELS: Record<string, string> = {
+  // impactedUsersCount
+  lt_10: "<10 users",
+  "10_50": "10–50 users",
+  "50_500": "50–500 users",
+  gt_500: "500+ users",
+  // userTimeSavings
+  lt_1: "<1 hr/week",
+  "1_5": "1–5 hrs/week",
+  "5_10": "5–10 hrs/week",
+  gt_10: "10+ hrs/week",
+  // costSavings
+  lt_50k: "<$50K",
+  "50k_250k": "$50K–$250K",
+  "250k_1m": "$250K–$1M",
+  gt_1m: "$1M+",
+  // implementationComplexity
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  // timelineForResults
+  lt_3: "<3 months",
+  "3_6": "3–6 months",
+  "6_12": "6–12 months",
+  gt_12: "12+ months",
+}
+
+function prettyEnum(v: string | string[] | undefined): string {
+  if (Array.isArray(v)) return v.length > 0 ? v.map((x) => ENUM_LABELS[x] || x).join(", ") : "—"
+  if (!v || v.trim() === "") return "—"
+  return ENUM_LABELS[v] || v
+}
+
 function dateLabel(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString()
@@ -114,31 +149,31 @@ function DecisionCard({ submission, selected, onToggleSelect }: DecisionCardProp
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Users className="w-3 h-3" /> Users
             </p>
-            <p className="text-sm font-medium mt-0.5">{fmt(d.impactedUsersCount)}</p>
+            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.impactedUsersCount)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" /> Time savings
             </p>
-            <p className="text-sm font-medium mt-0.5">{fmt(d.userTimeSavings)}</p>
+            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.userTimeSavings)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <DollarSign className="w-3 h-3" /> Cost savings
             </p>
-            <p className="text-sm font-medium mt-0.5">{fmt(d.costSavings)}</p>
+            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.costSavings)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Shield className="w-3 h-3" /> Complexity
             </p>
-            <p className="text-sm font-medium mt-0.5">{fmt(d.implementationComplexity)}</p>
+            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.implementationComplexity)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <TrendingUp className="w-3 h-3" /> Timeline
             </p>
-            <p className="text-sm font-medium mt-0.5">{fmt(d.timelineForResults)}</p>
+            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.timelineForResults)}</p>
           </div>
         </div>
 

@@ -172,14 +172,67 @@ export function Step10ReviewSubmit() {
     }
   }
 
+  // Human-readable labels for enum fields. Same map as decision-center /
+  // comparison-view — keep in lockstep with the Select options in step-3/5/6/9.
+  const ENUM_LABELS: Record<string, string> = {
+    lt_10: "<10 users",
+    "10_50": "10–50 users",
+    "50_500": "50–500 users",
+    gt_500: "500+ users",
+    lt_1: "<1 hr/week",
+    "1_5": "1–5 hrs/week",
+    "5_10": "5–10 hrs/week",
+    gt_10: "10+ hrs/week",
+    lt_50k: "<$50K",
+    "50k_250k": "$50K–$250K",
+    "250k_1m": "$250K–$1M",
+    gt_1m: "$1M+",
+    low: "Low",
+    medium: "Medium",
+    high: "High",
+    lt_3: "<3 months",
+    "3_6": "3–6 months",
+    "6_12": "6–12 months",
+    gt_12: "12+ months",
+    yes: "Yes",
+    no: "No",
+    internal: "Internal",
+    external: "External",
+    controlled: "Controlled",
+    public: "Public",
+    excluded: "Excluded",
+    patents: "Patents",
+    trademarks: "Trademarks",
+    ocio: "OCIO",
+    ocfo: "OCFO",
+    ogc: "OGC",
+    opia: "OPIA",
+    hr: "Human Resources",
+    other: "Other",
+    patent_examiner: "Patent Examiner",
+    trademark_examiner: "Trademark Examiner",
+    supervisory_examiner: "Supervisory Examiner",
+    product_owner: "Product Owner",
+    lead_product_owner: "Lead Product Owner",
+    developer: "Developer",
+    manager: "Manager",
+    it_staff: "IT Staff",
+    applicant: "Applicant",
+    it_systems: "IT Systems",
+    cross_functional: "Cross-Functional",
+  }
+  const prettify = (s: string) => ENUM_LABELS[s] || s
+
   const renderValue = (value: any) => {
     if (Array.isArray(value)) {
-      return value.join(", ") || <span className="text-muted-foreground">Not provided</span>
+      return value.length > 0
+        ? value.map(prettify).join(", ")
+        : <span className="text-muted-foreground">Not provided</span>
     }
     if (typeof value === "boolean") {
       return value ? "Yes" : "No"
     }
-    return value || <span className="text-muted-foreground">Not provided</span>
+    return value ? prettify(value) : <span className="text-muted-foreground">Not provided</span>
   }
 
   return (

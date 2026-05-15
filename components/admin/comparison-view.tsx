@@ -39,9 +39,48 @@ function readinessBadge(score: string | undefined) {
   }
 }
 
+// Same enum labels as decision-center.tsx — keep in lockstep with the Select
+// options in step-3/5/6/9. (If this duplicates one more time, move it to a util.)
+const ENUM_LABELS: Record<string, string> = {
+  lt_10: "<10 users",
+  "10_50": "10–50 users",
+  "50_500": "50–500 users",
+  gt_500: "500+ users",
+  lt_1: "<1 hr/week",
+  "1_5": "1–5 hrs/week",
+  "5_10": "5–10 hrs/week",
+  gt_10: "10+ hrs/week",
+  lt_50k: "<$50K",
+  "50k_250k": "$50K–$250K",
+  "250k_1m": "$250K–$1M",
+  gt_1m: "$1M+",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  lt_3: "<3 months",
+  "3_6": "3–6 months",
+  "6_12": "6–12 months",
+  gt_12: "12+ months",
+  yes: "Yes",
+  no: "No",
+  ready: "Ready",
+  needs_work: "Needs Work",
+  early_stage: "Early Stage",
+  internal: "Internal",
+  external: "External",
+  controlled: "Controlled",
+  public: "Public",
+  excluded: "Excluded",
+}
+
+function prettify(s: string): string {
+  return ENUM_LABELS[s] || s
+}
+
 function fieldValue(v: string | string[] | undefined): string {
-  if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : "—"
-  return v && v.trim() !== "" ? v : "—"
+  if (Array.isArray(v)) return v.length > 0 ? v.map(prettify).join(", ") : "—"
+  if (!v || v.trim() === "") return "—"
+  return prettify(v)
 }
 
 type RowProps = {
