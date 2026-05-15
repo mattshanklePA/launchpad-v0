@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { FileEdit, Info, FileText, CheckCircle, Sparkles } from "lucide-react"
+import { FileEdit, Info, FileText, CheckCircle, Sparkles, ArrowRight } from "lucide-react"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import type { FormData } from "@/lib/steps"
 
@@ -130,23 +130,28 @@ export function RecentDrafts() {
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                   In Progress
                 </p>
-                <Link
-                  href="/submit"
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-blue-50/30">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <FileEdit className="h-4 w-4 text-uspto-blue-primary flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-uspto-blue-primary">{draft.title}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-uspto-blue-primary truncate">{draft.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        On step {draft.step} of 11 — continue refining
+                        On step {draft.step} of 11
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    Draft
-                  </Badge>
-                </Link>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      Draft
+                    </Badge>
+                    <Button asChild size="sm">
+                      <Link href="/submit">
+                        Resume
+                        <ArrowRight className="ml-1 h-3 w-3" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
