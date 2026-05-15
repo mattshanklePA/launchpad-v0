@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { ensureSeeded, getSession, type Session } from "@/lib/auth"
+import { seedDemoSubmissionsIfEmpty } from "@/lib/seedSubmissions"
 
 type Props = {
   children: ReactNode
@@ -24,6 +25,10 @@ export function RequireAuth({ children, requireRole }: Props) {
 
   useEffect(() => {
     ensureSeeded()
+    // Seed demo submissions on first auth-gated page load. Idempotent — only
+    // runs if storage is empty (or only seed-prefixed entries exist) and the
+    // current seed version hasn't been installed yet.
+    seedDemoSubmissionsIfEmpty()
     const s = getSession()
     const next = encodeURIComponent(pathname || "/")
     if (!s) {

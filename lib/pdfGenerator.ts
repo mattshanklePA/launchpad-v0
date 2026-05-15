@@ -36,7 +36,16 @@ function readinessLabel(s?: string): string {
 }
 
 function officeLabel(o?: string): string {
-  const m: Record<string, string> = { patents: "Patents", trademarks: "Trademarks", ocio: "OCIO", ogc: "OGC", other: "Other" }
+  const m: Record<string, string> = {
+    patents: "Patents",
+    trademarks: "Trademarks",
+    ocio: "OCIO",
+    ocfo: "OCFO",
+    ogc: "OGC",
+    opia: "OPIA",
+    hr: "Human Resources",
+    other: "Other",
+  }
   return m[o || ""] || (o || "Unknown")
 }
 

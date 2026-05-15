@@ -53,19 +53,22 @@ export function Step1SubmitterInfo() {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="submitterOffice">Department/Office</Label>
+          <Label htmlFor="submitterOffice">Business Unit</Label>
           <Select
             value={formData.submitterOffice}
             onValueChange={(value) => setFormData((prev) => ({ ...prev, submitterOffice: value as any }))}
           >
             <SelectTrigger id="submitterOffice">
-              <SelectValue placeholder="Select your office..." />
+              <SelectValue placeholder="Select your business unit..." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="patents">Patents</SelectItem>
               <SelectItem value="trademarks">Trademarks</SelectItem>
-              <SelectItem value="ocio">OCIO</SelectItem>
-              <SelectItem value="ogc">OGC</SelectItem>
+              <SelectItem value="ocio">OCIO (Chief Information Officer)</SelectItem>
+              <SelectItem value="ocfo">OCFO (Chief Financial Officer)</SelectItem>
+              <SelectItem value="ogc">OGC (General Counsel)</SelectItem>
+              <SelectItem value="opia">OPIA (Policy &amp; International Affairs)</SelectItem>
+              <SelectItem value="hr">Office of Human Resources</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>

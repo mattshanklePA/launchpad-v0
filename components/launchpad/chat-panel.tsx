@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Wand2, Bot, User, Info, Send, ClipboardCheck, Sparkles, Pencil } from "lucide-react"
-import { validateAndRefineInput, type CoPilotResponse } from "@/app/actions"
+import { validateAndRefineInput, type ScoutResponse } from "@/app/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -20,7 +20,7 @@ type ApiMessage = {
 // Local message format for UI rendering — supports rich assistant responses
 type ChatMessage =
   | { role: "user"; content: string }
-  | { role: "assistant"; response: CoPilotResponse }
+  | { role: "assistant"; response: ScoutResponse }
 
 type LaunchPadChatPanelProps = {
   step: number
@@ -124,9 +124,9 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
   }, [messages])
 
   const handleError = (error: unknown) => {
-    console.error("LaunchPad Co-Pilot Error:", error)
+    console.error("LaunchPad Scout Error:", error)
     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred."
-    toast({ variant: "destructive", title: "Co-Pilot Error", description: errorMessage })
+    toast({ variant: "destructive", title: "Scout Error", description: errorMessage })
   }
 
   const callAI = async (updatedMessages: ChatMessage[]) => {
@@ -198,14 +198,14 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
           <div className="flex items-center justify-between p-3 border-b flex-shrink-0">
             <h3 className="font-semibold text-lg flex items-center gap-2">
               <Bot className="h-6 w-6 text-uspto-blue-primary" />
-              LaunchPad Co-Pilot
+              LaunchPad Scout
             </h3>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p>The Co-Pilot coaches you one question at a time. It does not invent facts — your specifics stay yours.</p>
+                <p>Scout coaches you one question at a time. It does not invent facts — your specifics stay yours.</p>
               </TooltipContent>
             </Tooltip>
           </div>

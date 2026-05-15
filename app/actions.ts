@@ -242,19 +242,19 @@ function getInputFieldForStep(step: number): keyof FormData | null {
 }
 
 // ============================================================
-// Co-pilot response shape (discriminated by mode)
+// Scout response shape (discriminated by mode)
 // ============================================================
-export type CoPilotOption = {
+export type ScoutOption = {
   label: string
   isRecommended: boolean
 }
 
-export type CoPilotResponse =
+export type ScoutResponse =
   | {
       mode: "question"
       questionText: string
       rationale: string
-      options: CoPilotOption[]
+      options: ScoutOption[]
     }
   | {
       mode: "scaffold"
@@ -262,9 +262,14 @@ export type CoPilotResponse =
       summary: string
     }
 
+// Backwards-compat aliases (deprecated). Kept so older imports don't break
+// while the codebase migrates off "Co-Pilot" naming. Safe to remove later.
+export type CoPilotOption = ScoutOption
+export type CoPilotResponse = ScoutResponse
+
 // Mock fallback for when the API is unavailable. Always returns a scaffold
 // (never a question) so the UI doesn't get stuck in a Q&A loop with no AI.
-function getMockResponse(step: number, userInput: string): CoPilotResponse {
+function getMockResponse(step: number, userInput: string): ScoutResponse {
   const currentStepInfo = formSteps.find((s) => s.step === step)
   const stepTitle = currentStepInfo?.title || "this step"
   return {
@@ -386,7 +391,7 @@ export async function validateAndRefineInput(
   formData: FormData,
   step: number,
   conversationHistory: Message[],
-): Promise<CoPilotResponse> {
+): Promise<ScoutResponse> {
   const currentStepInfo = formSteps.find((s) => s.step === step)
   if (!currentStepInfo) throw new Error("Invalid step number")
 

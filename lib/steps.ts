@@ -3,6 +3,29 @@ export type FormStep = {
   name: string
   title: string
   prompt: string
+  phase?: number
+  phaseName?: string
+}
+
+// Phase grouping for the 4-phase progress reframe.
+// Ramesh-bias: shows "Phase 2 of 4" instead of intimidating "Step 5 of 11".
+export type FormPhase = {
+  phase: number
+  name: string
+  description: string
+  stepStart: number
+  stepEnd: number
+}
+
+export const formPhases: FormPhase[] = [
+  { phase: 1, name: "Setup", description: "Who you are and what you're proposing.", stepStart: 1, stepEnd: 2 },
+  { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken.", stepStart: 3, stepEnd: 4 },
+  { phase: 3, name: "Solution & Value", description: "What you'd build and why it matters.", stepStart: 5, stepEnd: 7 },
+  { phase: 4, name: "Alignment & Feasibility", description: "Strategic fit, security, and measurable success.", stepStart: 8, stepEnd: 10 },
+]
+
+export function getPhaseForStep(step: number): FormPhase | null {
+  return formPhases.find((p) => step >= p.stepStart && step <= p.stepEnd) || null
 }
 
 export type FormData = {
@@ -19,7 +42,7 @@ export type FormData = {
     | "developer"
     | "other"
     | ""
-  submitterOffice: "patents" | "trademarks" | "ocio" | "ogc" | "other" | ""
+  submitterOffice: "patents" | "trademarks" | "ocio" | "ocfo" | "ogc" | "opia" | "hr" | "other" | ""
 
   // Step 2 - Use Case Overview
   useCaseTitle: string

@@ -29,7 +29,7 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Name", key: "submitterName" },
     { label: "Email", key: "submitterEmail" },
     { label: "Role", key: "submitterRole" },
-    { label: "Office", key: "submitterOffice" },
+    { label: "Business Unit", key: "submitterOffice" },
   ],
   2: [
     { label: "Idea Title", key: "useCaseTitle" },

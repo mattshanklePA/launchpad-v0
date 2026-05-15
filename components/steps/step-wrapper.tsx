@@ -1,14 +1,16 @@
 "use client"
 import type React from "react"
 import { useForm } from "@/context/form-context"
-import { formSteps } from "@/lib/steps"
+import { formSteps, getPhaseForStep } from "@/lib/steps"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 export function StepWrapper({ children }: { children: React.ReactNode }) {
   const { currentStep, goToNextStep, goToPreviousStep, isFirstStep, isLastStep } = useForm()
   const stepInfo = formSteps[currentStep - 1]
+  const phase = getPhaseForStep(currentStep)
 
   // Guard against invalid steps
   if (!stepInfo) {
@@ -25,6 +27,14 @@ export function StepWrapper({ children }: { children: React.ReactNode }) {
   return (
     <Card className="max-w-7xl mx-auto">
       <CardHeader>
+        {phase && (
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="outline" className="text-xs font-medium bg-uspto-blue-primary/5 border-uspto-blue-primary/20 text-uspto-blue-primary">
+              Phase {phase.phase} · {phase.name}
+            </Badge>
+            <span className="text-xs text-muted-foreground">{phase.description}</span>
+          </div>
+        )}
         <CardTitle>{stepInfo.title}</CardTitle>
         <CardDescription>{stepInfo.prompt}</CardDescription>
       </CardHeader>

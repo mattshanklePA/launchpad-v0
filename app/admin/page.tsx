@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getSubmissions, type Submission } from "@/lib/submissions"
+import { seedDemoSubmissionsIfEmpty, reseedDemoSubmissions } from "@/lib/seedSubmissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { DecisionCenter } from "@/components/admin/decision-center"
 import { CheckCircle2, Circle, Scale } from "lucide-react"
@@ -272,6 +273,9 @@ export default function AdminPage() {
   // ─── Auth gate: redirect to /login if not an admin or reviewer ───
   useEffect(() => {
     ensureSeeded()
+    // Make sure the demo seed is in place even if someone lands on /admin
+    // directly (e.g., bookmarked) without going through the landing page first.
+    seedDemoSubmissionsIfEmpty()
     const s = getSession()
     if (!hasAdminAccess(s)) {
       router.replace("/login?next=/admin")
