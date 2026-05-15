@@ -16,7 +16,7 @@ import { getSubmissions, type Submission } from "@/lib/submissions"
 import { seedDemoSubmissionsIfEmpty, reseedDemoSubmissions } from "@/lib/seedSubmissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { DecisionCenter } from "@/components/admin/decision-center"
-import { CheckCircle2, Circle, Scale } from "lucide-react"
+import { CheckCircle2, Circle, Scale, Sparkles } from "lucide-react"
 import {
   FileText,
   TrendingUp,
@@ -1030,8 +1030,8 @@ export default function AdminPage() {
                     <Input type="number" defaultValue="30" className="mt-1" />
                   </div>
                   <div>
-                    <Label>AI Co-Pilot Model</Label>
-                    <Input defaultValue="gpt-4o" className="mt-1" />
+                    <Label>Scout AI Model</Label>
+                    <Input defaultValue="claude-sonnet-4-5" className="mt-1" />
                   </div>
                   <div>
                     <Label>Rally Integration Endpoint</Label>
@@ -1055,6 +1055,54 @@ export default function AdminPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Demo data controls — only useful during the 5/20 demo prep */}
+              <Card className="border-amber-200 bg-amber-50/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-600" />
+                    Demo Data
+                  </CardTitle>
+                  <CardDescription>
+                    Pre-loaded sample submissions across business units (Patents, Trademarks, OCIO, HR, OGC) for the
+                    Decision Center demo. Use these controls if the seed didn't load or you want a clean slate.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        reseedDemoSubmissions()
+                        // Full page reload so the DecisionCenter (and any other mounted
+                        // tabs reading from localStorage) re-hydrates with the new data.
+                        window.location.reload()
+                      }}
+                    >
+                      Reload Demo Submissions
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (!confirm("Clear ALL submissions (both demo and real)? This cannot be undone.")) return
+                        try {
+                          localStorage.removeItem("launchpad-submissions")
+                          localStorage.removeItem("launchpad-seed-version")
+                          window.location.reload()
+                        } catch (err) {
+                          console.error(err)
+                        }
+                      }}
+                    >
+                      Clear All Submissions
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Reload writes the seed set, overwriting any existing submissions. Clear All removes everything and
+                    resets the seed marker so the next page load will re-seed automatically.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
             </TabsContent>
         </Tabs>
