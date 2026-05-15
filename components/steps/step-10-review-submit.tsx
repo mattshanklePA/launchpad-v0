@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useForm } from "@/context/form-context"
-import { formSteps } from "@/lib/steps"
+import { formSteps, type FormData } from "@/lib/steps"
 import { saveSubmission } from "@/lib/submissions"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -20,6 +20,75 @@ const routeOptions = [
   { value: "governance", label: "Submit for Governance Vetting" },
   { value: "draft", label: "Save as Draft (continue later)" },
 ]
+
+// Explicit per-step field map for the review cards. Replaces an older
+// crude "filter formData keys by first word of step name" that silently
+// dropped entire steps (e.g. Step 2's fields don't contain the word "idea").
+const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>> = {
+  1: [
+    { label: "Name", key: "submitterName" },
+    { label: "Email", key: "submitterEmail" },
+    { label: "Role", key: "submitterRole" },
+    { label: "Office", key: "submitterOffice" },
+  ],
+  2: [
+    { label: "Idea Title", key: "useCaseTitle" },
+    { label: "Idea Description", key: "useCaseDescription" },
+    { label: "Public / Excluded", key: "publicIndicator" },
+  ],
+  3: [
+    { label: "Target Audience", key: "targetAudience" },
+    { label: "Users Impacted", key: "impactedUsersCount" },
+    { label: "Pain Points", key: "painPoints" },
+    { label: "User Profile / Context", key: "targetUserContext" },
+    { label: "Refined Summary", key: "targetUserSummary" },
+  ],
+  4: [
+    { label: "Core Problem", key: "coreProblem" },
+    { label: "Problem Impact", key: "problemImpact" },
+    { label: "Affected System", key: "affectedSystem" },
+    { label: "Problem Type Tags", key: "problemType" },
+    { label: "Severity", key: "severity" },
+    { label: "Refined Definition", key: "problemDefinition" },
+  ],
+  5: [
+    { label: "Proposed Solution", key: "proposedSolution" },
+    { label: "Key Functionality", key: "keyFunctionality" },
+    { label: "Refined Summary", key: "solutionSummary" },
+  ],
+  6: [
+    { label: "User Value", key: "userValue" },
+    { label: "Time Savings Range", key: "userTimeSavings" },
+    { label: "Other Improvements", key: "otherUserImprovements" },
+    { label: "Refined Summary", key: "userValueSummary" },
+  ],
+  7: [
+    { label: "Business Value", key: "businessValue" },
+    { label: "Cost Savings Range", key: "costSavings" },
+    { label: "Strategic Benefits", key: "strategicBenefit" },
+    { label: "Refined Summary", key: "businessValueSummary" },
+  ],
+  8: [
+    { label: "USPTO Focus Areas", key: "usptoFocusArea" },
+    { label: "Relevant OKRs / Alignment", key: "relevantOkrs" },
+    { label: "Refined Summary", key: "alignmentSummary" },
+  ],
+  9: [
+    { label: "Implementation Complexity", key: "implementationComplexity" },
+    { label: "Resources Needed", key: "resourcesNeeded" },
+    { label: "Dependencies / Feasibility", key: "dependencies" },
+    { label: "Involves Sensitive Data", key: "involvesSensitiveData" },
+    { label: "Security Classification", key: "securityClassification" },
+    { label: "Access Control Requirements", key: "accessControlRequirements" },
+    { label: "Refined Summary", key: "feasibilitySummary" },
+  ],
+  10: [
+    { label: "Success Metrics", key: "successMetrics" },
+    { label: "Key Metrics Tags", key: "keyMetrics" },
+    { label: "Timeline for Results", key: "timelineForResults" },
+    { label: "Refined Summary", key: "metricsSummary" },
+  ],
+}
 
 export function Step10ReviewSubmit() {
   const { formData, setCurrentStep, setFormData } = useForm()
@@ -186,32 +255,31 @@ export function Step10ReviewSubmit() {
         </CardContent>
       </Card>
 
-      {formSteps.slice(0, 9).map((step) => (
-        <Card key={step.step}>
-          <CardHeader className="bg-muted/50 flex-row items-center justify-between py-3 px-4">
-            <CardTitle className="text-base">
-              Step {step.step}: {step.title}
-            </CardTitle>
-            <Button variant="link" size="sm" onClick={() => setCurrentStep(step.step)}>
-              Edit
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 text-sm">
-            {/* This is a simplified review. A real implementation would map over fields. */}
-            <pre className="whitespace-pre-wrap font-sans">
-              {Object.entries(formData)
-                .filter(([key]) =>
-                  // A crude way to show relevant data for the step
-                  key
-                    .toLowerCase()
-                    .includes(step.name.split(" ")[0].toLowerCase()),
-                )
-                .map(([key, value]) => `${key}: ${renderValue(value)}\n`)
-                .join("")}
-            </pre>
-          </CardContent>
-        </Card>
-      ))}
+      {formSteps.slice(0, 10).map((step) => {
+        const fields = STEP_FIELDS[step.step] || []
+        return (
+          <Card key={step.step}>
+            <CardHeader className="bg-muted/50 flex-row items-center justify-between py-3 px-4">
+              <CardTitle className="text-base">
+                Step {step.step}: {step.title}
+              </CardTitle>
+              <Button variant="link" size="sm" onClick={() => setCurrentStep(step.step)}>
+                Edit
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 text-sm">
+              <dl className="space-y-2">
+                {fields.map(({ label, key }) => (
+                  <div key={key} className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-1 md:gap-3">
+                    <dt className="font-medium text-muted-foreground">{label}</dt>
+                    <dd className="whitespace-pre-wrap break-words">{renderValue(formData[key])}</dd>
+                  </div>
+                ))}
+              </dl>
+            </CardContent>
+          </Card>
+        )
+      })}
       <Card>
         <CardHeader>
           <CardTitle>Submit for Vetting</CardTitle>
