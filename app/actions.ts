@@ -5,6 +5,11 @@ import { generateObject } from "ai"
 import { anthropic } from "@ai-sdk/anthropic"
 import { z } from "zod"
 import { formSteps, type FormData } from "@/lib/steps"
+import {
+  STRATEGIC_FOCUS_AREAS,
+  type StrategicFocusAreaId,
+  type AlignmentSuggestion,
+} from "@/lib/strategicFocusAreas"
 
 type Message = {
   role: "user" | "assistant"
@@ -222,14 +227,18 @@ function buildStepInputs(formData: FormData, step: number): string {
         `- Relevant OKRs / alignment text: ${fmt(formData.relevantOkrs)}`,
       ].join("\n")
     case 7:
-      // Feasibility & Security
+      // Feasibility & Security (includes AI Risk Management questions)
       return [
         `- Implementation complexity: ${fmt(formData.implementationComplexity)}`,
         `- Resources needed: ${fmt(formData.resourcesNeeded)}`,
         `- Dependencies (textarea): ${fmt(formData.dependencies)}`,
-        `- Involves sensitive data: ${fmt(formData.involvesSensitiveData)}`,
+        `--- AI RISK MANAGEMENT (DoC + EO mandated) ---`,
+        `- Uses PII / sensitive data: ${fmt(formData.involvesSensitiveData)}`,
         `- Security classification: ${fmt(formData.securityClassification)}`,
         `- Access control requirements: ${fmt(formData.accessControlRequirements)}`,
+        `- AI drives decisions about people: ${fmt(formData.aiDecisionalImpact)}`,
+        `- AI model sourcing: ${fmt(formData.aiModelSourcing)}`,
+        `- Mandatory human review: ${fmt(formData.aiHumanReview)}`,
       ].join("\n")
     case 8:
       // Success Metrics
@@ -322,25 +331,34 @@ export async function assessReadiness(
   const feasibility = formData.feasibilitySummary || formData.dependencies || "[Not provided]"
   const metrics = formData.metricsSummary || formData.successMetrics || "[Not provided]"
 
+  // Risk profile — pulled into the assessment so the exec summary reflects
+  // it (foreign sourcing or no human review materially affects readiness).
+  const riskFlags: string[] = []
+  if (formData.involvesSensitiveData === "yes") riskFlags.push("Uses PII / sensitive data")
+  if (formData.aiDecisionalImpact === "yes") riskFlags.push("AI drives decisions about applicants/employees")
+  if (formData.aiModelSourcing === "foreign") riskFlags.push("Foreign-built model — EO compliance issue")
+  if (formData.aiModelSourcing === "unknown") riskFlags.push("Model sourcing not yet determined")
+  if (formData.aiHumanReview === "no") riskFlags.push("No mandatory human review before action")
+
   const submissionSummary = `
 ## Idea: ${formData.useCaseTitle || "Untitled"}
 
 ### Description
 ${formData.useCaseDescription || "[Not provided]"}
 
-### Target Users
-${targetUser}
-
 ### Problem Statement
 ${problem}
+
+### Target Users
+${targetUser}
 
 ### Proposed Solution
 ${solution}
 
-### User Value
+### Value to Users
 ${userValue}
 
-### Business Value
+### Value to the Business
 ${businessValue}
 
 ### Strategic Alignment
@@ -348,6 +366,9 @@ ${alignment}
 
 ### Feasibility & Security
 ${feasibility}
+
+### AI Risk Profile
+${riskFlags.length > 0 ? riskFlags.map((f) => `- ${f}`).join("\n") : "No mandatory-disclosure risk flags raised."}
 
 ### Success Metrics
 ${metrics}
@@ -364,25 +385,36 @@ ${metrics}
       messages: [
         {
           role: "system",
-          content: `You are a senior AI strategist at USPTO evaluating whether an AI idea is ready for leadership review.
+          content: `You are a senior AI strategist at USPTO evaluating whether an AI idea is ready for leadership review by the acting Chief AI Officer.
 
 ${USPTO_STRATEGIC_CONTEXT}
 
-You are given the complete submission across all dimensions: target users, problem, solution, user value, business value, strategic alignment, feasibility, and success metrics.
+You are given the complete submission across all dimensions: problem, target users, solution, user value, business value, strategic alignment, feasibility, AI risk profile, and success metrics.
+
+LEADERSHIP FRAMING — IMPORTANT:
+The acting CAIO's three priorities are: (1) reduced pendency, (2) improved quality, (3) reduced costs. When evaluating and summarizing, lead with the PROBLEM, then align EXPECTED BENEFITS to these three priorities by name where the submission supports it. Don't force-fit — if the idea doesn't materially advance pendency/quality/cost, say so and connect it to the strategic priority it actually advances (e.g., employee experience, AI infrastructure, responsible AI).
+
+EXECUTIVE SUMMARY STRUCTURE (MANDATORY ORDER):
+1. PROBLEM — what's broken, who it affects, and the cost of inaction (use the submitter's numbers if provided; do not invent any)
+2. EXPECTED BENEFITS / VALUE METRICS — quantified outcomes tied to named USPTO priorities (pendency / quality / cost when applicable)
+3. STRATEGIC ALIGNMENT — the specific Strategic Plan goal(s) and/or AI Strategy priority(ies) this advances
+4. RISK PROFILE — surface any flags from the AI Risk Profile section (PII, decisional impact, model sourcing, human review)
+5. READINESS — is this ready for a leadership decision, or what still needs work
 
 EVALUATE THE IDEA HONESTLY:
 
 Rate it as one of:
-- "ready" — All dimensions are substantive and well-supported. A CAIO or CIO could make an informed decision based on this submission. Strategic alignment to a specific, named USPTO priority is clear, feasibility is realistic with FedRAMP/security considerations addressed, and success metrics are measurable with named baselines.
-- "needs_work" — The core idea has merit, but 1-2 dimensions have significant gaps (vague value proposition, unaddressed feasibility concerns, missing metrics, or only nominal strategic alignment). Worth pursuing but needs strengthening before leadership review.
-- "early_stage" — The idea is too vague or underdeveloped for leadership review. Multiple dimensions lack substance, or alignment is only nominal (buzzwords like "modernization" without explicit mechanism). The submitter should continue refining before submitting.
+- "ready" — All dimensions are substantive and well-supported. The acting CAIO could make an informed decision based on this submission. Strategic alignment to a specific, named USPTO priority is clear, feasibility is realistic with FedRAMP/security considerations addressed, AI risk management questions are answered with appropriate mitigations (American-built or open-source U.S.-hosted model, human review where decisional), and success metrics are measurable with named baselines.
+- "needs_work" — The core idea has merit, but 1-2 dimensions have significant gaps (vague value proposition, unaddressed feasibility concerns, missing metrics, only nominal strategic alignment, or one unanswered risk question like model sourcing). Worth pursuing but needs strengthening before leadership review.
+- "early_stage" — The idea is too vague or underdeveloped. Multiple dimensions lack substance, alignment is only nominal (buzzwords like "modernization" without explicit mechanism), OR the AI Risk Profile shows multiple unaddressed flags (foreign sourcing, decisional AI without human review, undefined PII handling). The submitter should continue refining before submitting.
 
 ANTI-FABRICATION RULE FOR THE EXECUTIVE SUMMARY:
-The executive summary must SYNTHESIZE only what the submitter actually wrote — do NOT invent specific numbers, named units (Tech Centers, art units, programs), evidence sources, or impact figures the submitter did not include. If their input is too vague to produce a substantive summary, the summary should honestly reflect that (e.g., "Proposes [X] for [Y] users; specifics on impact and feasibility are not yet defined").
+SYNTHESIZE only what the submitter actually wrote — do NOT invent specific numbers, named units (Tech Centers, art units, programs), evidence sources, or impact figures the submitter did not include. If their input is too vague to produce a substantive summary, the summary should honestly reflect that.
 
-When the submission is substantive, the summary should crisply state: what the idea is, who it helps, what specific USPTO priority it advances, and whether it's operationally ready. Reference USPTO priorities by name. Write as if briefing a CIO in 30 seconds.
+VALUE METRICS DISCIPLINE:
+When the submitter claims a benefit (faster, better, cheaper), the executive summary should restate it WITH the specific metric the submitter provided. If they said "improves quality," the summary should restate as the specific quality metric they named (e.g., "reduces office action rework rate from X% to Y%"). If they didn't quantify it, the summary should note "improves quality (no measurable baseline yet provided)" — don't paper over the missing number.
 
-The readinessSummary should similarly be honest about gaps — name them specifically rather than smoothing over.`,
+The readinessSummary should be 2-3 sentences naming specific gaps rather than smoothing over.`,
         },
         {
           role: "user",
@@ -408,6 +440,128 @@ The readinessSummary should similarly be honest about gaps — name them specifi
 }
 
 // ============================================================
+// Strategic Alignment auto-suggest
+// Pre-fills Step 6 by analyzing the problem, target users, solution, and
+// value statements already captured. Returns:
+//  - focusAreas: 1-3 IDs from the canonical USPTO focus area list
+//  - relevantOkrs: short paragraph naming specific USPTO objectives
+//  - alignmentSummary: 2-3 sentence executive-ready summary
+//  - rationale: why these specific priorities were selected
+//
+// The canonical focus area list lives in lib/strategicFocusAreas.ts so it
+// can be imported by both this server action AND client components (the
+// "use server" directive forbids non-async exports).
+
+export async function suggestStrategicAlignment(
+  formData: FormData,
+): Promise<AlignmentSuggestion> {
+  // Build context from the prior steps. We only call the AI when the idea
+  // has enough body to alignment-match against — title alone isn't enough.
+  const haveBody = Boolean(
+    formData.useCaseTitle?.trim() &&
+      (formData.coreProblem?.trim() || formData.proposedSolution?.trim()),
+  )
+  if (!haveBody) {
+    return {
+      focusAreas: [],
+      relevantOkrs: "",
+      alignmentSummary: "",
+      rationale: "Not enough context yet — fill in the problem, solution, and value steps first, then come back.",
+    }
+  }
+
+  const focusAreaList = STRATEGIC_FOCUS_AREAS.map((f) => `  - ${f.id}: ${f.label} (${f.category})`).join("\n")
+
+  const context = [
+    formData.useCaseTitle && `Title: ${formData.useCaseTitle}`,
+    formData.useCaseDescription && `Description: ${formData.useCaseDescription}`,
+    formData.coreProblem && `Problem: ${formData.coreProblem}`,
+    formData.problemImpact && `Problem impact: ${formData.problemImpact}`,
+    formData.targetUserContext && `Target users: ${formData.targetUserContext}`,
+    formData.proposedSolution && `Proposed solution: ${formData.proposedSolution}`,
+    formData.userValue && `User value: ${formData.userValue}`,
+    formData.businessValue && `Business value: ${formData.businessValue}`,
+  ]
+    .filter(Boolean)
+    .join("\n")
+
+  const systemPrompt = `${USPTO_STRATEGIC_CONTEXT}
+
+You are Scout, an AI advisor helping USPTO staff align AI ideas with published USPTO strategic priorities. You will receive a submitter's idea (problem, solution, value claims) and must return:
+
+1. A list of 1-3 focus area IDs that this idea CLEARLY advances. Use ONLY the canonical IDs from this list:
+${focusAreaList}
+
+2. A short paragraph (2-4 sentences) naming the specific USPTO objectives this advances, written in the submitter's voice (first person plural — "we," "this idea").
+
+3. A 2-3 sentence executive-ready alignment summary suitable for leadership review.
+
+4. A 1-2 sentence rationale explaining WHY you chose those specific focus areas (this is for the submitter to validate your suggestion, not for the final submission).
+
+Rules:
+- Quality over quantity. Pick 1-2 focus areas the idea CLEARLY advances. 3 only when the case is rock-solid for all three.
+- Reduced pendency, improved quality, and reduced costs are Ramesh's three priorities — surface those frame when the idea genuinely supports them.
+- Never invent specific metrics that aren't in the source context. If the submitter said "save 4 hrs/week," you can repeat that; don't make up a "30% reduction in X" they didn't claim.
+- If the idea is non-examination (e.g., HR, OCIO ops), align to "goal_employee_experience" + appropriate AI strategy priority — don't force-fit to examination goals.`
+
+  try {
+    const { object } = await generateObject({
+      model: anthropic("claude-sonnet-4-5-20250929"),
+      schema: z.object({
+        focusAreas: z
+          .array(z.string())
+          .min(1)
+          .max(3)
+          .describe("1-3 focus area IDs from the canonical list"),
+        relevantOkrs: z.string().describe("2-4 sentence first-person paragraph naming specific USPTO objectives"),
+        alignmentSummary: z.string().describe("2-3 sentence executive-ready alignment summary"),
+        rationale: z.string().describe("1-2 sentence rationale for the chosen focus areas"),
+      }),
+      system: systemPrompt,
+      prompt: `Idea context:\n${context}\n\nSuggest the strategic alignment for this idea.`,
+    })
+
+    // Validate returned focus area IDs against the canonical list — drop anything
+    // the AI hallucinated rather than letting bad data into the form.
+    const validIds = new Set(STRATEGIC_FOCUS_AREAS.map((f) => f.id))
+    const cleanFocusAreas = object.focusAreas.filter((id) => validIds.has(id as StrategicFocusAreaId))
+
+    return {
+      focusAreas: cleanFocusAreas,
+      relevantOkrs: object.relevantOkrs,
+      alignmentSummary: object.alignmentSummary,
+      rationale: object.rationale,
+    }
+  } catch (error) {
+    console.error("AI Gateway error for strategic alignment suggestion:", error)
+    // Soft fallback: best-guess focus areas based on the title/description text.
+    // Better than blocking the demo if the API is down.
+    const text = `${formData.useCaseTitle} ${formData.useCaseDescription} ${formData.coreProblem} ${formData.proposedSolution}`.toLowerCase()
+    const guess: string[] = []
+    if (/pendency|backlog|examin|exam |search|prior art/.test(text)) {
+      guess.push("goal_pendency_quality")
+    }
+    if (/operat|ticket|hr|onboard|workflow|process/.test(text)) {
+      guess.push("goal_employee_experience")
+    }
+    if (/security|pii|bias|fairness|explainab/.test(text)) {
+      guess.push("ai_responsible_use")
+    }
+    if (guess.length === 0) {
+      guess.push("ai_infrastructure")
+    }
+    return {
+      focusAreas: guess.slice(0, 2),
+      relevantOkrs:
+        "This idea aligns with USPTO's published strategic priorities — review the suggested focus areas and add specific OKR references where you have them.",
+      alignmentSummary:
+        "This idea connects to USPTO's published 2022-2026 Strategic Plan and the January 2025 AI Strategy. Review the suggested focus areas and refine the alignment language for your specific use case.",
+      rationale: "(Auto-suggested locally — Scout was unavailable. Verify these match your idea before submitting.)",
+    }
+  }
+}
+
+// ============================================================
 // Per-step coaching — Q&A flow with cross-step context
 // Each call returns EITHER a single question with options OR
 // a final scaffolded template (mode-discriminated).
@@ -426,14 +580,12 @@ export async function validateAndRefineInput(
   const assistantTurns = conversationHistory.filter((m) => m.role === "assistant").length
 
   const stepFormattingGuidelines: Record<number, string> = {
-    3: `When producing the scaffold: 2-3 paragraphs describing the target users, their roles, workflows, and specific pain points.`,
-    4: `When producing the scaffold: 2-3 clear sentences naming the problem and what makes it worth solving (severity, mission impact, consequences of inaction).`,
-    5: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
-    6: `When producing the scaffold: 2-3 sentences with specific, measurable user benefits.`,
-    7: `When producing the scaffold: 2-3 sentences with quantified efficiency gains, quality impact, and strategic alignment.`,
-    8: `When producing the scaffold: 2-3 sentences mapping the idea to named USPTO priorities and the explicit mechanism by which each is advanced.`,
-    9: `When producing the scaffold: bullet points covering Technical Feasibility, Security & Compliance, Dependencies, and Primary Risks with mitigation.`,
-    10: `When producing the scaffold: bullet points for Success Metrics, Leading Indicators, Lagging Indicators, and Timeline.`,
+    3: `When producing the scaffold: open with 2-3 sentences naming the problem (severity, mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
+    4: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
+    5: `When producing the scaffold: open with 2-3 sentences on user-level benefit (with a quantified time savings), then 2-3 sentences on agency-level business value tied to a named USPTO priority.`,
+    6: `When producing the scaffold: 2-3 sentences mapping the idea to named USPTO priorities and the explicit mechanism by which each is advanced.`,
+    7: `When producing the scaffold: bullet points covering Technical Feasibility, Security & Compliance, Dependencies, and Primary Risks with mitigation. Address AI risk management: PII use, decisional AI impact, American-built model sourcing.`,
+    8: `When producing the scaffold: bullet points for Success Metrics, Leading Indicators, Lagging Indicators, and Timeline.`,
   }
 
   try {

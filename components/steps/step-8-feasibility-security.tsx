@@ -81,23 +81,104 @@ export function Step8FeasibilitySecurity() {
               rows={3}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Does this involve sensitive data?</Label>
-            <RadioGroup
-              value={formData.involvesSensitiveData}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, involvesSensitiveData: value as any }))}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yes" id="data-yes" />
-                <Label htmlFor="data-yes">Yes</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id="data-no" />
-                <Label htmlFor="data-no">No</Label>
-              </div>
-            </RadioGroup>
+          {/* ─── AI Risk Management (DoC-mandated + Executive Order) ─── */}
+          <div className="pt-6 mt-6 border-t space-y-5">
+            <div>
+              <h3 className="font-semibold text-lg text-uspto-gray-text">AI Risk Management</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Mandatory disclosure questions required by the Department of Commerce and
+                current Executive Order on federal AI sourcing.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Does this involve PII or other sensitive data?</Label>
+              <RadioGroup
+                value={formData.involvesSensitiveData}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, involvesSensitiveData: value as any }))
+                }
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="data-yes" />
+                  <Label htmlFor="data-yes">Yes</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="data-no" />
+                  <Label htmlFor="data-no">No</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label>
+                Does the AI make or materially influence a decision that affects an applicant or employee?
+              </Label>
+              <RadioGroup
+                value={formData.aiDecisionalImpact}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, aiDecisionalImpact: value as any }))
+                }
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="dec-yes" />
+                  <Label htmlFor="dec-yes">Yes — output drives a decision</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="dec-no" />
+                  <Label htmlFor="dec-no">No — output is informational only</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="aiModelSourcing">Underlying AI model sourcing</Label>
+              <Select
+                value={formData.aiModelSourcing}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, aiModelSourcing: value as any }))
+                }
+              >
+                <SelectTrigger id="aiModelSourcing">
+                  <SelectValue placeholder="Select sourcing..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="american_built">American-built (commercial)</SelectItem>
+                  <SelectItem value="open_source_us">Open-source, U.S.-hosted</SelectItem>
+                  <SelectItem value="foreign">Foreign-built or foreign-hosted</SelectItem>
+                  <SelectItem value="unknown">Unknown / TBD</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Per the current executive order, federal AI procurements should prefer
+                American-built or U.S.-hosted open-source models. Foreign/unknown sourcing requires
+                additional review.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Is human review mandatory before the AI output drives action?</Label>
+              <RadioGroup
+                value={formData.aiHumanReview}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, aiHumanReview: value as any }))
+                }
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="hr-yes" />
+                  <Label htmlFor="hr-yes">Yes — human-in-the-loop</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="hr-no" />
+                  <Label htmlFor="hr-no">No — AI acts directly</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
+
           {formData.involvesSensitiveData === "yes" && (
             <>
               <div className="space-y-2">

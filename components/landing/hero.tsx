@@ -20,6 +20,10 @@ export function Hero() {
         <p className="mx-auto mt-6 max-w-3xl text-lg text-gray-600">
           Turn rough AI ideas into vetted, decision-ready use cases.
         </p>
+        <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-500">
+          Configurable for every business unit — Patents, Trademarks, OCIO, HR, OGC, and beyond.
+          LaunchPad adapts to how each team frames its work.
+        </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Button
             asChild

@@ -97,13 +97,18 @@ export type FormData = {
   relevantOkrs: string
   alignmentSummary: string
 
-  // Step 9
+  // Step 7 (was 9 in pre-merge numbering): Feasibility & Security
   implementationComplexity: "low" | "medium" | "high" | ""
   resourcesNeeded: string[]
   dependencies: string
-  involvesSensitiveData: "yes" | "no" | ""
+  involvesSensitiveData: "yes" | "no" | "" // PII / sensitive data use
   securityClassification: "internal" | "external" | "controlled" | ""
   accessControlRequirements: string[]
+  // AI Risk Management questions — Department of Commerce mandated set,
+  // plus the American-built model requirement per the current executive order.
+  aiDecisionalImpact: "yes" | "no" | "" // Does AI make/influence a decision affecting an applicant or employee?
+  aiModelSourcing: "american_built" | "open_source_us" | "foreign" | "unknown" | "" // Trump EO compliance
+  aiHumanReview: "yes" | "no" | "" // Is there mandatory human review before action?
   feasibilitySummary: string
 
   // Step 10
@@ -161,6 +166,9 @@ export const initialFormData: FormData = {
   involvesSensitiveData: "",
   securityClassification: "",
   accessControlRequirements: [],
+  aiDecisionalImpact: "",
+  aiModelSourcing: "",
+  aiHumanReview: "",
   feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],

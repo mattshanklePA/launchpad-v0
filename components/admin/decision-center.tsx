@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
+import { computeRiskProfile, riskBadgeClass } from "@/lib/riskProfile"
 
 function readinessBadge(score: string | undefined) {
   switch (score) {
@@ -80,6 +81,14 @@ const ENUM_LABELS: Record<string, string> = {
   "3_6": "3–6 months",
   "6_12": "6–12 months",
   gt_12: "12+ months",
+  // AI model sourcing
+  american_built: "American-built (commercial)",
+  open_source_us: "Open-source, U.S.-hosted",
+  foreign: "Foreign-built or foreign-hosted",
+  unknown: "Unknown / TBD",
+  // yes/no
+  yes: "Yes",
+  no: "No",
 }
 
 function prettyEnum(v: string | string[] | undefined): string {
@@ -120,6 +129,18 @@ function DecisionCard({ submission, selected, onToggleSelect }: DecisionCardProp
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {(() => {
+              const risk = computeRiskProfile(d)
+              return (
+                <Badge
+                  className={riskBadgeClass(risk.level)}
+                  title={`${risk.rationale}${risk.flags.length > 0 ? ` — ${risk.flags.join(", ")}` : ""}`}
+                >
+                  <Shield className="w-3 h-3 mr-1" />
+                  {risk.label}
+                </Badge>
+              )
+            })()}
             {readinessBadge(d.readinessScore)}
             <Button
               variant="ghost"

@@ -74,7 +74,7 @@ const seedSubmissions: Submission[] = [
       businessValueSummary:
         "Conservative estimate: $100M+ annual capacity reclamation OR equivalent 3-month pendency reduction. Directly supports Goal 1 (reduce pendency) and Goal 2 (improve quality) of the 2022-2026 Strategic Plan.",
 
-      usptoFocusArea: ["goal_1_pendency", "goal_2_quality", "ai_priority_examination_support"],
+      usptoFocusArea: ["goal_pendency_quality", "ai_infrastructure", "ai_responsible_use"],
       relevantOkrs:
         "Strategic Plan Goal 1: Drive Inclusive U.S. Innovation — pendency targets. Goal 2: Promote the Efficient Delivery of Reliable IP Rights — quality targets. AI Strategy Priority 1: Accelerate AI use in core examination workflows.",
       alignmentSummary:
@@ -87,6 +87,9 @@ const seedSubmissions: Submission[] = [
       involvesSensitiveData: "yes",
       securityClassification: "internal",
       accessControlRequirements: ["pii_protection", "examiner_authentication", "audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "open_source_us",
+      aiHumanReview: "yes",
       feasibilitySummary:
         "Medium complexity. Core ML is well-understood (RAG over patent corpus). Real complexity is PE2E integration and examiner change management. American-built or open-source models only; no claim text leaves USPTO infrastructure.",
 
@@ -157,7 +160,7 @@ const seedSubmissions: Submission[] = [
       businessValueSummary:
         "Contributes to backlog reduction but specific FTE-hours-saved estimate not yet developed.",
 
-      usptoFocusArea: ["goal_1_pendency"],
+      usptoFocusArea: ["goal_pendency_quality"],
       relevantOkrs: "Strategic Plan Goal 1: pendency targets for trademarks.",
       alignmentSummary: "Aligns with Goal 1 (pendency) but other strategic linkages not yet articulated.",
 
@@ -168,6 +171,9 @@ const seedSubmissions: Submission[] = [
       involvesSensitiveData: "no",
       securityClassification: "internal",
       accessControlRequirements: ["examiner_authentication"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "unknown",
+      aiHumanReview: "yes",
       feasibilitySummary:
         "Technically feasible; integration path with existing TM tools needs scoping. American-built model status TBD — current vendor is being evaluated.",
 
@@ -238,7 +244,7 @@ const seedSubmissions: Submission[] = [
       businessValueSummary:
         "Saves an estimated 1,500-2,000 HR ticket hours/year. Helps free HR for higher-value work.",
 
-      usptoFocusArea: ["operational_excellence"],
+      usptoFocusArea: ["goal_employee_experience"],
       relevantOkrs: "Internal: HR ticket SLA targets, new-hire engagement scores.",
       alignmentSummary:
         "Aligns with operational excellence goals but does not directly support the three top-of-mind Ramesh priorities (pendency, examination quality, examination cost). Framing as 'employee experience and HR efficiency' may be more appropriate.",
@@ -250,6 +256,9 @@ const seedSubmissions: Submission[] = [
       involvesSensitiveData: "no",
       securityClassification: "internal",
       accessControlRequirements: ["employee_authentication"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "unknown",
+      aiHumanReview: "yes",
       feasibilitySummary:
         "Low technical complexity. Bigger lift is HR content owner availability for QA. American-built model: undecided — will use whatever AI Council approves for internal RAG.",
 
@@ -325,7 +334,7 @@ const seedSubmissions: Submission[] = [
       businessValueSummary:
         "$700K-$1M/year in reclaimed tier-1 capacity. Knock-on productivity benefit across USPTO from faster IT resolution.",
 
-      usptoFocusArea: ["operational_excellence", "ai_priority_operations"],
+      usptoFocusArea: ["goal_employee_experience", "ai_infrastructure"],
       relevantOkrs:
         "OCIO ticket SLA targets; AI Strategy Priority 3: AI for operational efficiency.",
       alignmentSummary:
@@ -338,6 +347,9 @@ const seedSubmissions: Submission[] = [
       involvesSensitiveData: "no",
       securityClassification: "internal",
       accessControlRequirements: ["ocio_authentication", "audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "open_source_us",
+      aiHumanReview: "yes",
       feasibilitySummary:
         "Low technical complexity. American-built model — using open-source distilBERT fine-tuned on internal ticket data, hosted on USPTO infrastructure. 30-day shadow deployment de-risks accuracy concerns before go-live.",
 
@@ -412,6 +424,9 @@ const seedSubmissions: Submission[] = [
       involvesSensitiveData: "yes",
       securityClassification: "controlled",
       accessControlRequirements: [],
+      aiDecisionalImpact: "yes",
+      aiModelSourcing: "unknown",
+      aiHumanReview: "no",
       feasibilitySummary:
         "FOIA processing involves PII, attorney-client material, and exemption-driven redaction logic. High security and policy complexity. American-built model status not addressed.",
 

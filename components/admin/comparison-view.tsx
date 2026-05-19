@@ -71,6 +71,11 @@ const ENUM_LABELS: Record<string, string> = {
   controlled: "Controlled",
   public: "Public",
   excluded: "Excluded",
+  // AI model sourcing
+  american_built: "American-built",
+  open_source_us: "Open-source (U.S.)",
+  foreign: "Foreign-built",
+  unknown: "Unknown",
 }
 
 function prettify(s: string): string {
@@ -198,6 +203,13 @@ export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
             label="Feasibility & risks"
             values={submissions.map((s) => s.formData.feasibilitySummary || s.formData.dependencies)}
           />
+          <CompareRow label="Uses PII" values={submissions.map((s) => s.formData.involvesSensitiveData)} />
+          <CompareRow
+            label="AI drives decisions"
+            values={submissions.map((s) => s.formData.aiDecisionalImpact)}
+          />
+          <CompareRow label="Model sourcing" values={submissions.map((s) => s.formData.aiModelSourcing)} />
+          <CompareRow label="Human review" values={submissions.map((s) => s.formData.aiHumanReview)} />
           <CompareRow
             label="Success metrics"
             values={submissions.map((s) => s.formData.metricsSummary || s.formData.successMetrics)}

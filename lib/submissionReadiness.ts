@@ -121,7 +121,17 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     missing.push({ step: 7, stepName: "Feasibility & Security", field: "implementationComplexity", reason: "missing", message: "Implementation complexity" })
   }
   if (!formData.involvesSensitiveData) {
-    missing.push({ step: 7, stepName: "Feasibility & Security", field: "involvesSensitiveData", reason: "missing", message: "Sensitive data answer" })
+    missing.push({ step: 7, stepName: "Feasibility & Security", field: "involvesSensitiveData", reason: "missing", message: "PII / sensitive data answer" })
+  }
+  // AI Risk Management — DoC mandated, all three required for submission.
+  if (!formData.aiDecisionalImpact) {
+    missing.push({ step: 7, stepName: "Feasibility & Security", field: "aiDecisionalImpact", reason: "missing", message: "AI decisional impact answer" })
+  }
+  if (!formData.aiModelSourcing) {
+    missing.push({ step: 7, stepName: "Feasibility & Security", field: "aiModelSourcing", reason: "missing", message: "AI model sourcing" })
+  }
+  if (!formData.aiHumanReview) {
+    missing.push({ step: 7, stepName: "Feasibility & Security", field: "aiHumanReview", reason: "missing", message: "Human review answer" })
   }
 
   // ---------- Step 8: Success Metrics ----------
