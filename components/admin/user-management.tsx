@@ -20,10 +20,46 @@ import {
   addUser,
   removeUser,
   updateUserRole,
+  updateUserProfile,
   getSession,
   type User,
   type Role,
+  type JobRole,
+  type BusinessUnit,
 } from "@/lib/auth"
+
+// Display labels for the USPTO profile fields. Kept here (rather than imported
+// from a shared util) so this component is fully self-contained.
+const JOB_ROLE_OPTIONS: { value: JobRole; label: string }[] = [
+  { value: "", label: "— Not set —" },
+  { value: "patent_examiner", label: "Patent Examiner" },
+  { value: "trademark_examiner", label: "Trademark Examiner" },
+  { value: "manager", label: "Manager" },
+  { value: "it_staff", label: "IT Staff" },
+  { value: "product_owner", label: "Product Owner" },
+  { value: "lead_product_owner", label: "Lead Product Owner" },
+  { value: "developer", label: "Developer" },
+  { value: "other", label: "Other" },
+]
+
+const BUSINESS_UNIT_OPTIONS: { value: BusinessUnit; label: string }[] = [
+  { value: "", label: "— Not set —" },
+  { value: "patents", label: "Patents" },
+  { value: "trademarks", label: "Trademarks" },
+  { value: "ocio", label: "OCIO" },
+  { value: "ocfo", label: "OCFO" },
+  { value: "ogc", label: "OGC" },
+  { value: "opia", label: "OPIA" },
+  { value: "hr", label: "Human Resources" },
+  { value: "other", label: "Other" },
+]
+
+function jobRoleLabel(v?: JobRole): string {
+  return JOB_ROLE_OPTIONS.find((o) => o.value === (v || ""))?.label || "—"
+}
+function businessUnitLabel(v?: BusinessUnit): string {
+  return BUSINESS_UNIT_OPTIONS.find((o) => o.value === (v || ""))?.label || "—"
+}
 
 function roleBadge(role: Role) {
   switch (role) {
@@ -54,6 +90,8 @@ export function UserManagement() {
   const [formEmail, setFormEmail] = useState("")
   const [formName, setFormName] = useState("")
   const [formRole, setFormRole] = useState<Role>("submitter")
+  const [formJobRole, setFormJobRole] = useState<JobRole>("")
+  const [formBusinessUnit, setFormBusinessUnit] = useState<BusinessUnit>("")
   const [formPassword, setFormPassword] = useState("")
   const { toast } = useToast()
 
@@ -71,6 +109,8 @@ export function UserManagement() {
       name: formName,
       role: formRole,
       password: formPassword,
+      jobRole: formJobRole,
+      businessUnit: formBusinessUnit,
     })
     if ("error" in result) {
       toast({ variant: "destructive", title: "Could not add user", description: result.error })
@@ -80,6 +120,8 @@ export function UserManagement() {
     setFormEmail("")
     setFormName("")
     setFormRole("submitter")
+    setFormJobRole("")
+    setFormBusinessUnit("")
     setFormPassword("")
     setShowAddForm(false)
     refresh()
@@ -107,6 +149,34 @@ export function UserManagement() {
     refresh()
   }
 
+  const handleJobRoleChange = (user: User, newJobRole: JobRole) => {
+    if (newJobRole === (user.jobRole || "")) return
+    const result = updateUserProfile(user.id, { jobRole: newJobRole })
+    if (!result.ok) {
+      toast({ variant: "destructive", title: "Could not update job role", description: result.error })
+      return
+    }
+    toast({
+      title: "Profile updated",
+      description: `${user.name}: ${jobRoleLabel(newJobRole)}`,
+    })
+    refresh()
+  }
+
+  const handleBusinessUnitChange = (user: User, newBu: BusinessUnit) => {
+    if (newBu === (user.businessUnit || "")) return
+    const result = updateUserProfile(user.id, { businessUnit: newBu })
+    if (!result.ok) {
+      toast({ variant: "destructive", title: "Could not update business unit", description: result.error })
+      return
+    }
+    toast({
+      title: "Profile updated",
+      description: `${user.name}: ${businessUnitLabel(newBu)}`,
+    })
+    refresh()
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -118,7 +188,8 @@ export function UserManagement() {
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage who has access to admin features. Submitters can use the wizard without an account.
+          Manage who has access to admin features. Job Role and Business Unit auto-fill the
+          submitter step of the wizard so people don't have to retype it.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -140,7 +211,7 @@ export function UserManagement() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="newRole">Role</Label>
+                <Label htmlFor="newRole">Access role</Label>
                 <Select value={formRole} onValueChange={(v) => setFormRole(v as Role)}>
                   <SelectTrigger id="newRole">
                     <SelectValue />
@@ -162,6 +233,42 @@ export function UserManagement() {
                   placeholder="At least 6 characters"
                 />
               </div>
+              <div className="space-y-1">
+                <Label htmlFor="newJobRole">Job role</Label>
+                <Select
+                  value={formJobRole || "_none"}
+                  onValueChange={(v) => setFormJobRole(v === "_none" ? "" : (v as JobRole))}
+                >
+                  <SelectTrigger id="newJobRole">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {JOB_ROLE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="newBusinessUnit">Business unit</Label>
+                <Select
+                  value={formBusinessUnit || "_none"}
+                  onValueChange={(v) => setFormBusinessUnit(v === "_none" ? "" : (v as BusinessUnit))}
+                >
+                  <SelectTrigger id="newBusinessUnit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BUSINESS_UNIT_OPTIONS.map((o) => (
+                      <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <Button onClick={handleAdd}>Create User</Button>
           </div>
@@ -174,49 +281,96 @@ export function UserManagement() {
             return (
               <div
                 key={u.id}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 border rounded-lg"
+                className="flex flex-col gap-3 p-3 border rounded-lg"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium">{u.name}</p>
-                    {isMe && (
-                      <Badge variant="outline" className="text-xs">
-                        You
-                      </Badge>
-                    )}
-                    {isPrimaryAdmin && (
-                      <Badge variant="outline" className="text-xs">
-                        Primary
-                      </Badge>
-                    )}
+                {/* Top row: name / access role / delete */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium">{u.name}</p>
+                      {isMe && (
+                        <Badge variant="outline" className="text-xs">
+                          You
+                        </Badge>
+                      )}
+                      {isPrimaryAdmin && (
+                        <Badge variant="outline" className="text-xs">
+                          Primary
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">{u.email}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground truncate">{u.email}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {roleBadge(u.role)}
+                    <Select
+                      value={u.role}
+                      onValueChange={(v) => handleRoleChange(u, v as Role)}
+                      disabled={isPrimaryAdmin}
+                    >
+                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="submitter">Submitter</SelectItem>
+                        <SelectItem value="reviewer">Reviewer</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(u)}
+                      disabled={isPrimaryAdmin || isMe}
+                      title={isPrimaryAdmin ? "Cannot delete primary admin" : isMe ? "Cannot delete yourself" : "Delete user"}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {roleBadge(u.role)}
-                  <Select
-                    value={u.role}
-                    onValueChange={(v) => handleRoleChange(u, v as Role)}
-                    disabled={isPrimaryAdmin}
-                  >
-                    <SelectTrigger className="w-[140px] h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="submitter">Submitter</SelectItem>
-                      <SelectItem value="reviewer">Reviewer</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(u)}
-                    disabled={isPrimaryAdmin || isMe}
-                    title={isPrimaryAdmin ? "Cannot delete primary admin" : isMe ? "Cannot delete yourself" : "Delete user"}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
+
+                {/* Profile row: job role + business unit */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Job role</Label>
+                    <Select
+                      value={u.jobRole || "_none"}
+                      onValueChange={(v) =>
+                        handleJobRoleChange(u, v === "_none" ? "" : (v as JobRole))
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {JOB_ROLE_OPTIONS.map((o) => (
+                          <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Business unit</Label>
+                    <Select
+                      value={u.businessUnit || "_none"}
+                      onValueChange={(v) =>
+                        handleBusinessUnitChange(u, v === "_none" ? "" : (v as BusinessUnit))
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BUSINESS_UNIT_OPTIONS.map((o) => (
+                          <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             )

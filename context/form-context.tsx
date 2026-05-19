@@ -3,6 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { type FormData, initialFormData, formSteps } from "@/lib/steps"
+import { getSession } from "@/lib/auth"
 
 interface FormContextType {
   formData: FormData
@@ -42,27 +43,56 @@ const arrayFields: (keyof FormData)[] = [
   "successMetrics",
 ]
 
+// Returns the subset of FormData that the submitter step (Step 1) covers,
+// drawn from the active session. Used to auto-fill so the submitter doesn't
+// retype info every time. Falls back to empty values when no session.
+function profileFromSession(): Partial<FormData> {
+  if (typeof window === "undefined") return {}
+  const s = getSession()
+  if (!s) return {}
+  return {
+    submitterName: s.name || "",
+    submitterEmail: s.email || "",
+    submitterRole: (s.jobRole as FormData["submitterRole"]) || "",
+    submitterOffice: (s.businessUnit as FormData["submitterOffice"]) || "",
+  }
+}
+
+function isProfileComplete(d: Partial<FormData>): boolean {
+  return Boolean(
+    d.submitterName?.trim() &&
+      d.submitterEmail?.trim() &&
+      d.submitterRole &&
+      d.submitterOffice,
+  )
+}
+
 export const FormProvider = ({ children }: { children: ReactNode }) => {
-  // Hydrate from localStorage if a saved draft exists; otherwise start fresh.
-  // This is what lets a submitter close the tab and resume later.
-  //
-  // If the saved step is 12 (confirmation page), the previous session was
-  // already submitted — clear it and start fresh on this visit.
+  // Hydrate from localStorage if a saved draft exists; otherwise start fresh
+  // and auto-fill submitter info from the logged-in user's profile so they
+  // don't have to retype it. If the saved step is 12 (confirmation page),
+  // the previous session was already submitted — clear it and start fresh.
   const [formData, setFormData] = useState<FormData>(() => {
     if (typeof window === "undefined") return initialFormData
     try {
       const savedStep = localStorage.getItem(STORAGE_KEY_STEP)
+      const profile = profileFromSession()
       if (savedStep === "12") {
         localStorage.removeItem(STORAGE_KEY_FORM)
         localStorage.removeItem(STORAGE_KEY_STEP)
-        return initialFormData
+        // Fresh start after submission — still auto-fill profile so the next
+        // submission doesn't make the user retype Step 1.
+        return { ...initialFormData, ...profile }
       }
       const saved = localStorage.getItem(STORAGE_KEY_FORM)
-      if (!saved) return initialFormData
+      if (!saved) {
+        // Fresh draft — start with profile pre-filled.
+        return { ...initialFormData, ...profile }
+      }
       const parsed = JSON.parse(saved)
-      // Merge with initialFormData so any new fields added since the draft was
-      // saved get default values instead of being undefined.
-      return { ...initialFormData, ...parsed }
+      // Merge: defaults < profile < saved draft. Saved values always win so
+      // a user who edited submitter info inline doesn't get clobbered.
+      return { ...initialFormData, ...profile, ...parsed }
     } catch (error) {
       console.error("Failed to hydrate form data from localStorage:", error)
       return initialFormData
@@ -73,11 +103,15 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === "undefined") return 1
     try {
       const saved = localStorage.getItem(STORAGE_KEY_STEP)
-      if (!saved) return 1
-      // Already-submitted state — treat next visit as fresh
-      if (saved === "12") return 1
-      const parsed = parseInt(saved, 10)
-      return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1
+      if (saved && saved !== "12") {
+        const parsed = parseInt(saved, 10)
+        if (Number.isFinite(parsed) && parsed >= 1) return parsed
+      }
+      // No saved step (fresh start). If the user's profile auto-fills Step 1,
+      // skip straight to Step 2 — Step 1 is still reachable via "Previous" or
+      // the review screen "Edit" link, so nothing is lost.
+      const profile = profileFromSession()
+      return isProfileComplete(profile) ? 2 : 1
     } catch {
       return 1
     }
@@ -109,10 +143,12 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   }, [currentStep])
 
   // Called after successful submission to clear the in-progress draft
-  // so the user starts fresh next time they open /submit.
+  // so the user starts fresh next time they open /submit. Profile-prefilled
+  // submitter fields are preserved so they don't have to retype them.
   const resetForm = () => {
-    setFormData(initialFormData)
-    setCurrentStep(1)
+    const profile = profileFromSession()
+    setFormData({ ...initialFormData, ...profile })
+    setCurrentStep(isProfileComplete(profile) ? 2 : 1)
     if (typeof window !== "undefined") {
       try {
         localStorage.removeItem(STORAGE_KEY_FORM)
