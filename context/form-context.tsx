@@ -77,7 +77,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     try {
       const savedStep = localStorage.getItem(STORAGE_KEY_STEP)
       const profile = profileFromSession()
-      if (savedStep === "12") {
+      if (savedStep === "10") {
         localStorage.removeItem(STORAGE_KEY_FORM)
         localStorage.removeItem(STORAGE_KEY_STEP)
         // Fresh start after submission — still auto-fill profile so the next
@@ -103,7 +103,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === "undefined") return 1
     try {
       const saved = localStorage.getItem(STORAGE_KEY_STEP)
-      if (saved && saved !== "12") {
+      if (saved && saved !== "10") {
         const parsed = parseInt(saved, 10)
         if (Number.isFinite(parsed) && parsed >= 1) return parsed
       }
@@ -160,7 +160,9 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const totalSteps = formSteps.length
-  const reviewStepNumber = 11
+  // Review is the LAST interactive step before the confirmation page.
+  // formSteps now has 10 entries (1-9 interactive + 10 confirmation).
+  const reviewStepNumber = 9
 
   const goToNextStep = () => {
     if (currentStep < totalSteps) {

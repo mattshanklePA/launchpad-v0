@@ -868,7 +868,7 @@ export default function AdminPage() {
                             <span>Submitter: {draft.submitter}</span>
                             <span>Department: {draft.department}</span>
                             <span>Last Updated: {draft.lastUpdated}</span>
-                            <span>Step {draft.step}/11</span>
+                            <span>Step {draft.step}/9</span>
                             <div className="flex items-center gap-1">
                               <span>Classification:</span>
                               {getPublicIndicatorBadge(draft.publicIndicator)}
@@ -954,7 +954,7 @@ export default function AdminPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{draft.step}/11</Badge>
+                            <Badge variant="outline">{draft.step}/9</Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{draft.lastUpdated}</TableCell>
                           <TableCell>{getPublicIndicatorBadge(draft.publicIndicator)}</TableCell>

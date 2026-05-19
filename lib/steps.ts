@@ -7,8 +7,10 @@ export type FormStep = {
   phaseName?: string
 }
 
-// Phase grouping for the 4-phase progress reframe.
-// Ramesh-bias: shows "Phase 2 of 4" instead of intimidating "Step 5 of 11".
+// Phase grouping for the progress reframe.
+// Ramesh-bias: show "Phase N of 4" instead of intimidating step counts.
+// Steps 3 (Problem & Target Users) and 5 (Value) are merged steps that used
+// to be two separate substeps each.
 export type FormPhase = {
   phase: number
   name: string
@@ -19,9 +21,9 @@ export type FormPhase = {
 
 export const formPhases: FormPhase[] = [
   { phase: 1, name: "Setup", description: "Who you are and what you're proposing.", stepStart: 1, stepEnd: 2 },
-  { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken.", stepStart: 3, stepEnd: 4 },
-  { phase: 3, name: "Solution & Value", description: "What you'd build and why it matters.", stepStart: 5, stepEnd: 7 },
-  { phase: 4, name: "Alignment & Feasibility", description: "Strategic fit, security, and measurable success.", stepStart: 8, stepEnd: 10 },
+  { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken.", stepStart: 3, stepEnd: 3 },
+  { phase: 3, name: "Solution & Value", description: "What you'd build and why it matters.", stepStart: 4, stepEnd: 5 },
+  { phase: 4, name: "Alignment & Feasibility", description: "Strategic fit, security, and measurable success.", stepStart: 6, stepEnd: 8 },
 ]
 
 export function getPhaseForStep(step: number): FormPhase | null {
@@ -186,60 +188,48 @@ export const formSteps: FormStep[] = [
   },
   {
     step: 3,
-    name: "Target User",
-    title: "Identify the Target User",
-    prompt: "Who would benefit from this idea? Describe the primary users.",
+    name: "Problem & Target Users",
+    title: "Define the Problem and Who It Affects",
+    prompt: "What problem does this idea solve, and who's affected by it?",
   },
   {
     step: 4,
-    name: "Problem Statement",
-    title: "Define the Problem",
-    prompt: "What problem does this idea solve? Be specific about the pain.",
-  },
-  {
-    step: 5,
     name: "Proposed Solution",
     title: "Propose a Solution",
     prompt: "How would this work? Describe your proposed AI/ML approach.",
   },
   {
+    step: 5,
+    name: "Value",
+    title: "Define the Value to Users and the Business",
+    prompt: "How does this help users, and what's the business case for USPTO?",
+  },
+  {
     step: 6,
-    name: "User Value",
-    title: "Define the User Value",
-    prompt: "How would this make users' lives better? Quantify if you can.",
-  },
-  {
-    step: 7,
-    name: "Business Value",
-    title: "Estimate the Business Value",
-    prompt: "What's the business case? How does this help USPTO?",
-  },
-  {
-    step: 8,
     name: "Strategic Alignment",
     title: "Align with USPTO Goals",
     prompt: "Does this align with USPTO's strategic priorities? Which ones?",
   },
   {
-    step: 9,
+    step: 7,
     name: "Feasibility & Security",
     title: "Assess Feasibility & Security",
     prompt: "Is this idea feasible? Consider technical, security, and resource realities.",
   },
   {
-    step: 10,
+    step: 8,
     name: "Outcome Measurements",
     title: "Define Success Metrics",
     prompt: "How will we know this worked? Define measurable success.",
   },
   {
-    step: 11,
+    step: 9,
     name: "Review & Submit",
     title: "Review & Submit for Vetting",
     prompt: "Review your idea before submitting it for vetting.",
   },
   {
-    step: 12,
+    step: 10,
     name: "Submission Complete",
     title: "Idea Submitted for Vetting",
     prompt: "Your idea has been submitted and will be vetted by the review team.",

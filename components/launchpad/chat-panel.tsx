@@ -30,41 +30,35 @@ type LaunchPadChatPanelProps = {
 function getStepContext(step: number): { buttonLabel: string; emptyMessage: string } {
   switch (step) {
     case 3:
-      return {
-        buttonLabel: "Coach Me on Target Users",
-        emptyMessage: "Type a draft (even a rough one) in the User Profile field, then click below. I'll ask one question at a time to help you sharpen it.",
-      }
-    case 4:
+      // Merged Problem & Target Users
       return {
         buttonLabel: "Coach Me on the Problem",
-        emptyMessage: "Draft the problem in the field, then click below. I'll guide you with one question at a time.",
+        emptyMessage:
+          "Draft the core problem in the field above, then click below. I'll ask one question at a time, including who's affected and how badly.",
       }
-    case 5:
+    case 4:
       return {
         buttonLabel: "Coach Me on the Solution",
         emptyMessage: "Sketch your solution, then click below. I'll ask focused questions to firm it up.",
       }
+    case 5:
+      // Merged Value (user + business)
+      return {
+        buttonLabel: "Coach Me on Value",
+        emptyMessage:
+          "Note the business case in the field above, then click below. I'll help you tie user-level benefit to defensible agency-level numbers.",
+      }
     case 6:
-      return {
-        buttonLabel: "Coach Me on User Value",
-        emptyMessage: "Note the user benefit, then click below. I'll help you ground it in observable outcomes.",
-      }
-    case 7:
-      return {
-        buttonLabel: "Coach Me on Business Value",
-        emptyMessage: "Note the business case, then click below. I'll guide you to make it defensible.",
-      }
-    case 8:
       return {
         buttonLabel: "Coach Me on Alignment",
         emptyMessage: "Note how this maps to USPTO strategy, then click below. I'll help you connect it specifically.",
       }
-    case 9:
+    case 7:
       return {
         buttonLabel: "Coach Me on Feasibility",
         emptyMessage: "Note the dependencies/risks, then click below. I'll surface the federal realities you need to address.",
       }
-    case 10:
+    case 8:
       return {
         buttonLabel: "Coach Me on Metrics",
         emptyMessage: "Note success criteria, then click below. I'll help you ground them in measurable signals.",
@@ -77,20 +71,18 @@ function getStepContext(step: number): { buttonLabel: string; emptyMessage: stri
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
     case 3:
-      return "targetUserContext"
-    case 4:
+      // Merged Problem & Users — coach on the problem first
       return "coreProblem"
-    case 5:
+    case 4:
       return "proposedSolution"
-    case 6:
-      return "userValue"
-    case 7:
+    case 5:
+      // Merged Value — coach on the business-value statement
       return "businessValue"
-    case 8:
+    case 6:
       return "relevantOkrs"
-    case 9:
+    case 7:
       return "dependencies"
-    case 10:
+    case 8:
       return "successMetrics"
     default:
       return null

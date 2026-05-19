@@ -36,44 +36,41 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Idea Description", key: "useCaseDescription" },
     { label: "Public / Excluded", key: "publicIndicator" },
   ],
+  // Step 3: merged Problem & Target Users
   3: [
-    { label: "Target Audience", key: "targetAudience" },
-    { label: "Users Impacted", key: "impactedUsersCount" },
-    { label: "Pain Points", key: "painPoints" },
-    { label: "User Profile / Context", key: "targetUserContext" },
-    { label: "Refined Summary", key: "targetUserSummary" },
-  ],
-  4: [
     { label: "Core Problem", key: "coreProblem" },
     { label: "Problem Impact", key: "problemImpact" },
     { label: "Affected System", key: "affectedSystem" },
     { label: "Problem Type Tags", key: "problemType" },
     { label: "Severity", key: "severity" },
-    { label: "Refined Definition", key: "problemDefinition" },
+    { label: "Target Audience", key: "targetAudience" },
+    { label: "Users Impacted", key: "impactedUsersCount" },
+    { label: "Pain Points", key: "painPoints" },
+    { label: "User Profile / Context", key: "targetUserContext" },
+    { label: "Refined Problem & Users Summary", key: "problemDefinition" },
   ],
-  5: [
+  4: [
     { label: "Proposed Solution", key: "proposedSolution" },
     { label: "Key Functionality", key: "keyFunctionality" },
     { label: "Refined Summary", key: "solutionSummary" },
   ],
-  6: [
+  // Step 5: merged Value (user + business)
+  5: [
     { label: "User Value", key: "userValue" },
     { label: "Time Savings Range", key: "userTimeSavings" },
     { label: "Other Improvements", key: "otherUserImprovements" },
-    { label: "Refined Summary", key: "userValueSummary" },
-  ],
-  7: [
+    { label: "Refined User Value Summary", key: "userValueSummary" },
     { label: "Business Value", key: "businessValue" },
     { label: "Cost Savings Range", key: "costSavings" },
     { label: "Strategic Benefits", key: "strategicBenefit" },
-    { label: "Refined Summary", key: "businessValueSummary" },
+    { label: "Refined Business Value Summary", key: "businessValueSummary" },
   ],
-  8: [
+  6: [
     { label: "USPTO Focus Areas", key: "usptoFocusArea" },
     { label: "Relevant OKRs / Alignment", key: "relevantOkrs" },
     { label: "Refined Summary", key: "alignmentSummary" },
   ],
-  9: [
+  7: [
     { label: "Implementation Complexity", key: "implementationComplexity" },
     { label: "Resources Needed", key: "resourcesNeeded" },
     { label: "Dependencies / Feasibility", key: "dependencies" },
@@ -82,7 +79,7 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Access Control Requirements", key: "accessControlRequirements" },
     { label: "Refined Summary", key: "feasibilitySummary" },
   ],
-  10: [
+  8: [
     { label: "Success Metrics", key: "successMetrics" },
     { label: "Key Metrics Tags", key: "keyMetrics" },
     { label: "Timeline for Results", key: "timelineForResults" },
@@ -114,7 +111,7 @@ export function Step10ReviewSubmit() {
       })
       // Brief delay so the toast registers before the page transitions
       setTimeout(() => {
-        setCurrentStep(12)
+        setCurrentStep(10)
       }, 400)
     } catch (error) {
       console.error("Submission failed:", error)
@@ -308,7 +305,7 @@ export function Step10ReviewSubmit() {
         </CardContent>
       </Card>
 
-      {formSteps.slice(0, 10).map((step) => {
+      {formSteps.slice(0, 8).map((step) => {
         const fields = STEP_FIELDS[step.step] || []
         return (
           <Card key={step.step}>

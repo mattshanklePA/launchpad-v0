@@ -73,7 +73,7 @@ export function Step7Alignment() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={8}
+          step={6}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, alignmentSummary: suggestion }))}
         />
       </div>

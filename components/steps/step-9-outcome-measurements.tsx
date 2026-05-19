@@ -92,7 +92,7 @@ export function Step9OutcomeMeasurements() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={10}
+          step={8}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, metricsSummary: suggestion }))}
         />
       </div>

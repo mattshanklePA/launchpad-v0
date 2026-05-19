@@ -57,33 +57,46 @@ function buildSubmissionContext(formData: FormData, currentStep: number): string
   if (formData.useCaseDescription) {
     lines.push(`- Idea description: ${formData.useCaseDescription}`)
   }
-  if (currentStep > 3 && (formData.targetUserSummary || formData.targetUserContext)) {
-    lines.push(`- Target users (from Step 3): ${formData.targetUserSummary || formData.targetUserContext}`)
+  // Step 3 is the merged Problem & Target Users step — surface BOTH the
+  // problem definition and the target user context once it's been touched.
+  if (
+    currentStep > 3 &&
+    (formData.problemDefinition || formData.coreProblem || formData.targetUserSummary || formData.targetUserContext)
+  ) {
+    if (formData.problemDefinition || formData.coreProblem) {
+      lines.push(`- Problem (from Step 3): ${formData.problemDefinition || formData.coreProblem}`)
+    }
+    if (formData.targetUserSummary || formData.targetUserContext) {
+      lines.push(`- Target users (from Step 3): ${formData.targetUserSummary || formData.targetUserContext}`)
+    }
   }
-  if (currentStep > 4 && (formData.problemDefinition || formData.coreProblem)) {
-    lines.push(`- Problem (from Step 4): ${formData.problemDefinition || formData.coreProblem}`)
+  if (currentStep > 4 && (formData.solutionSummary || formData.proposedSolution)) {
+    lines.push(`- Proposed solution (from Step 4): ${formData.solutionSummary || formData.proposedSolution}`)
   }
-  if (currentStep > 5 && (formData.solutionSummary || formData.proposedSolution)) {
-    lines.push(`- Proposed solution (from Step 5): ${formData.solutionSummary || formData.proposedSolution}`)
+  // Step 5 is the merged Value step — both user and business value.
+  if (
+    currentStep > 5 &&
+    (formData.userValueSummary || formData.userValue || formData.businessValueSummary || formData.businessValue)
+  ) {
+    if (formData.userValueSummary || formData.userValue) {
+      lines.push(`- User value (from Step 5): ${formData.userValueSummary || formData.userValue}`)
+    }
+    if (formData.businessValueSummary || formData.businessValue) {
+      lines.push(`- Business value (from Step 5): ${formData.businessValueSummary || formData.businessValue}`)
+    }
   }
-  if (currentStep > 6 && (formData.userValueSummary || formData.userValue)) {
-    lines.push(`- User value (from Step 6): ${formData.userValueSummary || formData.userValue}`)
+  if (currentStep > 6 && (formData.alignmentSummary || formData.relevantOkrs)) {
+    lines.push(`- Strategic alignment (from Step 6): ${formData.alignmentSummary || formData.relevantOkrs}`)
   }
-  if (currentStep > 7 && (formData.businessValueSummary || formData.businessValue)) {
-    lines.push(`- Business value (from Step 7): ${formData.businessValueSummary || formData.businessValue}`)
+  if (currentStep > 7 && (formData.feasibilitySummary || formData.dependencies)) {
+    lines.push(`- Feasibility (from Step 7): ${formData.feasibilitySummary || formData.dependencies}`)
   }
-  if (currentStep > 8 && (formData.alignmentSummary || formData.relevantOkrs)) {
-    lines.push(`- Strategic alignment (from Step 8): ${formData.alignmentSummary || formData.relevantOkrs}`)
-  }
-  if (currentStep > 9 && (formData.feasibilitySummary || formData.dependencies)) {
-    lines.push(`- Feasibility (from Step 9): ${formData.feasibilitySummary || formData.dependencies}`)
-  }
-  if (currentStep > 10 && (formData.metricsSummary || formData.successMetrics)) {
-    lines.push(`- Success metrics (from Step 10): ${formData.metricsSummary || formData.successMetrics}`)
+  if (currentStep > 8 && (formData.metricsSummary || formData.successMetrics)) {
+    lines.push(`- Success metrics (from Step 8): ${formData.metricsSummary || formData.successMetrics}`)
   }
 
   if (lines.length === 0) {
-    return "(No prior context — this is the submitter's first co-pilot interaction.)"
+    return "(No prior context — this is the submitter's first Scout interaction.)"
   }
   return lines.join("\n")
 }
@@ -94,52 +107,61 @@ function buildSubmissionContext(formData: FormData, currentStep: number): string
 // and what a USPTO reviewer would push back on.
 // ============================================================
 const stepRubrics: Record<number, string> = {
-  3: `For TARGET USERS, evaluate whether:
-- The user role is named with specific workflow context (not just a job title)
-- The estimated number of users impacted is realistic and tied to USPTO scale
-- Pain points are observable, frequent, and have a clear severity
-- The user experience aligns with USPTO's goal of impactful employee and customer experiences`,
-
-  4: `For PROBLEM STATEMENT, evaluate whether:
+  // Step 3: PROBLEM & TARGET USERS (merged)
+  3: `For PROBLEM & TARGET USERS (merged step), evaluate whether:
+PROBLEM dimensions:
 - The root cause is named, not just symptoms
 - The cost of inaction is quantified (hours, dollars, errors, pendency days)
 - The problem connects to a real USPTO operational priority — most often efficient delivery of reliable IP rights
-- The magnitude is established (how many examiners, how many cases, how often)`,
+- The magnitude is established (how many cases/users/instances, how often)
+TARGET USER dimensions:
+- The affected user role is named with specific workflow context (not just a job title)
+- The estimated number of users impacted is realistic and tied to USPTO scale
+- Pain points are observable and frequent, with a clear severity
+- The user experience aligns with USPTO's goal of impactful employee and customer experiences
+COMBINED: a strong response makes the link explicit — for THIS problem, THESE users are affected in THIS specific way.`,
 
-  5: `For PROPOSED SOLUTION, evaluate whether:
+  // Step 4: PROPOSED SOLUTION
+  4: `For PROPOSED SOLUTION, evaluate whether:
 - The AI/ML mechanism is specific (NLP query expansion, classification model, RAG, etc.) — not just "we'll use AI"
 - The user interaction model is defined (what does the user do, what does the system return)
 - Existing USPTO systems/APIs that must be touched are named
 - The approach aligns with USPTO's priority of enhancing AI capabilities through infrastructure and resources`,
 
-  6: `For USER VALUE, evaluate whether:
+  // Step 5: VALUE (merged user + business)
+  5: `For VALUE (merged user + business value), evaluate whether:
+USER VALUE dimensions:
 - The current-state baseline is quantified (how long does the user spend today)
 - The expected improvement is grounded in data (pilot, benchmark, comparable system) — not a guess
 - The confidence level is acknowledged (high/medium/low and why)
-- The benefit is specific to USPTO users, not abstract`,
-
-  7: `For BUSINESS VALUE, evaluate whether:
-- Labor-hour savings, dollar savings, throughput gains, or public-facing improvements are quantified with a defensible baseline (whoever the users are — examiners, IT staff, attorneys, applicants, the public)
-- The strategic link to a named USPTO priority is explicit
+- The benefit is specific to USPTO users, not abstract
+BUSINESS VALUE dimensions:
+- Labor-hour savings, dollar savings, throughput gains, or public-facing improvements are quantified with a defensible baseline
+- The strategic link to a named USPTO priority is explicit (especially reduced pendency, improved quality, reduced costs — Ramesh's three priorities)
 - Secondary benefits (quality, consistency, reduced rework, public access) are identified
-- The ROI claim is realistic — overly aggressive estimates undermine credibility`,
+- The ROI claim is realistic — overly aggressive estimates undermine credibility
+COMBINED: the user-level benefit must scale into a defensible business-level number.`,
 
-  8: `For STRATEGIC ALIGNMENT, evaluate whether:
+  // Step 6: STRATEGIC ALIGNMENT
+  6: `For STRATEGIC ALIGNMENT, evaluate whether:
 - The submitter names 1-2 specific USPTO priorities — not vague gestures like "modernization" or "efficiency"
 - The mechanism connecting the idea to each priority is explicit (how, exactly, does this advance it?)
 - Expected contribution is quantified where possible
 - Responsible AI considerations are addressed — bias mitigation, human oversight, explainability
 - The submitter shows focus by naming what this idea does NOT prioritize`,
 
-  9: `For FEASIBILITY & SECURITY, evaluate whether:
+  // Step 7: FEASIBILITY & SECURITY
+  7: `For FEASIBILITY & SECURITY, evaluate whether:
 - The hardest technical risk is named honestly (not buried)
 - FedRAMP/ATO timeline implications are realistic (typically 8-12+ weeks for amendments)
 - Data sensitivity and 508 accessibility are addressed
 - Union/CBA considerations are flagged where workflows change
 - Critical-path dependencies (other systems, teams, procurement) are identified
-- A fallback plan exists if the biggest risk materializes`,
+- A fallback plan exists if the biggest risk materializes
+- AI risk management questions are addressed: PII use, decision-making impact, American-built model sourcing`,
 
-  10: `For SUCCESS METRICS, evaluate whether:
+  // Step 8: SUCCESS METRICS
+  8: `For SUCCESS METRICS, evaluate whether:
 - Baseline data source is named (current system telemetry, time-motion study, etc.)
 - Leading indicators (adoption, usage frequency) are distinguished from lagging indicators (time saved, quality)
 - A decision point is defined (at week X, if metric < threshold, we will Y)
@@ -161,43 +183,46 @@ function fmt(v: string | undefined | string[]): string {
 function buildStepInputs(formData: FormData, step: number): string {
   switch (step) {
     case 3:
+      // Merged Problem & Target Users
       return [
+        `--- PROBLEM ---`,
+        `- Core problem (textarea): ${fmt(formData.coreProblem)}`,
+        `- Problem impact (textarea): ${fmt(formData.problemImpact)}`,
+        `- Affected system: ${fmt(formData.affectedSystem)}`,
+        `- Problem type tags: ${fmt(formData.problemType)}`,
+        `- Severity: ${fmt(formData.severity)}`,
+        `--- TARGET USERS ---`,
         `- Target audience: ${fmt(formData.targetAudience)}`,
         `- Impacted users count: ${fmt(formData.impactedUsersCount)}`,
         `- Key pain points (textarea): ${fmt(formData.painPoints)}`,
         `- User profile / context (textarea): ${fmt(formData.targetUserContext)}`,
       ].join("\n")
     case 4:
-      return [
-        `- Core problem (textarea): ${fmt(formData.coreProblem)}`,
-        `- Problem impact (textarea): ${fmt(formData.problemImpact)}`,
-        `- Affected system: ${fmt(formData.affectedSystem)}`,
-        `- Problem type tags: ${fmt(formData.problemType)}`,
-        `- Severity: ${fmt(formData.severity)}`,
-      ].join("\n")
-    case 5:
+      // Proposed Solution
       return [
         `- Proposed solution (textarea): ${fmt(formData.proposedSolution)}`,
         `- Key functionality tags: ${fmt(formData.keyFunctionality)}`,
       ].join("\n")
-    case 6:
+    case 5:
+      // Merged Value (user + business)
       return [
+        `--- USER VALUE ---`,
         `- User value (textarea): ${fmt(formData.userValue)}`,
         `- User time savings range: ${fmt(formData.userTimeSavings)}`,
         `- Other user improvements: ${fmt(formData.otherUserImprovements)}`,
-      ].join("\n")
-    case 7:
-      return [
+        `--- BUSINESS VALUE ---`,
         `- Business value (textarea): ${fmt(formData.businessValue)}`,
         `- Cost savings range: ${fmt(formData.costSavings)}`,
         `- Strategic benefit tags: ${fmt(formData.strategicBenefit)}`,
       ].join("\n")
-    case 8:
+    case 6:
+      // Strategic Alignment
       return [
         `- USPTO focus areas selected: ${fmt(formData.usptoFocusArea)}`,
         `- Relevant OKRs / alignment text: ${fmt(formData.relevantOkrs)}`,
       ].join("\n")
-    case 9:
+    case 7:
+      // Feasibility & Security
       return [
         `- Implementation complexity: ${fmt(formData.implementationComplexity)}`,
         `- Resources needed: ${fmt(formData.resourcesNeeded)}`,
@@ -206,7 +231,8 @@ function buildStepInputs(formData: FormData, step: number): string {
         `- Security classification: ${fmt(formData.securityClassification)}`,
         `- Access control requirements: ${fmt(formData.accessControlRequirements)}`,
       ].join("\n")
-    case 10:
+    case 8:
+      // Success Metrics
       return [
         `- Success metrics description (textarea): ${fmt(formData.successMetrics)}`,
         `- Key metrics tags: ${fmt(formData.keyMetrics)}`,
@@ -217,24 +243,23 @@ function buildStepInputs(formData: FormData, step: number): string {
   }
 }
 
-// Helper to get the primary input field for a given step
+// Helper to get the primary input field for a given step.
+// For merged steps, prefer the more leadership-facing field.
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
     case 3:
-      return "targetUserContext"
-    case 4:
+      // Merged Problem & Users — coach on the problem first (per Jonathan's framing)
       return "coreProblem"
-    case 5:
+    case 4:
       return "proposedSolution"
-    case 6:
-      return "userValue"
-    case 7:
+    case 5:
+      // Merged Value — coach on the business-value statement first
       return "businessValue"
-    case 8:
+    case 6:
       return "relevantOkrs"
-    case 9:
+    case 7:
       return "dependencies"
-    case 10:
+    case 8:
       return "successMetrics"
     default:
       return null

@@ -7,8 +7,8 @@ import { CheckCircle2 } from "lucide-react"
 export function ProgressBar() {
   const { totalSteps, currentStep } = useForm()
 
-  // Review step (11) lives outside the 4 phases — show its own state.
-  const isReview = currentStep >= 11
+  // Review step (9) lives outside the 4 phases — show its own state.
+  const isReview = currentStep >= 9
   const activePhase = getPhaseForStep(currentStep)
 
   // Overall progress: count completed phases + partial credit for current phase.

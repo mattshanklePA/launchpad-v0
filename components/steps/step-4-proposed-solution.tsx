@@ -88,7 +88,7 @@ export function Step4ProposedSolution() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={5}
+          step={4}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, solutionSummary: suggestion }))}
         />
       </div>

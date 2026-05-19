@@ -5,11 +5,9 @@ import { AnimatePresence, motion } from "framer-motion"
 import { StepWrapper } from "./steps/step-wrapper"
 import { Step1SubmitterInfo } from "./steps/step-1-submitter-info"
 import { Step2UseCaseOverview } from "./steps/step-2-use-case-overview"
-import { Step3TargetUser } from "./steps/step-3-target-user"
-import { Step3ProblemStatement } from "./steps/step-3-problem-statement"
+import { Step3ProblemAndUsers } from "./steps/step-3-problem-and-users"
 import { Step4ProposedSolution } from "./steps/step-4-proposed-solution"
-import { Step5UserValue } from "./steps/step-5-user-value"
-import { Step6BusinessValue } from "./steps/step-6-business-value"
+import { Step5Value } from "./steps/step-5-value"
 import { Step7Alignment } from "./steps/step-7-alignment"
 import { Step8FeasibilitySecurity } from "./steps/step-8-feasibility-security"
 import { Step9OutcomeMeasurements } from "./steps/step-9-outcome-measurements"
@@ -17,6 +15,7 @@ import { Step10ReviewSubmit } from "./steps/step-10-review-submit"
 import { Step11ExportTracking } from "./steps/step-11-export-tracking"
 import { Button } from "@/components/ui/button"
 import { UserCircle2, PencilLine } from "lucide-react"
+import { WizardNav } from "@/components/layout/wizard-nav"
 
 // Same enum labels used elsewhere — kept inline so the banner doesn't depend
 // on a util we haven't created yet.
@@ -51,78 +50,82 @@ export function FormContainer() {
       case 2:
         return <Step2UseCaseOverview />
       case 3:
-        return <Step3TargetUser />
+        return <Step3ProblemAndUsers />
       case 4:
-        return <Step3ProblemStatement />
-      case 5:
         return <Step4ProposedSolution />
+      case 5:
+        return <Step5Value />
       case 6:
-        return <Step5UserValue />
-      case 7:
-        return <Step6BusinessValue />
-      case 8:
         return <Step7Alignment />
-      case 9:
+      case 7:
         return <Step8FeasibilitySecurity />
-      case 10:
+      case 8:
         return <Step9OutcomeMeasurements />
-      case 11:
+      case 9:
         return <Step10ReviewSubmit />
-      case 12:
+      case 10:
         return <Step11ExportTracking />
       default:
         return <div>Invalid Step</div>
     }
   }
 
-  // Step 12 is a confirmation page and doesn't need the standard wrapper
-  if (currentStep === 12) {
+  // Step 10 is the confirmation page and doesn't need the standard wrapper
+  if (currentStep === 10) {
     return renderStepContent()
   }
 
-  // Show the "Submitting as…" pill on steps 2-11 (Step 1 IS the editable
+  // Show the "Submitting as…" pill on steps 2-9 (Step 1 IS the editable
   // submitter form, so no need to advertise it there). Only render if we
   // actually have a name to show.
   const showSubmitterPill =
-    currentStep >= 2 && currentStep <= 11 && Boolean(formData.submitterName)
+    currentStep >= 2 && currentStep <= 9 && Boolean(formData.submitterName)
   const roleLabel = ROLE_LABELS[formData.submitterRole as string]
   const buLabel = BU_LABELS[formData.submitterOffice as string]
 
   return (
     <div className="max-w-[1800px] mx-auto px-4 py-8">
-      {showSubmitterPill && (
-        <div className="max-w-7xl mx-auto mb-3 flex items-center justify-between gap-3 px-1">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <UserCircle2 className="h-4 w-4 text-uspto-blue-primary" />
-            <span>
-              Submitting as <strong className="text-foreground">{formData.submitterName}</strong>
-              {roleLabel && <> · {roleLabel}</>}
-              {buLabel && <> · {buLabel}</>}
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => setCurrentStep(1)}
-          >
-            <PencilLine className="h-3 w-3 mr-1" />
-            Edit submitter info
-          </Button>
-        </div>
-      )}
+      <div className="flex gap-6">
+        {/* Left sidebar: wizard nav (desktop only) */}
+        <WizardNav />
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.3 }}
-        >
-          <StepWrapper>{renderStepContent()}</StepWrapper>
-        </motion.div>
-      </AnimatePresence>
+        {/* Center column: header pill + active step */}
+        <div className="flex-1 min-w-0">
+          {showSubmitterPill && (
+            <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <UserCircle2 className="h-4 w-4 text-uspto-blue-primary" />
+                <span>
+                  Submitting as <strong className="text-foreground">{formData.submitterName}</strong>
+                  {roleLabel && <> · {roleLabel}</>}
+                  {buLabel && <> · {buLabel}</>}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground hover:text-foreground self-start sm:self-auto"
+                onClick={() => setCurrentStep(1)}
+              >
+                <PencilLine className="h-3 w-3 mr-1" />
+                Edit submitter info
+              </Button>
+            </div>
+          )}
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+            >
+              <StepWrapper>{renderStepContent()}</StepWrapper>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   )
 }

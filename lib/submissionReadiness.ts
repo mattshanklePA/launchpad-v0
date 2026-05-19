@@ -41,7 +41,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   const missing: MissingItem[] = []
   const warnings: MissingItem[] = []
 
-  // ---------- Step 1: Submitter Info ----------
+  // ---------- Step 1: Submitter Info (auto-filled from profile when available) ----------
   if (!presentString(formData.submitterName)) {
     missing.push({ step: 1, stepName: "Submitter Info", field: "submitterName", reason: "missing", message: "Submitter name" })
   }
@@ -49,10 +49,10 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     missing.push({ step: 1, stepName: "Submitter Info", field: "submitterEmail", reason: "missing", message: "Submitter email" })
   }
   if (!formData.submitterRole) {
-    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterRole", reason: "missing", message: "Submitter role" })
+    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterRole", reason: "missing", message: "Job role" })
   }
   if (!formData.submitterOffice) {
-    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterOffice", reason: "missing", message: "Office" })
+    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterOffice", reason: "missing", message: "Business unit" })
   }
 
   // ---------- Step 2: Use Case Overview ----------
@@ -66,80 +66,76 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     missing.push({ step: 2, stepName: "Idea Overview", field: "publicIndicator", reason: "missing", message: "Public / excluded classification" })
   }
 
-  // ---------- Step 3: Target User ----------
-  if (!formData.targetAudience) {
-    missing.push({ step: 3, stepName: "Target User", field: "targetAudience", reason: "missing", message: "Target audience" })
-  }
-  if (!formData.impactedUsersCount) {
-    missing.push({ step: 3, stepName: "Target User", field: "impactedUsersCount", reason: "missing", message: "Estimated users impacted" })
-  }
-  if (!presentString(formData.targetUserContext)) {
-    missing.push({ step: 3, stepName: "Target User", field: "targetUserContext", reason: "missing", message: "User profile / context" })
-  }
-
-  // ---------- Step 4: Problem Statement ----------
+  // ---------- Step 3: Problem & Target Users (merged) ----------
   if (!presentString(formData.coreProblem)) {
-    missing.push({ step: 4, stepName: "Problem Statement", field: "coreProblem", reason: "missing", message: "Problem statement" })
+    missing.push({ step: 3, stepName: "Problem & Target Users", field: "coreProblem", reason: "missing", message: "Problem statement" })
   }
   if (!formData.severity) {
-    missing.push({ step: 4, stepName: "Problem Statement", field: "severity", reason: "missing", message: "Severity rating" })
+    missing.push({ step: 3, stepName: "Problem & Target Users", field: "severity", reason: "missing", message: "Severity rating" })
   }
   if (!formData.affectedSystem) {
-    missing.push({ step: 4, stepName: "Problem Statement", field: "affectedSystem", reason: "missing", message: "Affected system" })
+    missing.push({ step: 3, stepName: "Problem & Target Users", field: "affectedSystem", reason: "missing", message: "Affected system" })
+  }
+  if (!formData.targetAudience) {
+    missing.push({ step: 3, stepName: "Problem & Target Users", field: "targetAudience", reason: "missing", message: "Target audience" })
+  }
+  if (!formData.impactedUsersCount) {
+    missing.push({ step: 3, stepName: "Problem & Target Users", field: "impactedUsersCount", reason: "missing", message: "Estimated users impacted" })
+  }
+  if (!presentString(formData.targetUserContext)) {
+    missing.push({ step: 3, stepName: "Problem & Target Users", field: "targetUserContext", reason: "missing", message: "User profile / context" })
   }
 
-  // ---------- Step 5: Proposed Solution ----------
+  // ---------- Step 4: Proposed Solution ----------
   if (!presentString(formData.proposedSolution)) {
-    missing.push({ step: 5, stepName: "Proposed Solution", field: "proposedSolution", reason: "missing", message: "Proposed solution" })
+    missing.push({ step: 4, stepName: "Proposed Solution", field: "proposedSolution", reason: "missing", message: "Proposed solution" })
   }
 
-  // ---------- Step 6: User Value ----------
+  // ---------- Step 5: Value to Users and the Business (merged) ----------
   if (!presentString(formData.userValue)) {
-    missing.push({ step: 6, stepName: "User Value", field: "userValue", reason: "missing", message: "User value statement" })
+    missing.push({ step: 5, stepName: "Value", field: "userValue", reason: "missing", message: "User value statement" })
   }
   if (!formData.userTimeSavings) {
-    missing.push({ step: 6, stepName: "User Value", field: "userTimeSavings", reason: "missing", message: "Time savings range" })
+    missing.push({ step: 5, stepName: "Value", field: "userTimeSavings", reason: "missing", message: "Time savings range" })
   }
-
-  // ---------- Step 7: Business Value ----------
   if (!presentString(formData.businessValue)) {
-    missing.push({ step: 7, stepName: "Business Value", field: "businessValue", reason: "missing", message: "Business value statement" })
+    missing.push({ step: 5, stepName: "Value", field: "businessValue", reason: "missing", message: "Business value statement" })
   }
   if (!formData.costSavings) {
-    missing.push({ step: 7, stepName: "Business Value", field: "costSavings", reason: "missing", message: "Cost savings range" })
+    missing.push({ step: 5, stepName: "Value", field: "costSavings", reason: "missing", message: "Cost savings range" })
   }
 
-  // ---------- Step 8: Strategic Alignment ----------
+  // ---------- Step 6: Strategic Alignment ----------
   if (!presentString(formData.relevantOkrs)) {
-    missing.push({ step: 8, stepName: "Strategic Alignment", field: "relevantOkrs", reason: "missing", message: "Strategic alignment text" })
+    missing.push({ step: 6, stepName: "Strategic Alignment", field: "relevantOkrs", reason: "missing", message: "Strategic alignment text" })
   }
   if (!hasArrayValue(formData.usptoFocusArea)) {
-    missing.push({ step: 8, stepName: "Strategic Alignment", field: "usptoFocusArea", reason: "missing", message: "At least one USPTO focus area" })
+    missing.push({ step: 6, stepName: "Strategic Alignment", field: "usptoFocusArea", reason: "missing", message: "At least one USPTO focus area" })
   }
 
-  // ---------- Step 9: Feasibility & Security ----------
+  // ---------- Step 7: Feasibility & Security ----------
   if (!presentString(formData.dependencies)) {
-    missing.push({ step: 9, stepName: "Feasibility & Security", field: "dependencies", reason: "missing", message: "Feasibility / dependencies" })
+    missing.push({ step: 7, stepName: "Feasibility & Security", field: "dependencies", reason: "missing", message: "Feasibility / dependencies" })
   }
   if (!formData.implementationComplexity) {
-    missing.push({ step: 9, stepName: "Feasibility & Security", field: "implementationComplexity", reason: "missing", message: "Implementation complexity" })
+    missing.push({ step: 7, stepName: "Feasibility & Security", field: "implementationComplexity", reason: "missing", message: "Implementation complexity" })
   }
   if (!formData.involvesSensitiveData) {
-    missing.push({ step: 9, stepName: "Feasibility & Security", field: "involvesSensitiveData", reason: "missing", message: "Sensitive data answer" })
+    missing.push({ step: 7, stepName: "Feasibility & Security", field: "involvesSensitiveData", reason: "missing", message: "Sensitive data answer" })
   }
 
-  // ---------- Step 10: Outcome Measurements ----------
+  // ---------- Step 8: Success Metrics ----------
   if (!presentString(formData.successMetrics)) {
-    missing.push({ step: 10, stepName: "Outcome Measurements", field: "successMetrics", reason: "missing", message: "Success metrics" })
+    missing.push({ step: 8, stepName: "Success Metrics", field: "successMetrics", reason: "missing", message: "Success metrics" })
   }
   if (!formData.timelineForResults) {
-    missing.push({ step: 10, stepName: "Outcome Measurements", field: "timelineForResults", reason: "missing", message: "Timeline for results" })
+    missing.push({ step: 8, stepName: "Success Metrics", field: "timelineForResults", reason: "missing", message: "Timeline for results" })
   }
 
   // ---------- Quality gate: AI readiness assessment ----------
   if (!formData.readinessScore) {
     missing.push({
-      step: 11,
+      step: 9,
       stepName: "Review",
       field: "readinessScore",
       reason: "not_assessed",
@@ -147,10 +143,8 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     })
   } else if (formData.readinessScore === "early_stage") {
     // Quality threshold not met — submission blocked.
-    // The AI determined the idea is too vague: missing well-defined functionality,
-    // unclear strategic alignment, unclear problem/value/metrics, etc.
     missing.push({
-      step: 11,
+      step: 9,
       stepName: "Review",
       field: "readinessScore",
       reason: "low_quality",
@@ -158,9 +152,8 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
         "AI readiness assessment marked this as 'Early Stage' — refine the dimensions called out in the summary before submitting (e.g., at least one feature well-defined, clear strategic alignment, defensible user/business value, reasonable measurement and timeline)",
     })
   } else if (formData.readinessScore === "needs_work") {
-    // Soft warning — submission allowed but reviewer will see the gaps
     warnings.push({
-      step: 11,
+      step: 9,
       stepName: "Review",
       field: "readinessScore",
       reason: "low_quality",
