@@ -10,6 +10,7 @@
 // than a 100-char rambling title. We trust the AI to surface real quality.
 
 import type { FormData } from "@/lib/steps"
+import { isFieldEnabled } from "@/lib/formConfig"
 
 export type MissingReason = "missing" | "not_assessed" | "low_quality"
 
@@ -41,106 +42,62 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   const missing: MissingItem[] = []
   const warnings: MissingItem[] = []
 
+  // Local helper that respects the admin Form Configuration. A disabled field
+  // is by definition not required — skip the check entirely.
+  const need = (
+    field: keyof FormData,
+    item: Omit<MissingItem, "field"> & { field?: string },
+    test: () => boolean,
+  ) => {
+    if (!isFieldEnabled(field)) return
+    if (test()) missing.push({ ...item, field: (item.field as string) || (field as string) })
+  }
+
   // ---------- Step 1: Submitter Info (auto-filled from profile when available) ----------
-  if (!presentString(formData.submitterName)) {
-    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterName", reason: "missing", message: "Submitter name" })
-  }
-  if (!presentString(formData.submitterEmail)) {
-    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterEmail", reason: "missing", message: "Submitter email" })
-  }
-  if (!formData.submitterRole) {
-    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterRole", reason: "missing", message: "Job role" })
-  }
-  if (!formData.submitterOffice) {
-    missing.push({ step: 1, stepName: "Submitter Info", field: "submitterOffice", reason: "missing", message: "Business unit" })
-  }
+  need("submitterName", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Submitter name" }, () => !presentString(formData.submitterName))
+  need("submitterEmail", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Submitter email" }, () => !presentString(formData.submitterEmail))
+  need("submitterRole", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Job role" }, () => !formData.submitterRole)
+  need("submitterOffice", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Business unit" }, () => !formData.submitterOffice)
 
   // ---------- Step 2: Use Case Overview ----------
-  if (!presentString(formData.useCaseTitle)) {
-    missing.push({ step: 2, stepName: "Idea Overview", field: "useCaseTitle", reason: "missing", message: "Idea title" })
-  }
-  if (!presentString(formData.useCaseDescription)) {
-    missing.push({ step: 2, stepName: "Idea Overview", field: "useCaseDescription", reason: "missing", message: "Idea description" })
-  }
-  if (!formData.publicIndicator) {
-    missing.push({ step: 2, stepName: "Idea Overview", field: "publicIndicator", reason: "missing", message: "Public / excluded classification" })
-  }
+  need("useCaseTitle", { step: 2, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
+  need("useCaseDescription", { step: 2, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
+  need("publicIndicator", { step: 2, stepName: "Idea Overview", reason: "missing", message: "Public / excluded classification" }, () => !formData.publicIndicator)
 
   // ---------- Step 3: Problem & Target Users (merged) ----------
-  if (!presentString(formData.coreProblem)) {
-    missing.push({ step: 3, stepName: "Problem & Target Users", field: "coreProblem", reason: "missing", message: "Problem statement" })
-  }
-  if (!formData.severity) {
-    missing.push({ step: 3, stepName: "Problem & Target Users", field: "severity", reason: "missing", message: "Severity rating" })
-  }
-  if (!formData.affectedSystem) {
-    missing.push({ step: 3, stepName: "Problem & Target Users", field: "affectedSystem", reason: "missing", message: "Affected system" })
-  }
-  if (!formData.targetAudience) {
-    missing.push({ step: 3, stepName: "Problem & Target Users", field: "targetAudience", reason: "missing", message: "Target audience" })
-  }
-  if (!formData.impactedUsersCount) {
-    missing.push({ step: 3, stepName: "Problem & Target Users", field: "impactedUsersCount", reason: "missing", message: "Estimated users impacted" })
-  }
-  if (!presentString(formData.targetUserContext)) {
-    missing.push({ step: 3, stepName: "Problem & Target Users", field: "targetUserContext", reason: "missing", message: "User profile / context" })
-  }
+  need("coreProblem", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
+  need("severity", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Severity rating" }, () => !formData.severity)
+  need("affectedSystem", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Affected system" }, () => !formData.affectedSystem)
+  need("targetAudience", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Target audience" }, () => !formData.targetAudience)
+  need("impactedUsersCount", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Estimated users impacted" }, () => !formData.impactedUsersCount)
+  need("targetUserContext", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
 
   // ---------- Step 4: Proposed Solution ----------
-  if (!presentString(formData.proposedSolution)) {
-    missing.push({ step: 4, stepName: "Proposed Solution", field: "proposedSolution", reason: "missing", message: "Proposed solution" })
-  }
+  need("proposedSolution", { step: 4, stepName: "Proposed Solution", reason: "missing", message: "Proposed solution" }, () => !presentString(formData.proposedSolution))
 
   // ---------- Step 5: Value to Users and the Business (merged) ----------
-  if (!presentString(formData.userValue)) {
-    missing.push({ step: 5, stepName: "Value", field: "userValue", reason: "missing", message: "User value statement" })
-  }
-  if (!formData.userTimeSavings) {
-    missing.push({ step: 5, stepName: "Value", field: "userTimeSavings", reason: "missing", message: "Time savings range" })
-  }
-  if (!presentString(formData.businessValue)) {
-    missing.push({ step: 5, stepName: "Value", field: "businessValue", reason: "missing", message: "Business value statement" })
-  }
-  if (!formData.costSavings) {
-    missing.push({ step: 5, stepName: "Value", field: "costSavings", reason: "missing", message: "Cost savings range" })
-  }
+  need("userValue", { step: 5, stepName: "Value", reason: "missing", message: "User value statement" }, () => !presentString(formData.userValue))
+  need("userTimeSavings", { step: 5, stepName: "Value", reason: "missing", message: "Time savings range" }, () => !formData.userTimeSavings)
+  need("businessValue", { step: 5, stepName: "Value", reason: "missing", message: "Business value statement" }, () => !presentString(formData.businessValue))
+  need("costSavings", { step: 5, stepName: "Value", reason: "missing", message: "Cost savings range" }, () => !formData.costSavings)
 
   // ---------- Step 6: Strategic Alignment ----------
-  if (!presentString(formData.relevantOkrs)) {
-    missing.push({ step: 6, stepName: "Strategic Alignment", field: "relevantOkrs", reason: "missing", message: "Strategic alignment text" })
-  }
-  if (!hasArrayValue(formData.usptoFocusArea)) {
-    missing.push({ step: 6, stepName: "Strategic Alignment", field: "usptoFocusArea", reason: "missing", message: "At least one USPTO focus area" })
-  }
+  need("relevantOkrs", { step: 6, stepName: "Strategic Alignment", reason: "missing", message: "Strategic alignment text" }, () => !presentString(formData.relevantOkrs))
+  need("usptoFocusArea", { step: 6, stepName: "Strategic Alignment", reason: "missing", message: "At least one USPTO focus area" }, () => !hasArrayValue(formData.usptoFocusArea))
 
   // ---------- Step 7: Feasibility & Security ----------
-  if (!presentString(formData.dependencies)) {
-    missing.push({ step: 7, stepName: "Feasibility & Security", field: "dependencies", reason: "missing", message: "Feasibility / dependencies" })
-  }
-  if (!formData.implementationComplexity) {
-    missing.push({ step: 7, stepName: "Feasibility & Security", field: "implementationComplexity", reason: "missing", message: "Implementation complexity" })
-  }
-  if (!formData.involvesSensitiveData) {
-    missing.push({ step: 7, stepName: "Feasibility & Security", field: "involvesSensitiveData", reason: "missing", message: "PII / sensitive data answer" })
-  }
-  // AI Risk Management — DoC mandated, all three required for submission.
-  if (!formData.aiDecisionalImpact) {
-    missing.push({ step: 7, stepName: "Feasibility & Security", field: "aiDecisionalImpact", reason: "missing", message: "AI decisional impact answer" })
-  }
-  if (!formData.aiModelSourcing) {
-    missing.push({ step: 7, stepName: "Feasibility & Security", field: "aiModelSourcing", reason: "missing", message: "AI model sourcing" })
-  }
-  if (!formData.aiHumanReview) {
-    missing.push({ step: 7, stepName: "Feasibility & Security", field: "aiHumanReview", reason: "missing", message: "Human review answer" })
-  }
+  need("dependencies", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "Feasibility / dependencies" }, () => !presentString(formData.dependencies))
+  need("implementationComplexity", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "Implementation complexity" }, () => !formData.implementationComplexity)
+  // AI Risk Management — DoC mandated. These fields are locked-on in the
+  // registry so `need()` will always run the check.
+  need("involvesSensitiveData", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "PII / sensitive data answer" }, () => !formData.involvesSensitiveData)
+  need("aiDecisionalImpact", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "AI decisional impact answer" }, () => !formData.aiDecisionalImpact)
+  need("aiModelSourcing", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "AI model sourcing" }, () => !formData.aiModelSourcing)
+  need("aiHumanReview", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "Human review answer" }, () => !formData.aiHumanReview)
 
   // ---------- Step 8: Success Metrics ----------
-  if (!presentString(formData.successMetrics)) {
-    missing.push({ step: 8, stepName: "Success Metrics", field: "successMetrics", reason: "missing", message: "Success metrics" })
-  }
-  if (!formData.timelineForResults) {
-    missing.push({ step: 8, stepName: "Success Metrics", field: "timelineForResults", reason: "missing", message: "Timeline for results" })
-  }
+  need("successMetrics", { step: 8, stepName: "Success Metrics", reason: "missing", message: "Success metrics" }, () => !presentString(formData.successMetrics))
+  need("timelineForResults", { step: 8, stepName: "Success Metrics", reason: "missing", message: "Timeline for results" }, () => !formData.timelineForResults)
 
   // ---------- Quality gate: AI readiness assessment ----------
   if (!formData.readinessScore) {
@@ -171,8 +128,23 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     })
   }
 
-  const totalChecks = 25 + 1 // 25 required fields + 1 quality gate
-  const passed = totalChecks - missing.length
+  // Count enabled-and-required fields dynamically — disabled fields don't
+  // count toward the completeness denominator, so a heavily-trimmed config
+  // doesn't show as artificially incomplete.
+  const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
+    "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
+    "useCaseTitle", "useCaseDescription", "publicIndicator",
+    "coreProblem", "severity", "affectedSystem", "targetAudience", "impactedUsersCount", "targetUserContext",
+    "proposedSolution",
+    "userValue", "userTimeSavings", "businessValue", "costSavings",
+    "relevantOkrs", "usptoFocusArea",
+    "dependencies", "implementationComplexity",
+    "involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview",
+    "successMetrics", "timelineForResults",
+  ]
+  const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldEnabled(k)).length
+  const totalChecks = enabledRequiredCount + 1 // + 1 for the AI quality gate
+  const passed = Math.max(0, totalChecks - missing.length)
   const completenessPercent = Math.max(0, Math.min(100, Math.round((passed / totalChecks) * 100)))
 
   return {

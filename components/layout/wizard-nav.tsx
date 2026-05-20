@@ -11,6 +11,7 @@
 
 import { useForm } from "@/context/form-context"
 import { formSteps, formPhases } from "@/lib/steps"
+import { isStepEnabled } from "@/lib/formConfig"
 import { CheckCircle2, Circle, CircleDot, ClipboardList } from "lucide-react"
 
 const REVIEW_STEP = 9
@@ -42,9 +43,12 @@ export function WizardNav() {
         </div>
 
         {formPhases.map((phase) => {
+          // Only show steps that are enabled (at least one of their fields is on).
           const phaseSteps = formSteps.filter(
-            (s) => s.step >= phase.stepStart && s.step <= phase.stepEnd,
+            (s) => s.step >= phase.stepStart && s.step <= phase.stepEnd && isStepEnabled(s.step),
           )
+          // Hide the entire phase if every step in it has been disabled.
+          if (phaseSteps.length === 0) return null
           // Whole phase is done when current step has moved past it
           const phaseDone = currentStep > phase.stepEnd
           const phaseActive = currentStep >= phase.stepStart && currentStep <= phase.stepEnd

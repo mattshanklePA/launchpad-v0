@@ -16,6 +16,7 @@ import { AIdChatPanel } from "../launchpad/chat-panel"
 import TextareaAutosize from "react-textarea-autosize"
 import { suggestStrategicAlignment } from "@/app/actions"
 import { STRATEGIC_FOCUS_AREAS, type AlignmentSuggestion } from "@/lib/strategicFocusAreas"
+import { useFieldVisibility } from "@/lib/formConfig"
 import { Sparkles, Loader2, CheckCircle2, X, RefreshCw } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -32,6 +33,7 @@ const FOCUS_BY_CATEGORY = STRATEGIC_FOCUS_AREAS.reduce<Record<string, typeof STR
 export function Step7Alignment() {
   const { formData, setFormData } = useForm()
   const { toast } = useToast()
+  const isVisible = useFieldVisibility()
   const [suggesting, setSuggesting] = useState(false)
   const [suggestion, setSuggestion] = useState<AlignmentSuggestion | null>(null)
   const [autoTried, setAutoTried] = useState(false)
@@ -208,6 +210,7 @@ export function Step7Alignment() {
           )}
 
           {/* ─── Focus area selectors (grouped by category) ─── */}
+          {isVisible("usptoFocusArea") && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Which USPTO priorities does this advance?</Label>
@@ -239,34 +242,39 @@ export function Step7Alignment() {
               </div>
             ))}
           </div>
+          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="relevantOkrs">Relevant USPTO OKRs or goals</Label>
-            <Textarea
-              id="relevantOkrs"
-              value={formData.relevantOkrs}
-              onChange={(e) => setFormData((prev) => ({ ...prev, relevantOkrs: e.target.value }))}
-              placeholder="Name the specific objectives this advances and how."
-              rows={3}
-            />
-          </div>
+          {isVisible("relevantOkrs") && (
+            <div className="space-y-2">
+              <Label htmlFor="relevantOkrs">Relevant USPTO OKRs or goals</Label>
+              <Textarea
+                id="relevantOkrs"
+                value={formData.relevantOkrs}
+                onChange={(e) => setFormData((prev) => ({ ...prev, relevantOkrs: e.target.value }))}
+                placeholder="Name the specific objectives this advances and how."
+                rows={3}
+              />
+            </div>
+          )}
 
-          <div className="pt-6 mt-6 border-t space-y-2">
-            <Label htmlFor="alignmentSummary" className="text-base font-semibold">
-              Alignment Summary
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Executive-ready 2-3 sentence summary. Pre-filled by Scout — edit to taste.
-            </p>
-            <TextareaAutosize
-              id="alignmentSummary"
-              value={formData.alignmentSummary || ""}
-              onChange={(e) => setFormData((prev) => ({ ...prev, alignmentSummary: e.target.value }))}
-              placeholder="AI-generated summary will appear here..."
-              minRows={4}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
-            />
-          </div>
+          {isVisible("alignmentSummary") && (
+            <div className="pt-6 mt-6 border-t space-y-2">
+              <Label htmlFor="alignmentSummary" className="text-base font-semibold">
+                Alignment Summary
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Executive-ready 2-3 sentence summary. Pre-filled by Scout — edit to taste.
+              </p>
+              <TextareaAutosize
+                id="alignmentSummary"
+                value={formData.alignmentSummary || ""}
+                onChange={(e) => setFormData((prev) => ({ ...prev, alignmentSummary: e.target.value }))}
+                placeholder="AI-generated summary will appear here..."
+                minRows={4}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+              />
+            </div>
+          )}
         </div>
       </div>
       <div className="lg:col-span-5 flex flex-col">

@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { type FormData, initialFormData, formSteps } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
+import { isStepEnabled } from "@/lib/formConfig"
 
 interface FormContextType {
   formData: FormData
@@ -185,15 +186,31 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   // formSteps now has 10 entries (1-9 interactive + 10 confirmation).
   const reviewStepNumber = 9
 
+  // Walk forward/backward until we hit a step that has at least one enabled
+  // field, or land on the review step (which has no registry fields and is
+  // always "enabled"). Prevents users from seeing a step with no fields.
+  const findNextEnabledStep = (from: number, direction: 1 | -1): number => {
+    let candidate = from + direction
+    const lower = 1
+    const upper = totalSteps
+    while (candidate >= lower && candidate <= upper) {
+      if (isStepEnabled(candidate)) return candidate
+      candidate += direction
+    }
+    return from // no enabled step in that direction — stay put
+  }
+
   const goToNextStep = () => {
     if (currentStep < totalSteps) {
-      setCurrentStep((prev) => prev + 1)
+      const next = findNextEnabledStep(currentStep, 1)
+      if (next !== currentStep) setCurrentStep(next)
     }
   }
 
   const goToPreviousStep = () => {
     if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1)
+      const prev = findNextEnabledStep(currentStep, -1)
+      if (prev !== currentStep) setCurrentStep(prev)
     }
   }
 

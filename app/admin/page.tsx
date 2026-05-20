@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { seedDemoSubmissionsIfEmpty, reseedDemoSubmissions } from "@/lib/seedSubmissions"
+import { FormConfigPanel } from "@/components/admin/form-config-panel"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { DecisionCenter } from "@/components/admin/decision-center"
 import { CheckCircle2, Circle, Scale, Sparkles } from "lucide-react"
@@ -530,12 +531,13 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="okrs">USPTO OKRs</TabsTrigger>
             <TabsTrigger value="drafts">Submissions</TabsTrigger>
             <TabsTrigger value="submitted">Decision Center</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="formconfig">Form Config</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -1014,6 +1016,17 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="formconfig" className="space-y-6">
+            <h2 className="text-2xl font-bold">Form Configuration</h2>
+            <p className="text-sm text-muted-foreground -mt-4 max-w-3xl">
+              Turn individual wizard fields on or off so the form captures exactly the data your
+              organization needs — no more, no less. Hidden fields are also excluded from the
+              readiness check on the final step. Core fields and DoC-mandated AI risk questions
+              are locked on by design.
+            </p>
+            <FormConfigPanel />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
