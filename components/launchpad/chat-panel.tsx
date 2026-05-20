@@ -32,39 +32,39 @@ function getStepContext(step: number): { buttonLabel: string; emptyMessage: stri
     case 3:
       // Merged Problem & Target Users
       return {
-        buttonLabel: "Coach Me on the Problem",
+        buttonLabel: "Help Me with the Problem",
         emptyMessage:
           "Draft the core problem in the field above, then click below. I'll ask one question at a time, including who's affected and how badly.",
       }
     case 4:
       return {
-        buttonLabel: "Coach Me on the Solution",
+        buttonLabel: "Help Me with the Solution",
         emptyMessage: "Sketch your solution, then click below. I'll ask focused questions to firm it up.",
       }
     case 5:
       // Merged Value (user + business)
       return {
-        buttonLabel: "Coach Me on Value",
+        buttonLabel: "Help Me with Value",
         emptyMessage:
           "Note the business case in the field above, then click below. I'll help you tie user-level benefit to defensible agency-level numbers.",
       }
     case 6:
       return {
-        buttonLabel: "Coach Me on Alignment",
+        buttonLabel: "Help Me with Alignment",
         emptyMessage: "Note how this maps to USPTO strategy, then click below. I'll help you connect it specifically.",
       }
     case 7:
       return {
-        buttonLabel: "Coach Me on Feasibility",
+        buttonLabel: "Help Me with Feasibility",
         emptyMessage: "Note the dependencies/risks, then click below. I'll surface the federal realities you need to address.",
       }
     case 8:
       return {
-        buttonLabel: "Coach Me on Metrics",
+        buttonLabel: "Help Me with Metrics",
         emptyMessage: "Note success criteria, then click below. I'll help you ground them in measurable signals.",
       }
     default:
-      return { buttonLabel: "Start Coaching", emptyMessage: "Click below to get started." }
+      return { buttonLabel: "Help Me", emptyMessage: "Click below to get started." }
   }
 }
 
@@ -141,7 +141,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
       toast({
         variant: "destructive",
         title: "Add a draft first",
-        description: "Type at least a rough draft in the main field so I have something to coach on.",
+        description: "Type at least a rough draft in the main field so I have something to work with.",
       })
       return
     }
@@ -197,7 +197,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                 <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p>Scout coaches you one question at a time. It does not invent facts — your specifics stay yours.</p>
+                <p>Scout helps you one question at a time. It does not invent facts — your specifics stay yours.</p>
               </TooltipContent>
             </Tooltip>
           </div>

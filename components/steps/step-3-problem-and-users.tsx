@@ -230,7 +230,7 @@ export function Step3ProblemAndUsers() {
                 Refined Problem & Users Summary
               </Label>
               <p className="text-sm text-muted-foreground">
-                AI-generated summary tying the problem to its affected users. Coach Scout from the
+                AI-generated summary tying the problem to its affected users. Open Scout from the
                 right panel to draft or refine.
               </p>
               <TextareaAutosize
