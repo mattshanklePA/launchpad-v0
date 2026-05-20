@@ -13,8 +13,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getSubmissions, type Submission } from "@/lib/submissions"
-import { seedDemoSubmissionsIfEmpty, reseedDemoSubmissions } from "@/lib/seedSubmissions"
+import { clearSubmissions } from "@/lib/submissions"
 import { FormConfigPanel } from "@/components/admin/form-config-panel"
+import { DataProvider, useDataProvider } from "@/components/data-provider"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { DecisionCenter } from "@/components/admin/decision-center"
 import { CheckCircle2, Circle, Scale, Sparkles } from "lucide-react"
@@ -257,7 +258,17 @@ const pipelineStats = {
   successRate: "78%",
 }
 
+// Wrapper that provides shared app data to the admin page. The actual page
+// logic lives in AdminPageInner so it can call useDataProvider().
 export default function AdminPage() {
+  return (
+    <DataProvider>
+      <AdminPageInner />
+    </DataProvider>
+  )
+}
+
+function AdminPageInner() {
   const [okrs, setOKRs] = useState(mockOKRs)
   const [editingOKR, setEditingOKR] = useState<number | null>(null)
   const [newOKR, setNewOKR] = useState({ title: "", description: "", category: "" })
@@ -270,13 +281,11 @@ export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
   const router = useRouter()
+  const { loaded: dataLoaded, refetchSubmissions } = useDataProvider()
 
   // ─── Auth gate: redirect to /login if not an admin or reviewer ───
   useEffect(() => {
     ensureSeeded()
-    // Make sure the demo seed is in place even if someone lands on /admin
-    // directly (e.g., bookmarked) without going through the landing page first.
-    seedDemoSubmissionsIfEmpty()
     const s = getSession()
     if (!hasAdminAccess(s)) {
       router.replace("/login?next=/admin")
@@ -285,6 +294,14 @@ export default function AdminPage() {
     setSession(s)
     setAuthChecked(true)
   }, [router])
+
+  // Re-hydrate the local submissions array whenever the cache changes.
+  useEffect(() => {
+    if (dataLoaded) {
+      setSubmissions(getSubmissions())
+      setHydrated(true)
+    }
+  }, [dataLoaded])
 
   const handleLogout = () => {
     logout()
@@ -1085,10 +1102,11 @@ export default function AdminPage() {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        reseedDemoSubmissions()
-                        // Full page reload so the DecisionCenter (and any other mounted
-                        // tabs reading from localStorage) re-hydrates with the new data.
+                      onClick={async () => {
+                        // Clear in Supabase, then trigger the server-side seed
+                        // which inserts the 5 demo records into the now-empty table.
+                        await clearSubmissions()
+                        await fetch("/api/seed", { method: "POST" })
                         window.location.reload()
                       }}
                     >
@@ -1096,23 +1114,18 @@ export default function AdminPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        if (!confirm("Clear ALL submissions (both demo and real)? This cannot be undone.")) return
-                        try {
-                          localStorage.removeItem("launchpad-submissions")
-                          localStorage.removeItem("launchpad-seed-version")
-                          window.location.reload()
-                        } catch (err) {
-                          console.error(err)
-                        }
+                      onClick={async () => {
+                        if (!confirm("Clear ALL submissions in the database (visible to every visitor)? This cannot be undone.")) return
+                        await clearSubmissions()
+                        window.location.reload()
                       }}
                     >
                       Clear All Submissions
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Reload writes the seed set, overwriting any existing submissions. Clear All removes everything and
-                    resets the seed marker so the next page load will re-seed automatically.
+                    Reload wipes the Supabase submissions table and re-inserts the 5 demo records. Clear All wipes
+                    everything. Both actions affect what every visitor to the demo site sees.
                   </p>
                 </CardContent>
               </Card>

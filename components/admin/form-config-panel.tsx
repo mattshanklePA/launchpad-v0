@@ -33,10 +33,10 @@ export function FormConfigPanel() {
     setConfig(getFormConfig())
   }, [])
 
-  const handleToggle = (field: FieldDefinition, next: boolean) => {
+  const handleToggle = async (field: FieldDefinition, next: boolean) => {
     if (field.locked) return
     const session = getSession()
-    const result = setFieldEnabled(field.fieldKey, next, session?.email)
+    const result = await setFieldEnabled(field.fieldKey, next, session?.email)
     if (!result.ok) {
       toast({
         variant: "destructive",
@@ -48,13 +48,13 @@ export function FormConfigPanel() {
     setConfig(getFormConfig())
     toast({
       title: next ? "Field enabled" : "Field disabled",
-      description: `"${field.label}" will ${next ? "appear in" : "be hidden from"} the wizard on next load.`,
+      description: `"${field.label}" will ${next ? "appear in" : "be hidden from"} the wizard for every visitor on next load.`,
     })
   }
 
-  const handleReset = () => {
-    if (!confirm("Reset every field to enabled? This affects the wizard for all submitters.")) return
-    resetFormConfig()
+  const handleReset = async () => {
+    if (!confirm("Reset every field to enabled? This affects the wizard for all visitors.")) return
+    await resetFormConfig()
     setConfig(getFormConfig())
     toast({
       title: "Form configuration reset",

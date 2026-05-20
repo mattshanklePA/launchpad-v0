@@ -1,21 +1,19 @@
-// Form configuration store — which fields are turned on/off in the wizard.
-// Backed by localStorage so admin toggles persist across reloads. Defaults
-// to all-fields-enabled so the wizard works out of the box without setup.
+// Form configuration — now backed by Supabase via /api/form-config.
 //
-// Per the design choice locked in with Matt:
-//   - Locked fields are always enabled regardless of stored config.
-//   - Toggle changes apply on next page load (no live re-render needed).
-//   - Existing draft data is preserved when a field is toggled off, in case
-//     the admin re-enables it later.
+// Read side stays sync (reads from the DataProvider cache) so the existing
+// isFieldEnabled / useFieldVisibility consumers don't need to become async.
+// Write side is async (POSTs to API, caller refetches via DataProvider).
 
 import { useEffect, useState, useCallback } from "react"
 import { FIELD_REGISTRY, FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import type { FormData } from "@/lib/steps"
-
-const STORAGE_KEY = "launchpad-form-config"
+import {
+  getCachedFormConfig,
+  setCachedFormConfig,
+  subscribeToCache,
+} from "@/lib/dataCache"
 
 export type FormConfig = {
-  // Map from FormData key → enabled flag. Missing keys default to enabled.
   enabled: Record<string, boolean>
   updatedAt: string
   updatedBy?: string
@@ -27,77 +25,82 @@ function defaultConfig(): FormConfig {
   return { enabled, updatedAt: new Date().toISOString() }
 }
 
+/** Synchronous read of the current form config from the cache. */
 export function getFormConfig(): FormConfig {
-  if (typeof window === "undefined") return defaultConfig()
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return defaultConfig()
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== "object" || !parsed.enabled) return defaultConfig()
-    // Merge with defaults so any newly-added registry fields get an "enabled"
-    // default rather than being undefined.
-    const merged = defaultConfig()
-    for (const key of Object.keys(parsed.enabled)) {
-      if (key in merged.enabled) merged.enabled[key] = Boolean(parsed.enabled[key])
-    }
-    return {
-      enabled: merged.enabled,
-      updatedAt: parsed.updatedAt || merged.updatedAt,
-      updatedBy: parsed.updatedBy,
-    }
-  } catch (error) {
-    console.error("Failed to read form config from localStorage:", error)
-    return defaultConfig()
+  const cached = getCachedFormConfig()
+  // Merge with defaults so new registry fields appear enabled by default
+  // when admin hasn't explicitly toggled them.
+  const merged = defaultConfig()
+  for (const key of Object.keys(cached.enabled || {})) {
+    if (key in merged.enabled) merged.enabled[key] = Boolean(cached.enabled[key])
+  }
+  return {
+    enabled: merged.enabled,
+    updatedAt: cached.updatedAt || merged.updatedAt,
+    updatedBy: cached.updatedBy || undefined,
   }
 }
 
 /**
  * Check whether a field should appear in the wizard. Locked fields always
- * return true regardless of the stored toggle state.
+ * return true regardless of stored config.
  */
 export function isFieldEnabled(fieldKey: keyof FormData | string): boolean {
   const def = FIELD_REGISTRY_BY_KEY[fieldKey as string]
-  // Fields not in the registry default to enabled (e.g., the AI-output fields
-  // like readinessScore, executiveSummary that aren't user-toggleable).
   if (!def) return true
   if (def.locked) return true
   const config = getFormConfig()
-  // Missing in config also defaults to enabled.
-  return config.enabled[fieldKey] !== false
+  return config.enabled[fieldKey as string] !== false
 }
 
 /**
- * Set a field's enabled state. No-op for locked fields.
+ * Async write — PUTs the new enabled map to the server, then optimistically
+ * updates the cache so the UI reflects the change without waiting for a
+ * full refetch.
  */
-export function setFieldEnabled(
+export async function setFieldEnabled(
   fieldKey: keyof FormData | string,
   enabled: boolean,
   updatedBy?: string,
-): { ok: boolean; error?: string } {
-  if (typeof window === "undefined") return { ok: false, error: "Server-side" }
+): Promise<{ ok: boolean; error?: string }> {
   const def = FIELD_REGISTRY_BY_KEY[fieldKey as string]
   if (!def) return { ok: false, error: "Unknown field" }
   if (def.locked) return { ok: false, error: "Field is locked" }
   try {
-    const config = getFormConfig()
-    config.enabled[fieldKey] = enabled
-    config.updatedAt = new Date().toISOString()
-    if (updatedBy) config.updatedBy = updatedBy
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+    const current = getFormConfig()
+    const next = { ...current.enabled, [fieldKey as string]: enabled }
+    const res = await fetch("/api/form-config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: next, updatedBy }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      return { ok: false, error: body.error || "Failed to save form config" }
+    }
+    // Optimistic cache update — UI updates immediately without re-fetch.
+    setCachedFormConfig({
+      enabled: next,
+      updatedAt: new Date().toISOString(),
+      updatedBy,
+    })
     return { ok: true }
   } catch (error) {
-    console.error("Failed to write form config:", error)
     return { ok: false, error: String(error) }
   }
 }
 
-/**
- * Reset all toggleable fields to enabled.
- */
-export function resetFormConfig(): void {
-  if (typeof window === "undefined") return
+/** Reset all togglable fields to enabled. */
+export async function resetFormConfig(): Promise<void> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultConfig()))
+    const reset: Record<string, boolean> = {}
+    for (const f of FIELD_REGISTRY) reset[f.fieldKey] = true
+    await fetch("/api/form-config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: reset }),
+    })
+    setCachedFormConfig({ enabled: reset, updatedAt: new Date().toISOString() })
   } catch (error) {
     console.error("Failed to reset form config:", error)
   }
@@ -109,39 +112,18 @@ export function resetFormConfig(): void {
  */
 export function isStepEnabled(step: number): boolean {
   const stepFields = FIELD_REGISTRY.filter((f) => f.step === step)
-  if (stepFields.length === 0) return true // step 9 (review) and 10 (confirmation) have no registry fields
+  if (stepFields.length === 0) return true
   return stepFields.some((f) => isFieldEnabled(f.fieldKey))
 }
 
 /**
- * Client hook for field visibility. Reads the form config on mount and returns
- * a stable predicate function. Use this in step components to gate field
- * rendering — keeps SSR/hydration clean and avoids re-reading localStorage on
- * every render.
- *
- * Usage:
- *   const isVisible = useFieldVisibility()
- *   {isVisible("painPoints") && <Field ... />}
+ * Client hook for field visibility. Subscribes to cache changes so toggle
+ * edits in the admin panel propagate to open wizard tabs without a reload.
  */
 export function useFieldVisibility(): (fieldKey: keyof FormData | string) => boolean {
-  const [config, setConfig] = useState<FormConfig | null>(null)
-
-  useEffect(() => {
-    setConfig(getFormConfig())
+  const [, force] = useState(0)
+  useEffect(() => subscribeToCache(() => force((n) => n + 1)), [])
+  return useCallback((fieldKey: keyof FormData | string) => {
+    return isFieldEnabled(fieldKey)
   }, [])
-
-  return useCallback(
-    (fieldKey: keyof FormData | string) => {
-      const def = FIELD_REGISTRY_BY_KEY[fieldKey as string]
-      // Unregistered fields default to visible.
-      if (!def) return true
-      // Locked fields are always visible regardless of config.
-      if (def.locked) return true
-      // Before config loads (SSR / first paint), default to visible so we
-      // don't briefly flash a hidden field, then hide if needed on client.
-      if (!config) return true
-      return config.enabled[fieldKey as string] !== false
-    },
-    [config],
-  )
 }

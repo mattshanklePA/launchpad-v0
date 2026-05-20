@@ -107,8 +107,9 @@ export function Step10ReviewSubmit() {
   const handleSubmitForVetting = async () => {
     setIsSubmitting(true)
     try {
-      // Persist the submission to localStorage (last 5 are retained)
-      saveSubmission(formData)
+      // Persist to Supabase via the API. Every visitor will see this on
+      // their next page load (or on refetch).
+      await saveSubmission(formData)
       toast({
         title: "Submitted for vetting",
         description: "Your idea has been saved and routed for review.",

@@ -28,11 +28,11 @@ function LoginForm() {
     }
   }, [router, searchParams])
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     setIsSubmitting(true)
-    const result = login(email, password)
+    const result = await login(email, password)
     if (!result.ok) {
       setError(result.error || "Login failed")
       setIsSubmitting(false)

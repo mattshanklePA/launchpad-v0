@@ -19,7 +19,11 @@ function mk(partial: Partial<FormData>): FormData {
 
 // Five submissions across business units, readiness levels, and themes.
 // All dates are recent enough to feel live but staggered for realism.
-const seedSubmissions: Submission[] = [
+// Exported so the /api/seed route can read the same array used by the
+// client-side localStorage fallback. Server-side seed is the canonical path
+// now that data lives in Supabase; the localStorage helpers below are kept
+// only as a last-resort fallback if the API is unreachable.
+export const seedSubmissions: Submission[] = [
   // 1) Patents — READY. Strong example, shows the tool's "ideal" state.
   {
     id: "seed-patents-prior-art",

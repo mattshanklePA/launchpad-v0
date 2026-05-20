@@ -1,11 +1,23 @@
-// Demo-grade auth + user management for USPTO LaunchPad.
-// localStorage-backed — NOT secure for real use (plaintext passwords).
-// Sufficient to demonstrate role separation in demos.
+// Demo-grade auth — now backed by Supabase via /api/users* routes.
+//
+// Sessions remain in localStorage (per-user, not shared) so a login on
+// Matt's laptop doesn't show as logged in on Ramesh's laptop. User records
+// live in Supabase so admin lists + user management are consistent across
+// all visitors.
+//
+// Production work item: swap the plaintext password flow for Supabase Auth
+// (magic links, password hashing, session cookies, OAuth, etc.). Not in
+// scope for the Wednesday demo.
+
+import {
+  getCachedUsers,
+  getCachedUserByEmail,
+  getCachedUserById,
+  setCachedUsers,
+} from "@/lib/dataCache"
 
 export type Role = "admin" | "reviewer" | "submitter"
 
-// USPTO job role — matches FormData.submitterRole values in lib/steps.ts.
-// Optional on a User record so older accounts that pre-date this field stay valid.
 export type JobRole =
   | "patent_examiner"
   | "trademark_examiner"
@@ -17,7 +29,6 @@ export type JobRole =
   | "other"
   | ""
 
-// USPTO business unit — matches FormData.submitterOffice values in lib/steps.ts.
 export type BusinessUnit =
   | "patents"
   | "trademarks"
@@ -34,10 +45,10 @@ export type User = {
   email: string
   name: string
   role: Role
-  password: string // demo only — stored plaintext
+  // password is no longer exposed via the API — `password` here is only set
+  // during the initial create flow and then never round-trips back to the client.
+  password?: string
   createdAt: string
-  // Optional profile fields used to auto-fill the submitter step.
-  // Existing accounts without these fields are valid and will be migrated lazily.
   jobRole?: JobRole
   businessUnit?: BusinessUnit
 }
@@ -52,206 +63,151 @@ export type Session = {
   businessUnit?: BusinessUnit
 }
 
-const USERS_KEY = "launchpad-users"
 const SESSION_KEY = "launchpad-session"
 
-// ─── Seed admin user on first load ───
-const SEED_ADMIN: User = {
-  id: "admin-matt-001",
-  email: "matt.shankle@uspto.gov",
-  name: "Matt Shankle",
-  role: "admin",
-  password: "uspto12345!",
-  createdAt: "2026-01-01T00:00:00.000Z",
-  jobRole: "lead_product_owner",
-  businessUnit: "trademarks",
-}
-
-function genId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
-
+// ─── ensureSeeded ─────────────────────────────────────────────
+// In the old localStorage world this seeded the admin user on first load.
+// Now the admin user is seeded by the SQL migration in Supabase. This is a
+// no-op kept for API compatibility so callers don't break.
 export function ensureSeeded(): void {
-  if (typeof window === "undefined") return
-  try {
-    const raw = localStorage.getItem(USERS_KEY)
-    if (!raw) {
-      localStorage.setItem(USERS_KEY, JSON.stringify([SEED_ADMIN]))
-      return
-    }
-    const users = JSON.parse(raw) as User[]
-    let mutated = false
-    // If admin user is missing for any reason, re-add.
-    if (!users.some((u) => u.email === SEED_ADMIN.email)) {
-      users.unshift(SEED_ADMIN)
-      mutated = true
-    }
-    // Migration: if the seed admin exists but lacks profile fields (older
-    // installs from before jobRole/businessUnit were added), backfill them
-    // so Matt's profile is always Lead Product Owner / Trademarks for demos.
-    const admin = users.find((u) => u.email === SEED_ADMIN.email)
-    if (admin) {
-      if (!admin.jobRole) {
-        admin.jobRole = SEED_ADMIN.jobRole
-        mutated = true
-      }
-      if (!admin.businessUnit) {
-        admin.businessUnit = SEED_ADMIN.businessUnit
-        mutated = true
-      }
-    }
-    if (mutated) localStorage.setItem(USERS_KEY, JSON.stringify(users))
-  } catch (error) {
-    console.error("ensureSeeded failed:", error)
-    localStorage.setItem(USERS_KEY, JSON.stringify([SEED_ADMIN]))
-  }
+  // Intentional no-op. Admin seeded in Supabase via SQL migration.
 }
 
+// ─── Synchronous reads from cache (populated by DataProvider) ───
 export function getAllUsers(): User[] {
-  if (typeof window === "undefined") return []
-  ensureSeeded()
-  try {
-    const raw = localStorage.getItem(USERS_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
+  return getCachedUsers().map((u) => ({
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    role: u.role,
+    createdAt: u.createdAt,
+    jobRole: (u.jobRole as JobRole) || undefined,
+    businessUnit: (u.businessUnit as BusinessUnit) || undefined,
+  }))
 }
 
 export function getUserByEmail(email: string): User | null {
-  const all = getAllUsers()
-  const lower = email.trim().toLowerCase()
-  return all.find((u) => u.email.toLowerCase() === lower) ?? null
+  const u = getCachedUserByEmail(email)
+  if (!u) return null
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    role: u.role,
+    createdAt: u.createdAt,
+    jobRole: (u.jobRole as JobRole) || undefined,
+    businessUnit: (u.businessUnit as BusinessUnit) || undefined,
+  }
 }
 
-export function addUser(input: {
+// ─── Mutations (async — return promise; caller should refetch users) ───
+
+export async function addUser(input: {
   email: string
   name: string
   role: Role
   password: string
   jobRole?: JobRole
   businessUnit?: BusinessUnit
-}): User | { error: string } {
-  if (typeof window === "undefined") return { error: "Server-side, no localStorage" }
-  const email = input.email.trim().toLowerCase()
-  if (!email || !email.includes("@")) return { error: "Invalid email" }
-  if (!input.name.trim()) return { error: "Name is required" }
-  if (!input.password || input.password.length < 6) return { error: "Password must be at least 6 characters" }
-
-  const existing = getUserByEmail(email)
-  if (existing) return { error: "A user with that email already exists" }
-
-  const user: User = {
-    id: genId("user"),
-    email,
-    name: input.name.trim(),
-    role: input.role,
-    password: input.password,
-    createdAt: new Date().toISOString(),
-    jobRole: input.jobRole || "",
-    businessUnit: input.businessUnit || "",
+}): Promise<User | { error: string }> {
+  try {
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    })
+    const body = await res.json()
+    if (!res.ok) return { error: body.error || "Failed to create user" }
+    return body.user as User
+  } catch (error) {
+    return { error: String(error) }
   }
-  const all = getAllUsers()
-  all.push(user)
-  localStorage.setItem(USERS_KEY, JSON.stringify(all))
-  return user
 }
 
-/**
- * Update a user's USPTO profile fields (jobRole, businessUnit). If the user
- * is currently logged in, refresh the session so the new values flow to the
- * submitter form auto-fill on the next load.
- */
-export function updateUserProfile(
+export async function removeUser(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`/api/users/${encodeURIComponent(id)}`, { method: "DELETE" })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: body.error || "Failed to delete user" }
+    // If the deleted user is the active session, log them out client-side.
+    const session = getSession()
+    if (session && session.userId === id) logout()
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: String(error) }
+  }
+}
+
+export async function updateUserRole(
+  id: string,
+  role: Role,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`/api/users/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: body.error || "Failed to update role" }
+    // Sync the session if it's the active user.
+    const session = getSession()
+    if (session && session.userId === id) {
+      setSession({ ...session, role })
+    }
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: String(error) }
+  }
+}
+
+export async function updateUserProfile(
   id: string,
   patch: { jobRole?: JobRole; businessUnit?: BusinessUnit },
-): { ok: boolean; error?: string } {
-  if (typeof window === "undefined") return { ok: false, error: "Server-side" }
-  const all = getAllUsers()
-  const target = all.find((u) => u.id === id)
-  if (!target) return { ok: false, error: "User not found" }
-  if (patch.jobRole !== undefined) target.jobRole = patch.jobRole
-  if (patch.businessUnit !== undefined) target.businessUnit = patch.businessUnit
-  localStorage.setItem(USERS_KEY, JSON.stringify(all))
-  // Sync session if needed
-  const session = getSession()
-  if (session && session.userId === id) {
-    setSession({
-      ...session,
-      jobRole: target.jobRole,
-      businessUnit: target.businessUnit,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`/api/users/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
     })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: body.error || "Failed to update profile" }
+    // Sync session if it's the active user.
+    const session = getSession()
+    if (session && session.userId === id) {
+      setSession({
+        ...session,
+        jobRole: (patch.jobRole as JobRole) ?? session.jobRole,
+        businessUnit: (patch.businessUnit as BusinessUnit) ?? session.businessUnit,
+      })
+    }
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: String(error) }
   }
-  return { ok: true }
 }
 
-export function removeUser(id: string): { ok: boolean; error?: string } {
-  if (typeof window === "undefined") return { ok: false, error: "Server-side" }
-  const all = getAllUsers()
-  const target = all.find((u) => u.id === id)
-  if (!target) return { ok: false, error: "User not found" }
-  // Don't allow deleting the seed admin (safety)
-  if (target.email === SEED_ADMIN.email) {
-    return { ok: false, error: "Cannot delete the primary admin account" }
-  }
-  const filtered = all.filter((u) => u.id !== id)
-  localStorage.setItem(USERS_KEY, JSON.stringify(filtered))
-  // If deleted user is currently logged in, log them out
-  const session = getSession()
-  if (session && session.userId === id) {
-    logout()
-  }
-  return { ok: true }
-}
-
-export function updateUserRole(id: string, role: Role): { ok: boolean; error?: string } {
-  if (typeof window === "undefined") return { ok: false, error: "Server-side" }
-  const all = getAllUsers()
-  const target = all.find((u) => u.id === id)
-  if (!target) return { ok: false, error: "User not found" }
-  if (target.email === SEED_ADMIN.email && role !== "admin") {
-    return { ok: false, error: "Cannot demote the primary admin account" }
-  }
-  target.role = role
-  localStorage.setItem(USERS_KEY, JSON.stringify(all))
-  // If updated user is logged in, refresh session
-  const session = getSession()
-  if (session && session.userId === id) {
-    setSession({ ...session, role })
-  }
-  return { ok: true }
-}
-
-// ─── Session ───
+// ─── Session (still localStorage — inherently per-user) ───
 export function getSession(): Session | null {
   if (typeof window === "undefined") return null
   try {
     const raw = localStorage.getItem(SESSION_KEY)
     if (!raw) return null
     const session = JSON.parse(raw) as Session
-    // Self-heal: sessions created before jobRole/businessUnit existed won't
-    // have those fields. Backfill them from the user record so the wizard
-    // auto-fill works without forcing a re-login.
+    // Self-heal: if profile fields are missing from session but present on
+    // the cached user record, backfill so wizard auto-fill works without
+    // forcing a re-login.
     if (session.jobRole === undefined || session.businessUnit === undefined) {
-      const usersRaw = localStorage.getItem(USERS_KEY)
-      if (usersRaw) {
-        try {
-          const users = JSON.parse(usersRaw) as User[]
-          const user = users.find((u) => u.id === session.userId)
-          if (user && (user.jobRole !== undefined || user.businessUnit !== undefined)) {
-            const patched: Session = {
-              ...session,
-              jobRole: user.jobRole,
-              businessUnit: user.businessUnit,
-            }
-            localStorage.setItem(SESSION_KEY, JSON.stringify(patched))
-            return patched
-          }
-        } catch {
-          // fall through and return original session
+      const user = getCachedUserById(session.userId)
+      if (user && (user.jobRole !== undefined || user.businessUnit !== undefined)) {
+        const patched: Session = {
+          ...session,
+          jobRole: (user.jobRole as JobRole) ?? session.jobRole,
+          businessUnit: (user.businessUnit as BusinessUnit) ?? session.businessUnit,
         }
+        localStorage.setItem(SESSION_KEY, JSON.stringify(patched))
+        return patched
       }
     }
     return session
@@ -265,23 +221,26 @@ function setSession(s: Session): void {
   localStorage.setItem(SESSION_KEY, JSON.stringify(s))
 }
 
-export function login(email: string, password: string): { ok: boolean; error?: string; session?: Session } {
+export async function login(
+  email: string,
+  password: string,
+): Promise<{ ok: boolean; error?: string; session?: Session }> {
   if (typeof window === "undefined") return { ok: false, error: "Server-side" }
-  ensureSeeded()
-  const user = getUserByEmail(email)
-  if (!user) return { ok: false, error: "No account found for that email" }
-  if (user.password !== password) return { ok: false, error: "Incorrect password" }
-  const session: Session = {
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    loggedInAt: new Date().toISOString(),
-    jobRole: user.jobRole,
-    businessUnit: user.businessUnit,
+  try {
+    const res = await fetch("/api/users/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    })
+    const body = await res.json()
+    if (!res.ok || !body.session) {
+      return { ok: false, error: body.error || "Login failed" }
+    }
+    setSession(body.session as Session)
+    return { ok: true, session: body.session as Session }
+  } catch (error) {
+    return { ok: false, error: String(error) }
   }
-  setSession(session)
-  return { ok: true, session }
 }
 
 export function logout(): void {
@@ -296,3 +255,7 @@ export function hasAdminAccess(session: Session | null): boolean {
 export function isAdmin(session: Session | null): boolean {
   return !!session && session.role === "admin"
 }
+
+// Re-export helper used by form-context.tsx so its self-heal logic still works.
+// (Maintaining the old shape so callers don't need to change.)
+export { setCachedUsers as _setCachedUsers }

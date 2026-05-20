@@ -27,6 +27,7 @@ import {
   type JobRole,
   type BusinessUnit,
 } from "@/lib/auth"
+import { useDataProvider } from "@/components/data-provider"
 
 // Display labels for the USPTO profile fields. Kept here (rather than imported
 // from a shared util) so this component is fully self-contained.
@@ -94,17 +95,22 @@ export function UserManagement() {
   const [formBusinessUnit, setFormBusinessUnit] = useState<BusinessUnit>("")
   const [formPassword, setFormPassword] = useState("")
   const { toast } = useToast()
+  const { refetchUsers } = useDataProvider()
 
   const session = typeof window !== "undefined" ? getSession() : null
 
-  const refresh = () => setUsers(getAllUsers())
+  // Re-render the local users array from the shared cache.
+  const refresh = async () => {
+    await refetchUsers()
+    setUsers(getAllUsers())
+  }
 
   useEffect(() => {
-    refresh()
+    setUsers(getAllUsers())
   }, [])
 
-  const handleAdd = () => {
-    const result = addUser({
+  const handleAdd = async () => {
+    const result = await addUser({
       email: formEmail,
       name: formName,
       role: formRole,
@@ -124,34 +130,34 @@ export function UserManagement() {
     setFormBusinessUnit("")
     setFormPassword("")
     setShowAddForm(false)
-    refresh()
+    await refresh()
   }
 
-  const handleDelete = (user: User) => {
+  const handleDelete = async (user: User) => {
     if (!confirm(`Delete user ${user.name} (${user.email})?`)) return
-    const result = removeUser(user.id)
+    const result = await removeUser(user.id)
     if (!result.ok) {
       toast({ variant: "destructive", title: "Could not delete", description: result.error })
       return
     }
     toast({ title: "User removed", description: `${user.name} removed.` })
-    refresh()
+    await refresh()
   }
 
-  const handleRoleChange = (user: User, newRole: Role) => {
+  const handleRoleChange = async (user: User, newRole: Role) => {
     if (newRole === user.role) return
-    const result = updateUserRole(user.id, newRole)
+    const result = await updateUserRole(user.id, newRole)
     if (!result.ok) {
       toast({ variant: "destructive", title: "Could not update role", description: result.error })
       return
     }
     toast({ title: "Role updated", description: `${user.name} is now ${newRole}.` })
-    refresh()
+    await refresh()
   }
 
-  const handleJobRoleChange = (user: User, newJobRole: JobRole) => {
+  const handleJobRoleChange = async (user: User, newJobRole: JobRole) => {
     if (newJobRole === (user.jobRole || "")) return
-    const result = updateUserProfile(user.id, { jobRole: newJobRole })
+    const result = await updateUserProfile(user.id, { jobRole: newJobRole })
     if (!result.ok) {
       toast({ variant: "destructive", title: "Could not update job role", description: result.error })
       return
@@ -160,12 +166,12 @@ export function UserManagement() {
       title: "Profile updated",
       description: `${user.name}: ${jobRoleLabel(newJobRole)}`,
     })
-    refresh()
+    await refresh()
   }
 
-  const handleBusinessUnitChange = (user: User, newBu: BusinessUnit) => {
+  const handleBusinessUnitChange = async (user: User, newBu: BusinessUnit) => {
     if (newBu === (user.businessUnit || "")) return
-    const result = updateUserProfile(user.id, { businessUnit: newBu })
+    const result = await updateUserProfile(user.id, { businessUnit: newBu })
     if (!result.ok) {
       toast({ variant: "destructive", title: "Could not update business unit", description: result.error })
       return
@@ -174,7 +180,7 @@ export function UserManagement() {
       title: "Profile updated",
       description: `${user.name}: ${businessUnitLabel(newBu)}`,
     })
-    refresh()
+    await refresh()
   }
 
   return (
