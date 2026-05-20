@@ -9,6 +9,12 @@ import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 
 export const dynamic = "force-dynamic" // never cache list reads
+export const revalidate = 0
+export const fetchCache = "force-no-store"
+
+const NO_STORE = {
+  "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
+} as const
 
 type ApiSubmission = {
   id: string
@@ -30,7 +36,7 @@ export async function GET() {
       .limit(50)
     if (error) throw error
     const submissions = (data || []).map((row) => fromRow(row as DbSubmissionRow))
-    return NextResponse.json({ submissions })
+    return NextResponse.json({ submissions }, { headers: NO_STORE })
   } catch (error) {
     console.error("GET /api/submissions failed:", error)
     return NextResponse.json(

@@ -11,6 +11,12 @@ import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
 
 export const dynamic = "force-dynamic"
+export const revalidate = 0
+export const fetchCache = "force-no-store"
+
+const NO_STORE = {
+  "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
+} as const
 
 type ApiUser = {
   id: string
@@ -47,7 +53,7 @@ export async function GET() {
       .order("created_at", { ascending: true })
     if (error) throw error
     const users = (data || []).map((row) => fromRow(row as DbUserRow))
-    return NextResponse.json({ users })
+    return NextResponse.json({ users }, { headers: NO_STORE })
   } catch (error) {
     console.error("GET /api/users failed:", error)
     return NextResponse.json(

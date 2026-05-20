@@ -35,7 +35,14 @@ const DataContext = createContext<DataContextValue | null>(null)
 
 async function fetchJson<T = unknown>(url: string): Promise<T | null> {
   try {
-    const res = await fetch(url, { cache: "no-store" })
+    // Cache-bust with a unique timestamp param so no browser/CDN layer can
+    // serve a stale copy of shared config or submission data.
+    const sep = url.includes("?") ? "&" : "?"
+    const bustedUrl = `${url}${sep}_=${Date.now()}`
+    const res = await fetch(bustedUrl, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    })
     if (!res.ok) {
       console.error(`Fetch failed for ${url}: ${res.status}`)
       return null

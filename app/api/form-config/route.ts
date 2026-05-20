@@ -9,6 +9,14 @@ import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbFormConfigRow } from "@/lib/supabaseClient"
 
 export const dynamic = "force-dynamic"
+export const revalidate = 0
+export const fetchCache = "force-no-store"
+
+// Headers that defeat every layer of caching: browser, Vercel CDN, and any
+// intermediary proxy. Applied to every JSON response from this route.
+const NO_STORE = {
+  "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
+} as const
 
 type ApiFormConfig = {
   enabled: Record<string, boolean>
@@ -36,16 +44,17 @@ export async function GET() {
     if (!data) {
       // Defensive: schema seeds row 1 on table creation, but if someone wiped
       // it, return the empty default so the client treats all fields as enabled.
-      return NextResponse.json({
-        config: { enabled: {}, updatedAt: new Date().toISOString() },
-      })
+      return NextResponse.json(
+        { config: { enabled: {}, updatedAt: new Date().toISOString() } },
+        { headers: NO_STORE },
+      )
     }
-    return NextResponse.json({ config: fromRow(data as DbFormConfigRow) })
+    return NextResponse.json({ config: fromRow(data as DbFormConfigRow) }, { headers: NO_STORE })
   } catch (error) {
     console.error("GET /api/form-config failed:", error)
     return NextResponse.json(
       { error: "Failed to fetch form config", detail: String(error) },
-      { status: 500 },
+      { status: 500, headers: NO_STORE },
     )
   }
 }
