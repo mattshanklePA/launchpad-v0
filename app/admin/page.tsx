@@ -322,11 +322,8 @@ function AdminPageInner() {
     setShowComparison(false)
   }
 
-  // Hydrate real submissions from localStorage on mount
-  useEffect(() => {
-    setSubmissions(getSubmissions())
-    setHydrated(true)
-  }, [])
+  // Submissions are hydrated from the shared cache via the dataLoaded effect
+  // above — no separate mount hydration needed now that data lives in Supabase.
 
   // Shape submissions to match the UI's expected "draft" structure so the
   // existing rendering code works unchanged.
@@ -516,8 +513,10 @@ function AdminPageInner() {
     setOKRs(okrs.filter((okr) => okr.id !== id))
   }
 
-  // Don't render the dashboard until the auth check has run — prevents flash
-  if (!authChecked) {
+  // Don't render the dashboard until BOTH the auth check has run AND the
+  // shared data cache has loaded — prevents a flash where toggles/submissions
+  // render from an empty cache (everything appears "on" / no submissions).
+  if (!authChecked || !dataLoaded) {
     return <div className="min-h-screen bg-gray-50" />
   }
 

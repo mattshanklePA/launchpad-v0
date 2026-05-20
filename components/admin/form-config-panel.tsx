@@ -24,13 +24,20 @@ import {
 } from "@/lib/formConfig"
 import { formPhases } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
+import { subscribeToCache } from "@/lib/dataCache"
 
 export function FormConfigPanel() {
   const [config, setConfig] = useState<FormConfig | null>(null)
   const { toast } = useToast()
 
+  // Re-derive config from the shared cache on mount AND whenever the cache
+  // changes (e.g., when the DataProvider's initial fetch lands after this
+  // panel has already mounted). Without this subscription the panel would
+  // snapshot an empty cache on first render and never refresh.
   useEffect(() => {
-    setConfig(getFormConfig())
+    const sync = () => setConfig(getFormConfig())
+    sync()
+    return subscribeToCache(sync)
   }, [])
 
   const handleToggle = async (field: FieldDefinition, next: boolean) => {
