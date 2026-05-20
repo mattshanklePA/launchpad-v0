@@ -90,9 +90,30 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         return { ...initialFormData, ...profile }
       }
       const parsed = JSON.parse(saved)
-      // Merge: defaults < profile < saved draft. Saved values always win so
-      // a user who edited submitter info inline doesn't get clobbered.
-      return { ...initialFormData, ...profile, ...parsed }
+      // Merge precedence: saved draft wins for fields the user actually filled,
+      // but for any submitter field that's blank in the saved draft, fall
+      // through to the profile. This fixes the previous bug where a stale
+      // draft with empty submitter strings would override the profile auto-fill.
+      const merged: FormData = { ...initialFormData, ...parsed }
+      const submitterKeys: (keyof FormData)[] = [
+        "submitterName",
+        "submitterEmail",
+        "submitterRole",
+        "submitterOffice",
+      ]
+      for (const key of submitterKeys) {
+        const savedValue = merged[key]
+        const profileValue = profile[key]
+        const isEmpty =
+          savedValue === undefined ||
+          savedValue === null ||
+          (typeof savedValue === "string" && savedValue.trim() === "")
+        if (isEmpty && profileValue) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(merged as any)[key] = profileValue
+        }
+      }
+      return merged
     } catch (error) {
       console.error("Failed to hydrate form data from localStorage:", error)
       return initialFormData
