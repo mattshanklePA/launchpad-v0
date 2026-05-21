@@ -155,3 +155,34 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     warnings,
   }
 }
+
+
+// ---------------------------------------------------------------------------
+// Progress model — single source of truth for "is this step actually done?"
+// Drives the left-nav checkmarks and the top progress bar so they reflect
+// real completeness (required fields filled) instead of just which step the
+// user has visited. The step numbers here line up with the wizard's
+// currentStep (1 = Submitter Info … 8 = Success Metrics, 9 = Review).
+// ---------------------------------------------------------------------------
+export type ProgressModel = {
+  /** Steps (1-8) that still have at least one missing required field. */
+  missingSteps: Set<number>
+  /** True only when every required item passes (the Submit gate is open). */
+  canSubmit: boolean
+  /**
+   * Whether a given step is fully complete. Content steps (1-8) are complete
+   * when none of their required fields are missing. The review step (9) is
+   * complete only when the whole submission can be submitted.
+   */
+  isStepComplete: (step: number) => boolean
+}
+
+export function getProgressModel(formData: FormData): ProgressModel {
+  const { missing, canSubmit } = getSubmissionReadiness(formData)
+  const missingSteps = new Set<number>(missing.map((m) => m.step))
+  const isStepComplete = (step: number): boolean => {
+    if (step >= 9) return canSubmit // review / final step
+    return !missingSteps.has(step)
+  }
+  return { missingSteps, canSubmit, isStepComplete }
+}

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "@/context/form-context"
 import { AnimatePresence, motion } from "framer-motion"
 import { StepWrapper } from "./steps/step-wrapper"
@@ -43,6 +44,15 @@ const BU_LABELS: Record<string, string> = {
 export function FormContainer() {
   const { currentStep, setCurrentStep, formData } = useForm()
 
+  // Whenever the step changes (including quick-jumps from the left nav), bring
+  // the user back to the top of the page so they land on the step heading and
+  // first field — not on a blank region scrolled halfway down the previous step.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [currentStep])
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -84,7 +94,7 @@ export function FormContainer() {
   const buLabel = BU_LABELS[formData.submitterOffice as string]
 
   return (
-    <div className="max-w-[1800px] mx-auto px-4 py-8">
+    <div className="max-w-[1800px] mx-auto px-4 py-8 overflow-x-hidden">
       <div className="flex gap-6">
         {/* Left sidebar: wizard nav (desktop only) */}
         <WizardNav />
@@ -116,10 +126,10 @@ export function FormContainer() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
             >
               <StepWrapper>{renderStepContent()}</StepWrapper>
             </motion.div>

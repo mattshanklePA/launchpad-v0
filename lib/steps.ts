@@ -226,7 +226,7 @@ export const formSteps: FormStep[] = [
   },
   {
     step: 8,
-    name: "Outcome Measurements",
+    name: "Success Metrics",
     title: "Define Success Metrics",
     prompt: "How will we know this worked? Define measurable success.",
   },

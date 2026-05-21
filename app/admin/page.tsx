@@ -332,7 +332,10 @@ function AdminPageInner() {
       patents: "Patents",
       trademarks: "Trademarks",
       ocio: "OCIO",
+      ocfo: "OCFO",
       ogc: "OGC",
+      opia: "OPIA",
+      hr: "Human Resources",
       other: "Other",
     }
     return map[o] || (o ? o : "Unknown")
@@ -356,6 +359,26 @@ function AdminPageInner() {
   // Prefer real submissions; fall back to mocks only if there are none yet,
   // so the demo still shows visual content on a fresh browser.
   const drafts = hydrated && realDrafts.length > 0 ? realDrafts : mockDrafts
+
+  // --- Analytics (derived from the real pipeline, not random) ---
+  const buCounts = drafts.reduce<Record<string, number>>((acc, d) => {
+    const key = d.department || "Unknown"
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const buRows = Object.entries(buCounts).sort((a, b) => b[1] - a[1])
+  const maxBuCount = Math.max(1, ...buRows.map(([, n]) => n))
+  const readinessCounts = drafts.reduce<Record<string, number>>((acc, d) => {
+    const key = d.readinessScore || "needs_work"
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const readinessRows: { key: string; label: string; color: string }[] = [
+    { key: "ready", label: "Ready", color: "bg-green-500" },
+    { key: "needs_work", label: "Needs Work", color: "bg-amber-500" },
+    { key: "early_stage", label: "Early Stage", color: "bg-gray-400" },
+  ]
+  const totalDrafts = drafts.length || 1
 
   const toggleSummary = (id: string) => {
     setExpandedSummaries(prev => {
@@ -884,9 +907,8 @@ function AdminPageInner() {
                           <h3 className="font-semibold text-lg">{draft.title}</h3>
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                             <span>Submitter: {draft.submitter}</span>
-                            <span>Department: {draft.department}</span>
+                            <span>Business Unit: {draft.department}</span>
                             <span>Last Updated: {draft.lastUpdated}</span>
-                            <span>Step {draft.step}/9</span>
                             <div className="flex items-center gap-1">
                               <span>Classification:</span>
                               {getPublicIndicatorBadge(draft.publicIndicator)}
@@ -922,7 +944,7 @@ function AdminPageInner() {
                               )}
                             </Button>
                           )}
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" title="View details" aria-label="View details">
                             <Eye className="w-4 h-4" />
                           </Button>
                         </div>
@@ -939,10 +961,9 @@ function AdminPageInner() {
                       <TableRow>
                         <TableHead className="w-[300px]">Title</TableHead>
                         <TableHead>Submitter</TableHead>
-                        <TableHead>Department</TableHead>
+                        <TableHead>Business Unit</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Progress</TableHead>
-                        <TableHead>Current Step</TableHead>
                         <TableHead>Last Updated</TableHead>
                         <TableHead>Classification</TableHead>
                         <TableHead>Readiness</TableHead>
@@ -971,18 +992,15 @@ function AdminPageInner() {
                               <span className="text-sm text-muted-foreground">{draft.completionRate}%</span>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{draft.step}/9</Badge>
-                          </TableCell>
                           <TableCell className="text-muted-foreground">{draft.lastUpdated}</TableCell>
                           <TableCell>{getPublicIndicatorBadge(draft.publicIndicator)}</TableCell>
                           <TableCell>{getReadinessBadge(draft.readinessScore)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" title="View details" aria-label="View details">
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" title="Download" aria-label="Download">
                                 <Download className="w-4 h-4" />
                               </Button>
                             </div>
@@ -1006,28 +1024,70 @@ function AdminPageInner() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Submission Trends</CardTitle>
+                  <CardTitle>Submissions by Business Unit</CardTitle>
+                  <CardDescription>Where ideas are coming from across the agency.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">Submission volume over time chart would go here</p>
-                  <div className="h-32 bg-gray-100 rounded mt-4 flex items-center justify-center">
-                    <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                  <div className="space-y-3">
+                    {buRows.map(([bu, count]) => (
+                      <div key={bu}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="font-medium">{bu}</span>
+                          <span className="text-muted-foreground">{count}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                          <div
+                            className="bg-uspto-blue-primary h-2.5 rounded-full transition-all"
+                            style={{ width: `${(count / maxBuCount) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {buRows.length === 0 && (
+                      <p className="text-sm text-muted-foreground">No submissions yet.</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Completion Rates by Step</CardTitle>
+                  <CardTitle>Readiness Breakdown</CardTitle>
+                  <CardDescription>AI readiness verdict across the current pipeline.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((step) => (
-                      <div key={step} className="flex justify-between items-center">
-                        <span className="text-sm">Step {step}</span>
-                        <span className="text-sm font-medium">{Math.floor(Math.random() * 30 + 70)}%</span>
-                      </div>
-                    ))}
+                  <div className="space-y-4">
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100">
+                      {readinessRows.map((r) => {
+                        const n = readinessCounts[r.key] || 0
+                        if (n === 0) return null
+                        return (
+                          <div
+                            key={r.key}
+                            className={r.color}
+                            style={{ width: `${(n / totalDrafts) * 100}%` }}
+                            title={`${r.label}: ${n}`}
+                          />
+                        )
+                      })}
+                    </div>
+                    <div className="space-y-2">
+                      {readinessRows.map((r) => {
+                        const n = readinessCounts[r.key] || 0
+                        const pct = Math.round((n / totalDrafts) * 100)
+                        return (
+                          <div key={r.key} className="flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-2">
+                              <span className={`inline-block h-2.5 w-2.5 rounded-full ${r.color}`} />
+                              {r.label}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {n} · {pct}%
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

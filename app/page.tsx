@@ -18,7 +18,9 @@ export default function LandingPage() {
           <div className="bg-gray-50 py-24">
             <div className="container space-y-20">
               <DashboardTiles />
-              <RecentDrafts />
+              <div id="recent-ideas" className="scroll-mt-24">
+                <RecentDrafts />
+              </div>
               <FocusAreas />
             </div>
           </div>

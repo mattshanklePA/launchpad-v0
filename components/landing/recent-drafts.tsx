@@ -8,7 +8,15 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { FileEdit, Info, FileText, CheckCircle, Sparkles, ArrowRight } from "lucide-react"
 import { getSubmissions, type Submission } from "@/lib/submissions"
-import type { FormData } from "@/lib/steps"
+import { getPhaseForStep, formPhases, type FormData } from "@/lib/steps"
+
+// Friendly phase-based progress label for an in-progress draft, instead of a
+// raw "step N of 11" that no longer matches the merged step model.
+function draftProgressLabel(step: number): string {
+  if (step >= 9) return "Ready to review"
+  const phase = getPhaseForStep(step)
+  return phase ? `Phase ${phase.phase} of ${formPhases.length} · ${phase.name}` : "Just started"
+}
 
 type InProgressDraft = {
   title: string
@@ -136,7 +144,7 @@ export function RecentDrafts() {
                     <div className="min-w-0">
                       <p className="font-semibold text-uspto-blue-primary truncate">{draft.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        On step {draft.step} of 11
+                        {draftProgressLabel(draft.step)}
                       </p>
                     </div>
                   </div>
@@ -164,7 +172,7 @@ export function RecentDrafts() {
                   {submissions.map((sub) => (
                     <li
                       key={sub.id}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50"
+                      className="flex items-center justify-between p-3 rounded-lg border bg-white"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />

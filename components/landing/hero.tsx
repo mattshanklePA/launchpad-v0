@@ -1,6 +1,5 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, Info, Rocket } from "lucide-react"
+import { Rocket } from "lucide-react"
+import { HeroActions } from "@/components/landing/hero-actions"
 
 export function Hero() {
   return (
@@ -24,23 +23,7 @@ export function Hero() {
           Configurable for every business unit — Patents, Trademarks, OCIO, HR, OGC, and beyond.
           LaunchPad adapts to how each team frames its work.
         </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Button
-            asChild
-            size="lg"
-            className="bg-blue-400 h-12 px-8 text-base text-white hover:bg-blue-500 hover:scale-105 transition-transform"
-          >
-            <Link href="/submit">
-              Start Idea Submission <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" className="h-12 px-8 text-base bg-transparent">
-            View Saved Drafts
-          </Button>
-          <Button size="lg" variant="ghost" className="h-12 px-8 text-base text-gray-600">
-            <Info className="mr-2 h-5 w-5" /> How It Works
-          </Button>
-        </div>
+        <HeroActions />
       </div>
     </section>
   )

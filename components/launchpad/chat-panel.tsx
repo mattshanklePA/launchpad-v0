@@ -183,6 +183,13 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
   const isWaitingOnOptions = lastMessage?.role === "assistant" && lastMessage.response.mode === "question"
   const hasScaffold = lastMessage?.role === "assistant" && lastMessage.response.mode === "scaffold"
 
+  // Scout needs a rough draft in the step's source field before it has
+  // anything to work with — gate the initial button on that so a click never
+  // silently no-ops.
+  const sourceField = getInputFieldForStep(step)
+  const sourceText = sourceField ? (formData[sourceField] as string | undefined) : undefined
+  const hasDraft = !sourceField || (typeof sourceText === "string" && sourceText.trim().length > 0)
+
   return (
     <TooltipProvider>
       <div className="sticky top-24 max-h-[calc(100vh-8rem)]">
@@ -325,14 +332,21 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
 
           <div className="p-3 border-t bg-white flex-shrink-0">
             {messages.length === 0 ? (
-              <Button
-                onClick={handleInitialClick}
-                disabled={isLoading}
-                className="w-full bg-uspto-blue-primary hover:bg-uspto-blue-primary/90"
-              >
-                <Wand2 className="mr-2 h-4 w-4" />
-                {isLoading ? "Thinking..." : getStepContext(step).buttonLabel}
-              </Button>
+              <>
+                <Button
+                  onClick={handleInitialClick}
+                  disabled={isLoading || !hasDraft}
+                  className="w-full bg-uspto-blue-primary hover:bg-uspto-blue-primary/90"
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  {isLoading ? "Thinking..." : getStepContext(step).buttonLabel}
+                </Button>
+                {!hasDraft && (
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    Add a rough draft in the field above to enable Scout.
+                  </p>
+                )}
+              </>
             ) : isWaitingOnOptions && !otherInputOpen ? (
               <p className="text-xs text-center text-muted-foreground">
                 Pick an option above to continue.

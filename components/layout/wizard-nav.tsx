@@ -1,31 +1,36 @@
 "use client"
 
-// Left sidebar nav for the wizard. Lets the submitter jump to any visited
-// (or upcoming) step instead of clicking Previous repeatedly. Grouped by
-// the 4 phases, with the Review step pinned at the bottom as its own block.
+// Left sidebar nav for the wizard. Lets the submitter jump to any step
+// instead of clicking Previous repeatedly. Grouped by the 4 phases, with the
+// Review step pinned at the bottom as its own block.
 //
-// Status rules (kept deliberately simple for the demo):
-//   - current  → highlighted in primary color
-//   - visited  → step number < currentStep, shown with a checkmark
-//   - upcoming → step number > currentStep, muted
+// Status rules — driven by ACTUAL completeness, not just which step you've
+// visited (so an empty form never shows all-green checkmarks):
+//   - current     -> highlighted in primary color (blue dot)
+//   - complete     -> every required field on the step is filled (green check)
+//   - incomplete   -> moved past it but required fields are still missing (amber)
+//   - upcoming     -> not reached yet and not complete (muted empty circle)
 
 import { useForm } from "@/context/form-context"
 import { formSteps, formPhases } from "@/lib/steps"
 import { isStepEnabled } from "@/lib/formConfig"
-import { CheckCircle2, Circle, CircleDot, ClipboardList } from "lucide-react"
+import { getProgressModel } from "@/lib/submissionReadiness"
+import { CheckCircle2, Circle, CircleDot, AlertCircle, ClipboardList } from "lucide-react"
 
 const REVIEW_STEP = 9
 
-type StepStatus = "current" | "visited" | "upcoming"
+type StepStatus = "current" | "complete" | "incomplete" | "upcoming"
 
-function statusFor(step: number, current: number): StepStatus {
+function statusFor(step: number, current: number, isComplete: (s: number) => boolean): StepStatus {
   if (step === current) return "current"
-  if (step < current) return "visited"
+  if (isComplete(step)) return "complete"
+  if (step < current) return "incomplete"
   return "upcoming"
 }
 
 export function WizardNav() {
-  const { currentStep, setCurrentStep } = useForm()
+  const { currentStep, setCurrentStep, formData } = useForm()
+  const { isStepComplete, canSubmit } = getProgressModel(formData)
 
   // Confirmation page — nav doesn't apply
   if (currentStep === 10) return null
@@ -49,8 +54,8 @@ export function WizardNav() {
           )
           // Hide the entire phase if every step in it has been disabled.
           if (phaseSteps.length === 0) return null
-          // Whole phase is done when current step has moved past it
-          const phaseDone = currentStep > phase.stepEnd
+          // Phase is "done" only when every enabled step in it is complete.
+          const phaseDone = phaseSteps.every((s) => isStepComplete(s.step))
           const phaseActive = currentStep >= phase.stepStart && currentStep <= phase.stepEnd
 
           return (
@@ -78,7 +83,7 @@ export function WizardNav() {
               </div>
               <ul className="space-y-0.5">
                 {phaseSteps.map((s) => {
-                  const status = statusFor(s.step, currentStep)
+                  const status = statusFor(s.step, currentStep, isStepComplete)
                   return (
                     <li key={s.step}>
                       <button
@@ -87,15 +92,19 @@ export function WizardNav() {
                         className={`w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
                           status === "current"
                             ? "bg-uspto-blue-primary/10 text-uspto-blue-primary font-semibold"
-                            : status === "visited"
+                            : status === "complete"
                               ? "text-foreground hover:bg-muted"
-                              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                              : status === "incomplete"
+                                ? "text-amber-700 hover:bg-amber-50"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                         }`}
                       >
                         {status === "current" ? (
                           <CircleDot className="h-3.5 w-3.5 flex-shrink-0 text-uspto-blue-primary" />
-                        ) : status === "visited" ? (
+                        ) : status === "complete" ? (
                           <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-green-600" />
+                        ) : status === "incomplete" ? (
+                          <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
                         ) : (
                           <Circle className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/50" />
                         )}
@@ -117,12 +126,16 @@ export function WizardNav() {
             className={`w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
               currentStep === REVIEW_STEP
                 ? "bg-uspto-blue-primary/10 text-uspto-blue-primary font-semibold"
-                : currentStep > REVIEW_STEP
+                : canSubmit
                   ? "text-foreground hover:bg-muted"
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
             }`}
           >
-            <ClipboardList className="h-3.5 w-3.5 flex-shrink-0" />
+            {canSubmit ? (
+              <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-green-600" />
+            ) : (
+              <ClipboardList className="h-3.5 w-3.5 flex-shrink-0" />
+            )}
             <span className="truncate">Review &amp; Submit</span>
           </button>
         </div>

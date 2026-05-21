@@ -25,11 +25,10 @@ export async function POST(req: Request) {
       .maybeSingle()
     if (error) throw error
     const user = data as DbUserRow | null
-    if (!user) {
-      return NextResponse.json({ error: "No account found for that email" }, { status: 404 })
-    }
-    if (user.password !== password) {
-      return NextResponse.json({ error: "Incorrect password" }, { status: 401 })
+    // Use one generic message for both "no such email" and "wrong password" so
+    // the endpoint doesn't reveal which emails have accounts (account enumeration).
+    if (!user || user.password !== password) {
+      return NextResponse.json({ error: "Email or password is incorrect" }, { status: 401 })
     }
 
     return NextResponse.json({
