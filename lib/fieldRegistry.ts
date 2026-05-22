@@ -79,8 +79,8 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Short name for the AI use case.",
     reasonToInclude:
       "The primary identifier across submissions, comparisons, and the AI readiness assessment.",
-    phase: 1,
-    step: 2,
+    phase: 3,
+    step: 3,
     locked: true,
     lockedReason: "Required — the AI assessment and Decision Center both key off this field.",
   },
@@ -90,8 +90,8 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "1-3 sentence narrative explanation of the idea.",
     reasonToInclude:
       "Gives Scout enough context to coach the submitter through subsequent steps without inventing details.",
-    phase: 1,
-    step: 2,
+    phase: 3,
+    step: 3,
     locked: true,
     lockedReason: "Required — Scout uses this as the seed context for every step's coaching.",
   },
@@ -101,12 +101,12 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the idea is publicly discussable or contains excluded information.",
     reasonToInclude:
       "Flags submissions that need restricted handling and prevents them from appearing in public-facing exports.",
-    phase: 1,
-    step: 2,
+    phase: 3,
+    step: 3,
     locked: false,
   },
 
-  // ────── Phase 2: Problem & Target Users (Step 3, merged) ──────
+  // ────── Phase 2: Problem & Target Users (Step 2, merged) ──────
   {
     fieldKey: "coreProblem",
     label: "Core Problem",
@@ -114,7 +114,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The anchor field for the entire submission — every reviewer and the AI assessment start here.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: true,
     lockedReason: "Required — the AI assessment leads with this and the entire exec summary depends on it.",
   },
@@ -125,7 +125,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Surfaces severity and consequences of inaction. Without it, reviewers can't size the opportunity.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -134,7 +134,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Which process, system, or group the problem affects.",
     reasonToInclude: "Identifies the operational surface area for impact analysis and reviewer routing.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -143,7 +143,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Multi-select tags: process inefficiency, technical debt, policy gap, etc.",
     reasonToInclude: "Lets analytics roll up themes across submissions — useful for portfolio-level reporting.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -153,7 +153,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Quick triage signal in the Decision Center. Pair with impact text to prioritize review queue.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -162,7 +162,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Primary user role this serves (patent examiner, applicant, IT staff, etc.).",
     reasonToInclude: "Lets reviewers verify scope and identify the right SMEs to consult.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -172,7 +172,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Scale signal. The Decision Center surfaces this prominently to help triage by potential reach.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -182,7 +182,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Grounds the problem in concrete observations rather than abstraction. Strengthens the AI assessment.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -192,7 +192,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Captures the workflow detail reviewers need to assess fit and the AI uses to refine its summary.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
   {
@@ -202,7 +202,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Executive-ready summary that reviewers and the Decision Center quote. Editable after generation.",
     phase: 2,
-    step: 3,
+    step: 2,
     locked: false,
   },
 

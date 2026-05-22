@@ -284,7 +284,7 @@ export function Step3ProblemAndUsers() {
         </div>
 
         <div className="lg:col-span-5 flex flex-col">
-          <AIdChatPanel step={3} onApplySuggestion={handleSuggestion} />
+          <AIdChatPanel step={2} onApplySuggestion={handleSuggestion} />
         </div>
       </div>
     </TooltipProvider>

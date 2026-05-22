@@ -20,9 +20,9 @@ export type FormPhase = {
 }
 
 export const formPhases: FormPhase[] = [
-  { phase: 1, name: "Setup", description: "Who you are and what you're proposing.", stepStart: 1, stepEnd: 2 },
-  { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken.", stepStart: 3, stepEnd: 3 },
-  { phase: 3, name: "Solution & Value", description: "What you'd build and why it matters.", stepStart: 4, stepEnd: 5 },
+  { phase: 1, name: "Setup", description: "Who you are.", stepStart: 1, stepEnd: 1 },
+  { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken.", stepStart: 2, stepEnd: 2 },
+  { phase: 3, name: "Solution & Value", description: "Your idea, how it would work, and why it matters.", stepStart: 3, stepEnd: 5 },
   { phase: 4, name: "Alignment & Feasibility", description: "Strategic fit, security, and measurable success.", stepStart: 6, stepEnd: 8 },
 ]
 
@@ -190,15 +190,15 @@ export const formSteps: FormStep[] = [
   },
   {
     step: 2,
-    name: "Idea Overview",
-    title: "Describe Your Idea",
-    prompt: "What's your AI idea? It doesn't need to be polished yet.",
+    name: "Problem & Target Users",
+    title: "Define the Problem and Who It Affects",
+    prompt: "What problem or opportunity are you trying to address, and who's affected by it?",
   },
   {
     step: 3,
-    name: "Problem & Target Users",
-    title: "Define the Problem and Who It Affects",
-    prompt: "What problem does this idea solve, and who's affected by it?",
+    name: "Idea Overview",
+    title: "Describe Your Idea",
+    prompt: "Now capture the idea itself — Scout can suggest a title from the problem you described.",
   },
   {
     step: 4,

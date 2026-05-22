@@ -62,17 +62,17 @@ function buildSubmissionContext(formData: FormData, currentStep: number): string
   if (formData.useCaseDescription) {
     lines.push(`- Idea description: ${formData.useCaseDescription}`)
   }
-  // Step 3 is the merged Problem & Target Users step — surface BOTH the
+  // Step 2 is the merged Problem & Target Users step — surface BOTH the
   // problem definition and the target user context once it's been touched.
   if (
-    currentStep > 3 &&
+    currentStep > 2 &&
     (formData.problemDefinition || formData.coreProblem || formData.targetUserSummary || formData.targetUserContext)
   ) {
     if (formData.problemDefinition || formData.coreProblem) {
-      lines.push(`- Problem (from Step 3): ${formData.problemDefinition || formData.coreProblem}`)
+      lines.push(`- Problem (from Step 2): ${formData.problemDefinition || formData.coreProblem}`)
     }
     if (formData.targetUserSummary || formData.targetUserContext) {
-      lines.push(`- Target users (from Step 3): ${formData.targetUserSummary || formData.targetUserContext}`)
+      lines.push(`- Target users (from Step 2): ${formData.targetUserSummary || formData.targetUserContext}`)
     }
   }
   if (currentStep > 4 && (formData.solutionSummary || formData.proposedSolution)) {
@@ -112,8 +112,8 @@ function buildSubmissionContext(formData: FormData, currentStep: number): string
 // and what a USPTO reviewer would push back on.
 // ============================================================
 const stepRubrics: Record<number, string> = {
-  // Step 3: PROBLEM & TARGET USERS (merged)
-  3: `For PROBLEM & TARGET USERS (merged step), evaluate whether:
+  // Step 2: PROBLEM & TARGET USERS (merged)
+  2: `For PROBLEM & TARGET USERS (merged step), evaluate whether:
 PROBLEM dimensions:
 - The root cause is named, not just symptoms
 - The cost of inaction is quantified (hours, dollars, errors, pendency days)
@@ -187,7 +187,7 @@ function fmt(v: string | undefined | string[]): string {
 
 function buildStepInputs(formData: FormData, step: number): string {
   switch (step) {
-    case 3:
+    case 2:
       // Merged Problem & Target Users
       return [
         `--- PROBLEM ---`,
@@ -256,7 +256,7 @@ function buildStepInputs(formData: FormData, step: number): string {
 // For merged steps, prefer the more leadership-facing field.
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
-    case 3:
+    case 2:
       // Merged Problem & Users — coach on the problem first (per Jonathan's framing)
       return "coreProblem"
     case 4:
@@ -580,7 +580,7 @@ export async function validateAndRefineInput(
   const assistantTurns = conversationHistory.filter((m) => m.role === "assistant").length
 
   const stepFormattingGuidelines: Record<number, string> = {
-    3: `When producing the scaffold: open with 2-3 sentences naming the problem (severity, mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
+    2: `When producing the scaffold: open with 2-3 sentences naming the problem (severity, mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
     4: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
     5: `When producing the scaffold: open with 2-3 sentences on user-level benefit (with a quantified time savings), then 2-3 sentences on agency-level business value tied to a named USPTO priority.`,
     6: `When producing the scaffold: 2-3 sentences mapping the idea to named USPTO priorities and the explicit mechanism by which each is advanced.`,
@@ -709,5 +709,61 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
   } catch (error) {
     console.error("AI Gateway error, falling back to mock:", error)
     return getMockResponse(step, userInput)
+  }
+}
+
+
+// ============================================================
+// Idea title suggestion
+// The Idea Overview step now comes AFTER the problem step, so Scout can
+// propose a working title from the problem already captured plus the
+// submitter's rough idea text. Always editable — never overwrites silently.
+// ============================================================
+export async function suggestUseCaseTitle(
+  formData: FormData,
+): Promise<{ title: string; error?: string }> {
+  const problem = (formData.coreProblem || formData.problemDefinition || "").trim()
+  const impact = (formData.problemImpact || "").trim()
+  const description = (formData.useCaseDescription || "").trim()
+
+  if (!problem && !description) {
+    return {
+      title: "",
+      error:
+        "Add the problem (previous step) or a rough idea description first so Scout has something to title.",
+    }
+  }
+
+  const context = [
+    problem && `Problem: ${problem}`,
+    impact && `Why it matters: ${impact}`,
+    description && `Rough idea description: ${description}`,
+  ]
+    .filter(Boolean)
+    .join("\n")
+
+  try {
+    const { object } = await generateObject({
+      model: anthropic("claude-sonnet-4-5-20250929"),
+      schema: z.object({
+        title: z
+          .string()
+          .describe("A concise 3-8 word, Title Case name for the AI use case"),
+      }),
+      system: `You write short, specific titles for USPTO AI use-case submissions. Given the problem and a rough description, return ONE title of 3-8 words in Title Case. Name the function or outcome (e.g., "AI-Assisted Prior Art Search", "Automated IT Ticket Triage"). No quotation marks, no trailing punctuation, no marketing fluff. Do not invent specifics (units, numbers, systems) the input does not imply.`,
+      prompt: `${context}\n\nPropose one concise title for this idea.`,
+    })
+    return { title: object.title.trim().replace(/^["']+|["']+$/g, "") }
+  } catch (error) {
+    console.error("AI Gateway error for title suggestion:", error)
+    // Local fallback so the demo never hard-fails if the API is down.
+    const seed = description || problem
+    const firstClause = seed.split(/[.\n,;]/)[0].trim()
+    const words = firstClause.split(/\s+/).slice(0, 8).join(" ")
+    const fallback = words ? words.replace(/\b\w/g, (c) => c.toUpperCase()) : "New AI Use Case"
+    return {
+      title: fallback,
+      error: "Scout was unavailable — drafted a title locally. Edit it to fit.",
+    }
   }
 }

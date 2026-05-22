@@ -60,17 +60,17 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("submitterOffice", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Business unit" }, () => !formData.submitterOffice)
 
   // ---------- Step 2: Use Case Overview ----------
-  need("useCaseTitle", { step: 2, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
-  need("useCaseDescription", { step: 2, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
-  need("publicIndicator", { step: 2, stepName: "Idea Overview", reason: "missing", message: "Public / excluded classification" }, () => !formData.publicIndicator)
+  need("useCaseTitle", { step: 3, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
+  need("useCaseDescription", { step: 3, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
+  need("publicIndicator", { step: 3, stepName: "Idea Overview", reason: "missing", message: "Public / excluded classification" }, () => !formData.publicIndicator)
 
   // ---------- Step 3: Problem & Target Users (merged) ----------
-  need("coreProblem", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
-  need("severity", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Severity rating" }, () => !formData.severity)
-  need("affectedSystem", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Affected system" }, () => !formData.affectedSystem)
-  need("targetAudience", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Target audience" }, () => !formData.targetAudience)
-  need("impactedUsersCount", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "Estimated users impacted" }, () => !formData.impactedUsersCount)
-  need("targetUserContext", { step: 3, stepName: "Problem & Target Users", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
+  need("coreProblem", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
+  need("severity", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Severity rating" }, () => !formData.severity)
+  need("affectedSystem", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Affected system" }, () => !formData.affectedSystem)
+  need("targetAudience", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Target audience" }, () => !formData.targetAudience)
+  need("impactedUsersCount", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Estimated users impacted" }, () => !formData.impactedUsersCount)
+  need("targetUserContext", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
 
   // ---------- Step 4: Proposed Solution ----------
   need("proposedSolution", { step: 4, stepName: "Proposed Solution", reason: "missing", message: "Proposed solution" }, () => !presentString(formData.proposedSolution))

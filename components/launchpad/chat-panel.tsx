@@ -29,7 +29,7 @@ type LaunchPadChatPanelProps = {
 
 function getStepContext(step: number): { buttonLabel: string; emptyMessage: string } {
   switch (step) {
-    case 3:
+    case 2:
       // Merged Problem & Target Users
       return {
         buttonLabel: "Help Me with the Problem",
@@ -70,7 +70,7 @@ function getStepContext(step: number): { buttonLabel: string; emptyMessage: stri
 
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
-    case 3:
+    case 2:
       // Merged Problem & Users — coach on the problem first
       return "coreProblem"
     case 4:
