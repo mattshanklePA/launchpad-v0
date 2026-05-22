@@ -22,8 +22,9 @@ export type FormPhase = {
 export const formPhases: FormPhase[] = [
   { phase: 1, name: "Setup", description: "Who you are.", stepStart: 1, stepEnd: 1 },
   { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken.", stepStart: 2, stepEnd: 2 },
-  { phase: 3, name: "Solution & Value", description: "Your idea, how it would work, and why it matters.", stepStart: 3, stepEnd: 5 },
-  { phase: 4, name: "Alignment & Feasibility", description: "Strategic fit, security, and measurable success.", stepStart: 6, stepEnd: 8 },
+  { phase: 3, name: "Solution & Value", description: "What you'd build and why it matters.", stepStart: 3, stepEnd: 4 },
+  { phase: 4, name: "Alignment & Feasibility", description: "Strategic fit, security, and measurable success.", stepStart: 5, stepEnd: 7 },
+  { phase: 5, name: "Summary", description: "Name and summarize the finished idea.", stepStart: 8, stepEnd: 8 },
 ]
 
 export function getPhaseForStep(step: number): FormPhase | null {
@@ -196,39 +197,39 @@ export const formSteps: FormStep[] = [
   },
   {
     step: 3,
-    name: "Idea Overview",
-    title: "Describe Your Idea",
-    prompt: "Now capture the idea itself — Scout can suggest a title from the problem you described.",
-  },
-  {
-    step: 4,
     name: "Proposed Solution",
     title: "Propose a Solution",
     prompt: "How would this work? Describe your proposed AI/ML approach.",
   },
   {
-    step: 5,
+    step: 4,
     name: "Value",
     title: "Define the Value to Users and the Business",
     prompt: "How does this help users, and what's the business case for USPTO?",
   },
   {
-    step: 6,
+    step: 5,
     name: "Strategic Alignment",
     title: "Align with USPTO Goals",
     prompt: "Does this align with USPTO's strategic priorities? Which ones?",
   },
   {
-    step: 7,
+    step: 6,
     name: "Feasibility & Security",
     title: "Assess Feasibility & Security",
     prompt: "Is this idea feasible? Consider technical, security, and resource realities.",
   },
   {
-    step: 8,
+    step: 7,
     name: "Success Metrics",
     title: "Define Success Metrics",
     prompt: "How will we know this worked? Define measurable success.",
+  },
+  {
+    step: 8,
+    name: "Idea Overview",
+    title: "Name & Summarize Your Idea",
+    prompt: "Scout drafted a title and summary from everything you entered — review and refine.",
   },
   {
     step: 9,

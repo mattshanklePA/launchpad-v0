@@ -20,7 +20,7 @@ export type FieldDefinition = {
   // owner can read it and decide whether their org needs it.
   reasonToInclude: string
   // Which of the 4 wizard phases this field belongs to.
-  phase: 1 | 2 | 3 | 4
+  phase: 1 | 2 | 3 | 4 | 5
   // Which step within the wizard renders this field.
   step: number
   // True if the field cannot be turned off. Either core to the AI assessment
@@ -79,8 +79,8 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Short name for the AI use case.",
     reasonToInclude:
       "The primary identifier across submissions, comparisons, and the AI readiness assessment.",
-    phase: 3,
-    step: 3,
+    phase: 5,
+    step: 8,
     locked: true,
     lockedReason: "Required — the AI assessment and Decision Center both key off this field.",
   },
@@ -90,8 +90,8 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "1-3 sentence narrative explanation of the idea.",
     reasonToInclude:
       "Gives Scout enough context to coach the submitter through subsequent steps without inventing details.",
-    phase: 3,
-    step: 3,
+    phase: 5,
+    step: 8,
     locked: true,
     lockedReason: "Required — Scout uses this as the seed context for every step's coaching.",
   },
@@ -101,8 +101,8 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the idea is publicly discussable or contains excluded information.",
     reasonToInclude:
       "Flags submissions that need restricted handling and prevents them from appearing in public-facing exports.",
-    phase: 3,
-    step: 3,
+    phase: 5,
+    step: 8,
     locked: false,
   },
 
@@ -215,7 +215,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required for any meaningful review — without a described solution, the submission is just a problem statement.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: true,
     lockedReason: "Required — Scout's assessment and the Decision Center both depend on this field.",
   },
@@ -226,7 +226,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Forces the submitter to scope down to the 3 most important features rather than gold-plating.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -236,7 +236,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Cleaner version of the freeform proposed-solution text, used in exec summaries and comparisons.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
 
@@ -247,7 +247,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Free-text description of how this benefits the end user.",
     reasonToInclude: "Articulates the user-facing benefit separate from the business case.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
   {
@@ -257,7 +257,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Quantifies the user benefit. Pairs with impacted-users-count to project agency-level hour savings.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
   {
@@ -266,7 +266,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Multi-select tags: faster processing, better accuracy, reduced frustration, etc.",
     reasonToInclude: "Captures non-time-savings benefits that still matter to user experience.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
   {
@@ -276,7 +276,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Executive-ready quote for the value section. Editable after generation.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
   {
@@ -286,7 +286,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The business-case framing that leadership reads first. Anchor for ROI estimates and strategic alignment.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
   {
@@ -296,7 +296,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Order-of-magnitude $ figure that lets reviewers triage by ROI. Surfaces in the Decision Center prominently.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
   {
@@ -305,7 +305,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Multi-select tags for what high-level outcomes this drives.",
     reasonToInclude: "Lets analytics roll up portfolio-level themes across the submission pool.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
   {
@@ -315,7 +315,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The most-quoted field from a submission. Goes directly into the exec summary briefing.",
     phase: 3,
-    step: 5,
+    step: 4,
     locked: false,
   },
 
@@ -329,7 +329,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Forces explicit linkage to published agency priorities — prevents vague 'modernization' claims.",
     phase: 4,
-    step: 6,
+    step: 5,
     locked: false,
   },
   {
@@ -339,7 +339,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Detailed alignment language reviewers can quote when justifying funding decisions.",
     phase: 4,
-    step: 6,
+    step: 5,
     locked: false,
   },
   {
@@ -348,7 +348,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "AI-generated executive summary of strategic alignment.",
     reasonToInclude: "Clean exec-ready quote for the strategic section of the readiness brief.",
     phase: 4,
-    step: 6,
+    step: 5,
     locked: false,
   },
 
@@ -360,7 +360,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Quick triage for how much effort this will take. Pairs with timeline-to-results to estimate viability.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: false,
   },
   {
@@ -370,7 +370,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Surfaces dependencies on people/data/vendors so reviewers can confirm availability.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: false,
   },
   {
@@ -380,7 +380,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The honest-risks field. Without it, reviewers can't assess realistic feasibility.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: false,
   },
   {
@@ -390,7 +390,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required for federal AI risk management per Department of Commerce mandate.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: true,
     lockedReason: "DoC-mandated AI risk question — required for federal compliance.",
   },
@@ -401,7 +401,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Determines handling controls when PII or sensitive data is involved.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: false,
   },
   {
@@ -410,7 +410,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Tags: role-based, MFA, FedRAMP — only shown if sensitive data answer is Yes.",
     reasonToInclude: "Catalogs the security controls required to safely operate this AI use case.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: false,
   },
   {
@@ -420,7 +420,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required for federal AI risk management. Decisional AI requires enhanced human-review controls per DoC mandate.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: true,
     lockedReason: "DoC-mandated AI risk question — required for federal compliance.",
   },
@@ -431,7 +431,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required by the current Executive Order on federal AI — foreign sourcing requires additional review.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: true,
     lockedReason: "Required per Executive Order on federal AI sourcing.",
   },
@@ -442,7 +442,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required for federal AI risk management. Human-in-the-loop status determines downstream control requirements.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: true,
     lockedReason: "DoC-mandated AI risk question — required for federal compliance.",
   },
@@ -453,7 +453,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Compact exec-ready summary covering implementation feasibility, security posture, and risk profile.",
     phase: 4,
-    step: 7,
+    step: 6,
     locked: false,
   },
 
@@ -465,7 +465,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Forces explicit measurement thinking — without this, ROI claims are unverifiable.",
     phase: 4,
-    step: 8,
+    step: 7,
     locked: false,
   },
   {
@@ -474,7 +474,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Multi-select tags for measurable outcome categories.",
     reasonToInclude: "Lets the metrics roll up to portfolio-level views (how many projects target which outcomes).",
     phase: 4,
-    step: 8,
+    step: 7,
     locked: false,
   },
   {
@@ -483,7 +483,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Range: <3, 3-6, 6-12, 12+ months.",
     reasonToInclude: "Sets reviewer expectations and helps prioritize quick wins vs. long bets.",
     phase: 4,
-    step: 8,
+    step: 7,
     locked: false,
   },
   {
@@ -493,7 +493,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Exec-ready summary used in the readiness briefing and Decision Center comparison.",
     phase: 4,
-    step: 8,
+    step: 7,
     locked: false,
   },
 ]
@@ -513,6 +513,6 @@ export function fieldsForStep(step: number): FieldDefinition[] {
 }
 
 // Convenience: which fields belong to a given phase.
-export function fieldsForPhase(phase: 1 | 2 | 3 | 4): FieldDefinition[] {
+export function fieldsForPhase(phase: 1 | 2 | 3 | 4 | 5): FieldDefinition[] {
   return FIELD_REGISTRY.filter((f) => f.phase === phase)
 }

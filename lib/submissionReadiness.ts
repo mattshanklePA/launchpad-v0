@@ -60,9 +60,9 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("submitterOffice", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Business unit" }, () => !formData.submitterOffice)
 
   // ---------- Step 2: Use Case Overview ----------
-  need("useCaseTitle", { step: 3, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
-  need("useCaseDescription", { step: 3, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
-  need("publicIndicator", { step: 3, stepName: "Idea Overview", reason: "missing", message: "Public / excluded classification" }, () => !formData.publicIndicator)
+  need("useCaseTitle", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
+  need("useCaseDescription", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
+  need("publicIndicator", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Public / excluded classification" }, () => !formData.publicIndicator)
 
   // ---------- Step 3: Problem & Target Users (merged) ----------
   need("coreProblem", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
@@ -73,31 +73,31 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("targetUserContext", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
 
   // ---------- Step 4: Proposed Solution ----------
-  need("proposedSolution", { step: 4, stepName: "Proposed Solution", reason: "missing", message: "Proposed solution" }, () => !presentString(formData.proposedSolution))
+  need("proposedSolution", { step: 3, stepName: "Proposed Solution", reason: "missing", message: "Proposed solution" }, () => !presentString(formData.proposedSolution))
 
   // ---------- Step 5: Value to Users and the Business (merged) ----------
-  need("userValue", { step: 5, stepName: "Value", reason: "missing", message: "User value statement" }, () => !presentString(formData.userValue))
-  need("userTimeSavings", { step: 5, stepName: "Value", reason: "missing", message: "Time savings range" }, () => !formData.userTimeSavings)
-  need("businessValue", { step: 5, stepName: "Value", reason: "missing", message: "Business value statement" }, () => !presentString(formData.businessValue))
-  need("costSavings", { step: 5, stepName: "Value", reason: "missing", message: "Cost savings range" }, () => !formData.costSavings)
+  need("userValue", { step: 4, stepName: "Value", reason: "missing", message: "User value statement" }, () => !presentString(formData.userValue))
+  need("userTimeSavings", { step: 4, stepName: "Value", reason: "missing", message: "Time savings range" }, () => !formData.userTimeSavings)
+  need("businessValue", { step: 4, stepName: "Value", reason: "missing", message: "Business value statement" }, () => !presentString(formData.businessValue))
+  need("costSavings", { step: 4, stepName: "Value", reason: "missing", message: "Cost savings range" }, () => !formData.costSavings)
 
   // ---------- Step 6: Strategic Alignment ----------
-  need("relevantOkrs", { step: 6, stepName: "Strategic Alignment", reason: "missing", message: "Strategic alignment text" }, () => !presentString(formData.relevantOkrs))
-  need("usptoFocusArea", { step: 6, stepName: "Strategic Alignment", reason: "missing", message: "At least one USPTO focus area" }, () => !hasArrayValue(formData.usptoFocusArea))
+  need("relevantOkrs", { step: 5, stepName: "Strategic Alignment", reason: "missing", message: "Strategic alignment text" }, () => !presentString(formData.relevantOkrs))
+  need("usptoFocusArea", { step: 5, stepName: "Strategic Alignment", reason: "missing", message: "At least one USPTO focus area" }, () => !hasArrayValue(formData.usptoFocusArea))
 
   // ---------- Step 7: Feasibility & Security ----------
-  need("dependencies", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "Feasibility / dependencies" }, () => !presentString(formData.dependencies))
-  need("implementationComplexity", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "Implementation complexity" }, () => !formData.implementationComplexity)
+  need("dependencies", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Feasibility / dependencies" }, () => !presentString(formData.dependencies))
+  need("implementationComplexity", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Implementation complexity" }, () => !formData.implementationComplexity)
   // AI Risk Management — DoC mandated. These fields are locked-on in the
   // registry so `need()` will always run the check.
-  need("involvesSensitiveData", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "PII / sensitive data answer" }, () => !formData.involvesSensitiveData)
-  need("aiDecisionalImpact", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "AI decisional impact answer" }, () => !formData.aiDecisionalImpact)
-  need("aiModelSourcing", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "AI model sourcing" }, () => !formData.aiModelSourcing)
-  need("aiHumanReview", { step: 7, stepName: "Feasibility & Security", reason: "missing", message: "Human review answer" }, () => !formData.aiHumanReview)
+  need("involvesSensitiveData", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "PII / sensitive data answer" }, () => !formData.involvesSensitiveData)
+  need("aiDecisionalImpact", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI decisional impact answer" }, () => !formData.aiDecisionalImpact)
+  need("aiModelSourcing", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI model sourcing" }, () => !formData.aiModelSourcing)
+  need("aiHumanReview", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Human review answer" }, () => !formData.aiHumanReview)
 
   // ---------- Step 8: Success Metrics ----------
-  need("successMetrics", { step: 8, stepName: "Success Metrics", reason: "missing", message: "Success metrics" }, () => !presentString(formData.successMetrics))
-  need("timelineForResults", { step: 8, stepName: "Success Metrics", reason: "missing", message: "Timeline for results" }, () => !formData.timelineForResults)
+  need("successMetrics", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Success metrics" }, () => !presentString(formData.successMetrics))
+  need("timelineForResults", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Timeline for results" }, () => !formData.timelineForResults)
 
   // ---------- Quality gate: AI readiness assessment ----------
   if (!formData.readinessScore) {

@@ -33,9 +33,9 @@ export function Step8FeasibilitySecurity() {
   }
 
   return (
-    <div className="grid lg:grid-cols-12 gap-12">
+    <div className="grid lg:grid-cols-12 gap-10">
       <div className="lg:col-span-7">
-        <div className="rounded-lg border bg-white p-6 shadow-sm space-y-8 h-full">
+        <div className="space-y-8">
           {isVisible("implementationComplexity") && (
             <div className="space-y-2">
               <Label>Implementation complexity</Label>
@@ -251,7 +251,7 @@ export function Step8FeasibilitySecurity() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={7}
+          step={6}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, feasibilitySummary: suggestion }))}
         />
       </div>

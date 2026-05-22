@@ -114,9 +114,9 @@ export function Step7Alignment() {
     STRATEGIC_FOCUS_AREAS.find((f) => f.id === id)?.label || id
 
   return (
-    <div className="grid lg:grid-cols-12 gap-12">
+    <div className="grid lg:grid-cols-12 gap-10">
       <div className="lg:col-span-7">
-        <div className="rounded-lg border bg-white p-6 shadow-sm space-y-8 h-full">
+        <div className="space-y-8">
           {/* ─── Scout suggestion card ─── */}
           {(suggesting || suggestion) && (
             <div className="rounded-lg border-2 border-dashed border-uspto-blue-primary/40 bg-uspto-blue-primary/5 p-4 space-y-3">
@@ -279,7 +279,7 @@ export function Step7Alignment() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={6}
+          step={5}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, alignmentSummary: suggestion }))}
         />
       </div>

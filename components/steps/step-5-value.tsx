@@ -62,9 +62,9 @@ export function Step5Value() {
   }
 
   return (
-    <div className="grid lg:grid-cols-12 gap-12">
+    <div className="grid lg:grid-cols-12 gap-10">
       <div className="lg:col-span-7">
-        <div className="rounded-lg border bg-white p-6 shadow-sm space-y-10 h-full">
+        <div className="space-y-10">
           {/* ─── VALUE TO USERS ─── */}
           {userSectionVisible && (
             <div className="space-y-6">
@@ -252,7 +252,7 @@ export function Step5Value() {
       </div>
 
       <div className="lg:col-span-5 flex flex-col">
-        <AIdChatPanel step={5} onApplySuggestion={handleSuggestion} />
+        <AIdChatPanel step={4} onApplySuggestion={handleSuggestion} />
       </div>
     </div>
   )

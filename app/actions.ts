@@ -43,6 +43,19 @@ USPTO operates under two published strategic frameworks. Every AI idea pursued b
 A serious AI idea names the specific priorities it advances, describes the mechanism by which it does so, and acknowledges what it does not prioritize. Vague gestures like "modernization," "efficiency," or "improving outcomes" are not alignment — they are buzzwords.
 `
 
+const HUMANIZATION_GUIDELINES = `
+WRITING STYLE — avoid the patterns that make text read as AI-generated. This applies to every sentence you write (questions, rationales, scaffolds, summaries, titles, descriptions):
+- No rule-of-three cadences ("We launched fast. We tested hard. We scaled.").
+- No contrast framing ("not just X, it's Y").
+- No poetic elevation of ordinary things ("this isn't a tool, it's a movement").
+- Don't force odd-numbered lists (3 pillars, 5 steps) for their own sake.
+- No hypophora: don't pose a question and immediately answer it.
+- No adverb stacking ("truly," "deeply," "carefully").
+- No rhythmic cliché pairings ("Simple to use. Hard to ignore.").
+- No scripted transitions ("Let's unpack this," "Here's what that really means").
+- Don't end on a vague vibe; close on something concrete.
+Write plainly and specifically. Vary sentence length. Use concrete nouns and the submitter's own facts instead of abstraction.`
+
 // ============================================================
 // SUBMISSION CONTEXT BUILDER
 // Compiles the submitter's responses from previous steps so the
@@ -75,29 +88,29 @@ function buildSubmissionContext(formData: FormData, currentStep: number): string
       lines.push(`- Target users (from Step 2): ${formData.targetUserSummary || formData.targetUserContext}`)
     }
   }
-  if (currentStep > 4 && (formData.solutionSummary || formData.proposedSolution)) {
-    lines.push(`- Proposed solution (from Step 4): ${formData.solutionSummary || formData.proposedSolution}`)
+  if (currentStep > 3 && (formData.solutionSummary || formData.proposedSolution)) {
+    lines.push(`- Proposed solution (from Step 3): ${formData.solutionSummary || formData.proposedSolution}`)
   }
   // Step 5 is the merged Value step — both user and business value.
   if (
-    currentStep > 5 &&
+    currentStep > 4 &&
     (formData.userValueSummary || formData.userValue || formData.businessValueSummary || formData.businessValue)
   ) {
     if (formData.userValueSummary || formData.userValue) {
-      lines.push(`- User value (from Step 5): ${formData.userValueSummary || formData.userValue}`)
+      lines.push(`- User value (from Step 4): ${formData.userValueSummary || formData.userValue}`)
     }
     if (formData.businessValueSummary || formData.businessValue) {
-      lines.push(`- Business value (from Step 5): ${formData.businessValueSummary || formData.businessValue}`)
+      lines.push(`- Business value (from Step 4): ${formData.businessValueSummary || formData.businessValue}`)
     }
   }
-  if (currentStep > 6 && (formData.alignmentSummary || formData.relevantOkrs)) {
-    lines.push(`- Strategic alignment (from Step 6): ${formData.alignmentSummary || formData.relevantOkrs}`)
+  if (currentStep > 5 && (formData.alignmentSummary || formData.relevantOkrs)) {
+    lines.push(`- Strategic alignment (from Step 5): ${formData.alignmentSummary || formData.relevantOkrs}`)
   }
-  if (currentStep > 7 && (formData.feasibilitySummary || formData.dependencies)) {
-    lines.push(`- Feasibility (from Step 7): ${formData.feasibilitySummary || formData.dependencies}`)
+  if (currentStep > 6 && (formData.feasibilitySummary || formData.dependencies)) {
+    lines.push(`- Feasibility (from Step 6): ${formData.feasibilitySummary || formData.dependencies}`)
   }
-  if (currentStep > 8 && (formData.metricsSummary || formData.successMetrics)) {
-    lines.push(`- Success metrics (from Step 8): ${formData.metricsSummary || formData.successMetrics}`)
+  if (currentStep > 7 && (formData.metricsSummary || formData.successMetrics)) {
+    lines.push(`- Success metrics (from Step 7): ${formData.metricsSummary || formData.successMetrics}`)
   }
 
   if (lines.length === 0) {
@@ -126,15 +139,15 @@ TARGET USER dimensions:
 - The user experience aligns with USPTO's goal of impactful employee and customer experiences
 COMBINED: a strong response makes the link explicit — for THIS problem, THESE users are affected in THIS specific way.`,
 
-  // Step 4: PROPOSED SOLUTION
-  4: `For PROPOSED SOLUTION, evaluate whether:
+  // Step 3: PROPOSED SOLUTION
+  3: `For PROPOSED SOLUTION, evaluate whether:
 - The AI/ML mechanism is specific (NLP query expansion, classification model, RAG, etc.) — not just "we'll use AI"
 - The user interaction model is defined (what does the user do, what does the system return)
 - Existing USPTO systems/APIs that must be touched are named
 - The approach aligns with USPTO's priority of enhancing AI capabilities through infrastructure and resources`,
 
-  // Step 5: VALUE (merged user + business)
-  5: `For VALUE (merged user + business value), evaluate whether:
+  // Step 4: VALUE (merged user + business)
+  4: `For VALUE (merged user + business value), evaluate whether:
 USER VALUE dimensions:
 - The current-state baseline is quantified (how long does the user spend today)
 - The expected improvement is grounded in data (pilot, benchmark, comparable system) — not a guess
@@ -147,16 +160,16 @@ BUSINESS VALUE dimensions:
 - The ROI claim is realistic — overly aggressive estimates undermine credibility
 COMBINED: the user-level benefit must scale into a defensible business-level number.`,
 
-  // Step 6: STRATEGIC ALIGNMENT
-  6: `For STRATEGIC ALIGNMENT, evaluate whether:
+  // Step 5: STRATEGIC ALIGNMENT
+  5: `For STRATEGIC ALIGNMENT, evaluate whether:
 - The submitter names 1-2 specific USPTO priorities — not vague gestures like "modernization" or "efficiency"
 - The mechanism connecting the idea to each priority is explicit (how, exactly, does this advance it?)
 - Expected contribution is quantified where possible
 - Responsible AI considerations are addressed — bias mitigation, human oversight, explainability
 - The submitter shows focus by naming what this idea does NOT prioritize`,
 
-  // Step 7: FEASIBILITY & SECURITY
-  7: `For FEASIBILITY & SECURITY, evaluate whether:
+  // Step 6: FEASIBILITY & SECURITY
+  6: `For FEASIBILITY & SECURITY, evaluate whether:
 - The hardest technical risk is named honestly (not buried)
 - FedRAMP/ATO timeline implications are realistic (typically 8-12+ weeks for amendments)
 - Data sensitivity and 508 accessibility are addressed
@@ -165,8 +178,8 @@ COMBINED: the user-level benefit must scale into a defensible business-level num
 - A fallback plan exists if the biggest risk materializes
 - AI risk management questions are addressed: PII use, decision-making impact, American-built model sourcing`,
 
-  // Step 8: SUCCESS METRICS
-  8: `For SUCCESS METRICS, evaluate whether:
+  // Step 7: SUCCESS METRICS
+  7: `For SUCCESS METRICS, evaluate whether:
 - Baseline data source is named (current system telemetry, time-motion study, etc.)
 - Leading indicators (adoption, usage frequency) are distinguished from lagging indicators (time saved, quality)
 - A decision point is defined (at week X, if metric < threshold, we will Y)
@@ -202,13 +215,13 @@ function buildStepInputs(formData: FormData, step: number): string {
         `- Key pain points (textarea): ${fmt(formData.painPoints)}`,
         `- User profile / context (textarea): ${fmt(formData.targetUserContext)}`,
       ].join("\n")
-    case 4:
+    case 3:
       // Proposed Solution
       return [
         `- Proposed solution (textarea): ${fmt(formData.proposedSolution)}`,
         `- Key functionality tags: ${fmt(formData.keyFunctionality)}`,
       ].join("\n")
-    case 5:
+    case 4:
       // Merged Value (user + business)
       return [
         `--- USER VALUE ---`,
@@ -220,13 +233,13 @@ function buildStepInputs(formData: FormData, step: number): string {
         `- Cost savings range: ${fmt(formData.costSavings)}`,
         `- Strategic benefit tags: ${fmt(formData.strategicBenefit)}`,
       ].join("\n")
-    case 6:
+    case 5:
       // Strategic Alignment
       return [
         `- USPTO focus areas selected: ${fmt(formData.usptoFocusArea)}`,
         `- Relevant OKRs / alignment text: ${fmt(formData.relevantOkrs)}`,
       ].join("\n")
-    case 7:
+    case 6:
       // Feasibility & Security (includes AI Risk Management questions)
       return [
         `- Implementation complexity: ${fmt(formData.implementationComplexity)}`,
@@ -240,7 +253,7 @@ function buildStepInputs(formData: FormData, step: number): string {
         `- AI model sourcing: ${fmt(formData.aiModelSourcing)}`,
         `- Mandatory human review: ${fmt(formData.aiHumanReview)}`,
       ].join("\n")
-    case 8:
+    case 7:
       // Success Metrics
       return [
         `- Success metrics description (textarea): ${fmt(formData.successMetrics)}`,
@@ -259,16 +272,16 @@ function getInputFieldForStep(step: number): keyof FormData | null {
     case 2:
       // Merged Problem & Users — coach on the problem first (per Jonathan's framing)
       return "coreProblem"
-    case 4:
+    case 3:
       return "proposedSolution"
-    case 5:
+    case 4:
       // Merged Value — coach on the business-value statement first
       return "businessValue"
-    case 6:
+    case 5:
       return "relevantOkrs"
-    case 7:
+    case 6:
       return "dependencies"
-    case 8:
+    case 7:
       return "successMetrics"
     default:
       return null
@@ -389,6 +402,8 @@ ${metrics}
 
 ${USPTO_STRATEGIC_CONTEXT}
 
+${HUMANIZATION_GUIDELINES}
+
 You are given the complete submission across all dimensions: problem, target users, solution, user value, business value, strategic alignment, feasibility, AI risk profile, and success metrics.
 
 LEADERSHIP FRAMING — IMPORTANT:
@@ -487,6 +502,8 @@ export async function suggestStrategicAlignment(
 
   const systemPrompt = `${USPTO_STRATEGIC_CONTEXT}
 
+${HUMANIZATION_GUIDELINES}
+
 You are Scout, an AI advisor helping USPTO staff align AI ideas with published USPTO strategic priorities. You will receive a submitter's idea (problem, solution, value claims) and must return:
 
 1. A list of 1-3 focus area IDs that this idea CLEARLY advances. Use ONLY the canonical IDs from this list:
@@ -581,11 +598,11 @@ export async function validateAndRefineInput(
 
   const stepFormattingGuidelines: Record<number, string> = {
     2: `When producing the scaffold: open with 2-3 sentences naming the problem (severity, mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
-    4: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
-    5: `When producing the scaffold: open with 2-3 sentences on user-level benefit (with a quantified time savings), then 2-3 sentences on agency-level business value tied to a named USPTO priority.`,
-    6: `When producing the scaffold: 2-3 sentences mapping the idea to named USPTO priorities and the explicit mechanism by which each is advanced.`,
-    7: `When producing the scaffold: bullet points covering Technical Feasibility, Security & Compliance, Dependencies, and Primary Risks with mitigation. Address AI risk management: PII use, decisional AI impact, American-built model sourcing.`,
-    8: `When producing the scaffold: bullet points for Success Metrics, Leading Indicators, Lagging Indicators, and Timeline.`,
+    3: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
+    4: `When producing the scaffold: open with 2-3 sentences on user-level benefit (with a quantified time savings), then 2-3 sentences on agency-level business value tied to a named USPTO priority.`,
+    5: `When producing the scaffold: 2-3 sentences mapping the idea to named USPTO priorities and the explicit mechanism by which each is advanced.`,
+    6: `When producing the scaffold: bullet points covering Technical Feasibility, Security & Compliance, Dependencies, and Primary Risks with mitigation. Address AI risk management: PII use, decisional AI impact, American-built model sourcing.`,
+    7: `When producing the scaffold: bullet points for Success Metrics, Leading Indicators, Lagging Indicators, and Timeline.`,
   }
 
   try {
@@ -622,6 +639,8 @@ export async function validateAndRefineInput(
           content: `You are a senior AI strategist at USPTO who pressure-tests AI ideas. You COACH submitters one question at a time — you NEVER ghostwrite answers.
 
 ${USPTO_STRATEGIC_CONTEXT}
+
+${HUMANIZATION_GUIDELINES}
 
 ═══ SUBMISSION CONTEXT (carry these through every coaching turn) ═══
 ${submissionContext}
@@ -712,32 +731,39 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
   }
 }
 
-
 // ============================================================
-// Idea title suggestion
-// The Idea Overview step now comes AFTER the problem step, so Scout can
-// propose a working title from the problem already captured plus the
-// submitter's rough idea text. Always editable — never overwrites silently.
+// Idea overview — title + description, drafted LAST from everything collected.
+// The Idea Overview step now sits at the end of the wizard, so Scout can
+// synthesize a clean title and summary from the problem, solution, value,
+// alignment, feasibility, and metrics the submitter already provided. Always
+// editable; never overwrites a title/description the submitter has changed.
 // ============================================================
-export async function suggestUseCaseTitle(
+export async function suggestIdeaOverview(
   formData: FormData,
-): Promise<{ title: string; error?: string }> {
-  const problem = (formData.coreProblem || formData.problemDefinition || "").trim()
-  const impact = (formData.problemImpact || "").trim()
-  const description = (formData.useCaseDescription || "").trim()
+): Promise<{ title: string; description: string; error?: string }> {
+  const problem = (formData.problemDefinition || formData.coreProblem || "").trim()
+  const solution = (formData.solutionSummary || formData.proposedSolution || "").trim()
+  const userValue = (formData.userValueSummary || formData.userValue || "").trim()
+  const businessValue = (formData.businessValueSummary || formData.businessValue || "").trim()
+  const alignment = (formData.alignmentSummary || formData.relevantOkrs || "").trim()
+  const metrics = (formData.metricsSummary || formData.successMetrics || "").trim()
 
-  if (!problem && !description) {
+  if (!problem && !solution) {
     return {
       title: "",
+      description: "",
       error:
-        "Add the problem (previous step) or a rough idea description first so Scout has something to title.",
+        "Fill in the problem and solution first — Scout drafts the title and summary from your earlier answers.",
     }
   }
 
   const context = [
     problem && `Problem: ${problem}`,
-    impact && `Why it matters: ${impact}`,
-    description && `Rough idea description: ${description}`,
+    solution && `Proposed solution: ${solution}`,
+    userValue && `User value: ${userValue}`,
+    businessValue && `Business value: ${businessValue}`,
+    alignment && `Strategic alignment: ${alignment}`,
+    metrics && `Success metrics: ${metrics}`,
   ]
     .filter(Boolean)
     .join("\n")
@@ -746,24 +772,30 @@ export async function suggestUseCaseTitle(
     const { object } = await generateObject({
       model: anthropic("claude-sonnet-4-5-20250929"),
       schema: z.object({
-        title: z
+        title: z.string().describe("A concise 3-8 word, Title Case name for the AI use case"),
+        description: z
           .string()
-          .describe("A concise 3-8 word, Title Case name for the AI use case"),
+          .describe("A 2-3 sentence plain-language summary of what the idea is, who it helps, and the outcome"),
       }),
-      system: `You write short, specific titles for USPTO AI use-case submissions. Given the problem and a rough description, return ONE title of 3-8 words in Title Case. Name the function or outcome (e.g., "AI-Assisted Prior Art Search", "Automated IT Ticket Triage"). No quotation marks, no trailing punctuation, no marketing fluff. Do not invent specifics (units, numbers, systems) the input does not imply.`,
-      prompt: `${context}\n\nPropose one concise title for this idea.`,
+      system: `You name and summarize a USPTO AI use-case submission using only what the submitter already wrote. Return a concise Title Case title (3-8 words, no quotation marks, no trailing punctuation) and a 2-3 sentence description covering what the idea is, who it helps, and the intended outcome. Do not invent specifics (units, numbers, systems) the input does not contain.
+
+${HUMANIZATION_GUIDELINES}`,
+      prompt: `${context}\n\nWrite the title and description for this idea.`,
     })
-    return { title: object.title.trim().replace(/^["']+|["']+$/g, "") }
+    return {
+      title: object.title.trim().replace(/^["']+|["']+$/g, ""),
+      description: object.description.trim(),
+    }
   } catch (error) {
-    console.error("AI Gateway error for title suggestion:", error)
-    // Local fallback so the demo never hard-fails if the API is down.
-    const seed = description || problem
+    console.error("AI Gateway error for idea overview, falling back to local draft:", error)
+    const seed = solution || problem
     const firstClause = seed.split(/[.\n,;]/)[0].trim()
     const words = firstClause.split(/\s+/).slice(0, 8).join(" ")
-    const fallback = words ? words.replace(/\b\w/g, (c) => c.toUpperCase()) : "New AI Use Case"
+    const fallbackTitle = words ? words.replace(/\b\w/g, (c) => c.toUpperCase()) : "New AI Use Case"
     return {
-      title: fallback,
-      error: "Scout was unavailable — drafted a title locally. Edit it to fit.",
+      title: fallbackTitle,
+      description: [problem, solution].filter(Boolean).join(" ").slice(0, 280),
+      error: "Scout was unavailable — drafted from your inputs locally. Edit to fit.",
     }
   }
 }

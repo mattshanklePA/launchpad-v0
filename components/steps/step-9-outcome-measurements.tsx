@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -7,6 +8,7 @@ import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "../launchpad/chat-panel"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 const metricOptions = [
   { value: "time_savings", label: "Time savings" },
@@ -19,6 +21,7 @@ const metricOptions = [
 export function Step9OutcomeMeasurements() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
+  const [showOptional, setShowOptional] = useState(false)
 
   const handleMetricToggle = (item: string) => {
     const currentItems = formData.keyMetrics || []
@@ -27,37 +30,22 @@ export function Step9OutcomeMeasurements() {
   }
 
   return (
-    <div className="grid lg:grid-cols-12 gap-12">
+    <div className="grid lg:grid-cols-12 gap-10">
       <div className="lg:col-span-7">
-        <div className="rounded-lg border bg-white p-6 shadow-sm space-y-8 h-full">
+        <div className="space-y-8">
           {isVisible("successMetrics") && (
             <div className="space-y-2">
-              <Label htmlFor="successMetrics">How will we measure success?</Label>
+              <Label htmlFor="successMetrics" className="text-base font-semibold text-uspto-gray-text">
+                How will we measure success?
+              </Label>
               <Textarea
                 id="successMetrics"
                 value={formData.successMetrics}
                 onChange={(e) => setFormData((prev) => ({ ...prev, successMetrics: e.target.value }))}
                 placeholder="Describe the primary success indicators."
                 rows={4}
+                className="text-base"
               />
-            </div>
-          )}
-          {isVisible("keyMetrics") && (
-            <div className="space-y-2">
-              <Label>Key metrics</Label>
-              <div className="flex flex-wrap gap-2">
-                {metricOptions.map((option) => (
-                  <Toggle
-                    key={option.value}
-                    pressed={formData.keyMetrics.includes(option.value)}
-                    onPressedChange={() => handleMetricToggle(option.value)}
-                    variant="outline"
-                    className="rounded-full px-3 py-1 text-sm h-auto"
-                  >
-                    {option.label}
-                  </Toggle>
-                ))}
-              </div>
             </div>
           )}
           {isVisible("timelineForResults") && (
@@ -80,13 +68,45 @@ export function Step9OutcomeMeasurements() {
             </div>
           )}
 
+          {isVisible("keyMetrics") && (
+            <div className="border-t pt-6">
+              <button
+                type="button"
+                onClick={() => setShowOptional((v) => !v)}
+                className="flex items-center gap-1.5 text-sm font-medium text-uspto-blue-primary hover:underline"
+                aria-expanded={showOptional}
+              >
+                {showOptional ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {showOptional ? "Hide optional detail" : "Add optional detail"}
+              </button>
+              {showOptional && (
+                <div className="mt-5 space-y-2">
+                  <Label>Key metrics</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {metricOptions.map((option) => (
+                      <Toggle
+                        key={option.value}
+                        pressed={formData.keyMetrics.includes(option.value)}
+                        onPressedChange={() => handleMetricToggle(option.value)}
+                        variant="outline"
+                        className="rounded-full px-3 py-1 text-sm h-auto"
+                      >
+                        {option.label}
+                      </Toggle>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {isVisible("metricsSummary") && (
-            <div className="pt-6 mt-6 border-t space-y-2">
-              <Label htmlFor="metricsSummary" className="text-base font-semibold">
+            <div className="pt-6 border-t space-y-2">
+              <Label htmlFor="metricsSummary" className="text-base font-semibold text-uspto-gray-text">
                 Success Metrics Summary
               </Label>
               <p className="text-sm text-muted-foreground">
-                This field is for the AI-generated refined summary of success metrics and measurement approach.
+                AI-generated refined summary of success metrics and measurement approach.
               </p>
               <TextareaAutosize
                 id="metricsSummary"
@@ -102,7 +122,7 @@ export function Step9OutcomeMeasurements() {
       </div>
       <div className="lg:col-span-5 flex flex-col">
         <AIdChatPanel
-          step={8}
+          step={7}
           onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, metricsSummary: suggestion }))}
         />
       </div>

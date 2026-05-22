@@ -60,17 +60,17 @@ export function FormContainer() {
       case 2:
         return <Step3ProblemAndUsers />
       case 3:
-        return <Step2UseCaseOverview />
-      case 4:
         return <Step4ProposedSolution />
-      case 5:
+      case 4:
         return <Step5Value />
-      case 6:
+      case 5:
         return <Step7Alignment />
-      case 7:
+      case 6:
         return <Step8FeasibilitySecurity />
-      case 8:
+      case 7:
         return <Step9OutcomeMeasurements />
+      case 8:
+        return <Step2UseCaseOverview />
       case 9:
         return <Step10ReviewSubmit />
       case 10:
