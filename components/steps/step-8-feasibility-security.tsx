@@ -8,6 +8,8 @@ import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "../launchpad/chat-panel"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 const resourceOptions = [
   { value: "dev_staff", label: "Development staff" },
@@ -25,6 +27,7 @@ const accessOptions = [
 export function Step8FeasibilitySecurity() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
+  const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
 
   const handleToggle = (field: "resourcesNeeded" | "accessControlRequirements", item: string) => {
     const currentItems = formData[field] || []
@@ -59,24 +62,6 @@ export function Step8FeasibilitySecurity() {
               </RadioGroup>
             </div>
           )}
-          {isVisible("resourcesNeeded") && (
-            <div className="space-y-2">
-              <Label>What resources are needed?</Label>
-              <div className="flex flex-wrap gap-2">
-                {resourceOptions.map((option) => (
-                  <Toggle
-                    key={option.value}
-                    pressed={formData.resourcesNeeded.includes(option.value)}
-                    onPressedChange={() => handleToggle("resourcesNeeded", option.value)}
-                    variant="outline"
-                    className="rounded-full px-3 py-1 text-sm h-auto"
-                  >
-                    {option.label}
-                  </Toggle>
-                ))}
-              </div>
-            </div>
-          )}
           {isVisible("dependencies") && (
             <div className="space-y-2">
               <Label htmlFor="dependencies">Key dependencies or constraints</Label>
@@ -87,6 +72,37 @@ export function Step8FeasibilitySecurity() {
                 placeholder="e.g., API access to legacy systems, vendor contracts..."
                 rows={3}
               />
+            </div>
+          )}
+          {isVisible("resourcesNeeded") && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowOptional((v) => !v)}
+                className="flex items-center gap-1.5 text-sm font-medium text-uspto-blue-primary hover:underline"
+                aria-expanded={showOptional}
+              >
+                {showOptional ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {showOptional ? "Hide optional detail" : "Add optional detail"}
+              </button>
+              {showOptional && (
+                <div className="mt-5 space-y-2">
+                  <Label>What resources are needed?</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {resourceOptions.map((option) => (
+                      <Toggle
+                        key={option.value}
+                        pressed={formData.resourcesNeeded.includes(option.value)}
+                        onPressedChange={() => handleToggle("resourcesNeeded", option.value)}
+                        variant="outline"
+                        className="rounded-full px-3 py-1 text-sm h-auto"
+                      >
+                        {option.label}
+                      </Toggle>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {/* ─── AI Risk Management (DoC-mandated + Executive Order) ─── */}

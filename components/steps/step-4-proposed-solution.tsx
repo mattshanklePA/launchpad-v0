@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,7 +17,7 @@ export function Step4ProposedSolution() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
   const [newFeature, setNewFeature] = useState("")
-  const [showOptional, setShowOptional] = useState(false)
+  const [showOptional, setShowOptional] = usePersistentDisclosure("solution")
 
   const handleAddFeature = () => {
     if (newFeature && (formData.keyFunctionality || []).length < MAX_FEATURES) {

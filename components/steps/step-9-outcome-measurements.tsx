@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -21,7 +21,7 @@ const metricOptions = [
 export function Step9OutcomeMeasurements() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
-  const [showOptional, setShowOptional] = useState(false)
+  const [showOptional, setShowOptional] = usePersistentDisclosure("metrics")
 
   const handleMetricToggle = (item: string) => {
     const currentItems = formData.keyMetrics || []

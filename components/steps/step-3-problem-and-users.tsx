@@ -5,7 +5,7 @@
 // tucked behind an "Add optional detail" disclosure so the screen leads with
 // the core question instead of overwhelming the submitter with ~10 inputs.
 
-import { useState } from "react"
+import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -29,7 +29,7 @@ const problemTypeOptions = [
 export function Step3ProblemAndUsers() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
-  const [showOptional, setShowOptional] = useState(false)
+  const [showOptional, setShowOptional] = usePersistentDisclosure("problem")
 
   const usersSectionVisible =
     isVisible("targetAudience") || isVisible("impactedUsersCount") || isVisible("targetUserContext")
