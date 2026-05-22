@@ -1,10 +1,11 @@
 "use client"
 
-// MERGED STEP — combines what used to be Step 3 (Target User) and Step 4
-// (Problem Statement). Per Jonathan's feedback, leadership wants the problem
-// stated first, then the affected users described. Same fields as before, in
-// one screen, with the Scout panel coaching on the merged frame.
+// MERGED STEP — Problem first, then who's affected (per Jonathan's framing,
+// reinforced by the problem-first reorder). Non-required enrichment fields are
+// tucked behind an "Add optional detail" disclosure so the screen leads with
+// the core question instead of overwhelming the submitter with ~10 inputs.
 
+import { useState } from "react"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -15,6 +16,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { AIdChatPanel } from "@/components/launchpad/chat-panel"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 const problemTypeOptions = [
   { value: "process_inefficiency", label: "Process inefficiency" },
@@ -27,14 +29,14 @@ const problemTypeOptions = [
 export function Step3ProblemAndUsers() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
+  const [showOptional, setShowOptional] = useState(false)
 
-  // Section visibility — hide the section header entirely if every child
-  // field has been turned off in the admin Form Configuration.
   const usersSectionVisible =
-    isVisible("targetAudience") ||
-    isVisible("impactedUsersCount") ||
-    isVisible("painPoints") ||
-    isVisible("targetUserContext")
+    isVisible("targetAudience") || isVisible("impactedUsersCount") || isVisible("targetUserContext")
+
+  // Non-required enrichment fields — hidden behind the disclosure by default.
+  const optionalVisible =
+    isVisible("problemImpact") || isVisible("problemType") || isVisible("painPoints")
 
   const handleProblemTypeToggle = (type: string) => {
     const currentTypes = formData.problemType || []
@@ -44,49 +46,35 @@ export function Step3ProblemAndUsers() {
     setFormData((prev) => ({ ...prev, problemType: newTypes }))
   }
 
-  // Scout's "Use as Starting Point" should land in the Problem Definition
-  // summary field (the primary AI-refined output for this merged step).
   const handleSuggestion = (suggestion: string) => {
     setFormData((prev) => ({ ...prev, problemDefinition: suggestion }))
   }
 
   return (
     <TooltipProvider>
-      <div className="grid lg:grid-cols-12 gap-12">
+      <div className="grid lg:grid-cols-12 gap-10">
         <div className="lg:col-span-7">
-          <div className="rounded-lg border bg-white p-6 shadow-sm space-y-10 h-full">
-            {/* ─── PROBLEM FIRST (Jonathan's framing for Ramesh) ─── */}
+          <div className="space-y-10">
+            {/* ─── THE PROBLEM (primary) ─── */}
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-lg text-uspto-gray-text">The Problem</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Start with the problem before describing who's affected. Leadership wants
-                  the pain stated up front.
-                </p>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  The problem
+                </h3>
               </div>
 
               {isVisible("coreProblem") && (
                 <div className="space-y-2">
-                  <Label htmlFor="coreProblem">What is the core problem or opportunity?</Label>
+                  <Label htmlFor="coreProblem" className="text-base font-semibold text-uspto-gray-text">
+                    What is the core problem or opportunity?
+                  </Label>
                   <Textarea
                     id="coreProblem"
                     value={formData.coreProblem}
                     onChange={(e) => setFormData((prev) => ({ ...prev, coreProblem: e.target.value }))}
-                    placeholder="Summarize the main issue."
-                    rows={3}
-                  />
-                </div>
-              )}
-
-              {isVisible("problemImpact") && (
-                <div className="space-y-2">
-                  <Label htmlFor="problemImpact">Why does this problem matter?</Label>
-                  <Textarea
-                    id="problemImpact"
-                    value={formData.problemImpact}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, problemImpact: e.target.value }))}
-                    placeholder="Describe the impact on users, the agency, or the mission."
-                    rows={3}
+                    placeholder="Summarize the main issue in a sentence or two."
+                    rows={4}
+                    className="text-base"
                   />
                 </div>
               )}
@@ -98,9 +86,7 @@ export function Step3ProblemAndUsers() {
                       <Label htmlFor="affectedSystem">Which process, system, or group does this affect?</Label>
                       <Select
                         value={formData.affectedSystem}
-                        onValueChange={(value) =>
-                          setFormData((prev) => ({ ...prev, affectedSystem: value as any }))
-                        }
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, affectedSystem: value as any }))}
                       >
                         <SelectTrigger id="affectedSystem">
                           <SelectValue placeholder="Select an area..." />
@@ -121,9 +107,7 @@ export function Step3ProblemAndUsers() {
                       <Label>Severity</Label>
                       <RadioGroup
                         value={formData.severity}
-                        onValueChange={(value) =>
-                          setFormData((prev) => ({ ...prev, severity: value as any }))
-                        }
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, severity: value as any }))}
                         className="flex gap-4 pt-2"
                       >
                         <div className="flex items-center space-x-2">
@@ -143,34 +127,17 @@ export function Step3ProblemAndUsers() {
                   )}
                 </div>
               )}
-
-              {isVisible("problemType") && (
-                <div className="space-y-2">
-                  <Label>Problem type</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {problemTypeOptions.map((option) => (
-                      <Toggle
-                        key={option.value}
-                        pressed={formData.problemType.includes(option.value)}
-                        onPressedChange={() => handleProblemTypeToggle(option.value)}
-                        variant="outline"
-                        className="rounded-full px-3 py-1 text-sm h-auto"
-                      >
-                        {option.label}
-                      </Toggle>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* ─── TARGET USERS (the lens for the problem) ─── */}
+            {/* ─── WHO'S AFFECTED (secondary section) ─── */}
             {usersSectionVisible && (
-              <div className="space-y-6 pt-6 border-t">
+              <div className="space-y-6 border-t pt-8">
                 <div>
-                  <h3 className="font-semibold text-lg text-uspto-gray-text">Who's Affected</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Describe the people on the receiving end of the problem above.
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Who's affected
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    The people on the receiving end of the problem above.
                   </p>
                 </div>
 
@@ -181,9 +148,7 @@ export function Step3ProblemAndUsers() {
                         <Label htmlFor="targetAudience">Primary audience</Label>
                         <Select
                           value={formData.targetAudience}
-                          onValueChange={(value) =>
-                            setFormData((prev) => ({ ...prev, targetAudience: value as any }))
-                          }
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, targetAudience: value as any }))}
                         >
                           <SelectTrigger id="targetAudience">
                             <SelectValue placeholder="Select an audience..." />
@@ -207,9 +172,7 @@ export function Step3ProblemAndUsers() {
                         <Label htmlFor="impactedUsersCount">How many users are impacted?</Label>
                         <Select
                           value={formData.impactedUsersCount}
-                          onValueChange={(value) =>
-                            setFormData((prev) => ({ ...prev, impactedUsersCount: value as any }))
-                          }
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, impactedUsersCount: value as any }))}
                         >
                           <SelectTrigger id="impactedUsersCount">
                             <SelectValue placeholder="Select a range..." />
@@ -226,29 +189,13 @@ export function Step3ProblemAndUsers() {
                   </div>
                 )}
 
-                {isVisible("painPoints") && (
-                  <div className="space-y-2">
-                    <Label htmlFor="painPoints">Key pain points</Label>
-                    <TextareaAutosize
-                      id="painPoints"
-                      value={formData.painPoints}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, painPoints: e.target.value }))}
-                      placeholder="What are users dealing with today that this would fix?"
-                      minRows={3}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
-                    />
-                  </div>
-                )}
-
                 {isVisible("targetUserContext") && (
                   <div className="space-y-2">
                     <Label htmlFor="targetUserContext">User profile / additional context</Label>
                     <TextareaAutosize
                       id="targetUserContext"
                       value={formData.targetUserContext}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, targetUserContext: e.target.value }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, targetUserContext: e.target.value }))}
                       placeholder="Anything else about the users — workflow context, environment, edge cases."
                       minRows={3}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
@@ -258,22 +205,85 @@ export function Step3ProblemAndUsers() {
               </div>
             )}
 
+            {/* ─── OPTIONAL DETAIL (progressive disclosure) ─── */}
+            {optionalVisible && (
+              <div className="border-t pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowOptional((v) => !v)}
+                  className="flex items-center gap-1.5 text-sm font-medium text-uspto-blue-primary hover:underline"
+                  aria-expanded={showOptional}
+                >
+                  {showOptional ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {showOptional ? "Hide optional detail" : "Add optional detail"}
+                </button>
+
+                {showOptional && (
+                  <div className="mt-5 space-y-6">
+                    {isVisible("problemImpact") && (
+                      <div className="space-y-2">
+                        <Label htmlFor="problemImpact">Why does this problem matter?</Label>
+                        <Textarea
+                          id="problemImpact"
+                          value={formData.problemImpact}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, problemImpact: e.target.value }))}
+                          placeholder="Describe the impact on users, the agency, or the mission."
+                          rows={3}
+                        />
+                      </div>
+                    )}
+
+                    {isVisible("problemType") && (
+                      <div className="space-y-2">
+                        <Label>Problem type</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {problemTypeOptions.map((option) => (
+                            <Toggle
+                              key={option.value}
+                              pressed={formData.problemType.includes(option.value)}
+                              onPressedChange={() => handleProblemTypeToggle(option.value)}
+                              variant="outline"
+                              className="rounded-full px-3 py-1 text-sm h-auto"
+                            >
+                              {option.label}
+                            </Toggle>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {isVisible("painPoints") && (
+                      <div className="space-y-2">
+                        <Label htmlFor="painPoints">Key pain points</Label>
+                        <TextareaAutosize
+                          id="painPoints"
+                          value={formData.painPoints}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, painPoints: e.target.value }))}
+                          placeholder="What are users dealing with today that this would fix?"
+                          minRows={3}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ─── AI-REFINED SUMMARY ─── */}
             {isVisible("problemDefinition") && (
-              <div className="pt-6 border-t space-y-2">
-                <Label htmlFor="problemDefinition" className="text-base font-semibold">
+              <div className="border-t pt-8 space-y-2">
+                <Label htmlFor="problemDefinition" className="text-base font-semibold text-uspto-gray-text">
                   Refined Problem & Users Summary
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  AI-generated summary tying the problem to its affected users. Open Scout from the
-                  right panel to draft or refine.
+                  AI-generated summary tying the problem to its affected users. Open Scout from the right
+                  panel to draft or refine.
                 </p>
                 <TextareaAutosize
                   id="problemDefinition"
                   value={formData.problemDefinition || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, problemDefinition: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, problemDefinition: e.target.value }))}
                   placeholder="AI-generated summary will appear here..."
                   minRows={4}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
