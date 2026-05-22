@@ -31,15 +31,19 @@ function readInProgressDraft(): InProgressDraft | null {
     const formRaw = localStorage.getItem("aid-form-data")
     if (!formRaw) return null
     const parsed: Partial<FormData> = JSON.parse(formRaw)
-    // Only treat as a meaningful in-progress draft if the submitter has
-    // started naming the idea. Otherwise it's an untouched form.
-    if (!parsed.useCaseTitle || parsed.useCaseTitle.trim() === "") return null
+    // Treat as a meaningful in-progress draft if the submitter has typed
+    // anything substantive. The title now comes a step later (after the
+    // problem), so a problem-only draft still counts — don't require a title.
+    const title = (parsed.useCaseTitle || "").trim()
+    const description = (parsed.useCaseDescription || "").trim()
+    const problem = (parsed.coreProblem || "").trim()
+    if (!title && !description && !problem) return null
     const step = stepRaw ? parseInt(stepRaw, 10) : 1
-    // If step is 12 (just-submitted state), it gets reset on next mount —
-    // don't show as in-progress
-    if (step === 12) return null
+    // If step is the confirmation page (10), it was already submitted and gets
+    // reset on next mount — don't show as in-progress.
+    if (step === 10) return null
     return {
-      title: parsed.useCaseTitle,
+      title: title || "Untitled idea (draft)",
       step: Number.isFinite(step) ? step : 1,
       updatedAt: null, // we don't track update time on the draft itself
     }
@@ -153,7 +157,7 @@ export function RecentDrafts() {
                       Draft
                     </Badge>
                     <Button asChild size="sm">
-                      <Link href="/submit">
+                      <Link href="/submit?resume=1">
                         Resume
                         <ArrowRight className="ml-1 h-3 w-3" />
                       </Link>

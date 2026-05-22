@@ -17,10 +17,18 @@ interface FormContextType {
   isLastStep: boolean
   totalSteps: number
   resetForm: () => void
+  showResumePrompt: boolean
+  continueDraft: () => void
+  startNewForm: () => void
 }
 
 const STORAGE_KEY_FORM = "aid-form-data"
 const STORAGE_KEY_STEP = "aid-current-step"
+// Per-tab flag: set once the submitter is actively working in this session.
+// Lives in sessionStorage so it clears when the tab closes — a brand-new
+// session starts fresh and offers the draft via the resume prompt instead
+// of silently dropping the user back into the middle of the form.
+const SESSION_KEY = "aid-session-active"
 
 const FormContext = createContext<FormContextType | undefined>(undefined)
 
@@ -124,20 +132,33 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStep] = useState<number>(() => {
     if (typeof window === "undefined") return 1
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_STEP)
-      if (saved && saved !== "10") {
-        const parsed = parseInt(saved, 10)
-        if (Number.isFinite(parsed) && parsed >= 1) return parsed
-      }
-      // No saved step (fresh start). If the user's profile auto-fills Step 1,
-      // skip straight to Step 2 — Step 1 is still reachable via "Previous" or
-      // the review screen "Edit" link, so nothing is lost.
       const profile = profileFromSession()
-      return isProfileComplete(profile) ? 2 : 1
+      // If the profile auto-fills Step 1, a fresh start lands on Step 2.
+      const freshStart = isProfileComplete(profile) ? 2 : 1
+      const params = new URLSearchParams(window.location.search)
+      const forceResume = params.get("resume") === "1"
+      const sessionActive = sessionStorage.getItem(SESSION_KEY) === "1"
+      // Only drop the submitter back into a saved step when they explicitly
+      // asked to resume (Resume button → ?resume=1) or they're already mid-session
+      // in this tab (so a refresh doesn't lose their place). A brand-new session
+      // starts fresh; the draft is offered via the resume prompt instead.
+      if (forceResume || sessionActive) {
+        const saved = localStorage.getItem(STORAGE_KEY_STEP)
+        if (saved && saved !== "10") {
+          const parsed = parseInt(saved, 10)
+          if (Number.isFinite(parsed) && parsed >= 1) return parsed
+        }
+      }
+      return freshStart
     } catch {
       return 1
     }
   })
+
+  // Resume-prompt state. When an in-progress draft exists and this is a new
+  // session, we ask "continue or start new?" rather than auto-resuming.
+  const [showResumePrompt, setShowResumePrompt] = useState(false)
+  const [pendingResumeStep, setPendingResumeStep] = useState<number | null>(null)
 
   // Persist on every change
   useEffect(() => {
@@ -151,18 +172,62 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   }, [formData])
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        if (currentStep > 1) {
-          localStorage.setItem(STORAGE_KEY_STEP, currentStep.toString())
-        } else {
-          localStorage.removeItem(STORAGE_KEY_STEP)
-        }
-      } catch (error) {
-        console.error("Failed to persist current step:", error)
+    if (typeof window === "undefined") return
+    try {
+      // Don't persist (or clobber) the saved step until the user has committed
+      // to a session — otherwise the fresh-start step would overwrite the saved
+      // resume target before they pick "Continue draft".
+      if (sessionStorage.getItem(SESSION_KEY) !== "1") return
+      if (currentStep > 1) {
+        localStorage.setItem(STORAGE_KEY_STEP, currentStep.toString())
+      } else {
+        localStorage.removeItem(STORAGE_KEY_STEP)
       }
+    } catch (error) {
+      console.error("Failed to persist current step:", error)
     }
   }, [currentStep])
+
+  // On mount, decide whether to prompt. New session + meaningful draft → prompt.
+  // Explicit ?resume=1 or an already-active session → no prompt (resume handled
+  // by the initializer). No draft → just mark the session active and start.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get("resume") === "1") {
+        sessionStorage.setItem(SESSION_KEY, "1")
+        return
+      }
+      if (sessionStorage.getItem(SESSION_KEY) === "1") return
+      const saved = localStorage.getItem(STORAGE_KEY_FORM)
+      let hasContent = false
+      let step = 1
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        hasContent = Boolean(
+          (parsed.useCaseTitle || "").trim() ||
+            (parsed.useCaseDescription || "").trim() ||
+            (parsed.coreProblem || "").trim(),
+        )
+        const ss = localStorage.getItem(STORAGE_KEY_STEP)
+        const n = ss ? parseInt(ss, 10) : NaN
+        if (Number.isFinite(n) && n >= 1 && ss !== "10") step = n
+      }
+      if (hasContent) {
+        setPendingResumeStep(step)
+        setShowResumePrompt(true)
+      } else {
+        sessionStorage.setItem(SESSION_KEY, "1")
+      }
+    } catch {
+      try {
+        sessionStorage.setItem(SESSION_KEY, "1")
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [])
 
   // Called after successful submission to clear the in-progress draft
   // so the user starts fresh next time they open /submit. Profile-prefilled
@@ -179,6 +244,32 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         console.error("Failed to clear form storage:", error)
       }
     }
+  }
+
+  // Resume the saved draft at the step the submitter left off on.
+  const continueDraft = () => {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(SESSION_KEY, "1")
+      } catch {
+        /* ignore */
+      }
+    }
+    if (pendingResumeStep && pendingResumeStep >= 1) setCurrentStep(pendingResumeStep)
+    setShowResumePrompt(false)
+  }
+
+  // Abandon the saved draft and start a clean form (profile fields preserved).
+  const startNewForm = () => {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(SESSION_KEY, "1")
+      } catch {
+        /* ignore */
+      }
+    }
+    resetForm()
+    setShowResumePrompt(false)
   }
 
   const totalSteps = formSteps.length
@@ -230,6 +321,9 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         isLastStep,
         totalSteps: reviewStepNumber,
         resetForm,
+        showResumePrompt,
+        continueDraft,
+        startNewForm,
       }}
     >
       {children}

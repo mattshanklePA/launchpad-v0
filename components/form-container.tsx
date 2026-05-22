@@ -42,7 +42,7 @@ const BU_LABELS: Record<string, string> = {
 }
 
 export function FormContainer() {
-  const { currentStep, setCurrentStep, formData } = useForm()
+  const { currentStep, setCurrentStep, formData, showResumePrompt, continueDraft, startNewForm } = useForm()
 
   // Whenever the step changes (including quick-jumps from the left nav), bring
   // the user back to the top of the page so they land on the step heading and
@@ -94,6 +94,44 @@ export function FormContainer() {
   const buLabel = BU_LABELS[formData.submitterOffice as string]
 
   return (
+    <>
+      {showResumePrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="resume-title"
+        >
+          <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl text-left">
+            <h2 id="resume-title" className="text-xl font-bold text-uspto-gray-text">
+              Pick up where you left off?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You have an in-progress idea
+              {formData.useCaseTitle ? (
+                <>
+                  {" "}
+                  — <strong className="text-foreground">{formData.useCaseTitle}</strong>
+                </>
+              ) : (
+                ""
+              )}{" "}
+              saved in this browser. Continue that draft, or start a new form.
+            </p>
+            <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+              <Button variant="outline" onClick={startNewForm}>
+                Start a new form
+              </Button>
+              <Button
+                className="bg-uspto-blue-primary hover:bg-uspto-blue-primary/90"
+                onClick={continueDraft}
+              >
+                Continue draft
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="max-w-[1800px] mx-auto px-4 py-8 overflow-x-hidden">
       <div className="flex gap-6">
         {/* Left sidebar: wizard nav (desktop only) */}
@@ -137,5 +175,6 @@ export function FormContainer() {
         </div>
       </div>
     </div>
+    </>
   )
 }
