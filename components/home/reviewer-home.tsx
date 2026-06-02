@@ -14,15 +14,21 @@ import {
 } from "@/lib/reviewWorkflow"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Scale, ArrowRight } from "lucide-react"
+import { Scale, ArrowRight, SlidersHorizontal, Users, Database } from "lucide-react"
+import { getSession } from "@/lib/auth"
 
 export function ReviewerHome() {
   const { loaded } = useDataProvider()
   const [subs, setSubs] = useState<Submission[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     if (loaded) setSubs(getSubmissions())
   }, [loaded])
+
+  useEffect(() => {
+    setIsAdmin(getSession()?.role === "admin")
+  }, [])
 
   const counts = STATUS_ORDER.map((st) => ({ st, n: subs.filter((s) => getStatus(s) === st).length }))
 
@@ -63,6 +69,29 @@ export function ReviewerHome() {
         </div>
         <ArrowRight className="w-5 h-5 text-uspto-blue-primary" />
       </Link>
+
+      {isAdmin && (
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin tools</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link href="/admin?tab=formconfig" className="rounded-lg border bg-white p-4 hover:bg-muted/30">
+              <SlidersHorizontal className="w-5 h-5 text-muted-foreground" />
+              <div className="font-medium text-sm mt-2">Form configuration</div>
+              <div className="text-xs text-muted-foreground">Toggle wizard fields</div>
+            </Link>
+            <Link href="/admin?tab=settings" className="rounded-lg border bg-white p-4 hover:bg-muted/30">
+              <Users className="w-5 h-5 text-muted-foreground" />
+              <div className="font-medium text-sm mt-2">User management</div>
+              <div className="text-xs text-muted-foreground">Roles and accounts</div>
+            </Link>
+            <Link href="/admin?tab=settings" className="rounded-lg border bg-white p-4 hover:bg-muted/30">
+              <Database className="w-5 h-5 text-muted-foreground" />
+              <div className="font-medium text-sm mt-2">Demo data</div>
+              <div className="text-xs text-muted-foreground">Seed and reset</div>
+            </Link>
+          </div>
+        </section>
+      )}
 
       <section className="space-y-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Review queue · by business unit</h2>

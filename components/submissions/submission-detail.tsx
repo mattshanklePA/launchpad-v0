@@ -80,6 +80,19 @@ export function SubmissionDetail({ id }: { id: string }) {
       .finally(() => setAssisting(false))
   }, [sub, isReviewer])
 
+  // When a reviewer opens a still-"submitted" idea, move it into review.
+  const movedRef = useRef(false)
+  useEffect(() => {
+    if (!sub || movedRef.current || !isReviewer) return
+    if (getStatus(sub) !== "submitted") return
+    movedRef.current = true
+    ;(async () => {
+      await setSubmissionStatus(sub.id, "in_review")
+      await refetchSubmissions()
+      setSub(getSubmissions().find((s) => s.id === id) || null)
+    })()
+  }, [sub, isReviewer, id, refetchSubmissions])
+
   const reload = async () => {
     await refetchSubmissions()
     setSub(getSubmissions().find((s) => s.id === id) || null)

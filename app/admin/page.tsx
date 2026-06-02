@@ -280,8 +280,14 @@ function AdminPageInner() {
   const [showComparison, setShowComparison] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const [tab, setTab] = useState("overview")
   const router = useRouter()
   const { loaded: dataLoaded, refetchSubmissions } = useDataProvider()
+
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab")
+    if (t) setTab(t)
+  }, [])
 
   // ─── Auth gate: redirect to /login if not an admin or reviewer ───
   useEffect(() => {
@@ -569,7 +575,7 @@ function AdminPageInner() {
           )}
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="okrs">USPTO OKRs</TabsTrigger>
