@@ -66,9 +66,25 @@ export async function setFieldEnabled(
   const def = FIELD_REGISTRY_BY_KEY[fieldKey as string]
   if (!def) return { ok: false, error: "Unknown field" }
   if (def.locked) return { ok: false, error: "Field is locked" }
+  // Snapshot current state so we can revert if the save fails.
+  const current = getFormConfig()
+  const prevEnabled = current.enabled
+  const next = { ...prevEnabled, [fieldKey as string]: enabled }
+  // Optimistic update — flip the cache BEFORE the network round-trip so the
+  // toggle responds instantly. Subscribers (the admin panel, open wizard tabs)
+  // re-render now instead of waiting on the fetch. Revert below if it fails.
+  setCachedFormConfig({
+    enabled: next,
+    updatedAt: new Date().toISOString(),
+    updatedBy,
+  })
+  const revert = () =>
+    setCachedFormConfig({
+      enabled: prevEnabled,
+      updatedAt: current.updatedAt,
+      updatedBy: current.updatedBy ?? null,
+    })
   try {
-    const current = getFormConfig()
-    const next = { ...current.enabled, [fieldKey as string]: enabled }
     const res = await fetch("/api/form-config", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -76,16 +92,15 @@ export async function setFieldEnabled(
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      return { ok: false, error: body.error || "Failed to save form config" }
+      revert()
+      return {
+        ok: false,
+        error: body.error || body.detail || "Failed to save form config",
+      }
     }
-    // Optimistic cache update — UI updates immediately without re-fetch.
-    setCachedFormConfig({
-      enabled: next,
-      updatedAt: new Date().toISOString(),
-      updatedBy,
-    })
     return { ok: true }
   } catch (error) {
+    revert()
     return { ok: false, error: String(error) }
   }
 }

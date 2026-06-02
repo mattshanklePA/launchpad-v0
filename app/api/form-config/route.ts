@@ -68,12 +68,15 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Missing enabled map" }, { status: 400 })
     }
     const supabase = getSupabaseAdmin()
-    const { error } = await supabase.from("form_config").upsert({
-      id: 1,
-      enabled,
-      updated_at: new Date().toISOString(),
-      updated_by: updatedBy,
-    })
+    const { error } = await supabase.from("form_config").upsert(
+      {
+        id: 1,
+        enabled,
+        updated_at: new Date().toISOString(),
+        updated_by: updatedBy,
+      },
+      { onConflict: "id" },
+    )
     if (error) throw error
     return NextResponse.json({ ok: true })
   } catch (error) {
