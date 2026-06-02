@@ -18,6 +18,30 @@ const NO_STORE = {
   "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
 } as const
 
+// Supabase/Postgres errors are plain objects ({ message, code, details, hint }),
+// so String(error) yields the useless "[object Object]". Pull the useful parts
+// into a readable string for the JSON `detail` field.
+function errToDetail(error: unknown): string {
+  if (error && typeof error === "object") {
+    const e = error as Record<string, unknown>
+    const parts = [
+      e.message,
+      e.code ? `[${e.code}]` : "",
+      e.details,
+      e.hint ? `hint: ${e.hint}` : "",
+    ]
+      .filter(Boolean)
+      .map(String)
+    if (parts.length) return parts.join(" ")
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return String(error)
+    }
+  }
+  return String(error)
+}
+
 type ApiFormConfig = {
   enabled: Record<string, boolean>
   updatedAt: string
@@ -53,7 +77,7 @@ export async function GET() {
   } catch (error) {
     console.error("GET /api/form-config failed:", error)
     return NextResponse.json(
-      { error: "Failed to fetch form config", detail: String(error) },
+      { error: "Failed to fetch form config", detail: errToDetail(error) },
       { status: 500, headers: NO_STORE },
     )
   }
@@ -82,7 +106,7 @@ export async function PUT(req: Request) {
   } catch (error) {
     console.error("PUT /api/form-config failed:", error)
     return NextResponse.json(
-      { error: "Failed to update form config", detail: String(error) },
+      { error: "Failed to update form config", detail: errToDetail(error) },
       { status: 500 },
     )
   }
