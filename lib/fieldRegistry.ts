@@ -203,7 +203,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Executive-ready summary that reviewers and the Decision Center quote. Editable after generation.",
     phase: 2,
     step: 2,
-    locked: false,
+    locked: true,
+    lockedReason:
+      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
   },
 
   // ────── Phase 3: Solution & Value ──────
@@ -237,7 +239,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Cleaner version of the freeform proposed-solution text, used in exec summaries and comparisons.",
     phase: 3,
     step: 3,
-    locked: false,
+    locked: true,
+    lockedReason:
+      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
   },
 
   // Step 5: Value (merged user + business)
@@ -316,7 +320,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "The most-quoted field from a submission. Goes directly into the exec summary briefing.",
     phase: 3,
     step: 4,
-    locked: false,
+    locked: true,
+    lockedReason:
+      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
   },
 
   // ────── Phase 4: Alignment & Feasibility ──────
@@ -349,7 +355,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "Clean exec-ready quote for the strategic section of the readiness brief.",
     phase: 4,
     step: 5,
-    locked: false,
+    locked: true,
+    lockedReason:
+      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
   },
 
   // Step 7: Feasibility & Security
@@ -454,7 +462,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Compact exec-ready summary covering implementation feasibility, security posture, and risk profile.",
     phase: 4,
     step: 6,
-    locked: false,
+    locked: true,
+    lockedReason:
+      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
   },
 
   // Step 8: Success Metrics
@@ -494,7 +504,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Exec-ready summary used in the readiness briefing and Decision Center comparison.",
     phase: 4,
     step: 7,
-    locked: false,
+    locked: true,
+    lockedReason:
+      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
   },
 ]
 
