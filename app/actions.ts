@@ -234,6 +234,7 @@ function buildStepInputs(
       // Proposed Solution
       return section([
         ["proposedSolution", "Proposed solution (textarea)"],
+        ["implementationComplexity", "Implementation complexity"],
         ["keyFunctionality", "Key functionality tags"],
       ])
     case 4:
@@ -257,7 +258,6 @@ function buildStepInputs(
     case 6:
       // Feasibility & Security (includes AI Risk Management questions)
       return section([
-        ["implementationComplexity", "Implementation complexity"],
         ["resourcesNeeded", "Resources needed"],
         ["dependencies", "Dependencies (textarea)"],
         `--- AI RISK MANAGEMENT (DoC + EO mandated) ---`,
@@ -395,7 +395,7 @@ export async function assessReadiness(
   dim("Value to Users", ["userValue", "userTimeSavings"], userValue)
   dim("Value to the Business", ["businessValue", "costSavings"], businessValue)
   dim("Strategic Alignment", ["usptoFocusArea", "relevantOkrs"], alignment)
-  dim("Feasibility & Security", ["dependencies", "implementationComplexity", "resourcesNeeded"], feasibility)
+  dim("Feasibility & Security", ["dependencies", "resourcesNeeded"], feasibility)
 
   // Enabled-and-present quantitative signals the exec summary may cite verbatim.
   const dataPoints: string[] = []

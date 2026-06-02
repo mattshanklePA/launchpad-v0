@@ -87,7 +87,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
 
   // ---------- Step 7: Feasibility & Security ----------
   need("dependencies", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Feasibility / dependencies" }, () => !presentString(formData.dependencies))
-  need("implementationComplexity", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Implementation complexity" }, () => !formData.implementationComplexity)
+  need("implementationComplexity", { step: 3, stepName: "Proposed Solution", reason: "missing", message: "Implementation complexity" }, () => !formData.implementationComplexity)
   // AI Risk Management — DoC mandated. These fields are locked-on in the
   // registry so `need()` will always run the check.
   need("involvesSensitiveData", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "PII / sensitive data answer" }, () => !formData.involvesSensitiveData)

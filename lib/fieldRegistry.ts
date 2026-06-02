@@ -367,8 +367,8 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Low / Medium / High rating.",
     reasonToInclude:
       "Quick triage for how much effort this will take. Pairs with timeline-to-results to estimate viability.",
-    phase: 4,
-    step: 6,
+    phase: 3,
+    step: 3,
     locked: false,
   },
   {

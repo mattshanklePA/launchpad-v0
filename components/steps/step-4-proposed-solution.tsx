@@ -10,6 +10,7 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
 
 const MAX_FEATURES = 3
 
@@ -46,6 +47,23 @@ export function Step4ProposedSolution() {
                 placeholder="Provide a short narrative of your solution."
                 rows={4}
                 className="text-base"
+              />
+            </div>
+          )}
+
+          {isVisible("implementationComplexity") && (
+            <div className="space-y-2">
+              <Label className="text-base font-semibold text-uspto-gray-text">How complex is this to build?</Label>
+              <p className="text-sm text-muted-foreground">A quick feasibility signal for reviewers.</p>
+              <OptionRadioGroup
+                ariaLabel="Implementation complexity"
+                value={formData.implementationComplexity}
+                onChange={(value) => setFormData((prev) => ({ ...prev, implementationComplexity: value as any }))}
+                options={[
+                  { value: "low", label: "Low" },
+                  { value: "medium", label: "Medium" },
+                  { value: "high", label: "High" },
+                ]}
               />
             </div>
           )}

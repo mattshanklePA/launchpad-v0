@@ -12,6 +12,7 @@ import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "@/components/launchpad/chat-panel"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { ChevronDown, ChevronRight } from "lucide-react"
 
@@ -93,20 +94,17 @@ export function Step5Value() {
               {isVisible("userTimeSavings") && (
                 <div className="space-y-2 md:max-w-sm">
                   <Label htmlFor="userTimeSavings">Expected user time savings</Label>
-                  <Select
+                  <OptionRadioGroup
+                    ariaLabel="Expected user time savings"
                     value={formData.userTimeSavings}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, userTimeSavings: value as any }))}
-                  >
-                    <SelectTrigger id="userTimeSavings">
-                      <SelectValue placeholder="Select time saved per week..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lt_1">{"<1 hr/week"}</SelectItem>
-                      <SelectItem value="1_5">1–5 hrs/week</SelectItem>
-                      <SelectItem value="5_10">5–10 hrs/week</SelectItem>
-                      <SelectItem value="gt_10">10+ hrs/week</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => setFormData((prev) => ({ ...prev, userTimeSavings: value as any }))}
+                    options={[
+                      { value: "lt_1", label: "<1 hr/week" },
+                      { value: "1_5", label: "1–5 hrs/week" },
+                      { value: "5_10", label: "5–10 hrs/week" },
+                      { value: "gt_10", label: "10+ hrs/week" },
+                    ]}
+                  />
                 </div>
               )}
 
@@ -162,20 +160,17 @@ export function Step5Value() {
               {isVisible("costSavings") && (
                 <div className="space-y-2 md:max-w-sm">
                   <Label htmlFor="costSavings">Estimate potential cost or time savings</Label>
-                  <Select
+                  <OptionRadioGroup
+                    ariaLabel="Estimate potential cost or time savings"
                     value={formData.costSavings}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, costSavings: value as any }))}
-                  >
-                    <SelectTrigger id="costSavings">
-                      <SelectValue placeholder="Select a range..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lt_50k">{"<$50k"}</SelectItem>
-                      <SelectItem value="50k_250k">$50k–$250k</SelectItem>
-                      <SelectItem value="250k_1m">$250k–$1M</SelectItem>
-                      <SelectItem value="gt_1m">$1M+</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => setFormData((prev) => ({ ...prev, costSavings: value as any }))}
+                    options={[
+                      { value: "lt_50k", label: "<$50k" },
+                      { value: "50k_250k", label: "$50k–$250k" },
+                      { value: "250k_1m", label: "$250k–$1M" },
+                      { value: "gt_1m", label: "$1M+" },
+                    ]}
+                  />
                 </div>
               )}
 

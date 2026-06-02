@@ -16,6 +16,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { AIdChatPanel } from "@/components/launchpad/chat-panel"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
 import { ChevronDown, ChevronRight } from "lucide-react"
 
 const problemTypeOptions = [
@@ -170,20 +171,17 @@ export function Step3ProblemAndUsers() {
                     {isVisible("impactedUsersCount") && (
                       <div className="space-y-2">
                         <Label htmlFor="impactedUsersCount">How many users are impacted?</Label>
-                        <Select
+                        <OptionRadioGroup
+                          ariaLabel="How many users are impacted?"
                           value={formData.impactedUsersCount}
-                          onValueChange={(value) => setFormData((prev) => ({ ...prev, impactedUsersCount: value as any }))}
-                        >
-                          <SelectTrigger id="impactedUsersCount">
-                            <SelectValue placeholder="Select a range..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="lt_10">{"<10"}</SelectItem>
-                            <SelectItem value="10_50">10–50</SelectItem>
-                            <SelectItem value="50_500">50–500</SelectItem>
-                            <SelectItem value="gt_500">500+</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          onChange={(value) => setFormData((prev) => ({ ...prev, impactedUsersCount: value as any }))}
+                          options={[
+                            { value: "lt_10", label: "<10" },
+                            { value: "10_50", label: "10–50" },
+                            { value: "50_500", label: "50–500" },
+                            { value: "gt_500", label: "500+" },
+                          ]}
+                        />
                       </div>
                     )}
                   </div>

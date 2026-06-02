@@ -39,29 +39,6 @@ export function Step8FeasibilitySecurity() {
     <div className="grid lg:grid-cols-12 gap-10">
       <div className="lg:col-span-7">
         <div className="space-y-8">
-          {isVisible("implementationComplexity") && (
-            <div className="space-y-2">
-              <Label>Implementation complexity</Label>
-              <RadioGroup
-                value={formData.implementationComplexity}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, implementationComplexity: value as any }))}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="low" id="comp-low" />
-                  <Label htmlFor="comp-low">Low</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="medium" id="comp-medium" />
-                  <Label htmlFor="comp-medium">Medium</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="high" id="comp-high" />
-                  <Label htmlFor="comp-high">High</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
           {isVisible("dependencies") && (
             <div className="space-y-2">
               <Label htmlFor="dependencies">Key dependencies or constraints</Label>

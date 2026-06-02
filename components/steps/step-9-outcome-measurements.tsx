@@ -8,6 +8,7 @@ import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "../launchpad/chat-panel"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
 import { ChevronDown, ChevronRight } from "lucide-react"
 
 const metricOptions = [
@@ -51,20 +52,17 @@ export function Step9OutcomeMeasurements() {
           {isVisible("timelineForResults") && (
             <div className="space-y-2">
               <Label htmlFor="timelineForResults">Timeline for measurable results</Label>
-              <Select
+              <OptionRadioGroup
+                ariaLabel="Timeline for measurable results"
                 value={formData.timelineForResults}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, timelineForResults: value as any }))}
-              >
-                <SelectTrigger id="timelineForResults">
-                  <SelectValue placeholder="Select a timeline..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lt_3">{"<3 months"}</SelectItem>
-                  <SelectItem value="3_6">3–6 months</SelectItem>
-                  <SelectItem value="6_12">6–12 months</SelectItem>
-                  <SelectItem value="gt_12">12+ months</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(value) => setFormData((prev) => ({ ...prev, timelineForResults: value as any }))}
+                options={[
+                  { value: "lt_3", label: "<3 months" },
+                  { value: "3_6", label: "3–6 months" },
+                  { value: "6_12", label: "6–12 months" },
+                  { value: "gt_12", label: "12+ months" },
+                ]}
+              />
             </div>
           )}
 
