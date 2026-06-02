@@ -1,0 +1,21 @@
+"use client"
+
+import { useParams } from "next/navigation"
+import { RequireAuth } from "@/components/auth/require-auth"
+import { Header } from "@/components/layout/header"
+import { SubmissionDetail } from "@/components/submissions/submission-detail"
+
+export default function SubmissionDetailPage() {
+  const params = useParams()
+  const id = String(params?.id || "")
+  return (
+    <RequireAuth>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container py-8">
+          <SubmissionDetail id={id} />
+        </div>
+      </div>
+    </RequireAuth>
+  )
+}

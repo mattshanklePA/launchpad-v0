@@ -833,3 +833,82 @@ ${HUMANIZATION_GUIDELINES}`,
     }
   }
 }
+
+
+// ============================================================
+// Reviewer assist — advisory read for the submission detail view.
+// Advisory ONLY: the human reviewer makes the call. Helps them decide fast
+// and drafts the "request info" message when something is missing.
+// ============================================================
+export async function assistReviewer(
+  formData: FormData,
+): Promise<{
+  verdict: string
+  strengths: string[]
+  gaps: string[]
+  suggestedDisposition: "approve" | "request_info" | "reject"
+  draftRequestInfo: string
+}> {
+  const summary = `
+Title: ${formData.useCaseTitle || "Untitled"}
+Problem: ${formData.problemDefinition || formData.coreProblem || "[Not provided]"}
+Solution: ${formData.solutionSummary || formData.proposedSolution || "[Not provided]"}
+Business value: ${formData.businessValueSummary || formData.businessValue || "[Not provided]"}
+Cost/time savings: ${formData.costSavings || "[Not provided]"}
+Users impacted: ${formData.impactedUsersCount || "[Not provided]"}
+Strategic alignment: ${formData.alignmentSummary || formData.relevantOkrs || (Array.isArray(formData.usptoFocusArea) ? formData.usptoFocusArea.join(", ") : "") || "[Not provided]"}
+Implementation complexity: ${formData.implementationComplexity || "[Not provided]"}
+Success metrics: ${formData.metricsSummary || formData.successMetrics || "[Not provided]"}
+Timeline: ${formData.timelineForResults || "[Not provided]"}
+AI risk — PII: ${formData.involvesSensitiveData || "?"}; model sourcing: ${formData.aiModelSourcing || "?"}; drives decisions about people: ${formData.aiDecisionalImpact || "?"}; mandatory human review: ${formData.aiHumanReview || "?"}
+Prior readiness verdict: ${formData.readinessScore || "n/a"}
+`
+
+  try {
+    const { object } = await generateObject({
+      model: anthropic("claude-sonnet-4-5-20250929"),
+      schema: z.object({
+        verdict: z.string().describe("1-2 sentence overall read for a reviewer deciding whether this should advance"),
+        strengths: z.array(z.string()).describe("2-3 short, specific strengths"),
+        gaps: z.array(z.string()).describe("2-3 short, specific gaps or risks the reviewer should probe before approving"),
+        suggestedDisposition: z
+          .enum(["approve", "request_info", "reject"])
+          .describe("Advisory recommendation only — the human reviewer makes the actual decision"),
+        draftRequestInfo: z
+          .string()
+          .describe("A short, specific message to the submitter naming exactly what to clarify or add. Used only if the reviewer chooses to request info."),
+      }),
+      messages: [
+        {
+          role: "system",
+          content: `You are a senior AI strategist helping a USPTO reviewer decide whether an AI idea should advance to leadership.
+
+${USPTO_STRATEGIC_CONTEXT}
+
+${HUMANIZATION_GUIDELINES}
+
+You are ADVISORY ONLY. The human reviewer makes the decision; never imply you are deciding. Be specific and concise, and base everything ONLY on what the submitter actually provided — never invent numbers, units, or evidence. Frame gaps as concrete things to probe. The draftRequestInfo message should be polite, specific, and short (2-4 sentences), naming exactly what would make this decision-ready.`,
+        },
+        { role: "user", content: summary },
+      ],
+    })
+    return {
+      verdict: object.verdict,
+      strengths: object.strengths,
+      gaps: object.gaps,
+      suggestedDisposition: object.suggestedDisposition,
+      draftRequestInfo: object.draftRequestInfo,
+    }
+  } catch (error) {
+    console.error("assistReviewer failed, returning fallback:", error)
+    return {
+      verdict:
+        "Scout is temporarily unavailable. Review the submission against problem clarity, quantified value, strategic alignment, feasibility, and the AI risk answers.",
+      strengths: [],
+      gaps: ["Could not generate an AI read — assess manually."],
+      suggestedDisposition: "request_info",
+      draftRequestInfo:
+        "Thanks for the submission. Could you add a measurable baseline for your success metric and confirm the AI model sourcing before we score this?",
+    }
+  }
+}
