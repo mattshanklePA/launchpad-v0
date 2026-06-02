@@ -198,68 +198,83 @@ function fmt(v: string | undefined | string[]): string {
   return v && v.trim() !== "" ? v : "(not provided)"
 }
 
-function buildStepInputs(formData: FormData, step: number): string {
+function buildStepInputs(
+  formData: FormData,
+  step: number,
+  enabledFields?: Record<string, boolean>,
+): string {
+  const on = (k: keyof FormData) => !enabledFields || enabledFields[k as string] !== false
+  // Rows are [fieldKey, label]; plain strings are section headers. Only rows
+  // whose field is still enabled in the form config are shown, so the coach
+  // never asks about or flags a field the admin removed from the wizard.
+  type Row = [keyof FormData, string]
+  const section = (rows: (Row | string)[]): string =>
+    rows
+      .filter((r) => typeof r === "string" || on(r[0]))
+      .map((r) => (typeof r === "string" ? r : `- ${r[1]}: ${fmt(formData[r[0]] as any)}`))
+      .join("\n")
+
   switch (step) {
     case 2:
       // Merged Problem & Target Users
-      return [
+      return section([
         `--- PROBLEM ---`,
-        `- Core problem (textarea): ${fmt(formData.coreProblem)}`,
-        `- Problem impact (textarea): ${fmt(formData.problemImpact)}`,
-        `- Affected system: ${fmt(formData.affectedSystem)}`,
-        `- Problem type tags: ${fmt(formData.problemType)}`,
-        `- Severity: ${fmt(formData.severity)}`,
+        ["coreProblem", "Core problem (textarea)"],
+        ["problemImpact", "Problem impact (textarea)"],
+        ["affectedSystem", "Affected system"],
+        ["problemType", "Problem type tags"],
+        ["severity", "Severity"],
         `--- TARGET USERS ---`,
-        `- Target audience: ${fmt(formData.targetAudience)}`,
-        `- Impacted users count: ${fmt(formData.impactedUsersCount)}`,
-        `- Key pain points (textarea): ${fmt(formData.painPoints)}`,
-        `- User profile / context (textarea): ${fmt(formData.targetUserContext)}`,
-      ].join("\n")
+        ["targetAudience", "Target audience"],
+        ["impactedUsersCount", "Impacted users count"],
+        ["painPoints", "Key pain points (textarea)"],
+        ["targetUserContext", "User profile / context (textarea)"],
+      ])
     case 3:
       // Proposed Solution
-      return [
-        `- Proposed solution (textarea): ${fmt(formData.proposedSolution)}`,
-        `- Key functionality tags: ${fmt(formData.keyFunctionality)}`,
-      ].join("\n")
+      return section([
+        ["proposedSolution", "Proposed solution (textarea)"],
+        ["keyFunctionality", "Key functionality tags"],
+      ])
     case 4:
       // Merged Value (user + business)
-      return [
+      return section([
         `--- USER VALUE ---`,
-        `- User value (textarea): ${fmt(formData.userValue)}`,
-        `- User time savings range: ${fmt(formData.userTimeSavings)}`,
-        `- Other user improvements: ${fmt(formData.otherUserImprovements)}`,
+        ["userValue", "User value (textarea)"],
+        ["userTimeSavings", "User time savings range"],
+        ["otherUserImprovements", "Other user improvements"],
         `--- BUSINESS VALUE ---`,
-        `- Business value (textarea): ${fmt(formData.businessValue)}`,
-        `- Cost savings range: ${fmt(formData.costSavings)}`,
-        `- Strategic benefit tags: ${fmt(formData.strategicBenefit)}`,
-      ].join("\n")
+        ["businessValue", "Business value (textarea)"],
+        ["costSavings", "Cost savings range"],
+        ["strategicBenefit", "Strategic benefit tags"],
+      ])
     case 5:
       // Strategic Alignment
-      return [
-        `- USPTO focus areas selected: ${fmt(formData.usptoFocusArea)}`,
-        `- Relevant OKRs / alignment text: ${fmt(formData.relevantOkrs)}`,
-      ].join("\n")
+      return section([
+        ["usptoFocusArea", "USPTO focus areas selected"],
+        ["relevantOkrs", "Relevant OKRs / alignment text"],
+      ])
     case 6:
       // Feasibility & Security (includes AI Risk Management questions)
-      return [
-        `- Implementation complexity: ${fmt(formData.implementationComplexity)}`,
-        `- Resources needed: ${fmt(formData.resourcesNeeded)}`,
-        `- Dependencies (textarea): ${fmt(formData.dependencies)}`,
+      return section([
+        ["implementationComplexity", "Implementation complexity"],
+        ["resourcesNeeded", "Resources needed"],
+        ["dependencies", "Dependencies (textarea)"],
         `--- AI RISK MANAGEMENT (DoC + EO mandated) ---`,
-        `- Uses PII / sensitive data: ${fmt(formData.involvesSensitiveData)}`,
-        `- Security classification: ${fmt(formData.securityClassification)}`,
-        `- Access control requirements: ${fmt(formData.accessControlRequirements)}`,
-        `- AI drives decisions about people: ${fmt(formData.aiDecisionalImpact)}`,
-        `- AI model sourcing: ${fmt(formData.aiModelSourcing)}`,
-        `- Mandatory human review: ${fmt(formData.aiHumanReview)}`,
-      ].join("\n")
+        ["involvesSensitiveData", "Uses PII / sensitive data"],
+        ["securityClassification", "Security classification"],
+        ["accessControlRequirements", "Access control requirements"],
+        ["aiDecisionalImpact", "AI drives decisions about people"],
+        ["aiModelSourcing", "AI model sourcing"],
+        ["aiHumanReview", "Mandatory human review"],
+      ])
     case 7:
       // Success Metrics
-      return [
-        `- Success metrics description (textarea): ${fmt(formData.successMetrics)}`,
-        `- Key metrics tags: ${fmt(formData.keyMetrics)}`,
-        `- Timeline for results: ${fmt(formData.timelineForResults)}`,
-      ].join("\n")
+      return section([
+        ["successMetrics", "Success metrics description (textarea)"],
+        ["keyMetrics", "Key metrics tags"],
+        ["timelineForResults", "Timeline for results"],
+      ])
     default:
       return "(no inputs for this step)"
   }
@@ -334,18 +349,26 @@ function getMockResponse(step: number, userInput: string): ScoutResponse {
 // ============================================================
 export async function assessReadiness(
   formData: FormData,
+  // Map of fieldKey -> enabled, from the admin form config. When provided, the
+  // brief omits dimensions whose backing fields were turned off so the model
+  // does not score their absence as a gap. Optional for backward compatibility.
+  enabledFields?: Record<string, boolean>,
 ): Promise<{ readinessScore: "ready" | "needs_work" | "early_stage"; readinessSummary: string; executiveSummary: string }> {
+  const on = (k: string) => !enabledFields || enabledFields[k] !== false
+
   const targetUser = formData.targetUserSummary || formData.targetUserContext || "[Not provided]"
   const problem = formData.problemDefinition || formData.coreProblem || "[Not provided]"
   const solution = formData.solutionSummary || formData.proposedSolution || "[Not provided]"
   const userValue = formData.userValueSummary || formData.userValue || "[Not provided]"
   const businessValue = formData.businessValueSummary || formData.businessValue || "[Not provided]"
-  const alignment = formData.alignmentSummary || formData.relevantOkrs || "[Not provided]"
+  const alignmentText = formData.alignmentSummary || formData.relevantOkrs || ""
+  const focusAreas = Array.isArray(formData.usptoFocusArea) ? formData.usptoFocusArea : []
+  const alignment =
+    alignmentText || (focusAreas.length ? `Focus areas: ${focusAreas.join(", ")}` : "[Not provided]")
   const feasibility = formData.feasibilitySummary || formData.dependencies || "[Not provided]"
   const metrics = formData.metricsSummary || formData.successMetrics || "[Not provided]"
 
-  // Risk profile — pulled into the assessment so the exec summary reflects
-  // it (foreign sourcing or no human review materially affects readiness).
+  // Risk profile — locked compliance fields, always assessed.
   const riskFlags: string[] = []
   if (formData.involvesSensitiveData === "yes") riskFlags.push("Uses PII / sensitive data")
   if (formData.aiDecisionalImpact === "yes") riskFlags.push("AI drives decisions about applicants/employees")
@@ -353,39 +376,48 @@ export async function assessReadiness(
   if (formData.aiModelSourcing === "unknown") riskFlags.push("Model sourcing not yet determined")
   if (formData.aiHumanReview === "no") riskFlags.push("No mandatory human review before action")
 
-  const submissionSummary = `
-## Idea: ${formData.useCaseTitle || "Untitled"}
+  // Build the brief dimension-by-dimension. A toggleable dimension is included
+  // only if at least one backing input field is still enabled in the form
+  // config; dimensions the admin turned off are omitted AND listed under
+  // "Intentionally NOT Collected" so the model never scores their absence as a
+  // gap. Locked dimensions (description, problem, solution, risk) always show.
+  const omitted: string[] = []
+  const sections: string[] = [`## Idea: ${formData.useCaseTitle || "Untitled"}`]
+  const dim = (label: string, backing: string[], body: string, locked = false) => {
+    if (locked || backing.some(on)) sections.push(`### ${label}\n${body}`)
+    else omitted.push(label)
+  }
 
-### Description
-${formData.useCaseDescription || "[Not provided]"}
+  dim("Description", ["useCaseDescription"], formData.useCaseDescription || "[Not provided]", true)
+  dim("Problem Statement", ["coreProblem"], problem, true)
+  dim("Target Users", ["targetAudience", "targetUserContext", "painPoints"], targetUser)
+  dim("Proposed Solution", ["proposedSolution"], solution, true)
+  dim("Value to Users", ["userValue", "userTimeSavings"], userValue)
+  dim("Value to the Business", ["businessValue", "costSavings"], businessValue)
+  dim("Strategic Alignment", ["usptoFocusArea", "relevantOkrs"], alignment)
+  dim("Feasibility & Security", ["dependencies", "implementationComplexity", "resourcesNeeded"], feasibility)
 
-### Problem Statement
-${problem}
+  // Enabled-and-present quantitative signals the exec summary may cite verbatim.
+  const dataPoints: string[] = []
+  if (on("impactedUsersCount") && formData.impactedUsersCount) dataPoints.push(`- Estimated users impacted: ${formData.impactedUsersCount}`)
+  if (on("costSavings") && formData.costSavings) dataPoints.push(`- Estimated cost / time savings: ${formData.costSavings}`)
+  if (on("userTimeSavings") && formData.userTimeSavings) dataPoints.push(`- Expected user time savings: ${formData.userTimeSavings}`)
+  if (on("severity") && formData.severity) dataPoints.push(`- Problem severity: ${formData.severity}`)
+  if (on("implementationComplexity") && formData.implementationComplexity) dataPoints.push(`- Implementation complexity: ${formData.implementationComplexity}`)
+  if (on("timelineForResults") && formData.timelineForResults) dataPoints.push(`- Timeline for results: ${formData.timelineForResults}`)
+  if (dataPoints.length) sections.push(`### Key Data Points\n${dataPoints.join("\n")}`)
 
-### Target Users
-${targetUser}
+  sections.push(
+    `### AI Risk Profile\n${riskFlags.length > 0 ? riskFlags.map((f) => `- ${f}`).join("\n") : "No mandatory-disclosure risk flags raised."}`,
+  )
 
-### Proposed Solution
-${solution}
+  dim("Success Metrics", ["successMetrics", "timelineForResults"], metrics)
 
-### Value to Users
-${userValue}
+  const omittedNote = omitted.length
+    ? `\n\n### Intentionally NOT Collected (form configuration)\nThese dimensions were deliberately removed from the form by the administrator; the submitter was never asked for them. Do NOT treat their absence as a gap, do NOT list them as missing, do NOT lower the readiness rating for them, and do NOT mention them in the executive summary: ${omitted.join(", ")}.`
+    : ""
 
-### Value to the Business
-${businessValue}
-
-### Strategic Alignment
-${alignment}
-
-### Feasibility & Security
-${feasibility}
-
-### AI Risk Profile
-${riskFlags.length > 0 ? riskFlags.map((f) => `- ${f}`).join("\n") : "No mandatory-disclosure risk flags raised."}
-
-### Success Metrics
-${metrics}
-`
+  const submissionSummary = `\n${sections.join("\n\n")}${omittedNote}\n`
 
   try {
     const { object } = await generateObject({
@@ -404,7 +436,7 @@ ${USPTO_STRATEGIC_CONTEXT}
 
 ${HUMANIZATION_GUIDELINES}
 
-You are given the complete submission across all dimensions: problem, target users, solution, user value, business value, strategic alignment, feasibility, AI risk profile, and success metrics.
+You are given the submission across the dimensions the submitter was asked to complete. The form is configurable: optional dimensions may have been intentionally turned off by the administrator. Any such dimensions appear in an "Intentionally NOT Collected" section at the end of the brief. You MUST NOT treat those as gaps, missing information, or reasons to lower the readiness rating, and you MUST NOT mention them in the executive summary. Judge readiness and completeness ONLY against the dimensions that were actually collected.
 
 LEADERSHIP FRAMING — IMPORTANT:
 The acting CAIO's three priorities are: (1) reduced pendency, (2) improved quality, (3) reduced costs. When evaluating and summarizing, lead with the PROBLEM, then align EXPECTED BENEFITS to these three priorities by name where the submission supports it. Don't force-fit — if the idea doesn't materially advance pendency/quality/cost, say so and connect it to the strategic priority it actually advances (e.g., employee experience, AI infrastructure, responsible AI).
@@ -415,6 +447,7 @@ EXECUTIVE SUMMARY STRUCTURE (MANDATORY ORDER):
 3. STRATEGIC ALIGNMENT — the specific Strategic Plan goal(s) and/or AI Strategy priority(ies) this advances
 4. RISK PROFILE — surface any flags from the AI Risk Profile section (PII, decisional impact, model sourcing, human review)
 5. READINESS — is this ready for a leadership decision, or what still needs work
+If a section above (1-3) maps to a dimension listed under "Intentionally NOT Collected", SKIP that section entirely rather than noting it as missing. PROBLEM and RISK PROFILE are always collected.
 
 EVALUATE THE IDEA HONESTLY:
 
@@ -587,6 +620,7 @@ export async function validateAndRefineInput(
   formData: FormData,
   step: number,
   conversationHistory: Message[],
+  enabledFields?: Record<string, boolean>,
 ): Promise<ScoutResponse> {
   const currentStepInfo = formSteps.find((s) => s.step === step)
   if (!currentStepInfo) throw new Error("Invalid step number")
@@ -651,9 +685,9 @@ EVALUATION CRITERIA (what "strong" looks like for this step):
 ${stepRubrics[step] || "Apply general rigor: specificity, quantification, and explicit alignment with a named USPTO priority."}
 
 ═══ THE SUBMITTER'S CURRENT INPUTS FOR THIS STEP (every field) ═══
-${buildStepInputs(formData, step)}
+${buildStepInputs(formData, step, enabledFields)}
 
-When coaching: consider ALL inputs above, not just the textarea. Dropdowns and tag selections are real signal — if the submitter selected "Severity: high" but wrote a vague textarea, that mismatch is worth surfacing. If they tagged "Strategic Benefit: efficiency" and the textarea says nothing measurable, that's a gap to question.
+When coaching: consider ALL inputs above, not just the textarea. Dropdowns and tag selections are real signal — if the submitter selected "Severity: high" but wrote a vague textarea, that mismatch is worth surfacing. If they tagged "Strategic Benefit: efficiency" and the textarea says nothing measurable, that's a gap to question. Only the fields the submitter was actually shown appear above — do NOT ask about, request, or flag any field that is not listed; it was intentionally excluded from this form.
 
 Q&A turns completed so far in this session: ${assistantTurns}
 

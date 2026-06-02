@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCircle, Send } from "lucide-react"
 import { assessReadiness } from "@/app/actions"
 import { SubmissionGate } from "@/components/steps/submission-gate"
-import { isFieldEnabled } from "@/lib/formConfig"
+import { isFieldEnabled, getFormConfig } from "@/lib/formConfig"
 
 const routeOptions = [
   { value: "rally", label: "Export to Rally" },
@@ -132,7 +132,7 @@ export function Step10ReviewSubmit() {
   const handleAssessReadiness = async () => {
     setIsAssessing(true)
     try {
-      const result = await assessReadiness(formData)
+      const result = await assessReadiness(formData, getFormConfig().enabled)
       setFormData((prev) => ({
         ...prev,
         readinessScore: result.readinessScore,

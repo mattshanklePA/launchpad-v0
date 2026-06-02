@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { FormData } from "@/lib/steps"
 import { useForm } from "@/context/form-context"
+import { getFormConfig } from "@/lib/formConfig"
 
 // Message format for the API (legacy shape kept for backward compatibility)
 type ApiMessage = {
@@ -125,7 +126,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
     setIsLoading(true)
     try {
       const apiMessages = toApiMessages(updatedMessages)
-      const result = await validateAndRefineInput(formData, step, apiMessages)
+      const result = await validateAndRefineInput(formData, step, apiMessages, getFormConfig().enabled)
       setMessages([...updatedMessages, { role: "assistant", response: result }])
     } catch (error) {
       handleError(error)
