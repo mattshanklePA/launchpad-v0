@@ -93,10 +93,13 @@ export async function setFieldEnabled(
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
       revert()
-      return {
-        ok: false,
-        error: body.error || body.detail || "Failed to save form config",
-      }
+      // Prefer the server's `detail` (the actual Postgres/Supabase error) over
+      // the generic `error` so the toast tells us exactly why the write failed.
+      const detail =
+        body.detail && body.error
+          ? `${body.error}: ${body.detail}`
+          : body.detail || body.error || "Failed to save form config"
+      return { ok: false, error: detail }
     }
     return { ok: true }
   } catch (error) {
