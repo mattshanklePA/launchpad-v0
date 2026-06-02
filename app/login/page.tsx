@@ -24,7 +24,7 @@ function LoginForm() {
     ensureSeeded()
     const session = getSession()
     if (session) {
-      const next = searchParams.get("next") || "/"
+      const next = searchParams.get("next") || "/home"
       router.replace(next)
     }
   }, [router, searchParams])
@@ -39,7 +39,7 @@ function LoginForm() {
       setIsSubmitting(false)
       return
     }
-    const next = searchParams.get("next") || "/"
+    const next = searchParams.get("next") || "/home"
     router.replace(next)
   }
 

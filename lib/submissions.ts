@@ -9,6 +9,7 @@
 
 import type { FormData } from "@/lib/steps"
 import { getCachedSubmissions } from "@/lib/dataCache"
+import type { SubmissionComment, SubmissionStatus } from "@/lib/reviewWorkflow"
 
 const MAX_SUBMISSIONS = 50 // server caps at 50 in the GET handler too
 
@@ -74,4 +75,49 @@ export async function clearSubmissions(): Promise<void> {
   } catch (error) {
     console.error("Clear submissions threw:", error)
   }
+}
+
+/**
+ * Merge a patch into a submission's form_data and persist via upsert. Used by
+ * the review workflow to set status and append comments without a schema
+ * change. Caller should refetch submissions afterward.
+ */
+export async function patchSubmissionFormData(
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<boolean> {
+  const existing = getCachedSubmissions().find((s) => s.id === id)
+  if (!existing) return false
+  const mergedFormData = { ...(existing.formData as Record<string, unknown>), ...patch }
+  try {
+    const res = await fetch("/api/submissions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, submittedAt: existing.submittedAt, formData: mergedFormData }),
+    })
+    return res.ok
+  } catch (error) {
+    console.error("patchSubmissionFormData threw:", error)
+    return false
+  }
+}
+
+/** Set the review status of a submission. */
+export async function setSubmissionStatus(id: string, status: SubmissionStatus): Promise<boolean> {
+  return patchSubmissionFormData(id, { reviewStatus: status })
+}
+
+/** Append a comment to a submission's thread (optionally also set status). */
+export async function addSubmissionComment(
+  id: string,
+  comment: SubmissionComment,
+  status?: SubmissionStatus,
+): Promise<boolean> {
+  const existing = getCachedSubmissions().find((s) => s.id === id)
+  if (!existing) return false
+  const fd = existing.formData as Record<string, unknown>
+  const comments = Array.isArray(fd.comments) ? (fd.comments as SubmissionComment[]) : []
+  const patch: Record<string, unknown> = { comments: [...comments, comment] }
+  if (status) patch.reviewStatus = status
+  return patchSubmissionFormData(id, patch)
 }

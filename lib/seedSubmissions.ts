@@ -34,6 +34,7 @@ export const seedSubmissions: Submission[] = [
       submitterRole: "patent_examiner",
       submitterOffice: "patents",
 
+      reviewStatus: "in_review",
       useCaseTitle: "AI-Assisted Prior Art Retrieval for Patent Examiners",
       useCaseDescription:
         "An AI search agent that takes an examiner's claim language and returns a ranked list of the most relevant prior art across U.S. patents, foreign patents, and non-patent literature — with citation snippets and a confidence score for each result. The examiner reviews and confirms; the AI never makes the allowance/rejection decision.",
@@ -126,6 +127,16 @@ export const seedSubmissions: Submission[] = [
       submitterRole: "trademark_examiner",
       submitterOffice: "trademarks",
 
+      reviewStatus: "needs_info",
+      comments: [
+        {
+          id: "c-tm-1",
+          authorName: "Jonathan Moody",
+          authorRole: "reviewer",
+          body: "Strong direction. Before I can score this, put a number on examiner hours saved per application with a baseline source — right now the value is directional.",
+          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+        },
+      ],
       useCaseTitle: "Likelihood-of-Confusion Pre-Screen for Trademark Applications",
       useCaseDescription:
         "An AI tool that compares a new trademark application against the existing TM register and flags potential likelihood-of-confusion issues before an examiner picks up the file. Aims to surface obvious conflicts faster.",
@@ -208,6 +219,7 @@ export const seedSubmissions: Submission[] = [
       submitterRole: "manager",
       submitterOffice: "hr",
 
+      reviewStatus: "submitted",
       useCaseTitle: "AI Onboarding Assistant for New USPTO Employees",
       useCaseDescription:
         "A conversational AI assistant that answers new-hire questions during the 90-day onboarding window — benefits, training schedules, telework policy, IT access, badge/parking, expense system, leave types. Replaces a lot of one-off HR ticket volume.",
@@ -294,6 +306,7 @@ export const seedSubmissions: Submission[] = [
       submitterRole: "it_staff",
       submitterOffice: "ocio",
 
+      reviewStatus: "approved",
       useCaseTitle: "Automated IT Service Ticket Triage and Routing",
       useCaseDescription:
         "An AI classifier that reads inbound IT service tickets, identifies category (network, account, hardware, application-specific), assigns priority, and routes to the right tier-2 team. Reduces queue dwell time and improves first-touch resolution rate.",
@@ -386,6 +399,7 @@ export const seedSubmissions: Submission[] = [
       submitterRole: "other",
       submitterOffice: "ogc",
 
+      reviewStatus: "rejected",
       useCaseTitle: "AI for FOIA Request Processing",
       useCaseDescription:
         "We get lots of FOIA requests and they take a long time. Maybe AI can help.",

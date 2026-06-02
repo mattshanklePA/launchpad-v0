@@ -126,6 +126,16 @@ export type FormData = {
   readinessScore: "ready" | "needs_work" | "early_stage" | ""
   readinessSummary: string
   executiveSummary: string
+
+  // Review workflow (stored in form_data for the demo — see lib/reviewWorkflow).
+  reviewStatus?: "draft" | "submitted" | "in_review" | "needs_info" | "approved" | "rejected"
+  comments?: {
+    id: string
+    authorName: string
+    authorRole: "submitter" | "reviewer" | "admin"
+    body: string
+    createdAt: string
+  }[]
 }
 
 export const initialFormData: FormData = {
