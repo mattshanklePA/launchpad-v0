@@ -17,6 +17,11 @@ export type Submission = {
   id: string
   submittedAt: string
   formData: FormData
+  // Workflow columns (present once the migration is applied); helpers in
+  // lib/reviewWorkflow prefer these and fall back to form_data.
+  status?: string
+  ownerEmail?: string
+  businessUnit?: string
 }
 
 function generateId(): string {
@@ -32,6 +37,9 @@ export function getSubmissions(): Submission[] {
     id: s.id,
     submittedAt: s.submittedAt,
     formData: s.formData as FormData,
+    status: s.status,
+    ownerEmail: s.ownerEmail,
+    businessUnit: s.businessUnit,
   }))
 }
 

@@ -62,7 +62,9 @@ export function statusBadgeClasses(status: SubmissionStatus): string {
 }
 
 export function getStatus(s: Submission): SubmissionStatus {
-  const v = (s.formData as Record<string, unknown>)?.reviewStatus as SubmissionStatus | undefined
+  const v = (s.status || (s.formData as Record<string, unknown>)?.reviewStatus) as
+    | SubmissionStatus
+    | undefined
   return v && (STATUS_LABEL as Record<string, string>)[v] ? v : "submitted"
 }
 
@@ -72,11 +74,11 @@ export function getComments(s: Submission): SubmissionComment[] {
 }
 
 export function getOwnerEmail(s: Submission): string {
-  return String((s.formData as Record<string, unknown>)?.submitterEmail || "").toLowerCase()
+  return String(s.ownerEmail || (s.formData as Record<string, unknown>)?.submitterEmail || "").toLowerCase()
 }
 
 export function getBusinessUnit(s: Submission): string {
-  return String((s.formData as Record<string, unknown>)?.submitterOffice || "")
+  return String(s.businessUnit || (s.formData as Record<string, unknown>)?.submitterOffice || "")
 }
 
 export function businessUnitLabel(unit: string): string {

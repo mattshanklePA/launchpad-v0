@@ -67,6 +67,10 @@ export type DbSubmissionRow = {
   id: string
   submitted_at: string
   form_data: Record<string, unknown>
+  // Added by the review-workflow migration; optional so reads work pre-migration.
+  status?: string | null
+  owner_email?: string | null
+  business_unit?: string | null
 }
 
 export type DbFormConfigRow = {

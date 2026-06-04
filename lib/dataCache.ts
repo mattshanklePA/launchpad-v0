@@ -17,6 +17,9 @@ export type CachedSubmission = {
   id: string
   submittedAt: string
   formData: Record<string, unknown>
+  status?: string
+  ownerEmail?: string
+  businessUnit?: string
 }
 
 export type CachedUser = {

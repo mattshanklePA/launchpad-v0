@@ -20,10 +20,20 @@ type ApiSubmission = {
   id: string
   submittedAt: string
   formData: Record<string, unknown>
+  status?: string
+  ownerEmail?: string
+  businessUnit?: string
 }
 
 function fromRow(row: DbSubmissionRow): ApiSubmission {
-  return { id: row.id, submittedAt: row.submitted_at, formData: row.form_data }
+  return {
+    id: row.id,
+    submittedAt: row.submitted_at,
+    formData: row.form_data,
+    status: row.status ?? undefined,
+    ownerEmail: row.owner_email ?? undefined,
+    businessUnit: row.business_unit ?? undefined,
+  }
 }
 
 export async function GET() {
@@ -63,6 +73,25 @@ export async function POST(req: Request) {
       form_data: formData,
     })
     if (error) throw error
+
+    // Best-effort sync of the workflow columns. These exist only after the
+    // review-workflow migration is applied; until then this update no-ops
+    // (its error is swallowed) and form_data remains the source of truth.
+    try {
+      const fd = formData as Record<string, any>
+      const { error: colErr } = await supabase
+        .from("submissions")
+        .update({
+          status: fd.reviewStatus || "submitted",
+          owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
+          business_unit: fd.submitterOffice || null,
+        })
+        .eq("id", id)
+      if (colErr) console.warn("workflow column sync skipped:", colErr.message)
+    } catch (e) {
+      console.warn("workflow column sync threw:", e)
+    }
+
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error("POST /api/submissions failed:", error)
