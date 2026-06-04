@@ -337,7 +337,7 @@ function getMockResponse(step: number, userInput: string): ScoutResponse {
   return {
     mode: "scaffold",
     summary:
-      "(The AI co-pilot is temporarily unavailable. Here's a generic scaffold — please fill in the bracketed sections with your specific details.)",
+      "(Scout is temporarily unavailable. Here's a generic scaffold — please fill in the bracketed sections with your specific details.)",
     scaffoldText: userInput
       ? `${userInput}\n\n[Add the following specifics:\n- WHO specifically (which group of examiners, what unit)\n- WHAT evidence you've observed\n- HOW OFTEN this occurs\n- WHICH USPTO priority this advances by name\n- WHAT measurable outcome you expect]`
       : `[Describe ${stepTitle} with:\n- Specific user group (not just "examiners")\n- Observable evidence you've seen\n- Frequency and severity\n- Connection to a named USPTO priority\n- Measurable expected outcome]`,
