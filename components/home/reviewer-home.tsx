@@ -13,14 +13,44 @@ import {
   statusBadgeClasses,
 } from "@/lib/reviewWorkflow"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Scale, ArrowRight, SlidersHorizontal, Users, Database } from "lucide-react"
 import { getSession } from "@/lib/auth"
+
+function readinessChip(score?: string): { cls: string; label: string } {
+  switch (score) {
+    case "ready":
+      return { cls: "bg-green-100 text-green-700", label: "Ready" }
+    case "needs_work":
+      return { cls: "bg-amber-100 text-amber-700", label: "Needs work" }
+    case "early_stage":
+      return { cls: "bg-gray-100 text-gray-500", label: "Early" }
+    default:
+      return { cls: "bg-gray-100 text-gray-500", label: "Not assessed" }
+  }
+}
+
+function Card({ s }: { s: Submission }) {
+  const r = readinessChip(s.formData.readinessScore)
+  return (
+    <Link
+      href={`/submissions/${s.id}`}
+      className="block rounded-md border bg-white p-3 hover:border-uspto-blue-primary/50 transition-colors"
+    >
+      <div className="text-sm font-medium line-clamp-2 text-uspto-gray-text">{s.formData.useCaseTitle || "Untitled idea"}</div>
+      <div className="text-xs text-muted-foreground mt-1 truncate">{s.formData.submitterName || "Anonymous"}</div>
+      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{businessUnitLabel(getBusinessUnit(s))}</span>
+        <span className={`text-[10px] px-1.5 py-0.5 rounded ${r.cls}`}>{r.label}</span>
+      </div>
+    </Link>
+  )
+}
 
 export function ReviewerHome() {
   const { loaded } = useDataProvider()
   const [subs, setSubs] = useState<Submission[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
+  const [unit, setUnit] = useState("all")
 
   useEffect(() => {
     if (loaded) setSubs(getSubmissions())
@@ -30,30 +60,22 @@ export function ReviewerHome() {
     setIsAdmin(getSession()?.role === "admin")
   }, [])
 
-  const counts = STATUS_ORDER.map((st) => ({ st, n: subs.filter((s) => getStatus(s) === st).length }))
+  const units = Array.from(new Set(subs.map(getBusinessUnit).filter(Boolean))).sort()
+  const filtered = unit === "all" ? subs : subs.filter((s) => getBusinessUnit(s) === unit)
+  const inStatus = (st: (typeof STATUS_ORDER)[number]) => filtered.filter((s) => getStatus(s) === st)
 
-  const groups: Record<string, Submission[]> = {}
-  for (const s of subs) {
-    const bu = getBusinessUnit(s) || "other"
-    if (!groups[bu]) groups[bu] = []
-    groups[bu].push(s)
-  }
-  const buEntries = Object.entries(groups).sort((a, b) => b[1].length - a[1].length)
+  const pill = (active: boolean) =>
+    `text-xs px-3 py-1.5 rounded-full border transition-colors ${
+      active
+        ? "border-uspto-blue-primary bg-uspto-blue-primary/10 text-uspto-blue-primary font-medium"
+        : "border-input bg-white text-muted-foreground hover:bg-muted/50"
+    }`
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-uspto-gray-text">Pipeline</h1>
         <p className="text-sm text-muted-foreground mt-1">All AI ideas across business units.</p>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {counts.map(({ st, n }) => (
-          <div key={st} className="rounded-lg border bg-white p-4">
-            <div className="text-2xl font-bold text-uspto-gray-text">{n}</div>
-            <Badge variant="outline" className={`mt-1 ${statusBadgeClasses(st)}`}>{STATUS_LABEL[st]}</Badge>
-          </div>
-        ))}
       </div>
 
       <Link
@@ -93,38 +115,38 @@ export function ReviewerHome() {
         </section>
       )}
 
-      <section className="space-y-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Review queue · by business unit</h2>
-        <div className="rounded-lg border bg-white overflow-hidden">
-          {buEntries.length === 0 && (
-            <div className="p-6 text-center text-sm text-muted-foreground">No submissions yet.</div>
-          )}
-          {buEntries.map(([bu, list]) => (
-            <div key={bu}>
-              <div className="bg-muted/50 px-4 py-1.5 text-xs font-semibold text-muted-foreground">
-                {businessUnitLabel(bu)} · {list.length}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-muted-foreground mr-1">Business unit:</span>
+        <button type="button" className={pill(unit === "all")} onClick={() => setUnit("all")}>
+          All units
+        </button>
+        {units.map((u) => (
+          <button key={u} type="button" className={pill(unit === u)} onClick={() => setUnit(u)}>
+            {businessUnitLabel(u)}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {STATUS_ORDER.map((st) => {
+          const items = inStatus(st)
+          return (
+            <div key={st} className="flex-shrink-0 w-64">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <Badge variant="outline" className={statusBadgeClasses(st)}>{STATUS_LABEL[st]}</Badge>
+                <span className="text-xs font-medium text-muted-foreground">{items.length}</span>
               </div>
-              {list.map((s) => (
-                <Link
-                  key={s.id}
-                  href={`/submissions/${s.id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 border-t hover:bg-muted/40"
-                >
-                  <div className="min-w-0">
-                    <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {s.formData.submitterName || "Anonymous"} · readiness: {s.formData.readinessScore || "n/a"}
-                    </div>
-                  </div>
-                  <Badge variant="outline" className={`flex-shrink-0 ${statusBadgeClasses(getStatus(s))}`}>
-                    {STATUS_LABEL[getStatus(s)]}
-                  </Badge>
-                </Link>
-              ))}
+              <div className="space-y-2 rounded-lg bg-muted/40 p-2 min-h-[120px]">
+                {items.length === 0 ? (
+                  <div className="text-xs text-muted-foreground text-center py-6">None</div>
+                ) : (
+                  items.map((s) => <Card key={s.id} s={s} />)
+                )}
+              </div>
             </div>
-          ))}
-        </div>
-      </section>
+          )
+        })}
+      </div>
     </div>
   )
 }
