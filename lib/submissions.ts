@@ -10,6 +10,7 @@
 import type { FormData } from "@/lib/steps"
 import { getCachedSubmissions } from "@/lib/dataCache"
 import type { SubmissionComment, SubmissionStatus } from "@/lib/reviewWorkflow"
+import { assigneeForBusinessUnit } from "@/lib/reviewWorkflow"
 
 const MAX_SUBMISSIONS = 50 // server caps at 50 in the GET handler too
 
@@ -52,10 +53,16 @@ export function getSubmissions(): Submission[] {
  * on the next page-level reload to pick it up.
  */
 export async function saveSubmission(formData: FormData): Promise<Submission> {
+  // Auto-assign the reviewer for this submission's business unit (set at submit).
+  const office = (formData as Record<string, unknown>).submitterOffice as string | undefined
+  const reviewer = office ? assigneeForBusinessUnit(office) : null
+  const withAssignee: FormData = reviewer
+    ? { ...formData, assignedReviewerName: reviewer.name, assignedReviewerEmail: reviewer.email }
+    : formData
   const submission: Submission = {
     id: generateId(),
     submittedAt: new Date().toISOString(),
-    formData,
+    formData: withAssignee,
   }
   try {
     const res = await fetch("/api/submissions", {

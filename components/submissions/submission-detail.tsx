@@ -15,6 +15,7 @@ import {
   getComments,
   getOwnerEmail,
   getBusinessUnit,
+  getAssigneeName,
   businessUnitLabel,
   STATUS_LABEL,
   statusBadgeClasses,
@@ -158,6 +159,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           <h1 className="text-xl font-bold text-uspto-gray-text">{fd.useCaseTitle || "Untitled idea"}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {businessUnitLabel(getBusinessUnit(sub))} · {fd.submitterName || "Anonymous"} · submitted {new Date(sub.submittedAt).toLocaleDateString()}
+            {getAssigneeName(sub) ? ` · assigned to ${getAssigneeName(sub)}` : ""}
           </p>
         </div>
         <Badge variant="outline" className={statusBadgeClasses(status)}>{STATUS_LABEL[status]}</Badge>

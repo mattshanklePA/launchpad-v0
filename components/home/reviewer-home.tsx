@@ -7,13 +7,14 @@ import { useDataProvider } from "@/components/data-provider"
 import {
   getStatus,
   getBusinessUnit,
+  getAssigneeName,
   businessUnitLabel,
   STATUS_ORDER,
   STATUS_LABEL,
   statusBadgeClasses,
 } from "@/lib/reviewWorkflow"
 import { Badge } from "@/components/ui/badge"
-import { Scale, ArrowRight, SlidersHorizontal, Users, Database } from "lucide-react"
+import { Scale, ArrowRight, SlidersHorizontal, Users, Database, User } from "lucide-react"
 import { getSession } from "@/lib/auth"
 
 function readinessChip(score?: string): { cls: string; label: string } {
@@ -31,6 +32,7 @@ function readinessChip(score?: string): { cls: string; label: string } {
 
 function Card({ s }: { s: Submission }) {
   const r = readinessChip(s.formData.readinessScore)
+  const assignee = getAssigneeName(s)
   return (
     <Link
       href={`/submissions/${s.id}`}
@@ -42,6 +44,10 @@ function Card({ s }: { s: Submission }) {
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{businessUnitLabel(getBusinessUnit(s))}</span>
         <span className={`text-[10px] px-1.5 py-0.5 rounded ${r.cls}`}>{r.label}</span>
       </div>
+      <div className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
+        <User className="w-3 h-3" />
+        {assignee || "Unassigned"}
+      </div>
     </Link>
   )
 }
@@ -50,7 +56,8 @@ export function ReviewerHome() {
   const { loaded } = useDataProvider()
   const [subs, setSubs] = useState<Submission[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
-  const [unit, setUnit] = useState("all")
+  const [units, setUnits] = useState<string[]>([])
+  const [assignees, setAssignees] = useState<string[]>([])
 
   useEffect(() => {
     if (loaded) setSubs(getSubmissions())
@@ -60,9 +67,18 @@ export function ReviewerHome() {
     setIsAdmin(getSession()?.role === "admin")
   }, [])
 
-  const units = Array.from(new Set(subs.map(getBusinessUnit).filter(Boolean))).sort()
-  const filtered = unit === "all" ? subs : subs.filter((s) => getBusinessUnit(s) === unit)
+  const allUnits = Array.from(new Set(subs.map(getBusinessUnit).filter(Boolean))).sort()
+  const allAssignees = Array.from(new Set(subs.map(getAssigneeName).filter(Boolean))).sort()
+
+  const filtered = subs.filter(
+    (s) =>
+      (units.length === 0 || units.includes(getBusinessUnit(s))) &&
+      (assignees.length === 0 || assignees.includes(getAssigneeName(s))),
+  )
   const inStatus = (st: (typeof STATUS_ORDER)[number]) => filtered.filter((s) => getStatus(s) === st)
+
+  const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
+    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
 
   const pill = (active: boolean) =>
     `text-xs px-3 py-1.5 rounded-full border transition-colors ${
@@ -115,16 +131,27 @@ export function ReviewerHome() {
         </section>
       )}
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-muted-foreground mr-1">Business unit:</span>
-        <button type="button" className={pill(unit === "all")} onClick={() => setUnit("all")}>
-          All units
-        </button>
-        {units.map((u) => (
-          <button key={u} type="button" className={pill(unit === u)} onClick={() => setUnit(u)}>
-            {businessUnitLabel(u)}
-          </button>
-        ))}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground w-24 shrink-0">Business unit</span>
+          <button type="button" className={pill(units.length === 0)} onClick={() => setUnits([])}>All</button>
+          {allUnits.map((u) => (
+            <button key={u} type="button" className={pill(units.includes(u))} onClick={() => toggle(units, setUnits, u)}>
+              {businessUnitLabel(u)}
+            </button>
+          ))}
+        </div>
+        {allAssignees.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-muted-foreground w-24 shrink-0">Assigned to</span>
+            <button type="button" className={pill(assignees.length === 0)} onClick={() => setAssignees([])}>All</button>
+            {allAssignees.map((a) => (
+              <button key={a} type="button" className={pill(assignees.includes(a))} onClick={() => toggle(assignees, setAssignees, a)}>
+                {a}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-2">

@@ -8,6 +8,7 @@
 // scoping is done client-side — fine for a demo, not for production).
 
 import type { Submission } from "@/lib/submissions"
+import { getCachedUsers } from "@/lib/dataCache"
 
 export type SubmissionStatus =
   | "draft"
@@ -108,4 +109,19 @@ export function visibleSubmissions(
     return all.filter((s) => getOwnerEmail(s) === me)
   }
   return all
+}
+
+export function getAssigneeName(s: Submission): string {
+  return String((s.formData as Record<string, unknown>)?.assignedReviewerName || "")
+}
+
+export function getAssigneeEmail(s: Submission): string {
+  return String((s.formData as Record<string, unknown>)?.assignedReviewerEmail || "")
+}
+
+// The reviewer responsible for a business unit (role=reviewer, matching unit).
+export function assigneeForBusinessUnit(unit: string): { name: string; email: string } | null {
+  if (!unit) return null
+  const r = getCachedUsers().find((u) => u.role === "reviewer" && u.businessUnit === unit)
+  return r ? { name: r.name, email: r.email } : null
 }

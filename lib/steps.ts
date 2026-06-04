@@ -136,6 +136,8 @@ export type FormData = {
     body: string
     createdAt: string
   }[]
+  assignedReviewerName?: string
+  assignedReviewerEmail?: string
 }
 
 export const initialFormData: FormData = {
