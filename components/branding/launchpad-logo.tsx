@@ -23,16 +23,9 @@ const SIZE_MAP: Record<LogoSize, { icon: string; title: string; subtitle: string
 
 /**
  * LaunchPadLogo
- * - Wordmark variant: Rocket icon + "LaunchPad" + subtitle
+ * - Wordmark variant: Rocket icon + product name (Crimson Pro) + subtitle
  * - Icon variant: Rocket icon only with sr-only text
- * - Uses lucide-react for the icon, Tailwind for styling, and project colors
- *
- * Examples:
- *   <LaunchPadLogo />                      // default wordmark, md
- *   <LaunchPadLogo size="lg" />            // larger wordmark
- *   <LaunchPadLogo variant="icon" />       // icon-only
- *   <LaunchPadLogo monochrome />           // inherits currentColor
- *   <LaunchPadLogo withSubtitle={false} /> // no subtitle
+ * - Uses lucide-react for the icon, Tailwind for styling, and tenant brand colors
  */
 export function LaunchPadLogo({
   size = "md",
@@ -62,7 +55,7 @@ export function LaunchPadLogo({
     <span className={cn("inline-flex items-center", sz.gap, className)} role="img" aria-label="LaunchPad logo">
       <Rocket className={cn(sz.icon, iconColor)} strokeWidth={2.2} />
       <span className="flex flex-col leading-none">
-        <span className={cn("font-bold tracking-tight", sz.title, titleColor, titleClassName)}>{getTenant().productName}</span>
+        <span className={cn("font-wordmark font-semibold tracking-tight", sz.title, titleColor, titleClassName)}>{getTenant().productName}</span>
         {withSubtitle && (
           <span className={cn("-mt-0.5 font-medium", sz.subtitle, subtitleColor, subtitleClassName)}>
             {getTenant().logoSubtitle}

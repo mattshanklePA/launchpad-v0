@@ -8,22 +8,6 @@ import { getSession, type Session } from "@/lib/auth"
 import { ArrowRight, FileText, Rocket, Lock } from "lucide-react"
 import { getTenant } from "@/lib/tenant"
 
-const USPTO_GOALS: { title: string; description: string }[] = [
-  { title: "Drive U.S. innovation and global competitiveness", description: "Expand access to the IP system and strengthen U.S. leadership in emerging technology." },
-  { title: "Promote the efficient delivery of reliable IP rights", description: "Reduce pendency and improve quality across patents and trademarks." },
-  { title: "Promote IP protection against new and persistent threats", description: "Strengthen enforcement and defend the integrity of issued IP rights." },
-  { title: "Bring innovation to impact for the public good", description: "Apply the IP and innovation system to national priorities like health, climate, and equity." },
-  { title: "Generate impactful employee and customer experiences", description: "Create rewarding experiences for the USPTO workforce and the public it serves." },
-]
-
-const AI_PRIORITIES: { title: string; description: string }[] = [
-  { title: "Advance IP policies for inclusive AI innovation", description: "Shape policy that supports U.S. AI leadership and stays inclusive of all innovators." },
-  { title: "Build AI capabilities through infrastructure and resources", description: "Invest in the compute, data, and tooling to deploy AI responsibly." },
-  { title: "Promote responsible AI use", description: "Ensure bias mitigation, explainability, and human oversight across AI systems." },
-  { title: "Develop AI expertise within the workforce", description: "Train USPTO staff to evaluate, deploy, and oversee AI in their work." },
-  { title: "Collaborate with government and international partners on AI", description: "Coordinate with peer agencies, OMB, and international IP offices on AI." },
-]
-
 function ObjectiveList({ items }: { items: { title: string; description: string }[] }) {
   return (
     <div className="space-y-3">
@@ -91,7 +75,7 @@ export function PublicLanding() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-uspto-blue-primary/10 mb-5">
               <Rocket className="w-8 h-8 text-uspto-blue-primary" strokeWidth={2.2} />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-uspto-gray-text">
+            <h1 className="font-heading text-3xl sm:text-5xl font-semibold tracking-tight text-dow-space">
               {t.heroHeadline}
             </h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -131,7 +115,7 @@ export function PublicLanding() {
             <div className="grid lg:grid-cols-2 gap-10">
               {t.landingObjectives.map((group) => (
                 <div key={group.title}>
-                  <h2 className="text-xl font-bold text-uspto-gray-text mb-1">{group.title}</h2>
+                  <h2 className="font-heading text-xl font-semibold tracking-tight text-dow-space mb-1">{group.title}</h2>
                   <p className="text-sm text-muted-foreground mb-4">{group.subtitle}</p>
                   <ObjectiveList items={group.items} />
                 </div>
@@ -143,7 +127,7 @@ export function PublicLanding() {
 
       <footer className="border-t bg-white">
         <div className="container py-6 text-center text-xs text-muted-foreground">
-          LaunchPad · USPTO AI Use Case Platform
+          {t.productName} &middot; {t.logoSubtitle}
         </div>
       </footer>
     </div>

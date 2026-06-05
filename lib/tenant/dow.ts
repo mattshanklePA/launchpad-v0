@@ -13,14 +13,14 @@ export const dow: TenantConfig = {
   strategicContext: `
 The Department of War pursues AI under published strategy and responsible-AI guidance. Every AI idea should clearly advance at least one priority and respect the ethical principles below:
 
-**DoD Data, Analytics, and AI Adoption Strategy (2023) goals:**
+**Department of War Data, Analytics, and AI Adoption Strategy goals:**
 - Invest in interoperable, federated infrastructure
 - Advance the data, analytics, and AI ecosystem
 - Expand digital talent management
 - Improve foundational data management
 - Deliver capabilities for enduring decision advantage
 
-**DoD AI Ethical Principles (every AI use must be):**
+**Department of War AI Ethical Principles (every AI use must be):**
 - Responsible: appropriate judgment and care, with humans accountable
 - Equitable: deliberate steps to minimize unintended bias
 - Traceable: transparent, auditable methods, data, and design
@@ -34,22 +34,22 @@ A serious AI idea names the specific priority it advances and the mechanism, sta
   leadershipPriorities: "readiness, decision advantage, cost, and risk reduction",
 
   focusAreas: [
-    { id: "adopt_infrastructure", label: "Invest in interoperable, federated infrastructure", category: "DoD AI Adoption Strategy" },
-    { id: "adopt_ecosystem", label: "Advance the data, analytics & AI ecosystem", category: "DoD AI Adoption Strategy" },
-    { id: "adopt_talent", label: "Expand digital talent management", category: "DoD AI Adoption Strategy" },
-    { id: "adopt_data", label: "Improve foundational data management", category: "DoD AI Adoption Strategy" },
-    { id: "adopt_advantage", label: "Deliver capabilities for enduring decision advantage", category: "DoD AI Adoption Strategy" },
-    { id: "rai_responsible", label: "Responsible (judgment, care, accountability)", category: "DoD AI Ethical Principles" },
-    { id: "rai_equitable", label: "Equitable (minimize unintended bias)", category: "DoD AI Ethical Principles" },
-    { id: "rai_traceable", label: "Traceable (transparent, auditable)", category: "DoD AI Ethical Principles" },
-    { id: "rai_reliable", label: "Reliable (tested for safety and security)", category: "DoD AI Ethical Principles" },
-    { id: "rai_governable", label: "Governable (detect and avoid unintended behavior)", category: "DoD AI Ethical Principles" },
+    { id: "adopt_infrastructure", label: "Invest in interoperable, federated infrastructure", category: "DoW AI Adoption Strategy" },
+    { id: "adopt_ecosystem", label: "Advance the data, analytics & AI ecosystem", category: "DoW AI Adoption Strategy" },
+    { id: "adopt_talent", label: "Expand digital talent management", category: "DoW AI Adoption Strategy" },
+    { id: "adopt_data", label: "Improve foundational data management", category: "DoW AI Adoption Strategy" },
+    { id: "adopt_advantage", label: "Deliver capabilities for enduring decision advantage", category: "DoW AI Adoption Strategy" },
+    { id: "rai_responsible", label: "Responsible (judgment, care, accountability)", category: "DoW AI Ethical Principles" },
+    { id: "rai_equitable", label: "Equitable (minimize unintended bias)", category: "DoW AI Ethical Principles" },
+    { id: "rai_traceable", label: "Traceable (transparent, auditable)", category: "DoW AI Ethical Principles" },
+    { id: "rai_reliable", label: "Reliable (tested for safety and security)", category: "DoW AI Ethical Principles" },
+    { id: "rai_governable", label: "Governable (detect and avoid unintended behavior)", category: "DoW AI Ethical Principles" },
   ],
 
   landingObjectives: [
     {
-      title: "DoD AI adoption priorities",
-      subtitle: "Data, Analytics & AI Adoption Strategy (2023)",
+      title: "Department of War AI priorities",
+      subtitle: "Data, Analytics & AI Adoption Strategy",
       items: [
         { title: "Interoperable, federated infrastructure", description: "Invest in the connective infrastructure that lets data and AI move across the enterprise." },
         { title: "Advance the data, analytics & AI ecosystem", description: "Build and field the tools, models, and partnerships that turn data into advantage." },
@@ -59,7 +59,7 @@ A serious AI idea names the specific priority it advances and the mechanism, sta
       ],
     },
     {
-      title: "DoD AI Ethical Principles",
+      title: "Department of War AI ethical principles",
       subtitle: "Responsible AI",
       items: [
         { title: "Responsible", description: "Exercise appropriate judgment and care; humans remain accountable." },
@@ -86,10 +86,10 @@ A serious AI idea names the specific priority it advances and the mechanism, sta
   },
 
   riskFramework: {
-    label: "DoD AI Ethical Principles + CDAO Responsible AI",
+    label: "DoW AI Ethical Principles + CDAO Responsible AI",
     description: "Responsible-AI posture plus data classification / Impact Level (Unclassified, CUI, IL4, IL5), American-built model sourcing, and mandatory human review.",
   },
 
-  theme: { primary: "#243b2e", primaryForeground: "#ffffff" },
+  theme: { primary: "#355E93", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: false, scout: true },
 }
