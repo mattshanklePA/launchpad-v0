@@ -47,95 +47,92 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 // Sources: uspto.gov/about-us/performance-and-planning/strategy-and-reporting
 //          uspto.gov/initiatives/artificial-intelligence/ai-strategy
 const mockOKRs = [
-  // ───── USPTO 2022-2026 Strategic Plan ─────
+  // ===== Department of War AI Adoption Strategy =====
   {
     id: 1,
-    title: "Drive U.S. innovation and global competitiveness",
+    title: "Invest in interoperable, federated infrastructure",
     description:
-      "Expand outreach to under-represented innovators, strengthen U.S. leadership in emerging tech, and ensure broad access to the IP system.",
-    category: "USPTO Strategic Goal",
+      "Build the connective infrastructure that lets data and AI move securely across commands and the enterprise.",
+    category: "AI Adoption Goal",
     status: "active",
     progress: 45,
   },
   {
     id: 2,
-    title: "Promote the efficient delivery of reliable IP rights",
+    title: "Advance the data, analytics, and AI ecosystem",
     description:
-      "Reduce pendency, improve first-action quality, and modernize the examination experience across patents and trademarks.",
-    category: "USPTO Strategic Goal",
+      "Field the tools, models, and partnerships that turn data into decision advantage for the warfighter.",
+    category: "AI Adoption Goal",
     status: "active",
-    progress: 60,
+    progress: 50,
   },
   {
     id: 3,
-    title: "Promote IP protection against new and persistent threats",
+    title: "Expand digital talent management",
     description:
-      "Strengthen anti-counterfeiting capabilities, support enforcement, and defend the integrity of issued IP rights.",
-    category: "USPTO Strategic Goal",
+      "Grow and retain the workforce able to build, evaluate, and oversee AI across the Department.",
+    category: "AI Adoption Goal",
     status: "active",
     progress: 35,
   },
   {
     id: 4,
-    title: "Bring innovation to impact for the public good",
+    title: "Improve foundational data management",
     description:
-      "Leverage the IP and innovation system to address national priorities including climate, public health, and equity.",
-    category: "USPTO Strategic Goal",
+      "Make data visible, accessible, understandable, linked, and trustworthy across the Department of War.",
+    category: "AI Adoption Goal",
     status: "active",
-    progress: 30,
+    progress: 40,
   },
   {
     id: 5,
-    title: "Generate impactful employee and customer experiences",
+    title: "Deliver capabilities for enduring decision advantage",
     description:
-      "Maximize agency operations to create rewarding experiences for the USPTO workforce and the applicants and public it serves.",
-    category: "USPTO Strategic Goal",
+      "Get responsible AI into the hands of decision-makers and the warfighter to sustain enduring advantage.",
+    category: "AI Adoption Goal",
     status: "active",
-    progress: 50,
+    progress: 30,
   },
-  // ───── USPTO AI Strategy (January 2025) ─────
+  // ===== Responsible AI (Department of War AI Ethical Principles) =====
   {
     id: 6,
-    title: "Advance IP policies for inclusive AI innovation",
+    title: "Responsible",
     description:
-      "Shape patent, trademark, and copyright policies that support U.S. AI leadership while remaining inclusive of all innovators.",
-    category: "AI Strategy Priority",
+      "Personnel exercise appropriate judgment and care, and remain accountable for AI development and use.",
+    category: "Responsible AI Principle",
     status: "active",
     progress: 40,
   },
   {
     id: 7,
-    title: "Build AI capabilities through infrastructure and resources",
-    description:
-      "Invest in the compute, data, and tooling infrastructure required to deploy AI responsibly across USPTO operations.",
-    category: "AI Strategy Priority",
-    status: "active",
-    progress: 25,
-  },
-  {
-    id: 8,
-    title: "Promote responsible AI use",
-    description:
-      "Ensure all AI systems include bias mitigation, explainability, and meaningful human oversight in line with federal AI guidance.",
-    category: "AI Strategy Priority",
+    title: "Equitable",
+    description: "Take deliberate steps to minimize unintended bias in AI capabilities.",
+    category: "Responsible AI Principle",
     status: "active",
     progress: 35,
   },
   {
-    id: 9,
-    title: "Develop AI expertise within the workforce",
-    description:
-      "Train USPTO staff across roles to evaluate, deploy, and oversee AI capabilities relevant to their work.",
-    category: "AI Strategy Priority",
+    id: 8,
+    title: "Traceable",
+    description: "Ensure transparent, auditable methodologies, data sources, and design procedures.",
+    category: "Responsible AI Principle",
     status: "active",
-    progress: 20,
+    progress: 30,
+  },
+  {
+    id: 9,
+    title: "Reliable",
+    description: "AI has explicit, well-defined uses, tested for safety and security across its lifecycle.",
+    category: "Responsible AI Principle",
+    status: "active",
+    progress: 25,
   },
   {
     id: 10,
-    title: "Collaborate with government and international partners on AI",
+    title: "Governable",
     description:
-      "Coordinate with peer federal agencies, OMB, and international IP offices on AI governance and shared technical standards.",
-    category: "AI Strategy Priority",
+      "Design AI to detect and avoid unintended behavior, with the ability to disengage or deactivate.",
+    category: "Responsible AI Principle",
     status: "active",
     progress: 30,
   },
@@ -364,7 +361,7 @@ function AdminPageInner() {
 
   // Prefer real submissions; fall back to mocks only if there are none yet,
   // so the demo still shows visual content on a fresh browser.
-  const drafts = hydrated && realDrafts.length > 0 ? realDrafts : mockDrafts
+  const drafts = hydrated && realDrafts.length > 0 ? realDrafts : []
 
   // --- Analytics (derived from the real pipeline, not random) ---
   const buCounts = drafts.reduce<Record<string, number>>((acc, d) => {

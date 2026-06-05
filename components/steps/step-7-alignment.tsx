@@ -144,7 +144,7 @@ export function Step7Alignment() {
               {suggesting && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Analyzing your problem, solution, and value claims against USPTO priorities…
+                  Analyzing your problem, solution, and value claims against Department of War priorities…
                 </div>
               )}
 
@@ -213,7 +213,7 @@ export function Step7Alignment() {
           {isVisible("usptoFocusArea") && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Which USPTO priorities does this advance?</Label>
+              <Label>Which Department of War priorities does this advance?</Label>
               {hasUserData && !suggesting && !suggestion && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={fetchSuggestion}>
                   <Sparkles className="h-3 w-3 mr-1" />
@@ -246,7 +246,7 @@ export function Step7Alignment() {
 
           {isVisible("relevantOkrs") && (
             <div className="space-y-2">
-              <Label htmlFor="relevantOkrs">Relevant USPTO OKRs or goals</Label>
+              <Label htmlFor="relevantOkrs">Relevant Department of War OKRs or goals</Label>
               <Textarea
                 id="relevantOkrs"
                 value={formData.relevantOkrs}

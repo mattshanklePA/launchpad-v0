@@ -32,7 +32,7 @@ export function Step1SubmitterInfo() {
               type="email"
               value={formData.submitterEmail}
               onChange={(e) => setFormData((prev) => ({ ...prev, submitterEmail: e.target.value }))}
-              placeholder="e.g., jane.doe@uspto.gov"
+              placeholder="e.g., jane.doe@army.mil"
             />
           </div>
         )}
@@ -49,8 +49,8 @@ export function Step1SubmitterInfo() {
                 <SelectValue placeholder="Select your role..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="patent_examiner">Patent Examiner</SelectItem>
-                <SelectItem value="trademark_examiner">Trademark Examiner</SelectItem>
+                <SelectItem value="patent_examiner">Operations / Staff Officer</SelectItem>
+                <SelectItem value="trademark_examiner">Analyst</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="it_staff">IT Staff</SelectItem>
                 <SelectItem value="product_owner">Product Owner</SelectItem>

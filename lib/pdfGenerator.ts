@@ -1,14 +1,14 @@
-// Branded USPTO LaunchPad PDF generator.
-// Produces a multi-page PDF with USPTO header band, exec summary callout,
+// Branded Department of War LaunchPad PDF generator.
+// Produces a multi-page PDF with Department of War header band, exec summary callout,
 // per-section blocks with side badges, key-functionality bullets, focus-area
 // chips, and a readiness assessment banner.
 
 import { jsPDF } from "jspdf"
 import type { FormData } from "@/lib/steps"
 
-const USPTO_BLUE_PRIMARY: [number, number, number] = [0, 76, 147]
-const USPTO_BLUE_SECONDARY: [number, number, number] = [0, 114, 206]
-const USPTO_BLUE_TINT: [number, number, number] = [232, 240, 250]
+const USPTO_BLUE_PRIMARY: [number, number, number] = [53, 94, 147]
+const USPTO_BLUE_SECONDARY: [number, number, number] = [37, 66, 103]
+const USPTO_BLUE_TINT: [number, number, number] = [235, 239, 245]
 const READY_GREEN: [number, number, number] = [22, 163, 74]
 const NEEDS_AMBER: [number, number, number] = [217, 119, 6]
 const EARLY_RED: [number, number, number] = [220, 38, 38]
@@ -72,7 +72,7 @@ export function generateSubmissionPDF(formData: FormData) {
   doc.setTextColor(255, 255, 255)
   doc.setFont("helvetica", "bold")
   doc.setFontSize(20)
-  doc.text("USPTO LaunchPad", margin, 36)
+  doc.text("LaunchPad", margin, 36)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(11)
   doc.text("AI Use Case Submission", margin, 54)
@@ -212,8 +212,8 @@ export function generateSubmissionPDF(formData: FormData) {
   bullets("Other user improvements", formData.otherUserImprovements)
   section("Business Value", fmt(formData.businessValueSummary || formData.businessValue), rangeLabel(formData.costSavings, "savings"))
   bullets("Strategic benefits", formData.strategicBenefit)
-  section("Strategic Alignment with USPTO Priorities", fmt(formData.alignmentSummary || formData.relevantOkrs))
-  chips("USPTO focus areas", formData.usptoFocusArea)
+  section("Strategic Alignment with Department of War Priorities", fmt(formData.alignmentSummary || formData.relevantOkrs))
+  chips("Strategic focus areas", formData.usptoFocusArea)
   section("Feasibility & Security", fmt(formData.feasibilitySummary || formData.dependencies),
     formData.implementationComplexity ? `${formData.implementationComplexity.charAt(0).toUpperCase() + formData.implementationComplexity.slice(1)} complexity` : undefined)
   bullets("Resources needed", formData.resourcesNeeded)
@@ -252,7 +252,7 @@ export function generateSubmissionPDF(formData: FormData) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(8)
     doc.setTextColor(...GRAY_500)
-    doc.text("USPTO LaunchPad — AI Use Case Intake Platform", margin, pageH - 18)
+    doc.text("LaunchPad — Department of War AI Use Case Platform", margin, pageH - 18)
     doc.text(`Page ${i} of ${total}`, pageW - margin, pageH - 18, { align: "right" })
   }
 

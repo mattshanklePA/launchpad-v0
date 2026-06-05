@@ -217,13 +217,13 @@ export const formSteps: FormStep[] = [
     step: 4,
     name: "Value",
     title: "Define the Value to Users and the Business",
-    prompt: "How does this help users, and what's the business case for USPTO?",
+    prompt: "How does this help users, and what's the business case for the Department of War?",
   },
   {
     step: 5,
     name: "Strategic Alignment",
-    title: "Align with USPTO Goals",
-    prompt: "Does this align with USPTO's strategic priorities? Which ones?",
+    title: "Align with Department of War Goals",
+    prompt: "Does this align with the Department of War's strategic priorities? Which ones?",
   },
   {
     step: 6,

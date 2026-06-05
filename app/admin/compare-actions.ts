@@ -9,6 +9,7 @@ import { generateObject } from "ai"
 import { anthropic } from "@ai-sdk/anthropic"
 import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
+import { getTenant } from "@/lib/tenant"
 
 export type CompareBriefing = {
   narrative: string
@@ -22,23 +23,7 @@ export type CompareBriefing = {
   }>
 }
 
-const USPTO_STRATEGIC_CONTEXT = `
-USPTO operates under two published strategic frameworks. Funding decisions should advance at least one priority from these:
-
-**2022-2026 Strategic Plan goals:**
-- Drive inclusive U.S. innovation and global competitiveness
-- Promote the efficient delivery of reliable IP rights
-- Promote the protection of IP against new and persistent threats
-- Bring innovation to impact for the public good
-- Generate impactful employee and customer experiences by maximizing agency operations
-
-**AI Strategy (January 2025) priorities:**
-- Advance IP policies for inclusive AI innovation
-- Enhance AI capabilities through infrastructure and resources
-- Promote responsible AI use (bias mitigation, explainability, human oversight)
-- Develop AI expertise within the workforce
-- Collaborate with governmental and international partners on AI
-`
+const STRATEGIC_CONTEXT = getTenant().strategicContext
 
 function fmt(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : "(none)"
@@ -132,7 +117,7 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
         narrative: z
           .string()
           .describe(
-            "A comparative narrative (3-5 sentences). How do these candidates differ in approach, target users, expected impact, and strategic priorities? Where do they overlap or compete? Reference USPTO priorities by name.",
+            "A comparative narrative (3-5 sentences). How do these candidates differ in approach, target users, expected impact, and strategic priorities? Where do they overlap or compete? Reference DoW priorities by name.",
           ),
         portfolioTake: z
           .string()
@@ -142,14 +127,14 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
         unaddressedGaps: z
           .string()
           .describe(
-            "What's NOT in the portfolio. Which USPTO strategic priorities are these candidates collectively missing? What common gaps appear across multiple submissions (e.g., 'none of these address FedRAMP/ATO timing', 'none have baseline data')?",
+            "What's NOT in the portfolio. Which DoW strategic priorities are these candidates collectively missing? What common gaps appear across multiple submissions (e.g., 'none of these address FedRAMP/ATO timing', 'none have baseline data')?",
           ),
         perSubmission: z
           .array(
             z.object({
               id: z.string(),
               title: z.string(),
-              oneLine: z.string().describe("One sentence: what this is and the named USPTO priority it advances most directly."),
+              oneLine: z.string().describe("One sentence: what this is and the named DoW priority it advances most directly."),
               whatItDoesNotAddress: z
                 .string()
                 .describe(
@@ -162,38 +147,38 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
       messages: [
         {
           role: "system",
-          content: `You are a senior AI strategist at USPTO supporting a CIO/CAIO funding decision. You are NOT here to pitch the submissions — you are here to help the exec make a clear-eyed comparison.
+          content: `You are a senior AI strategist at DoW supporting a CIO/CAIO funding decision. You are NOT here to pitch the submissions — you are here to help the exec make a clear-eyed comparison.
 
-${USPTO_STRATEGIC_CONTEXT}
+${STRATEGIC_CONTEXT}
 
 ═══ ABSOLUTE ANTI-FABRICATION RULES ═══
 - NEVER invent specific numbers, named organizational units, evidence sources, or timelines a submission did not include
 - NEVER assert strategic alignment a submission did not explicitly claim
 - If a submission's claims are vague or unsupported, say so honestly — that's decision-useful information
-- Reference USPTO priorities by name (e.g., "efficient delivery of reliable IP rights"), not by number
-- Submissions may come from any part of USPTO and target any user group (examiners, IT, OGC, applicants, the public, etc.) — do not default to "examiners"
+- Reference DoW priorities by name (e.g., "efficient delivery of reliable IP rights"), not by number
+- Submissions may come from any part of DoW and target any user group (examiners, IT, OGC, applicants, the public, etc.) — do not default to "examiners"
 
 ═══ EVALUATION LENSES (apply implicitly, do not call out by name) ═══
 For each submission, the comparison should help the exec understand:
 - Is the user demand real and observable? (or speculative?)
 - Will the target users actually be able to use it? (workflow fit, training overhead)
-- Can USPTO actually build and integrate it? (FedRAMP/ATO, data access, vendor dependencies, technical complexity)
-- Can USPTO sustain it operationally? (procurement, ops, change management, ROI under federal cost realities)
+- Can DoW actually build and integrate it? (FedRAMP/ATO, data access, vendor dependencies, technical complexity)
+- Can DoW sustain it operationally? (procurement, ops, change management, ROI under federal cost realities)
 
 Surface these dimensions through your narrative and per-submission gaps — do not label them with technical terms.
 
 ═══ YOUR TASK ═══
 Read the dossier of ${submissions.length} submissions below. Then produce:
-1. A comparative NARRATIVE — how do they differ, where do they overlap, which advances which USPTO priority most directly
+1. A comparative NARRATIVE — how do they differ, where do they overlap, which advances which DoW priority most directly
 2. A PORTFOLIO TAKE — funding recommendation grounded in what the submissions actually show (or honest acknowledgment that more work is needed)
-3. UNADDRESSED GAPS — what USPTO priorities aren't represented; what common weaknesses appear across multiple candidates
+3. UNADDRESSED GAPS — what DoW priorities aren't represented; what common weaknesses appear across multiple candidates
 4. PER-SUBMISSION snapshot — one-liner + specific gaps not addressed in that submission
 
 Tone: rigorous, honest, decision-useful. An exec should be able to read this and confidently make a funding call (or confidently say "not yet, here's what I need first").`,
         },
         {
           role: "user",
-          content: `Compare the following ${submissions.length} USPTO AI use case submissions:\n${dossier}`,
+          content: `Compare the following ${submissions.length} DoW AI use case submissions:\n${dossier}`,
         },
       ],
     })
@@ -208,11 +193,11 @@ Tone: rigorous, honest, decision-useful. An exec should be able to read this and
     console.error("compareSubmissions AI error, falling back to mock briefing:", error)
     return {
       narrative:
-        "(AI briefing temporarily unavailable.) These submissions span different parts of the USPTO portfolio. A comparative analysis requires review of each candidate's target users, strategic priority advanced, and feasibility posture. Manual review recommended in the interim.",
+        "(AI briefing temporarily unavailable.) These submissions span different parts of the DoW portfolio. A comparative analysis requires review of each candidate's target users, strategic priority advanced, and feasibility posture. Manual review recommended in the interim.",
       portfolioTake:
         "Unable to generate a portfolio take without AI synthesis. Recommend deferring funding decision until briefing service is available, or conducting manual side-by-side review using the candidate detail cards.",
       unaddressedGaps:
-        "(Briefing unavailable.) Review each candidate manually for: FedRAMP/ATO timing, named USPTO priority alignment, observable evidence of user demand, and quantified expected impact.",
+        "(Briefing unavailable.) Review each candidate manually for: FedRAMP/ATO timing, named DoW priority alignment, observable evidence of user demand, and quantified expected impact.",
       perSubmission: submissions.map((s) => ({
         id: s.id,
         title: s.formData.useCaseTitle || "Untitled idea",

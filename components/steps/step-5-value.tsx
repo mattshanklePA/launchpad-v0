@@ -24,7 +24,7 @@ const improvementOptions = [
 ]
 
 const benefitOptions = [
-  { value: "improve_quality", label: "Improve patent/trademark quality" },
+  { value: "improve_quality", label: "Improve mission or operational quality" },
   { value: "reduce_backlog", label: "Reduce backlog" },
   { value: "support_goals", label: "Support Department of War strategic goals" },
   { value: "other", label: "Other" },
@@ -129,7 +129,7 @@ export function Step5Value() {
             </div>
           )}
 
-          {/* ─── VALUE TO THE BUSINESS (USPTO) ─── */}
+          {/* ─── VALUE TO THE BUSINESS (Department of War) ─── */}
           {businessSectionVisible && (
             <div className={`space-y-6 ${userSectionVisible ? "pt-8 border-t" : ""}`}>
               <div>
@@ -137,7 +137,7 @@ export function Step5Value() {
                   Value to the Business
                 </h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  What changes for USPTO at the agency level: pendency, quality, cost.
+                  What changes for the Department of War at the enterprise level: readiness, decision advantage, cost.
                 </p>
               </div>
 
