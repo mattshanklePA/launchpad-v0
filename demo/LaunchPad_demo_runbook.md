@@ -71,7 +71,7 @@ Posture (honest and strong): *"508 is a first-class requirement here, not a bolt
 
 **E. Confirm Scout works in PROD** — if the Anthropic API key isn't set in Vercel, Scout silently falls back to canned scaffolds. Make sure a real, specific Scout answer comes back in the deployed app, not the generic fallback.
 
-**F. Pre-stage for tomorrow** — open the tabs/logins you'll use ahead of time (admin, one reviewer, one submitter), and pre-generate one Decision Center briefing so you're not waiting on it live.
+**F. Pre-stage for tomorrow** — because one browser shares a single login across tabs, set up **two windows: a normal window signed in as your demo submitter, and an incognito window signed in as admin**. Pre-generate one Decision Center briefing (in the admin window) so you're not waiting on it live. Screenshot that briefing as a fallback.
 
 ---
 
@@ -84,36 +84,45 @@ The product already tells the complete story end to end. The single biggest risk
 
 ---
 
-## 3. The 22-minute demo path
+## 3. The 25-minute demo path
 
-> Pacing note: switching roles + the Decision Center briefing eat time. Pre-stage logins and a pre-generated briefing. Keep Scout moments short — one question, one scaffold.
+> Pacing note: role switches and the Decision Center briefing eat time. Pre-stage logins and a pre-generated briefing. Keep Scout moments short (one question, one scaffold). The technical and security points below are woven into the moment each naturally comes up, so you're explaining, not lecturing.
+
+> **Login choreography:** open logged out on the public landing. **First login = submitter** (the intake journey); the reviewer/governance side = **admin**. The app session is shared across all tabs in one browser, so to flip roles fast keep **two windows: a normal window signed in as the submitter, an incognito window signed in as admin** (incognito has its own session). Use the *same* submitter for the opening intake and the closing feedback reply, and **request info on the idea you just submitted** so it comes full circle. After the admin requests info, **refresh the submitter window** to see "Action needed."
 
 **0:00–2:00 — Frame the problem (talk, no screen yet).**
 "Right now AI ideas at USPTO are decentralized — they come through SharePoint, email, hallway conversations. There's no single, governable front door, and no consistent way to see what's worth funding. Ramesh, you've said the question now is *what value are these initiatives actually bringing*. That's what LaunchPad answers."
 
-**2:00–4:00 — Lean, problem-first intake (submitter wizard).**
-Start a new idea. Point out it jumps straight to **the problem**, not the idea — "the finding is people have 'ideas' that aren't even AI; we lead with the problem so we catch that early." Call out the **two-field, radio-driven** steps: "this is deliberately lean — Ramesh, you wanted three questions, we'll come back to how you control that."
+**2:00–4:30 — Log in, and tell the security + identity story while you do.**
+Deliver the ~20-second architecture line (top of runbook) as you type. Then, still on the login screen, cover roles/security today vs. their environment:
+"Today, for the prototype, the app handles sign-in itself and manages three roles: submitter, reviewer, admin. In your environment we wouldn't do that. Authentication would come from your identity provider through your existing SSO — PIV/CAC, MFA, your ICAM policy — and we'd map your existing groups to these three roles. We're not creating another place to manage people. Same with the data behind it: who sits in which business unit, the people and product records — that stays in your systems of record, Dataverse or Oracle/APEX, and we read from those. LaunchPad is a thin governance layer on top of what you already own."
+Land it: *"We don't ask you to trust our security model. We plug into yours."* (Point out the **Sign up button is locked** — accounts are provisioned, not self-service. That's the governed posture, not a missing feature.)
 
-**4:00–7:00 — Scout (the intelligence).**
-Type something vague. Scout **asks a clarifying question** with clickable options instead of dumping feedback; it **never invents facts**; it drafts a **scaffold** into the locked summary field. "This is Claude in the back — most of the IP is in the prompts. It coaches, the human stays in control." Mention the governable angle: "Scout can also say *this doesn't look like AI* or *we already have a tool for this* before anyone spends a dollar."
+**4:30–6:30 — Lean, problem-first intake (submitter wizard).**
+Start a new idea. Point out it jumps straight to **the problem**, not the idea: "the finding is people have 'ideas' that aren't even AI; we lead with the problem so we catch that early." Call out the **two-field, radio-driven** steps: "this is deliberately lean — Ramesh, you wanted three questions; I'll show you how you control exactly that in a minute."
 
-**7:00–9:00 — Readiness gate + submit.**
+**6:30–9:00 — Scout (the intelligence).**
+Type something vague. Scout **asks a clarifying question** with clickable options instead of dumping feedback; it **never invents facts**; it drafts a **scaffold** into the locked summary field. "This is Claude in the back, running server-side — most of the IP is in the prompts. It coaches; the human stays in control." Governable angle: "Scout can also say *this doesn't look like AI* or *we already have a tool for this* before anyone spends a dollar."
+
+**9:00–11:00 — Readiness gate + submit.**
 Land on the review step → **readiness verdict** (ready / needs work / early stage) and exec summary. "Every submission comes out structured and comparable, with a quality gate before it ever reaches a reviewer." Submit.
 
-**9:00–13:00 — Reviewer pipeline (role switch → reviewer).**
-Show the **kanban by status**, then **filter by business unit and by assignee** (multi-select). "Every idea is auto-routed to the reviewer for its business unit." Open an idea → **Scout's reviewer read** (advisory verdict, strengths, gaps, suggested disposition — *human decides*), and the **risk panel** (PII / American-built model / human review / decisional). "These are the DoC- and EO-mandated questions — this is the *governable* part."
+**11:00–15:00 — Reviewer pipeline + risk panel (role switch → admin).**
+*Log in as admin here, not a plain reviewer: admin sees the same pipeline and can take the same review actions, but ALSO has the Form Config tool you'll show at 21:00 — so no extra login mid-demo. (Form Config is admin-only by design; say so: "only an admin/governance owner controls what the form collects.")*
+Show the **kanban by status**, then **filter by business unit and by assignee** (multi-select). "Every idea is auto-routed to the reviewer for its business unit." Open an idea → **Scout's reviewer read** (advisory verdict, strengths, gaps, suggested disposition — *human decides*), and the **risk panel** (PII / American-built model / human review / decisional). "These are the DoC- and EO-mandated questions, the *governable* part." Tie it home: "and because the model runs through Amazon Bedrock in your GovCloud — already FedRAMP High and IL4/5 — the whole thing, your data and the model, stays inside your accredited boundary. American-built, nothing leaves."
 
-**13:00–16:00 — The feedback loop.**
+**15:00–18:00 — The feedback loop.**
 **Request info → Draft with Scout** (it writes the specific gap message) **→ Send.** Switch to the submitter → **Action needed** → they see the note and **reply/resubmit**. "A review isn't a dead end — there's a real channel back to the submitter."
 
-**16:00–19:00 — Decision Center (Ramesh's value question).**
-Compare 2-3 side by side → show the **executive briefing**. "This is the leadership view — quantified value, strategic alignment, risk, and a recommendation, side by side. This is how you decide what to fund." (Use the pre-generated one to avoid the wait.)
+**18:00–21:00 — Decision Center (Ramesh's value question).**
+Compare 2-3 side by side → show the **executive briefing**. "This is the leadership view: quantified value, strategic alignment, risk, and a recommendation, side by side. This is how you decide what to fund." (Use the pre-generated one to avoid the wait.)
 
-**19:00–21:00 — Governance payoff + customization.**
-Open a **Rejected** example (auto-drafting office actions, or resume auto-screening). "The tool flagged this — decisional AI making a determination about a person with no human review. *That's* what governable means; it doesn't just collect ideas, it catches the ones that shouldn't proceed." Then Admin → **Form Config**: toggle a couple fields off live. "Ramesh — you wanted it leaner? Ten seconds. It's fully customizable; no COTS limits."
+**21:00–23:30 — Governance payoff + customization.**
+Open a **Rejected** example (auto-drafting office actions, or resume auto-screening). "The tool flagged this: decisional AI making a determination about a person with no human review. *That's* what governable means; it doesn't just collect ideas, it catches the ones that shouldn't proceed." Then Admin → **Form Config**: toggle a couple fields off live. "Ramesh, you wanted it leaner? Ten seconds. Fully customizable, no COTS limits."
 
-**21:00–22:00 — Close.**
-"It's bespoke to you, runs on your infrastructure, points at whatever model you approve, and it's customizable as you learn. We'd love your read on it." Then stop and let them react.
+**23:30–25:00 — Close (+ logistics teaser).**
+"It's bespoke to you, runs on your infrastructure inside your boundary, points at whatever model you approve, and it stays customizable as you learn. We'd love your read on it." If they're warm, open the door: *"Happy to come up and spend a few hours with your team walking through it and taking direction before anything's formal."* Keep the open-source answer ready (see Logistics): open to it, but the cleanest path is we run it for you so you don't inherit the maintenance. Then stop and let them react.
+
 
 ---
 
@@ -135,3 +144,36 @@ Open a **Rejected** example (auto-drafting office actions, or resume auto-screen
 - **Briefing spins** → use the pre-generated one; "this is a heavier call, we're tuning performance."
 - **A status/assignee looks wrong** → you likely haven't run 0003/0004; fall back to a different example.
 - Worst case, the **lean-form build** (pre-redesign) is still on the prior commit as a fallback.
+
+
+---
+
+## Logistics — open source, staffing, engagement offer
+
+### If Ramesh asks "will you open-source it?"
+Don't say no. Posture: *"We're open to it, but we'd want to figure out how we stay involved and keep some control."* Then steer to the better path.
+
+**Best case (preferred): keep it as our commercial IP, not open-source.**
+- LaunchPad is pre-existing IP **developed at private expense** -> it's commercial computer software. USPTO gets a **license to use** the deployed instance; Packaged Agile keeps the code and the rights.
+- USPTO procures a **license + services** engagement (deploy, integrate identity/data, ATO, maintain), ideally under an existing contract vehicle (bring it under the current BL solution / GSA MAS) to avoid a fresh competitive procurement.
+- PA stays maintainer and roadmap owner -> recurring revenue, control, reusable for other agencies.
+
+**Why it's good for USPTO (the pitch):** *"You get a supported, continuously-upgraded product in your boundary, and you don't take on a codebase to maintain yourselves. License cost stays minimal; the value is in the team and the hosting."*
+
+**Reframe open source as a burden:** if they take the open-source code, *they* own maintaining it (or it rots). Proprietary + our team = we carry that.
+
+**Fallback (don't hard-no):** *"We're open to discussing open-sourcing parts down the line."* Ramesh's open-source instinct is really a procurement/budget concern, answer that, not the licensing.
+
+*Validate the IP / data-rights wording with Brad & Dave before committing language ("developed at private expense / restricted rights" is the lever).*
+
+### Staffing (3 FTE, then a decision gate)
+3 FTE for build-to-production + early adoption, then decide: scale up or drop to maintenance (1 FTE).
+- **Matt — Program / Product Manager:** customer engagement, feedback, roadmap, governance liaison, prioritization.
+- **Full-stack engineer (lead dev):** Next.js / TS / React + Node + Postgres + the Scout / AI prompt integration. Builds features.
+- **DevSecOps / cloud-integration engineer:** AWS GovCloud + containerization, SSO / identity (OIDC / SAML / Cognito), security + ATO support, AI-gateway / Bedrock config, Dataverse / APEX + Rally integrations. Lands it in their environment.
+- **Surge fractionally (not full FTE):** formal ATO / security accreditation and the 508 / VPAT.
+- **Steady-state maintenance:** ~1 FTE (full-stack engineer) + Matt fractional.
+- Consistent with deck slide 5's "dedicated 2-3 person team" assumption.
+
+### Engagement offer (Matt)
+If they're serious, offer up to ~4 hours on-site at USPTO before any official engagement: sit with their team, walk through the app, capture feedback / direction, and make updates live. Low-commitment way to build momentum and show responsiveness.
