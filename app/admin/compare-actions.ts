@@ -87,6 +87,12 @@ Feasibility & security:
   - Sensitive data: ${fmt(d.involvesSensitiveData)}
   - Security classification: ${fmt(d.securityClassification)}
   - Access control: ${fmt(d.accessControlRequirements)}
+  - Data readiness: ${fmt(d.dataReadiness)}
+  - Data classification / Impact Level: ${fmt(d.impactLevel)}
+  - Technology Readiness Level (1-9): ${fmt(d.trl)}
+  - AI decisional impact on people: ${fmt(d.aiDecisionalImpact)}
+  - Model sourcing: ${fmt(d.aiModelSourcing)}
+  - Mandatory human review: ${fmt(d.aiHumanReview)}
   - Summary: ${fmt(d.feasibilitySummary)}
 
 Success metrics:
@@ -151,12 +157,21 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
 
 ${STRATEGIC_CONTEXT}
 
+═══ OVERSIGHT LENS (apply to every candidate) ═══
+For each submission, weigh the signals GAO/DoD-OIG funders actually audit for, and surface gaps in "whatItDoesNotAddress" and "unaddressedGaps":
+- DATA READINESS — is AI-ready data available, or must it be built/relabeled? (the most common reason DoD AI fails) A candidate with no data foundation is not yet fundable, however strong the concept.
+- HUMAN OVERSIGHT — for anything decisional about people/targeting, is human judgment required?
+- CLASSIFICATION / IMPACT LEVEL — is it declared and consistent with the data (CUI -> IL4/IL5)?
+- MATURITY (TRL) — is it stated, with a maturation or sustainment plan if low?
+- SUSTAINMENT COST — does the value claim acknowledge total cost of ownership, not just build?
+In "unaddressedGaps", explicitly call out common shortfalls across the set (e.g., "none state data readiness", "none declare an Impact Level", "none address T&E/assurance").
+
 ═══ ABSOLUTE ANTI-FABRICATION RULES ═══
 - NEVER invent specific numbers, named organizational units, evidence sources, or timelines a submission did not include
 - NEVER assert strategic alignment a submission did not explicitly claim
 - If a submission's claims are vague or unsupported, say so honestly — that's decision-useful information
-- Reference DoW priorities by name (e.g., "efficient delivery of reliable IP rights"), not by number
-- Submissions may come from any part of DoW and target any user group (examiners, IT, OGC, applicants, the public, etc.) — do not default to "examiners"
+- Reference DoW priorities by name (e.g., "enduring decision advantage", "readiness", "sustainment"), not by number
+- Submissions may come from any command and target any user group (warfighters, operators, sustainers, analysts, IT, medical, acquisition, etc.) — do not default to one group
 
 ═══ EVALUATION LENSES (apply implicitly, do not call out by name) ═══
 For each submission, the comparison should help the exec understand:

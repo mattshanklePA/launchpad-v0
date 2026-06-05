@@ -94,6 +94,9 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("aiDecisionalImpact", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI decisional impact answer" }, () => !formData.aiDecisionalImpact)
   need("aiModelSourcing", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI model sourcing" }, () => !formData.aiModelSourcing)
   need("aiHumanReview", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Human review answer" }, () => !formData.aiHumanReview)
+  need("dataReadiness", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Data readiness answer" }, () => !formData.dataReadiness)
+  need("impactLevel", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Data classification / Impact Level" }, () => !formData.impactLevel)
+  need("trl", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Technology Readiness Level" }, () => !formData.trl)
 
   // ---------- Step 8: Success Metrics ----------
   need("successMetrics", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Success metrics" }, () => !presentString(formData.successMetrics))

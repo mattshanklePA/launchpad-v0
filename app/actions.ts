@@ -362,6 +362,9 @@ export async function assessReadiness(
   if (formData.aiModelSourcing === "foreign") riskFlags.push("Foreign-built model — EO compliance issue")
   if (formData.aiModelSourcing === "unknown") riskFlags.push("Model sourcing not yet determined")
   if (formData.aiHumanReview === "no") riskFlags.push("No mandatory human review before action")
+  if (formData.dataReadiness === "needs_build") riskFlags.push("No AI-ready data yet — must be collected or labeled first (the most common reason DoD AI fails)")
+  if (formData.dataReadiness === "partial") riskFlags.push("Data only partially AI-ready — labeling/cleanup needed")
+  if (formData.impactLevel === "il6") riskFlags.push("Classified (IL6 / Secret) — requires a SIPRNet enclave and the strictest controls")
 
   // Build the brief dimension-by-dimension. A toggleable dimension is included
   // only if at least one backing input field is still enabled in the form
@@ -391,6 +394,9 @@ export async function assessReadiness(
   if (on("userTimeSavings") && formData.userTimeSavings) dataPoints.push(`- Expected user time savings: ${formData.userTimeSavings}`)
   if (on("severity") && formData.severity) dataPoints.push(`- Problem severity: ${formData.severity}`)
   if (on("implementationComplexity") && formData.implementationComplexity) dataPoints.push(`- Implementation complexity: ${formData.implementationComplexity}`)
+  if (formData.impactLevel) dataPoints.push(`- Data classification / Impact Level: ${formData.impactLevel.toUpperCase()}`)
+  if (formData.dataReadiness) dataPoints.push(`- Data readiness: ${formData.dataReadiness === "ai_ready" ? "AI-ready data exists" : formData.dataReadiness === "partial" ? "partial — needs labeling/cleanup" : "must be built/relabeled"}`)
+  if (formData.trl) dataPoints.push(`- Maturity: TRL ${formData.trl} of 9`)
   if (on("timelineForResults") && formData.timelineForResults) dataPoints.push(`- Timeline for results: ${formData.timelineForResults}`)
   if (dataPoints.length) sections.push(`### Key Data Points\n${dataPoints.join("\n")}`)
 
@@ -438,16 +444,23 @@ If a section above (1-3) maps to a dimension listed under "Intentionally NOT Col
 
 EVALUATE THE IDEA HONESTLY:
 
+DOD WEIGHTING — weigh these heavily in the rating, in roughly this order:
+1. DATA READINESS — does AI-ready data exist today? "Must be built/relabeled" is the most common reason DoD AI fails; a strong concept with no data foundation is NOT "ready".
+2. STRATEGIC + MISSION ALIGNMENT — a specifically named Adoption-Strategy goal AND mission outcome (readiness, decision advantage, sustainment, force protection), with a stated mechanism — not "modernization".
+3. RESPONSIBLE-AI POSTURE — appropriate human judgment for anything decisional, American-built model inside the accredited boundary, declared classification/Impact Level consistent with the data, and bias/traceability addressed.
+4. MATURITY — a declared TRL with a maturation or sustainment plan if low.
+5. VALUE — quantified, caveated outcomes that acknowledge sustainment cost, not adjectives.
+
 Rate it as one of:
-- "ready" — All dimensions are substantive and well-supported. The acting CAIO could make an informed decision based on this submission. Strategic alignment to a specific, named priority is clear, feasibility is realistic with security and compliance considerations addressed, AI risk management questions are answered with appropriate mitigations (American-built or open-source U.S.-hosted model, human review where decisional), and success metrics are measurable with named baselines.
-- "needs_work" — The core idea has merit, but 1-2 dimensions have significant gaps (vague value proposition, unaddressed feasibility concerns, missing metrics, only nominal strategic alignment, or one unanswered risk question like model sourcing). Worth pursuing but needs strengthening before leadership review.
-- "early_stage" — The idea is too vague or underdeveloped. Multiple dimensions lack substance, alignment is only nominal (buzzwords like "modernization" without explicit mechanism), OR the AI Risk Profile shows multiple unaddressed flags (foreign sourcing, decisional AI without human review, undefined PII handling). The submitter should continue refining before submitting.
+- "ready" — All collected dimensions are substantive. The approving authority could make an informed funding decision. Data readiness is credible, alignment names a specific priority and mission outcome with a mechanism, the responsible-AI gate is clean (human judgment where decisional, American-built/in-boundary model, classification/Impact Level declared), TRL is stated, and value is quantified.
+- "needs_work" — The core idea has merit but 1-2 dimensions have significant gaps (partial data readiness, only nominal alignment, missing TRL, unquantified value, or one unresolved risk answer like model sourcing). Worth pursuing but needs strengthening before leadership review.
+- "early_stage" — Too vague or underdeveloped: multiple weak dimensions, buzzword alignment with no mechanism, NO realistic data foundation, OR multiple unaddressed responsible-AI flags (foreign/unknown sourcing, decisional AI without human review, undeclared classification). The submitter should keep refining before submitting.
 
 ANTI-FABRICATION RULE FOR THE EXECUTIVE SUMMARY:
-SYNTHESIZE only what the submitter actually wrote — do NOT invent specific numbers, named units (Tech Centers, art units, programs), evidence sources, or impact figures the submitter did not include. If their input is too vague to produce a substantive summary, the summary should honestly reflect that.
+SYNTHESIZE only what the submitter actually wrote — do NOT invent specific numbers, named units, programs, or organizations, evidence sources, or impact figures the submitter did not include. If their input is too vague to produce a substantive summary, the summary should honestly reflect that.
 
 VALUE METRICS DISCIPLINE:
-When the submitter claims a benefit (faster, better, cheaper), the executive summary should restate it WITH the specific metric the submitter provided. If they said "improves quality," the summary should restate as the specific quality metric they named (e.g., "reduces office action rework rate from X% to Y%"). If they didn't quantify it, the summary should note "improves quality (no measurable baseline yet provided)" — don't paper over the missing number.
+When the submitter claims a benefit (faster, better, cheaper), the executive summary should restate it WITH the specific metric the submitter provided. If they said "improves quality," the summary should restate as the specific quality metric they named (e.g., "cuts manual triage time from X hours to Y"). If they didn't quantify it, the summary should note "improves quality (no measurable baseline yet provided)" — don't paper over the missing number.
 
 The readinessSummary should be 2-3 sentences naming specific gaps rather than smoothing over.`,
         },
