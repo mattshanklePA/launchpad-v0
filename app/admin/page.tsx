@@ -558,7 +558,7 @@ function AdminPageInner() {
           <div>
             <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
             <p className="text-muted-foreground mt-2">
-              Manage USPTO OKRs, monitor the AI idea pipeline, and oversee vetting operations
+              Manage Department of War OKRs, monitor the AI idea pipeline, and oversee vetting operations
             </p>
           </div>
           {session && (
@@ -578,7 +578,7 @@ function AdminPageInner() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="okrs">USPTO OKRs</TabsTrigger>
+            <TabsTrigger value="okrs">Department of War OKRs</TabsTrigger>
             <TabsTrigger value="drafts">Submissions</TabsTrigger>
             <TabsTrigger value="submitted">Decision Center</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -754,7 +754,7 @@ function AdminPageInner() {
 
           <TabsContent value="okrs" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">USPTO OKRs Management</h2>
+              <h2 className="text-2xl font-bold">Department of War OKRs Management</h2>
               <Button onClick={() => setEditingOKR(-1)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add New OKR

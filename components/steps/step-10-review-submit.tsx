@@ -67,7 +67,7 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Refined Business Value Summary", key: "businessValueSummary" },
   ],
   6: [
-    { label: "USPTO Focus Areas", key: "usptoFocusArea" },
+    { label: "Strategic focus areas", key: "usptoFocusArea" },
     { label: "Relevant OKRs / Alignment", key: "relevantOkrs" },
     { label: "Refined Summary", key: "alignmentSummary" },
   ],

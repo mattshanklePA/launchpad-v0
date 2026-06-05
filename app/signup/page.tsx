@@ -24,7 +24,7 @@ export default function SignupPage() {
               Sign-up is managed by your administrator
             </CardTitle>
             <CardDescription>
-              Self-registration isn't available in this environment. USPTO provisions accounts and roles.
+              Self-registration isn't available in this environment. Accounts and roles are provisioned for you.
             </CardDescription>
           </CardHeader>
           <CardContent>

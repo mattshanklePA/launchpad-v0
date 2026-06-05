@@ -26,7 +26,7 @@ const improvementOptions = [
 const benefitOptions = [
   { value: "improve_quality", label: "Improve patent/trademark quality" },
   { value: "reduce_backlog", label: "Reduce backlog" },
-  { value: "support_goals", label: "Support USPTO strategic goals" },
+  { value: "support_goals", label: "Support Department of War strategic goals" },
   { value: "other", label: "Other" },
 ]
 

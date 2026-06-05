@@ -7,6 +7,7 @@ import { Button } from "../ui/button"
 import { Rocket, Home, Save } from "lucide-react"
 import { useForm } from "@/context/form-context"
 import { useToast } from "@/components/ui/use-toast"
+import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 
 export function FormHeader() {
   const router = useRouter()
@@ -34,16 +35,8 @@ export function FormHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container flex h-20 max-w-screen-2xl items-center justify-between">
-        <Link href="/" className="flex items-center gap-4">
-          <Image src="/uspto-logo.png" alt="USPTO Logo" width={80} height={26} className="object-contain" />
-          <div className="h-10 border-l border-gray-300" />
-          <div className="flex items-center gap-3">
-            <Rocket className="h-7 w-7 text-uspto-blue-primary" />
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-uspto-gray-text">LaunchPad</span>
-              <p className="-mt-1 text-xs text-gray-500">USPTO AI Use Case Platform</p>
-            </div>
-          </div>
+        <Link href="/">
+          <LaunchPadLogo size="md" />
         </Link>
         <Button variant="outline" asChild className="ml-4 bg-transparent">
           <Link href="/">
