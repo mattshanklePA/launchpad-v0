@@ -20,7 +20,7 @@ let anonClient: SupabaseClient | null = null
  */
 export function getSupabaseAdmin(): SupabaseClient {
   if (adminClient) return adminClient
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "")
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set")
   if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set")
@@ -37,7 +37,7 @@ export function getSupabaseAdmin(): SupabaseClient {
  */
 export function getSupabaseAnon(): SupabaseClient {
   if (anonClient) return anonClient
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "")
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set")
   if (!anonKey) throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set")
