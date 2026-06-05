@@ -77,7 +77,7 @@ export default function SignupPage() {
               <div className="space-y-2">
                 <Label>Business unit</Label>
                 <Select value={unit} onValueChange={(v) => setUnit(v as BusinessUnit)}>
-                  <SelectTrigger><SelectValue placeholder="Select your business unit..." /></SelectTrigger>
+                  <SelectTrigger aria-label="Business unit"><SelectValue placeholder="Select your business unit..." /></SelectTrigger>
                   <SelectContent>
                     {UNITS.map((u) => (
                       <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>

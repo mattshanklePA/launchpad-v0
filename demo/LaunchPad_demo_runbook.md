@@ -5,6 +5,51 @@
 
 ---
 
+## Technical framing — deliver this casually while you log in (~20 seconds)
+
+"Quick note on what this is under the hood while I log in: it's a standard web app, a Next.js front end with a Postgres database and server-side APIs. The AI is Claude, running server-side, not in the browser. None of it is tied to our demo stack. In your environment it drops onto AWS: Postgres becomes RDS or Aurora, hosting becomes ECS or Fargate, all inside your FedRAMP boundary. And Claude is already authorized at FedRAMP High and DoD IL4/5 through Amazon Bedrock in AWS GovCloud, so the model runs inside your accredited boundary, it's American-built, and no data leaves USPTO control."
+
+That one paragraph preempts three of the most likely questions: "is this just a form," "where would it run," and "is the model compliant."
+
+---
+
+## Deep-dive answers (the two you flagged)
+
+### "Can it pull users / people / products from our systems of record (Dataverse, Oracle APEX) instead of managing them in the tool?"
+
+Yes, and that's how it should run. The tool should not be another place you maintain people and roles. There are two separate connection points:
+
+- **Identity (who you are + your role):** authentication and group/role membership come from your identity provider through SSO (OIDC or SAML), not from accounts stored in the app.
+- **Reference data (people, products, org / business units):** pulled from the authoritative source. Microsoft Dataverse exposes an OAuth2-secured Web API (OData v4) we read from; Oracle / APEX exposes data through ORDS REST endpoints or a direct read connection. The tool reads from those; it doesn't own that data.
+
+Why it isn't a rebuild: the data layer already sits behind a clean server-side API, and "role" and "business unit" are already first-class concepts in the app (we route reviewers by business unit today). Swapping the seeded users for a Dataverse or APEX feed is a contained integration. The tool becomes a thin governance-and-workflow layer on top of your existing sources of truth.
+
+*Honest caveat if pressed:* these are standard integration patterns, but they're real work, and we'd scope them with your data owners. We built it clean specifically so this part is straightforward.
+
+### "Security and authorization: what do you use today, and what would you use in our environment?"
+
+**Today (prototype):** the app manages sessions and three roles (submitter, reviewer, admin), with all data access strictly server-side (the database service credential never reaches the browser). It's demo-grade, and we'd replace it. We wouldn't bring our own security model into your environment.
+
+**In your environment, we adopt your standards:**
+
+- **Authentication:** federate to your IdP via OAuth2 / OIDC or SAML, through Amazon Cognito or an ALB OIDC integration, including PIV/CAC and MFA per your ICAM policy. No passwords stored in the app.
+- **Authorization:** map your existing IdP groups to the three roles, and enforce row-level data isolation in Postgres so a submitter only ever sees their own records at the database layer, not just in the UI.
+- **Boundary + model:** everything runs inside your AWS FedRAMP environment, and the model runs via Amazon Bedrock in AWS GovCloud, which carries FedRAMP High and DoD IL4/5 authorization for Claude. No data egress, American-built model, inside your accreditation boundary.
+
+The one-liner: *"We don't ask you to trust our security model. We plug into yours."*
+
+> Confidence note: the Bedrock FedRAMP High / IL4/5 authorization for Claude in AWS GovCloud is real and current (AWS and Anthropic, May 2025). Safe to state as fact.
+
+### "Is it Section 508 / accessibility compliant?"
+
+Posture (honest and strong): *"508 is a first-class requirement here, not a bolt-on. It's built on standard accessible web components, proper form labels, keyboard operability, semantic headings, and ARIA on the interactive pieces, and we test against WCAG 2.0 AA, which is the Section 508 technical standard. Full conformance with a VPAT, and a pass through your accessibility / Trusted Tester process, are part of standing it up in your environment. It's accessible by construction, so those are fixes, not redesigns."*
+
+- **Do NOT claim "fully 508 compliant."** It's a prototype; a live scan will surface items, and overclaiming to a federal audience is the wrong move.
+- **If someone runs a scanner live (axe, Lighthouse, ANDI):** *"Exactly the right check. It's a prototype, so a scan may flag items; remediation and the VPAT are part of the build-out. Nothing structural is in the way."*
+- **What's already done (say only if useful):** images carry alt text, interactive controls have accessible names, and the custom radio and kanban controls expose proper roles and state. You can run axe DevTools or Lighthouse on the deployed site yourself before the demo to have a current snapshot in hand.
+
+---
+
 ## 1. Do today, before the demo (in order)
 
 **A. Database — run the remaining SQL in Supabase (you've run 0001 + 0002):**

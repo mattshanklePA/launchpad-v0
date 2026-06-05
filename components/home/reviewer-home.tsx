@@ -134,9 +134,9 @@ export function ReviewerHome() {
       <div className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground w-24 shrink-0">Business unit</span>
-          <button type="button" className={pill(units.length === 0)} onClick={() => setUnits([])}>All</button>
+          <button type="button" aria-pressed={units.length === 0} className={pill(units.length === 0)} onClick={() => setUnits([])}>All</button>
           {allUnits.map((u) => (
-            <button key={u} type="button" className={pill(units.includes(u))} onClick={() => toggle(units, setUnits, u)}>
+            <button key={u} type="button" aria-pressed={units.includes(u)} className={pill(units.includes(u))} onClick={() => toggle(units, setUnits, u)}>
               {businessUnitLabel(u)}
             </button>
           ))}
@@ -144,9 +144,9 @@ export function ReviewerHome() {
         {allAssignees.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground w-24 shrink-0">Assigned to</span>
-            <button type="button" className={pill(assignees.length === 0)} onClick={() => setAssignees([])}>All</button>
+            <button type="button" aria-pressed={assignees.length === 0} className={pill(assignees.length === 0)} onClick={() => setAssignees([])}>All</button>
             {allAssignees.map((a) => (
-              <button key={a} type="button" className={pill(assignees.includes(a))} onClick={() => toggle(assignees, setAssignees, a)}>
+              <button key={a} type="button" aria-pressed={assignees.includes(a)} className={pill(assignees.includes(a))} onClick={() => toggle(assignees, setAssignees, a)}>
                 {a}
               </button>
             ))}

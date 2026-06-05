@@ -273,7 +273,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                               disabled={isLoading}
                               autoFocus
                             />
-                            <Button type="submit" size="icon" disabled={isLoading || !chatInput.trim()}>
+                            <Button type="submit" size="icon" aria-label="Send message" disabled={isLoading || !chatInput.trim()}>
                               <Send className="h-4 w-4" />
                             </Button>
                           </form>
@@ -362,7 +362,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                   className="flex-1"
                   disabled={isLoading}
                 />
-                <Button type="submit" size="icon" disabled={isLoading || !chatInput.trim()}>
+                <Button type="submit" size="icon" aria-label="Send message" disabled={isLoading || !chatInput.trim()}>
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
