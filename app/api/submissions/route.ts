@@ -7,6 +7,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
+import { errToDetail } from "@/lib/errToDetail"
 
 export const dynamic = "force-dynamic" // never cache list reads
 export const revalidate = 0
@@ -50,7 +51,7 @@ export async function GET() {
   } catch (error) {
     console.error("GET /api/submissions failed:", error)
     return NextResponse.json(
-      { error: "Failed to fetch submissions", detail: String(error) },
+      { error: "Failed to fetch submissions", detail: errToDetail(error) },
       { status: 500 },
     )
   }
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("POST /api/submissions failed:", error)
     return NextResponse.json(
-      { error: "Failed to save submission", detail: String(error) },
+      { error: "Failed to save submission", detail: errToDetail(error) },
       { status: 500 },
     )
   }
@@ -113,7 +114,7 @@ export async function DELETE() {
   } catch (error) {
     console.error("DELETE /api/submissions failed:", error)
     return NextResponse.json(
-      { error: "Failed to clear submissions", detail: String(error) },
+      { error: "Failed to clear submissions", detail: errToDetail(error) },
       { status: 500 },
     )
   }
