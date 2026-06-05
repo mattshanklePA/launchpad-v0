@@ -44,7 +44,7 @@ function ObjectiveList({ items }: { items: { title: string; description: string 
 export function PublicLanding() {
   const [session, setSession] = useState<Session | null>(null)
   const [hydrated, setHydrated] = useState(false)
-  const [metrics, setMetrics] = useState<{ submitted: number; deployed: number } | null>(null)
+  const [metrics, setMetrics] = useState<{ submitted: number; deployed: number }>({ submitted: 0, deployed: 0 })
 
   useEffect(() => {
     setSession(getSession())
@@ -91,7 +91,7 @@ export function PublicLanding() {
               The governable front door for AI at USPTO
             </h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              One place to turn AI ideas into vetted, decision-ready use cases — so the right ones get funded and the risky ones are caught early.
+              One place to turn AI ideas into vetted, decision-ready use cases, so leadership can fund the strong ones and catch risky ones early.
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               {session ? (
@@ -111,11 +111,11 @@ export function PublicLanding() {
           <div className="container py-10">
             <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
               <div className="rounded-xl border bg-white p-6 text-center">
-                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics ? metrics.submitted : "—"}</div>
+                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics.submitted}</div>
                 <div className="text-sm text-muted-foreground mt-1">Use cases submitted</div>
               </div>
               <div className="rounded-xl border bg-white p-6 text-center">
-                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics ? metrics.deployed : "—"}</div>
+                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics.deployed}</div>
                 <div className="text-sm text-muted-foreground mt-1">Use cases deployed</div>
               </div>
             </div>

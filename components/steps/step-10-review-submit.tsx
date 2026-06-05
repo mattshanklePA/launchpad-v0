@@ -166,7 +166,7 @@ export function Step10ReviewSubmit() {
         return (
           <Badge className="bg-red-100 text-red-800 border-red-300 text-sm px-3 py-1">
             <AlertCircle className="w-4 h-4 mr-1.5" />
-            Early Stage — Keep Refining
+            Early stage: keep refining
           </Badge>
         )
       default:

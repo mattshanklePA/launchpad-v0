@@ -231,7 +231,7 @@ export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
                   Generate an AI-synthesized briefing that compares these candidates across strategic fit, user impact,
-                  feasibility, and operational realities. The briefing names gaps honestly — it does not invent specifics
+                  feasibility, and operational realities. The briefing names gaps honestly. It does not invent specifics
                   the submissions don't include.
                 </p>
                 <Button onClick={handleGenerateBrief} size="lg">

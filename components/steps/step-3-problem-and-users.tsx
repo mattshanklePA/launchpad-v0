@@ -194,7 +194,7 @@ export function Step3ProblemAndUsers() {
                       id="targetUserContext"
                       value={formData.targetUserContext}
                       onChange={(e) => setFormData((prev) => ({ ...prev, targetUserContext: e.target.value }))}
-                      placeholder="Anything else about the users — workflow context, environment, edge cases."
+                      placeholder="Anything else about the users: workflow context, environment, edge cases."
                       minRows={3}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
                     />

@@ -137,7 +137,7 @@ export function Step5Value() {
                   Value to the Business
                 </h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  What changes for USPTO at the agency level — pendency, quality, cost.
+                  What changes for USPTO at the agency level: pendency, quality, cost.
                 </p>
               </div>
 

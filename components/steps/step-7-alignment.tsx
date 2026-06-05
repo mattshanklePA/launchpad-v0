@@ -97,7 +97,7 @@ export function Step7Alignment() {
     }))
     toast({
       title: "Suggestion applied",
-      description: "Review and tweak — these were Scout's first draft, not the final word.",
+      description: "Review and tweak. These were Scout's first draft, not the final word.",
     })
     setSuggestion(null)
   }
@@ -263,7 +263,7 @@ export function Step7Alignment() {
                 Alignment Summary
               </Label>
               <p className="text-sm text-muted-foreground">
-                Executive-ready 2-3 sentence summary. Pre-filled by Scout — edit to taste.
+                Executive-ready 2-3 sentence summary. Pre-filled by Scout. Edit to taste.
               </p>
               <TextareaAutosize
                 id="alignmentSummary"

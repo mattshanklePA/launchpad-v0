@@ -32,7 +32,7 @@ import { useDataProvider } from "@/components/data-provider"
 // Display labels for the USPTO profile fields. Kept here (rather than imported
 // from a shared util) so this component is fully self-contained.
 const JOB_ROLE_OPTIONS: { value: JobRole; label: string }[] = [
-  { value: "", label: "— Not set —" },
+  { value: "", label: "Not set" },
   { value: "patent_examiner", label: "Patent Examiner" },
   { value: "trademark_examiner", label: "Trademark Examiner" },
   { value: "manager", label: "Manager" },
@@ -44,7 +44,7 @@ const JOB_ROLE_OPTIONS: { value: JobRole; label: string }[] = [
 ]
 
 const BUSINESS_UNIT_OPTIONS: { value: BusinessUnit; label: string }[] = [
-  { value: "", label: "— Not set —" },
+  { value: "", label: "Not set" },
   { value: "patents", label: "Patents" },
   { value: "trademarks", label: "Trademarks" },
   { value: "ocio", label: "OCIO" },

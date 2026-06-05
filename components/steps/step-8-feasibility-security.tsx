@@ -125,11 +125,11 @@ export function Step8FeasibilitySecurity() {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="yes" id="dec-yes" />
-                  <Label htmlFor="dec-yes">Yes — output drives a decision</Label>
+                  <Label htmlFor="dec-yes">Yes, output drives a decision</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="no" id="dec-no" />
-                  <Label htmlFor="dec-no">No — output is informational only</Label>
+                  <Label htmlFor="dec-no">No, output is informational only</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -170,11 +170,11 @@ export function Step8FeasibilitySecurity() {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="yes" id="hr-yes" />
-                  <Label htmlFor="hr-yes">Yes — human-in-the-loop</Label>
+                  <Label htmlFor="hr-yes">Yes, human-in-the-loop</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="no" id="hr-no" />
-                  <Label htmlFor="hr-no">No — AI acts directly</Label>
+                  <Label htmlFor="hr-no">No, AI acts directly</Label>
                 </div>
               </RadioGroup>
             </div>

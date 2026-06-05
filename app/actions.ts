@@ -54,6 +54,7 @@ WRITING STYLE — avoid the patterns that make text read as AI-generated. This a
 - No rhythmic cliché pairings ("Simple to use. Hard to ignore.").
 - No scripted transitions ("Let's unpack this," "Here's what that really means").
 - Don't end on a vague vibe; close on something concrete.
+- No em dashes. Use a period, comma, colon, or parentheses instead.
 Write plainly and specifically. Vary sentence length. Use concrete nouns and the submitter's own facts instead of abstraction.`
 
 // ============================================================
@@ -658,7 +659,7 @@ export async function validateAndRefineInput(
             }),
           )
           .describe(
-            "If mode=question: 4-5 options. Use 2-3 specific likely answers FIRST, then 'Other — let me type my own', then 'I have enough — give me the scaffold'. If mode=scaffold: empty array.",
+            "If mode=question: 4-5 options. Use 2-3 specific likely answers FIRST, then 'Other (let me type my own)', then 'I have enough, give me the scaffold'. If mode=scaffold: empty array.",
           ),
         scaffoldText: z
           .string()
@@ -694,8 +695,8 @@ Q&A turns completed so far in this session: ${assistantTurns}
 ═══ INTERACTION MODEL ═══
 
 EACH RESPONSE IS EITHER mode="question" OR mode="scaffold". You decide based on:
-- If turns so far is 0-2 AND the submitter has not selected "I have enough — give me the scaffold" → prefer mode="question"
-- If turns so far is ≥3 OR the most recent user message in history is "I have enough — give me the scaffold" → produce mode="scaffold"
+- If turns so far is 0-2 AND the submitter has not selected "I have enough, give me the scaffold" → prefer mode="question"
+- If turns so far is ≥3 OR the most recent user message in history is "I have enough, give me the scaffold" → produce mode="scaffold"
 - If the submitter's draft text is already substantive and well-grounded → you may skip directly to mode="scaffold"
 
 — QUESTION MODE —
@@ -705,8 +706,8 @@ Provide a 1-sentence rationale explaining why this question matters in USPTO ter
 
 Provide 4-5 options. Structure them like this:
 - 2-3 specific likely answers (vary the user group based on what the submission actually says — examiners, IT staff, OGC attorneys, applicants, the public, contract admins, etc. — do NOT default to "examiners")
-- Then: "Other — let me type my own"
-- Then: "I have enough — give me the scaffold"
+- Then: "Other (let me type my own)"
+- Then: "I have enough, give me the scaffold"
 
 Mark exactly ONE option as isRecommended=true if SUBMISSION CONTEXT suggests an obvious starting point. Otherwise mark none as recommended.
 
@@ -749,8 +750,8 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
           object.options && object.options.length > 0
             ? object.options
             : [
-                { label: "Other — let me type my own", isRecommended: false },
-                { label: "I have enough — give me the scaffold", isRecommended: false },
+                { label: "Other (let me type my own)", isRecommended: false },
+                { label: "I have enough, give me the scaffold", isRecommended: false },
               ],
       }
     }

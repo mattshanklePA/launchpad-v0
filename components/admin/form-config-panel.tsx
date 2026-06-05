@@ -195,7 +195,7 @@ export function FormConfigPanel() {
                             checked={enabled}
                             disabled={field.locked}
                             onCheckedChange={(next) => handleToggle(field, next)}
-                            aria-label={`${field.label} — ${enabled ? "on" : "off"}`}
+                            aria-label={`${field.label}: ${enabled ? "on" : "off"}`}
                           />
                         </div>
                       </div>

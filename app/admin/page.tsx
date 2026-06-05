@@ -855,7 +855,7 @@ function AdminPageInner() {
               <div className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/40 bg-primary/5">
                 <p className="text-sm">
                   <span className="font-semibold">{selectedForCompare.size}</span> selected for comparison
-                  {selectedForCompare.size === 1 && " — pick 1 more to compare"}
+                  {selectedForCompare.size === 1 && ", pick 1 more to compare"}
                   {selectedForCompare.size >= 4 && " (max 4)"}
                 </p>
                 <div className="flex gap-2">

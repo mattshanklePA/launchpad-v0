@@ -111,7 +111,7 @@ export function FormContainer() {
               {formData.useCaseTitle ? (
                 <>
                   {" "}
-                  — <strong className="text-foreground">{formData.useCaseTitle}</strong>
+                  · <strong className="text-foreground">{formData.useCaseTitle}</strong>
                 </>
               ) : (
                 ""
