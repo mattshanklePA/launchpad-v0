@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { getTenant } from "@/lib/tenant"
 
 export function Step1SubmitterInfo() {
   const { formData, setFormData } = useForm()
@@ -62,23 +63,18 @@ export function Step1SubmitterInfo() {
         )}
         {isVisible("submitterOffice") && (
           <div className="space-y-2">
-            <Label htmlFor="submitterOffice">Business Unit</Label>
+            <Label htmlFor="submitterOffice">{getTenant().unit.label}</Label>
             <Select
               value={formData.submitterOffice}
               onValueChange={(value) => setFormData((prev) => ({ ...prev, submitterOffice: value as any }))}
             >
               <SelectTrigger id="submitterOffice">
-                <SelectValue placeholder="Select your business unit..." />
+                <SelectValue placeholder={`Select your ${getTenant().unit.label.toLowerCase()}...`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="patents">Patents</SelectItem>
-                <SelectItem value="trademarks">Trademarks</SelectItem>
-                <SelectItem value="ocio">OCIO (Chief Information Officer)</SelectItem>
-                <SelectItem value="ocfo">OCFO (Chief Financial Officer)</SelectItem>
-                <SelectItem value="ogc">OGC (General Counsel)</SelectItem>
-                <SelectItem value="opia">OPIA (Policy &amp; International Affairs)</SelectItem>
-                <SelectItem value="hr">Office of Human Resources</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                {getTenant().unit.options.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

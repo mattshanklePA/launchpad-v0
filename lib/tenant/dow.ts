@@ -1,3 +1,4 @@
+// DoW tenant configuration (Department of War instance)
 import type { TenantConfig } from "./types"
 
 export const dow: TenantConfig = {
