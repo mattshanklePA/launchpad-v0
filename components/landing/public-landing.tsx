@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
 import { getSession, type Session } from "@/lib/auth"
-import { ArrowRight, FileText, Rocket } from "lucide-react"
+import { ArrowRight, FileText, Rocket, Lock } from "lucide-react"
 
 const USPTO_GOALS: { title: string; description: string }[] = [
   { title: "Drive U.S. innovation and global competitiveness", description: "Expand access to the IP system and strengthen U.S. leadership in emerging technology." },
@@ -73,7 +73,9 @@ export function PublicLanding() {
               </>
             ) : (
               <>
-                <Button variant="outline" asChild><Link href="/signup">Sign up</Link></Button>
+                <Button variant="outline" disabled title="Accounts are provisioned by your administrator">
+                  <Lock className="w-4 h-4 mr-2" />Sign up
+                </Button>
                 <Button asChild><Link href="/login">Log in</Link></Button>
               </>
             ))}

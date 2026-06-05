@@ -46,7 +46,7 @@ Posture (honest and strong): *"508 is a first-class requirement here, not a bolt
 
 - **Do NOT claim "fully 508 compliant."** It's a prototype; a live scan will surface items, and overclaiming to a federal audience is the wrong move.
 - **If someone runs a scanner live (axe, Lighthouse, ANDI):** *"Exactly the right check. It's a prototype, so a scan may flag items; remediation and the VPAT are part of the build-out. Nothing structural is in the way."*
-- **What's already done (say only if useful):** images carry alt text, interactive controls have accessible names, and the custom radio and kanban controls expose proper roles and state. You can run axe DevTools or Lighthouse on the deployed site yourself before the demo to have a current snapshot in hand.
+- **What's already done (say only if useful):** a bounded accessibility pass was completed before the demo — all images carry alt text, the Scout send controls and the sign-up business-unit dropdown have accessible names, the kanban filter pills announce their pressed state, and the custom radio and kanban controls expose proper roles and state. **We deliberately stopped there.** Extending labels to the deeper admin screens (the OKR edit/delete icon buttons) and a formal scan + VPAT are intentionally deferred to post-demo, to avoid destabilizing the build the night before. You can run axe DevTools or Lighthouse on the deployed site yourself for a current snapshot.
 
 ---
 
@@ -57,7 +57,7 @@ Posture (honest and strong): *"508 is a first-class requirement here, not a bolt
 - [ ] `0004_users_and_assignees.sql` — 7 reviewers, 12 submitters, per-BU assignment
 - [ ] Verify: `select status, count(*) from submissions group by status;` → should show submitted/in_review/needs_info/approved/rejected. And `select count(*) from users;` → 19+.
 
-**B. Deploy the code** — push the `USPTO-launchpad` branch (GitHub Desktop). Since the last push this includes: storage cutover, kanban + multi-select filters, assignees + auto-assign, and the Scout naming fix. Let Vercel finish before testing.
+**B. Deploy the code** — push the `USPTO-launchpad` branch (GitHub Desktop). Since the last push this includes: storage cutover, kanban + multi-select filters, assignees + auto-assign, and the Scout naming fix. Let Vercel finish before testing. The new public landing page is included; the **Sign up** button is intentionally locked (no self-registration — accounts are provisioned), so nothing can pollute the pipeline during the demo. Log in and the seeded accounts work normally.
 
 **C. Set the lean form config** — Admin → Form Config → toggle to the keep-on set (impacted users, implementation complexity, business value, cost/time savings, strategic focus areas, success metrics, timeline; everything else off). This is Ramesh's #1 reaction point.
 
@@ -78,7 +78,7 @@ Posture (honest and strong): *"508 is a first-class requirement here, not a bolt
 ## 2. Additional features? — My recommendation: **freeze**
 
 The product already tells the complete story end to end. The single biggest risk tomorrow is a broken build, not a missing feature. **Do not add scope today.** Everything below is explicitly **post-demo**:
-- Comments-table cutover, real auth + RLS hardening, multi-draft, category-tile rewording (GitLab/ServiceNow), label wording ("expected benefits"/"value metrics" — Jonathan to send copy).
+- Comments-table cutover, real auth + RLS hardening, multi-draft, category-tile rewording (GitLab/ServiceNow), label wording ("expected benefits"/"value metrics" — Jonathan to send copy), and 508 remediation on the admin screens plus a formal accessibility scan / VPAT.
 
 **One optional polish with real client signal:** Jonathan said the executive briefing is *wordy* ("shorten the paragraphs"). If you have time AND test it, tightening that prompt is the one change with direct feedback behind it. But it touches a live model prompt — only do it if you can regenerate and eyeball a few. Otherwise, in the demo just say "we're tuning length" — it's already a known note.
 
