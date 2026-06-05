@@ -59,7 +59,7 @@ export function PublicLanding() {
               </>
             ) : (
               <>
-                <Button variant="outline" disabled title="Accounts are provisioned by your administrator" className="border-white/30 text-white/80 hover:bg-white/10 hover:text-white">
+                <Button variant="outline" disabled title="Accounts are provisioned by your administrator" className="bg-transparent border-white/30 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-100">
                   <Lock className="w-4 h-4 mr-2" />Sign up
                 </Button>
                 <Button asChild><Link href="/login">Log in</Link></Button>
@@ -72,22 +72,22 @@ export function PublicLanding() {
       <main className="flex-1">
         <section className="relative bg-dow-space">
           <div
-            className="absolute inset-0 bg-cover bg-center"
+            className="absolute inset-0 bg-cover bg-top"
             style={{ backgroundImage: "url('/hero-dow.jpg')" }}
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-gradient-to-b from-[#0d1826]/85 via-[#11233b]/82 to-[#0d1826]/94"
+            className="absolute inset-0 bg-gradient-to-b from-[#0d1826]/80 via-[#11233b]/80 to-[#0d1826]/94"
             aria-hidden="true"
           />
           <div className="relative container py-20 sm:py-28 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 ring-1 ring-white/15 mb-5">
               <Rocket className="w-8 h-8 text-white" strokeWidth={2.2} />
             </div>
-            <h1 className="font-heading text-3xl sm:text-5xl font-semibold tracking-tight text-white drop-shadow-sm">
+            <h1 className="font-heading text-3xl sm:text-5xl font-semibold tracking-tight text-white drop-shadow-md">
               {t.heroHeadline}
             </h1>
-            <p className="mt-4 text-lg text-dow-steel max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-white/85 max-w-2xl mx-auto drop-shadow">
               {t.heroSubtitle}
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
