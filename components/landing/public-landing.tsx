@@ -48,18 +48,18 @@ export function PublicLanding() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="border-b bg-white">
+      <header className="border-b border-white/10 bg-[#141414]">
         <div className="container flex h-20 items-center justify-between">
-          <LaunchPadLogo size="md" />
+          <LaunchPadLogo size="md" monochrome className="text-white" subtitleClassName="text-dow-steel" />
           <div className="flex items-center gap-2">
             {hydrated && (session ? (
               <>
-                <span className="text-sm text-muted-foreground hidden sm:inline">{session.name}</span>
+                <span className="text-sm text-white/70 hidden sm:inline">{session.name}</span>
                 <Button asChild><Link href="/home">Go to dashboard</Link></Button>
               </>
             ) : (
               <>
-                <Button variant="outline" disabled title="Accounts are provisioned by your administrator">
+                <Button variant="outline" disabled title="Accounts are provisioned by your administrator" className="border-white/30 text-white/80 hover:bg-white/10 hover:text-white">
                   <Lock className="w-4 h-4 mr-2" />Sign up
                 </Button>
                 <Button asChild><Link href="/login">Log in</Link></Button>
@@ -70,15 +70,24 @@ export function PublicLanding() {
       </header>
 
       <main className="flex-1">
-        <section className="border-b bg-white">
-          <div className="container py-16 sm:py-20 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-uspto-blue-primary/10 mb-5">
-              <Rocket className="w-8 h-8 text-uspto-blue-primary" strokeWidth={2.2} />
+        <section className="relative bg-dow-space">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('/hero-dow.jpg')" }}
+            aria-hidden="true"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-[#0d1826]/85 via-[#11233b]/82 to-[#0d1826]/94"
+            aria-hidden="true"
+          />
+          <div className="relative container py-20 sm:py-28 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 ring-1 ring-white/15 mb-5">
+              <Rocket className="w-8 h-8 text-white" strokeWidth={2.2} />
             </div>
-            <h1 className="font-heading text-3xl sm:text-5xl font-semibold tracking-tight text-dow-space">
+            <h1 className="font-heading text-3xl sm:text-5xl font-semibold tracking-tight text-white drop-shadow-sm">
               {t.heroHeadline}
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-dow-steel max-w-2xl mx-auto">
               {t.heroSubtitle}
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
@@ -95,16 +104,16 @@ export function PublicLanding() {
           </div>
         </section>
 
-        <section className="bg-gray-50 border-b">
+        <section className="bg-dow-ocean border-b border-white/10">
           <div className="container py-10">
             <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-              <div className="rounded-xl border bg-white p-6 text-center">
-                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics.submitted}</div>
-                <div className="text-sm text-muted-foreground mt-1">Use cases submitted</div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+                <div className="text-4xl font-bold text-white">{metrics.submitted}</div>
+                <div className="text-sm text-dow-steel mt-1">Use cases submitted</div>
               </div>
-              <div className="rounded-xl border bg-white p-6 text-center">
-                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics.deployed}</div>
-                <div className="text-sm text-muted-foreground mt-1">Use cases deployed</div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+                <div className="text-4xl font-bold text-white">{metrics.deployed}</div>
+                <div className="text-sm text-dow-steel mt-1">Use cases deployed</div>
               </div>
             </div>
           </div>
@@ -125,8 +134,8 @@ export function PublicLanding() {
         </section>
       </main>
 
-      <footer className="border-t bg-white">
-        <div className="container py-6 text-center text-xs text-muted-foreground">
+      <footer className="border-t bg-[#141414]">
+        <div className="container py-6 text-center text-xs text-dow-steel">
           {t.productName} &middot; {t.logoSubtitle}
         </div>
       </footer>
