@@ -6,6 +6,7 @@ import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
 import { getSession, type Session } from "@/lib/auth"
 import { ArrowRight, FileText, Rocket, Lock } from "lucide-react"
+import { getTenant } from "@/lib/tenant"
 
 const USPTO_GOALS: { title: string; description: string }[] = [
   { title: "Drive U.S. innovation and global competitiveness", description: "Expand access to the IP system and strengthen U.S. leadership in emerging technology." },
@@ -42,6 +43,7 @@ function ObjectiveList({ items }: { items: { title: string; description: string 
 }
 
 export function PublicLanding() {
+  const t = getTenant()
   const [session, setSession] = useState<Session | null>(null)
   const [hydrated, setHydrated] = useState(false)
   const [metrics, setMetrics] = useState<{ submitted: number; deployed: number }>({ submitted: 0, deployed: 0 })
@@ -90,10 +92,10 @@ export function PublicLanding() {
               <Rocket className="w-8 h-8 text-uspto-blue-primary" strokeWidth={2.2} />
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-uspto-gray-text">
-              The governable front door for AI at USPTO
+              {t.heroHeadline}
             </h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              One place to turn AI ideas into vetted, decision-ready use cases, so leadership can fund the strong ones and catch risky ones early.
+              {t.heroSubtitle}
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               {session ? (
@@ -127,16 +129,13 @@ export function PublicLanding() {
         <section className="bg-gray-50 py-14">
           <div className="container">
             <div className="grid lg:grid-cols-2 gap-10">
-              <div>
-                <h2 className="text-xl font-bold text-uspto-gray-text mb-1">USPTO strategic objectives</h2>
-                <p className="text-sm text-muted-foreground mb-4">2022–2026 Strategic Plan</p>
-                <ObjectiveList items={USPTO_GOALS} />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-uspto-gray-text mb-1">USPTO AI strategy</h2>
-                <p className="text-sm text-muted-foreground mb-4">January 2025 AI Strategy priorities</p>
-                <ObjectiveList items={AI_PRIORITIES} />
-              </div>
+              {t.landingObjectives.map((group) => (
+                <div key={group.title}>
+                  <h2 className="text-xl font-bold text-uspto-gray-text mb-1">{group.title}</h2>
+                  <p className="text-sm text-muted-foreground mb-4">{group.subtitle}</p>
+                  <ObjectiveList items={group.items} />
+                </div>
+              ))}
             </div>
           </div>
         </section>

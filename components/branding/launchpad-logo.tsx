@@ -1,5 +1,6 @@
 import { Rocket } from 'lucide-react'
 import { cn } from "@/lib/utils"
+import { getTenant } from "@/lib/tenant"
 
 type LogoSize = "sm" | "md" | "lg"
 type LogoVariant = "wordmark" | "icon"
@@ -52,7 +53,7 @@ export function LaunchPadLogo({
     return (
       <span className={cn("inline-flex items-center", className)} role="img" aria-label="LaunchPad logo">
         <Rocket className={cn(sz.icon, iconColor)} strokeWidth={2.2} />
-        <span className="sr-only">LaunchPad</span>
+        <span className="sr-only">{getTenant().productName}</span>
       </span>
     )
   }
@@ -61,10 +62,10 @@ export function LaunchPadLogo({
     <span className={cn("inline-flex items-center", sz.gap, className)} role="img" aria-label="LaunchPad logo">
       <Rocket className={cn(sz.icon, iconColor)} strokeWidth={2.2} />
       <span className="flex flex-col leading-none">
-        <span className={cn("font-bold tracking-tight", sz.title, titleColor, titleClassName)}>LaunchPad</span>
+        <span className={cn("font-bold tracking-tight", sz.title, titleColor, titleClassName)}>{getTenant().productName}</span>
         {withSubtitle && (
           <span className={cn("-mt-0.5 font-medium", sz.subtitle, subtitleColor, subtitleClassName)}>
-            USPTO AI Use Case Platform
+            {getTenant().logoSubtitle}
           </span>
         )}
       </span>
