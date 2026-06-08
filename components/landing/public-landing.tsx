@@ -53,7 +53,7 @@ export function PublicLanding() {
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         const subs: any[] = j?.submissions || []
-        const submitted = subs.length
+        const submitted = subs.filter((s) => (s.status || s.formData?.reviewStatus) !== "draft").length
         const deployed = subs.filter((s) => (s.status || s.formData?.reviewStatus) === "approved").length
         setMetrics({ submitted, deployed })
       })

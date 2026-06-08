@@ -357,7 +357,9 @@ function AdminPageInner() {
     }
     return map[o] || (o ? o : "Unknown")
   }
-  const realDrafts = submissions.map((s) => ({
+  const realDrafts = submissions
+    .filter((s) => ((s.status || (s.formData as Record<string, unknown>)?.reviewStatus) ?? "submitted") !== "draft")
+    .map((s) => ({
     id: s.id,
     title: s.formData.useCaseTitle || "Untitled idea",
     submitter: s.formData.submitterName || "Anonymous",

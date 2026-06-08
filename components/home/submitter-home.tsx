@@ -133,7 +133,21 @@ export function SubmitterHome() {
           <p className="text-sm text-muted-foreground mt-1">Track your AI ideas through review.</p>
         </div>
         <Button asChild>
-          <Link href="/submit"><Plus className="w-4 h-4 mr-2" />Start a new idea</Link>
+          <Link
+            href="/submit"
+            onClick={() => {
+              try {
+                localStorage.removeItem(STORAGE_KEY_FORM)
+                localStorage.removeItem("aid-current-step")
+                localStorage.removeItem("aid-editing-id")
+                sessionStorage.removeItem("aid-session-active")
+              } catch {
+                /* ignore */
+              }
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />Start a new idea
+          </Link>
         </Button>
       </div>
 
