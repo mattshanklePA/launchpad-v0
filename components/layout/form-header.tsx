@@ -23,12 +23,12 @@ export function FormHeader() {
     toast({
       title: "Draft saved",
       description: title
-        ? `"${title}" is saved. You can resume from the landing page anytime.`
-        : "Your progress is saved. Resume from the landing page anytime.",
+        ? `"${title}" is saved. You can resume from your dashboard anytime.`
+        : "Your progress is saved. Resume from your dashboard anytime.",
     })
     // Small delay so the toast registers before navigation
     setTimeout(() => {
-      router.push("/")
+      router.push("/home")
     }, 400)
   }
 

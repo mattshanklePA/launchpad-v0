@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { getSession } from "@/lib/auth"
-import { getSubmissions, type Submission } from "@/lib/submissions"
+import { getSubmissions, setSubmissionStatus, type Submission } from "@/lib/submissions"
 import { useDataProvider } from "@/components/data-provider"
 import {
   getStatus,
@@ -14,9 +14,20 @@ import {
 } from "@/lib/reviewWorkflow"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ArrowRight, MessageSquare, FileText } from "lucide-react"
+import { Plus, ArrowRight, MessageSquare, FileText, Undo2 } from "lucide-react"
 import { DeleteDraftButton } from "@/components/draft/delete-draft-button"
 import { useToast } from "@/components/ui/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const STORAGE_KEY_FORM = "aid-form-data"
 
@@ -42,6 +53,33 @@ function StatusBadge({ status }: { status: ReturnType<typeof getStatus> }) {
   )
 }
 
+function WithdrawButton({ onConfirm }: { onConfirm: () => void }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" className="text-amber-700 hover:bg-amber-50 hover:text-amber-800">
+          <Undo2 className="w-3.5 h-3.5 mr-1.5" />
+          Withdraw
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Withdraw this submission?</AlertDialogTitle>
+          <AlertDialogDescription>
+            It will be pulled out of review and returned to draft, so reviewers no longer see it. You can submit it again later.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} className="bg-amber-600 text-white hover:bg-amber-700 focus-visible:ring-amber-600">
+            Withdraw
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 export function SubmitterHome() {
   const { loaded } = useDataProvider()
   const { toast } = useToast()
@@ -57,6 +95,20 @@ export function SubmitterHome() {
     }
     setDraft(null)
     toast({ title: "Draft deleted", description: "Your in-progress idea was removed." })
+  }
+
+  const handleWithdraw = async (id: string) => {
+    const ok = await setSubmissionStatus(id, "draft")
+    if (ok) {
+      setMine((prev) =>
+        prev.map((s) =>
+          s.id === id ? { ...s, status: "draft", formData: { ...s.formData, reviewStatus: "draft" } } : s,
+        ),
+      )
+      toast({ title: "Withdrawn", description: "Pulled from review and returned to draft." })
+    } else {
+      toast({ variant: "destructive", title: "Couldn't withdraw", description: "Please try again." })
+    }
   }
 
   useEffect(() => {
@@ -138,22 +190,25 @@ export function SubmitterHome() {
           </div>
         ) : (
           <div className="rounded-md border bg-white divide-y">
-            {submitted.map((s) => (
-              <Link
-                key={s.id}
-                href={`/submissions/${s.id}`}
-                className="flex items-center justify-between gap-3 p-3 hover:bg-muted/40"
-              >
-                <div className="min-w-0">
-                  <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
-                  <div className="text-xs text-muted-foreground">Submitted {new Date(s.submittedAt).toLocaleDateString()}</div>
+            {submitted.map((s) => {
+              const status = getStatus(s)
+              const canWithdraw = status === "submitted" || status === "in_review"
+              return (
+                <div key={s.id} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/40">
+                  <Link href={`/submissions/${s.id}`} className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
+                    <div className="text-xs text-muted-foreground">Submitted {new Date(s.submittedAt).toLocaleDateString()}</div>
+                  </Link>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <StatusBadge status={status} />
+                    {canWithdraw && <WithdrawButton onConfirm={() => handleWithdraw(s.id)} />}
+                    <Link href={`/submissions/${s.id}`} aria-label="Open">
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <StatusBadge status={getStatus(s)} />
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </Link>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
