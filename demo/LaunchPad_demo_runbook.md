@@ -52,7 +52,52 @@ Click **Start a new idea**. Point out it jumps straight to **the problem**, not 
 
 **The Scout moment:** type something vague (e.g. "AI to help attorneys find similar marks"). Scout **asks one clarifying question with clickable options** instead of dumping feedback — and the options are domain-real (search strategies, design codes, goods/services relatedness). Land the line: *"This is Claude in the back. Most of the IP is in the prompts — Scout knows trademark examination; it's not a generic chatbot. It coaches; the human stays in control."* Pick an option and note it **folds your answer into a sharper problem statement** rather than making you rewrite.
 
-Paste the real problem when ready: *"Trademark examining attorneys manually search for confusingly similar prior marks across word, design, and goods/services dimensions. Searches vary between attorneys, similar marks get missed, and that drives pendency and inconsistent likelihood-of-confusion refusals."*
+**Paste-ready content (in wizard order — copy each as you reach it).** Use case: *AI-Assisted Conflicting-Mark Search for Trademark Examination.*
+
+**Problem & Users**
+
+Core Problem:
+```
+Trademark examining attorneys manually search for confusingly similar prior marks across word, design, and goods/services dimensions. Searches vary between attorneys, similar marks get missed, and that drives pendency and inconsistent likelihood-of-confusion refusals.
+```
+Impacted Users → **500+**
+
+**Solution**
+
+Proposed Solution:
+```
+An advisory AI assistant that, given a new application's mark and its goods/services, surfaces the most likely conflicting prior marks — accounting for phonetic similarity, visual/design similarity, and relatedness of goods/services — ranked, with the basis for each match. The attorney reviews and decides the refusal; the AI never issues it. Runs on a U.S.-hosted model inside the USPTO boundary.
+```
+Implementation Complexity → **Medium**
+
+**Value**
+
+Value to the Business:
+```
+Cuts conflict-search time and reduces trademark pendency — a top agency priority — while improving the consistency of Section 2(d) refusals across attorneys. Fewer missed conflicts and fewer inconsistent decisions mean a better, more predictable applicant experience.
+```
+Estimated Cost / Time Savings → **$1M+**
+
+**Strategic Alignment** — Scout auto-fills this; just review. *(If you need to set it manually: focus areas = "Promote the efficient delivery of reliable IP rights" + "Promote responsible AI use".)*
+
+**Feasibility & risk questions** (answer for a clean, green risk profile)
+
+- Uses PII / sensitive data → **No**
+- AI makes a decision about a person → **No** (informational only)
+- AI model sourcing → **American-built (commercial)**
+- Mandatory human review → **Yes**
+
+**Success Metrics**
+
+Success Metrics:
+```
+Average conflict-search time per application (target: down 30-40%), attorney-rated relevance of surfaced marks, consistency of 2(d) refusal outcomes, and trademark first-action pendency in pilot law offices vs. a control group.
+```
+Timeline for Results → **6-12 months**
+
+**Idea Overview** — Scout drafts the title and description; accept or use:
+- Title: `AI-Assisted Conflicting-Mark Search for Trademark Examination`
+- Public / Excluded → **Public**
 
 > **If anyone runs an accessibility scanner (axe/Lighthouse):** *"Exactly the right check. It's accessible by construction — semantic headings, labels, keyboard operability, ARIA on the interactive pieces, tested to WCAG 2.0 AA, the Section 508 standard. A scan on a prototype may flag items; full conformance with a VPAT and a Trusted Tester pass are part of standing it up. Those are fixes, not redesigns."* **Do not claim "fully 508 compliant."**
 
@@ -60,7 +105,7 @@ Paste the real problem when ready: *"Trademark examining attorneys manually sear
 Hit **Save & Exit**. It drops you **back on your dashboard** (not some random page) with a "Draft saved" confirmation. Point to the **In progress** draft and click **Resume**: *"Nothing's lost — the wizard auto-saves every keystroke. A submitter can walk away and come back."* *(Optional: note the **Delete** button next to Resume — they can abandon a draft cleanly.)*
 
 ### 5. Solution → Value → Strategic Alignment → Feasibility — ~3 min
-Move quickly through **Solution** and **Value** (paste the prepared content; call out the **quantified** cost/time savings — *"this is the value signal leadership triages on"*).
+Move quickly through **Solution** and **Value** (paste from the **paste-ready content block under step 3**; call out the **quantified** cost/time savings — *"this is the value signal leadership triages on"*).
 
 **Strategic Alignment — the auto-fill beat (new):** when you land here, **Scout has already filled it in** from your earlier answers — focus areas, alignment language — and a banner says *"Scout filled this in… please review and edit."* Land it: *"I never filled in strategic alignment. Scout did it from what I told it — and it flags that I should review it. The human still owns the final word."* The selected priorities are **highlighted** so you can see exactly what it chose.
 
