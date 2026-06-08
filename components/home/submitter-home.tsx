@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getSession } from "@/lib/auth"
 import { getSubmissions, setSubmissionStatus, type Submission } from "@/lib/submissions"
@@ -83,6 +84,7 @@ function WithdrawButton({ onConfirm }: { onConfirm: () => void }) {
 export function SubmitterHome() {
   const { loaded } = useDataProvider()
   const { toast } = useToast()
+  const router = useRouter()
   const [mine, setMine] = useState<Submission[]>([])
   const [draft, setDraft] = useState<{ title: string } | null>(null)
 
@@ -95,6 +97,20 @@ export function SubmitterHome() {
     }
     setDraft(null)
     toast({ title: "Draft deleted", description: "Your in-progress idea was removed." })
+  }
+
+  const handleEditDraft = (s: Submission) => {
+    // Open a draft straight into the editable wizard, tagged so resubmit
+    // updates this same record (not a duplicate).
+    try {
+      localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(s.formData))
+      localStorage.setItem("aid-current-step", "1")
+      localStorage.setItem("aid-editing-id", s.id)
+      sessionStorage.removeItem("aid-session-active")
+    } catch {
+      /* ignore */
+    }
+    router.push("/submit?resume=1")
   }
 
   const handleWithdraw = async (id: string) => {
@@ -203,16 +219,14 @@ export function SubmitterHome() {
             {dbDrafts
               .filter((s) => !(draft && (s.formData.useCaseTitle || "").trim() === draft.title))
               .map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/40">
-                  <Link href={`/submissions/${s.id}`} className="min-w-0 flex-1">
-                    <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
-                    <div className="text-xs text-muted-foreground">Saved {new Date(s.submittedAt).toLocaleDateString()}</div>
-                  </Link>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                <div key={s.id} className="flex items-center justify-between gap-3 p-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</span>
                     <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">Draft</Badge>
-                    <Link href={`/submissions/${s.id}`} aria-label="Open">
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                    </Link>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => handleEditDraft(s)}>Resume</Button>
                   </div>
                 </div>
               ))}
