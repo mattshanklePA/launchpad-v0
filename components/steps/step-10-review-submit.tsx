@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { useForm } from "@/context/form-context"
 import { formSteps, type FormData } from "@/lib/steps"
-import { saveSubmission } from "@/lib/submissions"
+import { saveSubmission, patchSubmissionFormData } from "@/lib/submissions"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -107,13 +107,28 @@ export function Step10ReviewSubmit() {
   const handleSubmitForVetting = async () => {
     setIsSubmitting(true)
     try {
-      // Persist to Supabase via the API. Every visitor will see this on
-      // their next page load (or on refetch).
-      await saveSubmission(formData)
-      toast({
-        title: "Submitted for vetting",
-        description: "Your idea has been saved and routed for review.",
-      })
+      // If we're editing an existing submission, update it in place so the
+      // comment thread + assignment are preserved, and send it back to the
+      // queue. Otherwise create a new submission.
+      const editingId = typeof window !== "undefined" ? localStorage.getItem("aid-editing-id") : null
+      if (editingId) {
+        await patchSubmissionFormData(editingId, { ...formData, reviewStatus: "submitted" })
+        try {
+          localStorage.removeItem("aid-editing-id")
+        } catch {
+          /* ignore */
+        }
+        toast({
+          title: "Changes submitted",
+          description: "Your updated idea was saved and routed back for review.",
+        })
+      } else {
+        await saveSubmission(formData)
+        toast({
+          title: "Submitted for vetting",
+          description: "Your idea has been saved and routed for review.",
+        })
+      }
       // Brief delay so the toast registers before the page transitions
       setTimeout(() => {
         setCurrentStep(10)

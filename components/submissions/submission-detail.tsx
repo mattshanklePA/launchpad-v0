@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { getSession } from "@/lib/auth"
 import { useDataProvider } from "@/components/data-provider"
@@ -25,7 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  ArrowLeft, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Loader2,
+  ArrowLeft, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Loader2, Pencil,
 } from "lucide-react"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
@@ -61,6 +62,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const [comment, setComment] = useState("")
   const [busy, setBusy] = useState(false)
   const ranRef = useRef(false)
+  const router = useRouter()
 
   const session = typeof window !== "undefined" ? getSession() : null
   const role = session?.role || "submitter"
@@ -150,6 +152,20 @@ export function SubmissionDetail({ id }: { id: string }) {
     setBusy(false)
   }
 
+  // Load this submission back into the wizard for editing. Tag the id so the
+  // wizard updates this record in place (keeping the comment thread) instead
+  // of creating a duplicate.
+  const handleEdit = () => {
+    try {
+      localStorage.setItem("aid-form-data", JSON.stringify(sub.formData))
+      localStorage.setItem("aid-current-step", "1")
+      localStorage.setItem("aid-editing-id", sub.id)
+    } catch {
+      /* ignore */
+    }
+    router.push("/submit?resume=1")
+  }
+
   return (
     <div className="space-y-5 max-w-3xl">
       <Link href="/home" className="text-sm text-uspto-blue-primary hover:underline"><ArrowLeft className="w-4 h-4 inline mr-1" />Back</Link>
@@ -170,6 +186,15 @@ export function SubmissionDetail({ id }: { id: string }) {
           <Button onClick={() => setStatus("approved")} disabled={busy}><Check className="w-4 h-4 mr-1.5" />Approve</Button>
           <Button variant="outline" onClick={() => document.getElementById("comment-box")?.focus()} disabled={busy}><MessageSquare className="w-4 h-4 mr-1.5" />Request info</Button>
           <Button variant="outline" onClick={() => setStatus("rejected")} disabled={busy}><X className="w-4 h-4 mr-1.5" />Reject</Button>
+        </div>
+      )}
+
+      {isOwner && (status === "needs_info" || status === "submitted" || status === "in_review") && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleEdit} disabled={busy}><Pencil className="w-4 h-4 mr-1.5" />Edit submission</Button>
+          {status === "needs_info" && (
+            <span className="text-xs text-muted-foreground">Reopen the form, make changes, and resubmit for review.</span>
+          )}
         </div>
       )}
 
@@ -207,7 +232,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Risk profile</div>
         <div className="flex flex-wrap gap-2">
           <RiskRow ok={fd.involvesSensitiveData !== "yes"} label={fd.involvesSensitiveData === "yes" ? "Uses PII" : "No PII"} />
-          <RiskRow ok={fd.aiModelSourcing === "american" || fd.aiModelSourcing === "open_source_us"} label={fd.aiModelSourcing === "foreign" ? "Foreign model" : fd.aiModelSourcing === "unknown" || !fd.aiModelSourcing ? "Sourcing unknown" : "American-built"} />
+          <RiskRow ok={fd.aiModelSourcing === "american_built" || fd.aiModelSourcing === "open_source_us"} label={fd.aiModelSourcing === "foreign" ? "Foreign model" : fd.aiModelSourcing === "unknown" || !fd.aiModelSourcing ? "Sourcing unknown" : "American-built"} />
           <RiskRow ok={fd.aiHumanReview === "yes"} label={fd.aiHumanReview === "yes" ? "Human review: yes" : "No human review"} />
           <RiskRow ok={fd.aiDecisionalImpact !== "yes"} label={fd.aiDecisionalImpact === "yes" ? "Decisional AI" : "Non-decisional"} />
         </div>

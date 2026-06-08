@@ -89,6 +89,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       if (savedStep === "10") {
         localStorage.removeItem(STORAGE_KEY_FORM)
         localStorage.removeItem(STORAGE_KEY_STEP)
+        localStorage.removeItem("aid-editing-id")
         // Fresh start after submission — still auto-fill profile so the next
         // submission doesn't make the user retype Step 1.
         return { ...initialFormData, ...profile }
@@ -240,6 +241,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       try {
         localStorage.removeItem(STORAGE_KEY_FORM)
         localStorage.removeItem(STORAGE_KEY_STEP)
+        localStorage.removeItem("aid-editing-id")
       } catch (error) {
         console.error("Failed to clear form storage:", error)
       }
