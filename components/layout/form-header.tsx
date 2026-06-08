@@ -7,11 +7,12 @@ import { Button } from "../ui/button"
 import { Rocket, Home, Save } from "lucide-react"
 import { useForm } from "@/context/form-context"
 import { useToast } from "@/components/ui/use-toast"
+import { DeleteDraftButton } from "@/components/draft/delete-draft-button"
 
 export function FormHeader() {
   const router = useRouter()
   const { toast } = useToast()
-  const { formData } = useForm()
+  const { formData, resetForm } = useForm()
 
   const handleSaveAndExit = () => {
     // The wizard auto-saves to localStorage on every keystroke
@@ -29,6 +30,12 @@ export function FormHeader() {
     setTimeout(() => {
       router.push("/")
     }, 400)
+  }
+
+  const handleDeleteDraft = () => {
+    resetForm()
+    toast({ title: "Draft deleted", description: "Your in-progress idea was removed." })
+    setTimeout(() => router.push("/home"), 300)
   }
 
   return (
@@ -54,7 +61,8 @@ export function FormHeader() {
         <div className="flex-1 px-8">
           <ProgressBar />
         </div>
-        <div>
+        <div className="flex items-center gap-2">
+          <DeleteDraftButton onConfirm={handleDeleteDraft} variant="ghost" />
           <Button variant="outline" onClick={handleSaveAndExit}>
             <Save className="mr-2 h-4 w-4" />
             Save & Exit

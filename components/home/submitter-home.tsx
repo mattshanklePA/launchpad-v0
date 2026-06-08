@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, ArrowRight, MessageSquare, FileText } from "lucide-react"
+import { DeleteDraftButton } from "@/components/draft/delete-draft-button"
+import { useToast } from "@/components/ui/use-toast"
 
 const STORAGE_KEY_FORM = "aid-form-data"
 
@@ -42,8 +44,20 @@ function StatusBadge({ status }: { status: ReturnType<typeof getStatus> }) {
 
 export function SubmitterHome() {
   const { loaded } = useDataProvider()
+  const { toast } = useToast()
   const [mine, setMine] = useState<Submission[]>([])
   const [draft, setDraft] = useState<{ title: string } | null>(null)
+
+  const handleDeleteDraft = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY_FORM)
+      localStorage.removeItem("aid-current-step")
+    } catch {
+      /* ignore */
+    }
+    setDraft(null)
+    toast({ title: "Draft deleted", description: "Your in-progress idea was removed." })
+  }
 
   useEffect(() => {
     if (!loaded) return
@@ -106,9 +120,12 @@ export function SubmitterHome() {
               <span className="font-medium text-sm truncate">{draft.title}</span>
               <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">Draft</Badge>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/submit?resume=1">Resume</Link>
-            </Button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/submit?resume=1">Resume</Link>
+              </Button>
+              <DeleteDraftButton onConfirm={handleDeleteDraft} size="sm" label="Delete" />
+            </div>
           </div>
         </section>
       )}
