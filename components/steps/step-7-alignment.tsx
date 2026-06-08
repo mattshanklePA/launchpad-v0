@@ -11,7 +11,6 @@ import { useEffect, useState } from "react"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Toggle } from "@/components/ui/toggle"
 import { Button } from "@/components/ui/button"
 import { AIdChatPanel } from "../launchpad/chat-panel"
 import { ScoutFilledBanner } from "../launchpad/scout-filled-banner"
@@ -19,7 +18,8 @@ import TextareaAutosize from "react-textarea-autosize"
 import { suggestStrategicAlignment } from "@/app/actions"
 import { STRATEGIC_FOCUS_AREAS } from "@/lib/strategicFocusAreas"
 import { useFieldVisibility } from "@/lib/formConfig"
-import { Sparkles, Loader2 } from "lucide-react"
+import { Sparkles, Loader2, Check } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 
 // Group the canonical focus areas by category for display.
@@ -143,24 +143,40 @@ export function Step7Alignment() {
           {/* Focus area selectors (grouped by category) */}
           {isVisible("usptoFocusArea") && (
             <div className="space-y-3">
-              <Label>Which USPTO priorities does this advance?</Label>
+              <div className="flex items-center justify-between">
+                <Label>Which USPTO priorities does this advance?</Label>
+                {formData.usptoFocusArea.length > 0 && (
+                  <span className="text-xs font-medium text-uspto-blue-primary">
+                    {formData.usptoFocusArea.length} selected
+                  </span>
+                )}
+              </div>
               {Object.entries(FOCUS_BY_CATEGORY).map(([category, options]) => (
                 <div key={category} className="space-y-1.5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {category}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {options.map((option) => (
-                      <Toggle
-                        key={option.id}
-                        pressed={formData.usptoFocusArea.includes(option.id)}
-                        onPressedChange={() => handleFocusAreaToggle(option.id)}
-                        variant="outline"
-                        className="rounded-full px-3 py-1 text-xs h-auto"
-                      >
-                        {option.label}
-                      </Toggle>
-                    ))}
+                    {options.map((option) => {
+                      const selected = formData.usptoFocusArea.includes(option.id)
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => handleFocusAreaToggle(option.id)}
+                          className={cn(
+                            "inline-flex items-center rounded-full border px-3 py-1 text-xs transition-colors",
+                            selected
+                              ? "border-uspto-blue-primary bg-uspto-blue-primary text-white"
+                              : "border-gray-300 bg-white text-foreground hover:bg-gray-50",
+                          )}
+                        >
+                          {selected && <Check className="mr-1 h-3 w-3" />}
+                          {option.label}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               ))}
