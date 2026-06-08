@@ -46,6 +46,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 //   - January 2025 AI Strategy — 5 AI-specific priorities
 // Sources: uspto.gov/about-us/performance-and-planning/strategy-and-reporting
 //          uspto.gov/initiatives/artificial-intelligence/ai-strategy
+function readinessMeter(score: "ready" | "needs_work" | "early_stage") {
+  switch (score) {
+    case "ready":
+      return { pct: 100, bar: "bg-green-500", label: "Ready" }
+    case "needs_work":
+      return { pct: 60, bar: "bg-amber-500", label: "Needs work" }
+    default:
+      return { pct: 30, bar: "bg-red-500", label: "Early stage" }
+  }
+}
+
 const mockOKRs = [
   // ───── USPTO 2022-2026 Strategic Plan ─────
   {
@@ -922,13 +933,13 @@ function AdminPageInner() {
                           </div>
                           <div className="mt-3">
                             <div className="flex justify-between text-sm mb-1">
-                              <span>Completion Rate</span>
-                              <span>{draft.completionRate}%</span>
+                              <span>Readiness</span>
+                              <span className="text-muted-foreground">{readinessMeter(draft.readinessScore).label}</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
-                                className="bg-green-500 h-2 rounded-full"
-                                style={{ width: `${draft.completionRate}%` }}
+                                className={`${readinessMeter(draft.readinessScore).bar} h-2 rounded-full`}
+                                style={{ width: `${readinessMeter(draft.readinessScore).pct}%` }}
                               ></div>
                             </div>
                           </div>
@@ -969,10 +980,9 @@ function AdminPageInner() {
                         <TableHead>Submitter</TableHead>
                         <TableHead>Business Unit</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Progress</TableHead>
+                        <TableHead>Readiness</TableHead>
                         <TableHead>Last Updated</TableHead>
                         <TableHead>Classification</TableHead>
-                        <TableHead>Readiness</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -991,16 +1001,15 @@ function AdminPageInner() {
                             <div className="flex items-center gap-2">
                               <div className="w-16 bg-gray-200 rounded-full h-2">
                                 <div
-                                  className="bg-green-500 h-2 rounded-full"
-                                  style={{ width: `${draft.completionRate}%` }}
+                                  className={`${readinessMeter(draft.readinessScore).bar} h-2 rounded-full`}
+                                  style={{ width: `${readinessMeter(draft.readinessScore).pct}%` }}
                                 ></div>
                               </div>
-                              <span className="text-sm text-muted-foreground">{draft.completionRate}%</span>
+                              <span className="text-sm text-muted-foreground">{readinessMeter(draft.readinessScore).label}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{draft.lastUpdated}</TableCell>
                           <TableCell>{getPublicIndicatorBadge(draft.publicIndicator)}</TableCell>
-                          <TableCell>{getReadinessBadge(draft.readinessScore)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm" title="View details" aria-label="View details">
