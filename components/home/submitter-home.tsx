@@ -119,7 +119,11 @@ export function SubmitterHome() {
   }, [loaded])
 
   const needsInfo = mine.filter((s) => getStatus(s) === "needs_info")
-  const submitted = mine.filter((s) => getStatus(s) !== "needs_info")
+  const dbDrafts = mine.filter((s) => getStatus(s) === "draft")
+  const submitted = mine.filter((s) => {
+    const st = getStatus(s)
+    return st !== "needs_info" && st !== "draft"
+  })
 
   return (
     <div className="space-y-8">
@@ -178,6 +182,28 @@ export function SubmitterHome() {
               </Button>
               <DeleteDraftButton onConfirm={handleDeleteDraft} size="sm" label="Delete" />
             </div>
+          </div>
+        </section>
+      )}
+
+      {dbDrafts.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Drafts</h2>
+          <div className="rounded-md border bg-white divide-y">
+            {dbDrafts.map((s) => (
+              <div key={s.id} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/40">
+                <Link href={`/submissions/${s.id}`} className="min-w-0 flex-1">
+                  <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
+                  <div className="text-xs text-muted-foreground">Saved {new Date(s.submittedAt).toLocaleDateString()}</div>
+                </Link>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">Draft</Badge>
+                  <Link href={`/submissions/${s.id}`} aria-label="Open">
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}

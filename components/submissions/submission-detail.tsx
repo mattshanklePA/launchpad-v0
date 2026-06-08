@@ -189,7 +189,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         </div>
       )}
 
-      {isOwner && (status === "needs_info" || status === "submitted" || status === "in_review") && (
+      {isOwner && (status === "needs_info" || status === "submitted" || status === "in_review" || status === "draft") && (
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={handleEdit} disabled={busy}><Pencil className="w-4 h-4 mr-1.5" />Edit submission</Button>
           {status === "needs_info" && (
