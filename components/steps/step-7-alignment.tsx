@@ -1,10 +1,11 @@
 "use client"
 
-// Step 6 in the new flow — Strategic Alignment. On mount, if the user hasn't
-// already picked focus areas, Scout analyzes the prior steps (problem, users,
-// solution, value) and pre-suggests 1-3 focus areas + drafts the alignment
-// language. The user reviews and accepts/edits. This turns what used to be a
-// cold-start step into a one-click confirmation.
+// Strategic Alignment. On entry, if the submitter hasn't filled anything,
+// Scout analyzes the prior steps (problem, users, solution, value) and
+// AUTO-FILLS the focus areas + OKR text + alignment summary directly, then
+// shows a "Scout filled this in — review and edit" banner. No click needed.
+// Resilient: only fills empty fields, fails quietly to manual entry, and the
+// human can re-run or edit anything.
 
 import { useEffect, useState } from "react"
 import { useForm } from "@/context/form-context"
@@ -13,11 +14,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
 import { Button } from "@/components/ui/button"
 import { AIdChatPanel } from "../launchpad/chat-panel"
+import { ScoutFilledBanner } from "../launchpad/scout-filled-banner"
 import TextareaAutosize from "react-textarea-autosize"
 import { suggestStrategicAlignment } from "@/app/actions"
-import { STRATEGIC_FOCUS_AREAS, type AlignmentSuggestion } from "@/lib/strategicFocusAreas"
+import { STRATEGIC_FOCUS_AREAS } from "@/lib/strategicFocusAreas"
 import { useFieldVisibility } from "@/lib/formConfig"
-import { Sparkles, Loader2, CheckCircle2, X, RefreshCw } from "lucide-react"
+import { Sparkles, Loader2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
 // Group the canonical focus areas by category for display.
@@ -34,12 +36,12 @@ export function Step7Alignment() {
   const { formData, setFormData } = useForm()
   const { toast } = useToast()
   const isVisible = useFieldVisibility()
-  const [suggesting, setSuggesting] = useState(false)
-  const [suggestion, setSuggestion] = useState<AlignmentSuggestion | null>(null)
+  const [filling, setFilling] = useState(false)
+  const [scoutFilled, setScoutFilled] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
   const [autoTried, setAutoTried] = useState(false)
 
-  // Cheap heuristic for "has the submitter filled out the upstream steps enough
-  // that a Scout suggestion would be useful?" — title + (problem or solution).
+  // Enough upstream context for a useful suggestion? Title + (problem or solution).
   const hasUpstreamContext = Boolean(
     formData.useCaseTitle?.trim() &&
       (formData.coreProblem?.trim() || formData.proposedSolution?.trim()),
@@ -50,7 +52,9 @@ export function Step7Alignment() {
     Boolean(formData.relevantOkrs?.trim()) ||
     Boolean(formData.alignmentSummary?.trim())
 
-  const fetchSuggestion = async () => {
+  // Fetch a suggestion and write it straight into the fields.
+  // force = overwrite existing values (used by Re-run); otherwise only fill blanks.
+  const fillFromScout = async (force: boolean) => {
     if (!hasUpstreamContext) {
       toast({
         variant: "destructive",
@@ -59,50 +63,41 @@ export function Step7Alignment() {
       })
       return
     }
-    setSuggesting(true)
+    setFilling(true)
     try {
       const result = await suggestStrategicAlignment(formData)
-      setSuggestion(result)
+      setFormData((prev) => ({
+        ...prev,
+        usptoFocusArea: force
+          ? result.focusAreas
+          : Array.from(new Set([...(prev.usptoFocusArea || []), ...result.focusAreas])),
+        relevantOkrs: force || !prev.relevantOkrs?.trim() ? result.relevantOkrs : prev.relevantOkrs,
+        alignmentSummary:
+          force || !prev.alignmentSummary?.trim() ? result.alignmentSummary : prev.alignmentSummary,
+      }))
+      setScoutFilled(true)
+      setBannerDismissed(false)
     } catch (error) {
-      console.error("Failed to fetch alignment suggestion:", error)
+      console.error("Failed to auto-fill alignment:", error)
       toast({
         variant: "destructive",
-        title: "Couldn't get a suggestion",
+        title: "Couldn't auto-fill",
         description: "Scout was unreachable. You can fill the fields manually or try again.",
       })
     } finally {
-      setSuggesting(false)
+      setFilling(false)
     }
   }
 
-  // Auto-trigger on first mount IF upstream context exists AND nothing is filled.
-  // Only fires once per mount — re-runs are via the explicit Re-run button.
+  // Auto-fill once on mount when there's context and nothing filled yet.
   useEffect(() => {
     if (autoTried) return
     setAutoTried(true)
     if (hasUpstreamContext && !hasUserData) {
-      fetchSuggestion()
+      fillFromScout(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const applySuggestion = () => {
-    if (!suggestion) return
-    setFormData((prev) => ({
-      ...prev,
-      // Merge — don't clobber any focus areas the user already picked.
-      usptoFocusArea: Array.from(new Set([...(prev.usptoFocusArea || []), ...suggestion.focusAreas])),
-      relevantOkrs: prev.relevantOkrs?.trim() ? prev.relevantOkrs : suggestion.relevantOkrs,
-      alignmentSummary: prev.alignmentSummary?.trim() ? prev.alignmentSummary : suggestion.alignmentSummary,
-    }))
-    toast({
-      title: "Suggestion applied",
-      description: "Review and tweak. These were Scout's first draft, not the final word.",
-    })
-    setSuggestion(null)
-  }
-
-  const dismissSuggestion = () => setSuggestion(null)
 
   const handleFocusAreaToggle = (item: string) => {
     const current = formData.usptoFocusArea || []
@@ -110,138 +105,66 @@ export function Step7Alignment() {
     setFormData((prev) => ({ ...prev, usptoFocusArea: next }))
   }
 
-  const idToLabel = (id: string): string =>
-    STRATEGIC_FOCUS_AREAS.find((f) => f.id === id)?.label || id
-
   return (
     <div className="grid lg:grid-cols-12 gap-10">
       <div className="lg:col-span-7">
         <div className="space-y-8">
-          {/* ─── Scout suggestion card ─── */}
-          {(suggesting || suggestion) && (
-            <div className="rounded-lg border-2 border-dashed border-uspto-blue-primary/40 bg-uspto-blue-primary/5 p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 mt-0.5 text-uspto-blue-primary flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-sm text-uspto-blue-primary">
-                      {suggesting ? "Scout is suggesting alignment…" : "Scout's suggested alignment"}
-                    </p>
-                    {suggestion && (
-                      <p className="text-xs text-muted-foreground mt-0.5 italic">
-                        {suggestion.rationale}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {!suggesting && suggestion && (
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={dismissSuggestion}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-
-              {suggesting && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Analyzing your problem, solution, and value claims against USPTO priorities…
-                </div>
-              )}
-
-              {suggestion && (
-                <>
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Suggested focus areas
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {suggestion.focusAreas.map((id) => (
-                        <span
-                          key={id}
-                          className="inline-flex items-center gap-1 rounded-full bg-white border border-uspto-blue-primary/30 px-2.5 py-1 text-xs text-foreground"
-                        >
-                          <CheckCircle2 className="h-3 w-3 text-uspto-blue-primary" />
-                          {idToLabel(id)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {suggestion.alignmentSummary && (
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Suggested summary
-                      </p>
-                      <p className="text-sm bg-white rounded border px-3 py-2">
-                        {suggestion.alignmentSummary}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Button size="sm" onClick={applySuggestion}>
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Apply suggestion
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={fetchSuggestion} disabled={suggesting}>
-                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                      Re-run
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={dismissSuggestion}>
-                      Dismiss
-                    </Button>
-                  </div>
-                </>
-              )}
+          {/* Filling state */}
+          {filling && (
+            <div className="rounded-lg border border-uspto-blue-primary/40 bg-uspto-blue-primary/5 p-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-uspto-blue-primary" />
+              Scout is filling in your strategic alignment from your earlier answers…
             </div>
           )}
 
-          {/* ─── "Get a suggestion" CTA when no suggestion card is showing ─── */}
-          {!suggesting && !suggestion && !hasUserData && hasUpstreamContext && (
+          {/* Review banner after auto-fill */}
+          {!filling && scoutFilled && !bannerDismissed && (
+            <ScoutFilledBanner
+              what="your strategic alignment"
+              rerunning={filling}
+              onRerun={() => fillFromScout(true)}
+              onDismiss={() => setBannerDismissed(true)}
+            />
+          )}
+
+          {/* Manual trigger when nothing is filled and auto didn't run (e.g. user cleared everything) */}
+          {!filling && !scoutFilled && !hasUserData && hasUpstreamContext && (
             <div className="rounded-lg border bg-muted/30 p-3 flex items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 inline mr-1 text-uspto-blue-primary" />
-                Let Scout draft this for you based on what you've entered.
+                Let Scout fill this in from what you&apos;ve entered.
               </p>
-              <Button size="sm" onClick={fetchSuggestion}>
-                Get a suggestion
+              <Button size="sm" onClick={() => fillFromScout(false)}>
+                Fill with Scout
               </Button>
             </div>
           )}
 
-          {/* ─── Focus area selectors (grouped by category) ─── */}
+          {/* Focus area selectors (grouped by category) */}
           {isVisible("usptoFocusArea") && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="space-y-3">
               <Label>Which USPTO priorities does this advance?</Label>
-              {hasUserData && !suggesting && !suggestion && (
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={fetchSuggestion}>
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Re-suggest
-                </Button>
-              )}
-            </div>
-            {Object.entries(FOCUS_BY_CATEGORY).map(([category, options]) => (
-              <div key={category} className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {category}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {options.map((option) => (
-                    <Toggle
-                      key={option.id}
-                      pressed={formData.usptoFocusArea.includes(option.id)}
-                      onPressedChange={() => handleFocusAreaToggle(option.id)}
-                      variant="outline"
-                      className="rounded-full px-3 py-1 text-xs h-auto"
-                    >
-                      {option.label}
-                    </Toggle>
-                  ))}
+              {Object.entries(FOCUS_BY_CATEGORY).map(([category, options]) => (
+                <div key={category} className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {category}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {options.map((option) => (
+                      <Toggle
+                        key={option.id}
+                        pressed={formData.usptoFocusArea.includes(option.id)}
+                        onPressedChange={() => handleFocusAreaToggle(option.id)}
+                        variant="outline"
+                        className="rounded-full px-3 py-1 text-xs h-auto"
+                      >
+                        {option.label}
+                      </Toggle>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           )}
 
           {isVisible("relevantOkrs") && (
