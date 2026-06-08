@@ -1,137 +1,105 @@
 # LaunchPad — Demo Runbook
 
-**Audience:** Ramesh (acting CAIO, pragmatic, *obsessed with lean*, focused on the **value/outcomes** of AI initiatives, owned the original secret use-case list), Scott Barker (experience-design PO), Chris (facilitating, already sold), Jonathan (your champion).
-**One-line positioning:** *LaunchPad is the governable front door for AI ideas at USPTO* — one intake where staff turn rough ideas into vetted, decision-ready use cases, so leadership can see the whole pipeline and decide what's worth funding instead of chasing shadow AI.
+**Audience:** Ramesh (acting CAIO, pragmatic, *obsessed with lean*, focused on the **value/outcomes** of AI initiatives), Scott Barker (experience-design PO), Chris (facilitating, already sold), Jonathan (your champion).
+
+**Positioning (one line):** *LaunchPad is the governable front door for AI ideas at USPTO* — one intake where staff turn rough ideas into vetted, decision-ready use cases, so leadership sees the whole pipeline and decides what's worth funding instead of chasing shadow AI.
+
+**Two logins you'll use:** the **submitter** (`submitter@uspto.gov` / `launchpad`, "USPTO Submitter" — assigned to you as reviewer) and **your own admin** account. Admin = reviewer + admin tools, so it covers both the pipeline review and the leadership views.
 
 ---
 
-## Technical framing — deliver this casually while you log in (~20 seconds)
+## Demo flow at a glance
 
-"Quick note on what this is under the hood while I log in: it's a standard web app, a Next.js front end with a Postgres database and server-side APIs. The AI is Claude, running server-side, not in the browser. None of it is tied to our demo stack. In your environment it drops onto AWS: Postgres becomes RDS or Aurora, hosting becomes ECS or Fargate, all inside your FedRAMP boundary. And Claude is already authorized at FedRAMP High and DoD IL4/5 through Amazon Bedrock in AWS GovCloud, so the model runs inside your accredited boundary, it's American-built, and no data leaves USPTO control."
+- **Frame the problem** — talk, no screen yet.
+- **Log in as the submitter** → land on the public **landing page** (the "governable front door"). *(Drop the architecture line while you log in.)*
+- **Start a new idea** → problem-first wizard; type something vague first to trigger **Scout's clarifying question**.
+- **Save & Exit** → lands back on the **dashboard**; reopen via **Resume** to show nothing is lost.
+- **Work through** Solution → Value → **Strategic Alignment (Scout auto-fills it)** → Feasibility & the **AI-risk questions**.
+- **Idea Overview** → run the **AI readiness review** (Ready / Needs work + exec summary) → **Submit**.
+- **Log out → log in as admin (you).**
+- **Pipeline view** → portfolio by status, **color-coded readiness bars**, filter by business unit / assignee.
+- **Open the idea** → **Scout's reviewer read** + **risk panel** → **Request info** (Draft with Scout) → Send.
+- **Log out → log in as the submitter** → **Action needed** → **Edit submission** → change a field → **resubmit** (loop closes, conversation preserved).
+- **Log out → log in as admin** → **Decision Center**: compare 2–3 → **executive briefing**.
+- **Admin → Form Config**: toggle fields live (lean, no COTS limits) → **close**.
 
-That one paragraph preempts three of the most likely questions: "is this just a form," "where would it run," and "is the model compliant."
-
----
-
-## Deep-dive answers (the two you flagged)
-
-### "Can it pull users / people / products from our systems of record (Dataverse, Oracle APEX) instead of managing them in the tool?"
-
-Yes, and that's how it should run. The tool should not be another place you maintain people and roles. There are two separate connection points:
-
-- **Identity (who you are + your role):** authentication and group/role membership come from your identity provider through SSO (OIDC or SAML), not from accounts stored in the app.
-- **Reference data (people, products, org / business units):** pulled from the authoritative source. Microsoft Dataverse exposes an OAuth2-secured Web API (OData v4) we read from; Oracle / APEX exposes data through ORDS REST endpoints or a direct read connection. The tool reads from those; it doesn't own that data.
-
-Why it isn't a rebuild: the data layer already sits behind a clean server-side API, and "role" and "business unit" are already first-class concepts in the app (we route reviewers by business unit today). Swapping the seeded users for a Dataverse or APEX feed is a contained integration. The tool becomes a thin governance-and-workflow layer on top of your existing sources of truth.
-
-*Honest caveat if pressed:* these are standard integration patterns, but they're real work, and we'd scope them with your data owners. We built it clean specifically so this part is straightforward.
-
-### "Security and authorization: what do you use today, and what would you use in our environment?"
-
-**Today (prototype):** the app manages sessions and three roles (submitter, reviewer, admin), with all data access strictly server-side (the database service credential never reaches the browser). It's demo-grade, and we'd replace it. We wouldn't bring our own security model into your environment.
-
-**In your environment, we adopt your standards:**
-
-- **Authentication:** federate to your IdP via OAuth2 / OIDC or SAML, through Amazon Cognito or an ALB OIDC integration, including PIV/CAC and MFA per your ICAM policy. No passwords stored in the app.
-- **Authorization:** map your existing IdP groups to the three roles, and enforce row-level data isolation in Postgres so a submitter only ever sees their own records at the database layer, not just in the UI.
-- **Boundary + model:** everything runs inside your AWS FedRAMP environment, and the model runs via Amazon Bedrock in AWS GovCloud, which carries FedRAMP High and DoD IL4/5 authorization for Claude. No data egress, American-built model, inside your accreditation boundary.
-
-The one-liner: *"We don't ask you to trust our security model. We plug into yours."*
-
-> Confidence note: the Bedrock FedRAMP High / IL4/5 authorization for Claude in AWS GovCloud is real and current (AWS and Anthropic, May 2025). Safe to state as fact.
-
-### "Is it Section 508 / accessibility compliant?"
-
-Posture (honest and strong): *"508 is a first-class requirement here, not a bolt-on. It's built on standard accessible web components, proper form labels, keyboard operability, semantic headings, and ARIA on the interactive pieces, and we test against WCAG 2.0 AA, which is the Section 508 technical standard. Full conformance with a VPAT, and a pass through your accessibility / Trusted Tester process, are part of standing it up in your environment. It's accessible by construction, so those are fixes, not redesigns."*
-
-- **Do NOT claim "fully 508 compliant."** It's a prototype; a live scan will surface items, and overclaiming to a federal audience is the wrong move.
-- **If someone runs a scanner live (axe, Lighthouse, ANDI):** *"Exactly the right check. It's a prototype, so a scan may flag items; remediation and the VPAT are part of the build-out. Nothing structural is in the way."*
-- **What's already done (say only if useful):** a bounded accessibility pass was completed before the demo — all images carry alt text, the Scout send controls and the sign-up business-unit dropdown have accessible names, the kanban filter pills announce their pressed state, and the custom radio and kanban controls expose proper roles and state. **We deliberately stopped there.** Extending labels to the deeper admin screens (the OKR edit/delete icon buttons) and a formal scan + VPAT are intentionally deferred to post-demo, to avoid destabilizing the build the night before. You can run axe DevTools or Lighthouse on the deployed site yourself for a current snapshot.
+> Pacing: switching roles and the Decision Center briefing eat the most time. Pre-stage all logins and pre-generate one briefing. Keep Scout moments short — one question, one scaffold.
 
 ---
 
-## 1. Do today, before the demo (in order)
+## The walkthrough
 
-**A. Database — run the remaining SQL in Supabase (you've run 0001 + 0002):**
-- [ ] `0003_more_demo_examples.sql` — 7 more ideas (fills all 5 statuses + OCFO/OPIA)
-- [ ] `0004_users_and_assignees.sql` — 7 reviewers, 12 submitters, per-BU assignment
-- [ ] Verify: `select status, count(*) from submissions group by status;` → should show submitted/in_review/needs_info/approved/rejected. And `select count(*) from users;` → 19+.
+### 0. Before you start (have this ready)
+- Three browser tabs/logins pre-opened: **submitter**, **admin** (you), and a second admin tab parked on the **Decision Center** with a **pre-generated briefing** (it's the slow call, ~20s).
+- **Lean form config set** (Admin → Form Config → keep on: impacted users, implementation complexity, business value, cost/time savings, strategic focus areas, success metrics, timeline; everything else off). This is Ramesh's #1 reaction point.
+- Confirm Scout returns a real, specific answer in the deployed app (if the Anthropic key isn't live in prod, Scout silently falls back to canned scaffolds).
+- Have the **trademark use-case content** handy to paste (problem/solution/value/metrics for "AI-Assisted Conflicting-Mark Search").
 
-**B. Deploy the code** — push the `USPTO-launchpad` branch (GitHub Desktop). Since the last push this includes: storage cutover, kanban + multi-select filters, assignees + auto-assign, and the Scout naming fix. Let Vercel finish before testing. The new public landing page is included; the **Sign up** button is intentionally locked (no self-registration — accounts are provisioned), so nothing can pollute the pipeline during the demo. Log in and the seeded accounts work normally.
+### 1. Frame the problem (talk, no screen) — ~1.5 min
+"Right now AI ideas at USPTO are decentralized — they come through SharePoint, email, hallway conversations. There's no single governable front door, and no consistent way to see what's worth funding. Ramesh, you've said the question now is *what value these initiatives actually bring*. That's what LaunchPad answers."
 
-**C. Set the lean form config** — Admin → Form Config → toggle to the keep-on set (impacted users, implementation complexity, business value, cost/time savings, strategic focus areas, success metrics, timeline; everything else off). This is Ramesh's #1 reaction point.
+### 2. Log in as the submitter + show the landing page — ~1.5 min
+Log in as **`submitter@uspto.gov`**. While you're logging in, deliver the **architecture line casually** — it preempts "is this just a form," "where would it run," and "is the model compliant":
 
-**D. Smoke-test the happy path (15 min):**
-- [ ] Log in as **admin** → `/home` kanban renders; BU + Assignee filters toggle; counts re-tally.
-- [ ] Log in as a **reviewer** (e.g. `jonathan.moody@uspto.gov` / `launchpad`) → open the **trademark Needs-Info** idea → confirm **Scout's read generates** (live model call, ~3-6s), risk panel shows, comment thread shows the seeded reviewer note.
-- [ ] Run the loop: **Request info → Draft with Scout → Send**; then log in as that **submitter** → **Action needed** → reply.
-- [ ] Log in as a **submitter** (`anita.krishnan@uspto.gov` / `launchpad`) → My Ideas shows only hers.
-- [ ] **Wizard:** start a new idea → confirm problem-first, two-field steps, radio buttons, Scout, locked summary field.
-- [ ] **Decision Center:** compare 2 → generate briefing (⚠ this is the slow one, 20s+).
+> *"Quick note on what this is under the hood while I log in: a standard web app — Next.js front end, Postgres database, server-side APIs. The AI is Claude, running server-side, not in the browser. In your environment it drops onto AWS — Postgres becomes RDS or Aurora, hosting becomes ECS or Fargate, all inside your FedRAMP boundary. And Claude is already authorized at FedRAMP High and DoD IL4/5 through Amazon Bedrock in AWS GovCloud, so the model runs inside your accredited boundary, it's American-built, and no data leaves USPTO control."*
 
-**E. Confirm Scout works in PROD** — if the Anthropic API key isn't set in Vercel, Scout silently falls back to canned scaffolds. Make sure a real, specific Scout answer comes back in the deployed app, not the generic fallback.
+> **Confidence note:** the Bedrock FedRAMP High / IL4/5 authorization for Claude in AWS GovCloud is real and current (AWS + Anthropic, 2025). Safe to state as fact.
 
-**F. Pre-stage for tomorrow** — open the tabs/logins you'll use ahead of time (admin, one reviewer, one submitter), and pre-generate one Decision Center briefing so you're not waiting on it live.
+On the landing page: "This is the front door. One place for any staff member to bring an AI idea — and notice sign-up is locked; accounts are provisioned, so nothing pollutes the pipeline."
 
----
+### 3. Start a new idea — problem-first + Scout — ~3 min
+Click **Start a new idea**. Point out it jumps straight to **the problem**, not the solution: *"the finding is people have 'ideas' that aren't even AI — we lead with the problem so we catch that early."* Call out the **lean, two-field, radio-driven** steps: *"Ramesh, you wanted three questions — we'll show you how you control that at the end."*
 
-## 2. Additional features? — My recommendation: **freeze**
+**The Scout moment:** type something vague (e.g. "AI to help attorneys find similar marks"). Scout **asks one clarifying question with clickable options** instead of dumping feedback — and the options are domain-real (search strategies, design codes, goods/services relatedness). Land the line: *"This is Claude in the back. Most of the IP is in the prompts — Scout knows trademark examination; it's not a generic chatbot. It coaches; the human stays in control."* Pick an option and note it **folds your answer into a sharper problem statement** rather than making you rewrite.
 
-The product already tells the complete story end to end. The single biggest risk tomorrow is a broken build, not a missing feature. **Do not add scope today.** Everything below is explicitly **post-demo**:
-- Comments-table cutover, real auth + RLS hardening, multi-draft, category-tile rewording (GitLab/ServiceNow), label wording ("expected benefits"/"value metrics" — Jonathan to send copy), and 508 remediation on the admin screens plus a formal accessibility scan / VPAT.
+Paste the real problem when ready: *"Trademark examining attorneys manually search for confusingly similar prior marks across word, design, and goods/services dimensions. Searches vary between attorneys, similar marks get missed, and that drives pendency and inconsistent likelihood-of-confusion refusals."*
 
-**One optional polish with real client signal:** Jonathan said the executive briefing is *wordy* ("shorten the paragraphs"). If you have time AND test it, tightening that prompt is the one change with direct feedback behind it. But it touches a live model prompt — only do it if you can regenerate and eyeball a few. Otherwise, in the demo just say "we're tuning length" — it's already a known note.
+> **If anyone runs an accessibility scanner (axe/Lighthouse):** *"Exactly the right check. It's accessible by construction — semantic headings, labels, keyboard operability, ARIA on the interactive pieces, tested to WCAG 2.0 AA, the Section 508 standard. A scan on a prototype may flag items; full conformance with a VPAT and a Trusted Tester pass are part of standing it up. Those are fixes, not redesigns."* **Do not claim "fully 508 compliant."**
 
----
+### 4. Save & Exit → reopen the draft — ~1 min
+Hit **Save & Exit**. It drops you **back on your dashboard** (not some random page) with a "Draft saved" confirmation. Point to the **In progress** draft and click **Resume**: *"Nothing's lost — the wizard auto-saves every keystroke. A submitter can walk away and come back."* *(Optional: note the **Delete** button next to Resume — they can abandon a draft cleanly.)*
 
-## 3. The 22-minute demo path
+### 5. Solution → Value → Strategic Alignment → Feasibility — ~3 min
+Move quickly through **Solution** and **Value** (paste the prepared content; call out the **quantified** cost/time savings — *"this is the value signal leadership triages on"*).
 
-> Pacing note: switching roles + the Decision Center briefing eat time. Pre-stage logins and a pre-generated briefing. Keep Scout moments short — one question, one scaffold.
+**Strategic Alignment — the auto-fill beat (new):** when you land here, **Scout has already filled it in** from your earlier answers — focus areas, alignment language — and a banner says *"Scout filled this in… please review and edit."* Land it: *"I never filled in strategic alignment. Scout did it from what I told it — and it flags that I should review it. The human still owns the final word."* The selected priorities are **highlighted** so you can see exactly what it chose.
 
-**0:00–2:00 — Frame the problem (talk, no screen yet).**
-"Right now AI ideas at USPTO are decentralized — they come through SharePoint, email, hallway conversations. There's no single, governable front door, and no consistent way to see what's worth funding. Ramesh, you've said the question now is *what value are these initiatives actually bringing*. That's what LaunchPad answers."
+**Feasibility & the AI-risk questions:** these are the **mandated** disclosures — PII / sensitive data, does the AI make a decision about a person, model sourcing (American-built / U.S.-hosted), mandatory human review. *"This is the governable part — the DoC- and EO-mandated questions, built into the intake, not bolted on after."* Answer them clean (No PII, informational-only, American-built, human-in-the-loop) so the risk profile is green.
 
-**2:00–4:00 — Lean, problem-first intake (submitter wizard).**
-Start a new idea. Point out it jumps straight to **the problem**, not the idea — "the finding is people have 'ideas' that aren't even AI; we lead with the problem so we catch that early." Call out the **two-field, radio-driven** steps: "this is deliberately lean — Ramesh, you wanted three questions, we'll come back to how you control that."
+> **If asked about security / who can see what:** *"Today this is demo-grade — sessions and three roles, all data access server-side, the database credential never reaches the browser. In your environment we adopt your standards: federate to your IdP via OIDC or SAML through Cognito or an ALB, PIV/CAC and MFA per your ICAM policy, map your IdP groups to the three roles, and enforce row-level security in Postgres so a submitter only ever sees their own records at the database layer. We don't ask you to trust our security model — we plug into yours."*
 
-**4:00–7:00 — Scout (the intelligence).**
-Type something vague. Scout **asks a clarifying question** with clickable options instead of dumping feedback; it **never invents facts**; it drafts a **scaffold** into the locked summary field. "This is Claude in the back — most of the IP is in the prompts. It coaches, the human stays in control." Mention the governable angle: "Scout can also say *this doesn't look like AI* or *we already have a tool for this* before anyone spends a dollar."
+### 6. Idea Overview → AI readiness review → Submit — ~2 min
+On the **Idea Overview** step, Scout drafts a **title and description** from everything entered. Then the **readiness review**: a verdict (**Ready / Needs work / Early stage**) plus an **executive summary**. *"Every submission comes out structured, comparable, and quality-gated before it ever reaches a reviewer."* **Submit.**
 
-**7:00–9:00 — Readiness gate + submit.**
-Land on the review step → **readiness verdict** (ready / needs work / early stage) and exec summary. "Every submission comes out structured and comparable, with a quality gate before it ever reaches a reviewer." Submit.
+### 7. Log out → log in as admin → the pipeline — ~3 min
+Log out, log in as **yourself (admin)**. Open the **pipeline**: the whole portfolio by status, with **color-coded readiness bars** (green = ready, amber = needs work, red = early) — *"at a glance, here's which ideas are actually decision-ready."* Show **filter by business unit and assignee** (multi-select): *"every idea is auto-routed to the reviewer for its business unit."*
 
-**9:00–13:00 — Reviewer pipeline (role switch → reviewer).**
-Show the **kanban by status**, then **filter by business unit and by assignee** (multi-select). "Every idea is auto-routed to the reviewer for its business unit." Open an idea → **Scout's reviewer read** (advisory verdict, strengths, gaps, suggested disposition — *human decides*), and the **risk panel** (PII / American-built model / human review / decisional). "These are the DoC- and EO-mandated questions — this is the *governable* part."
+> **If asked "can it pull people/roles from our systems of record (Dataverse, Oracle APEX)?":** *"Yes — and it should. The tool shouldn't be another place you maintain people and roles. Identity and group membership come from your IdP via SSO. Reference data — people, products, org units — is read from the authoritative source: Dataverse via its OData Web API, or Oracle/APEX via ORDS. 'Role' and 'business unit' are already first-class here — we route reviewers by business unit today — so swapping seeded users for a live feed is a contained integration. The tool stays a thin governance layer on top of your sources of truth."*
 
-**13:00–16:00 — The feedback loop.**
-**Request info → Draft with Scout** (it writes the specific gap message) **→ Send.** Switch to the submitter → **Action needed** → they see the note and **reply/resubmit**. "A review isn't a dead end — there's a real channel back to the submitter."
+### 8. Open the idea → Scout's reviewer read + risk panel → Request info — ~3 min
+Open the idea you just submitted. Show **Scout's read** (advisory verdict, strengths, gaps, suggested disposition — *human decides*) and the **risk panel** (PII / American-built / human review / decisional). Then run the loop: **Request info → Draft with Scout** (it writes the specific gap message) **→ Send.**
 
-**16:00–19:00 — Decision Center (Ramesh's value question).**
-Compare 2-3 side by side → show the **executive briefing**. "This is the leadership view — quantified value, strategic alignment, risk, and a recommendation, side by side. This is how you decide what to fund." (Use the pre-generated one to avoid the wait.)
+### 9. Log in as the submitter → Edit & resubmit (close the loop) — ~2.5 min
+Log out, back in as the **submitter**. **Action needed** shows the returned idea with the reviewer's note. Click **Edit submission** — it **reopens the actual form** with everything intact, change a field, and **resubmit**. *"A review isn't a dead end — the submitter edits the real submission and sends it back, and the whole conversation is preserved. It updates the same record, not a duplicate."* *(Optional aside: a submitter can also **Withdraw** a submission to pull it back to draft themselves — they're never locked in.)*
 
-**19:00–21:00 — Governance payoff + customization.**
-Open a **Rejected** example (auto-drafting office actions, or resume auto-screening). "The tool flagged this — decisional AI making a determination about a person with no human review. *That's* what governable means; it doesn't just collect ideas, it catches the ones that shouldn't proceed." Then Admin → **Form Config**: toggle a couple fields off live. "Ramesh — you wanted it leaner? Ten seconds. It's fully customizable; no COTS limits."
+### 10. Log in as admin → Decision Center → Form Config → close — ~3 min
+Log out, back in as **admin**. Open the **Decision Center**, compare **2–3** ideas, and show the **executive briefing** — quantified value, strategic alignment, risk, and a recommendation, side by side. *(Use the pre-generated one to skip the wait.)* *"This is the leadership view — this is how you decide what to fund."*
 
-**21:00–22:00 — Close.**
-"It's bespoke to you, runs on your infrastructure, points at whatever model you approve, and it's customizable as you learn. We'd love your read on it." Then stop and let them react.
+Then **Admin → Form Config**: toggle a couple of fields off **live**. *"Ramesh — you wanted it leaner? Ten seconds. Fully customizable; no COTS limits."*
+
+**Close:** *"It's bespoke to you, runs on your infrastructure, points at whatever model you approve, and it's customizable as you learn. We'd love your read on it."* Then stop and let them react.
 
 ---
 
-## 4. Likely light technical questions (+ short answers)
-
-- **"Is this just a Microsoft Form?"** No — there's real intelligence (Claude) in the back, server-side. It produces structured, comparable data and a readiness score; a form can't coach or assess.
-- **"What model is it / is it American-built?"** Claude (Anthropic) today; it's configurable to whatever model you approve — American-built or open-source U.S.-hosted. In a real deployment no submission data leaves USPTO control.
-- **"Where's it hosted? FedRAMP?"** It's a prototype on Vercel + Supabase right now; built to deploy on USPTO infrastructure / GovCloud. Not ATO'd yet — that's part of standing it up for real.
-- **"Is it GitLab? Can we have the code?"** Yes — it's in a repo and can be shared or open-sourced. *(Defer terms: "great question, let me sync with my team and come back to you.")*
-- **"Does the AI make the decisions?"** No. Advisory only, human-in-the-loop by design — and the tool actively flags decisional AI without human review as a risk.
-- **"How hard is it to change?"** Very easy — the Form Config you just saw toggles fields live, and the whole thing is customizable. That flexibility vs. a rigid COTS tool is the pitch.
-- **"PII / data security?"** Demo uses no real data. The mandated risk questions (PII, sourcing, human review, decisional impact) are built in. Real deployment scopes data access and adds row-level security.
-- **"Multi-draft / scale?"** Honest answer: single in-progress draft per user today; scales fine and multi-draft is on the roadmap.
-
----
-
-## 5. If something breaks
-- **Scout returns generic text** → API key not live in prod; talk through it ("Scout's drafting here") and move on; don't dwell.
+## If something breaks
+- **Scout returns generic text** → API key not live in prod; talk through it ("Scout's drafting here") and move on.
 - **Briefing spins** → use the pre-generated one; "this is a heavier call, we're tuning performance."
-- **A status/assignee looks wrong** → you likely haven't run 0003/0004; fall back to a different example.
-- Worst case, the **lean-form build** (pre-redesign) is still on the prior commit as a fallback.
+- **A status/assignee looks wrong** → fall back to a different seeded example.
+- **Auto-fill on Strategic Alignment doesn't fire** → there's a "Fill with Scout" button right there; click it, or fill the focus areas manually.
+
+## Other likely questions (quick answers)
+- **"Is this just a Microsoft Form?"** No — real intelligence (Claude) server-side; it produces structured, comparable data and a readiness score, and coaches the submitter. A form can't.
+- **"Does the AI make the decisions?"** No. Advisory only, human-in-the-loop by design — and the tool actively flags decisional AI without human review as a risk.
+- **"Can we have the code / is it GitLab?"** It's in a repo and can be shared. *(Defer terms: "great question — let me sync with my team and come back to you.")*
+- **"Multi-draft / scale?"** Single in-progress draft per user today; scales fine, multi-draft is on the roadmap.
+- **"PII / data security?"** Demo uses no real data; the mandated risk questions are built in; real deployment scopes data access and adds row-level security.

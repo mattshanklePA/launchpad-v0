@@ -167,43 +167,41 @@ export function SubmitterHome() {
         </section>
       )}
 
-      {draft && (
-        <section className="space-y-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">In progress</h2>
-          <div className="rounded-md border bg-white p-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <FileText className="w-4 h-4 text-muted-foreground" />
-              <span className="font-medium text-sm truncate">{draft.title}</span>
-              <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">Draft</Badge>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/submit?resume=1">Resume</Link>
-              </Button>
-              <DeleteDraftButton onConfirm={handleDeleteDraft} size="sm" label="Delete" />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {dbDrafts.length > 0 && (
+      {(draft || dbDrafts.length > 0) && (
         <section className="space-y-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Drafts</h2>
           <div className="rounded-md border bg-white divide-y">
-            {dbDrafts.map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/40">
-                <Link href={`/submissions/${s.id}`} className="min-w-0 flex-1">
-                  <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
-                  <div className="text-xs text-muted-foreground">Saved {new Date(s.submittedAt).toLocaleDateString()}</div>
-                </Link>
-                <div className="flex items-center gap-2 flex-shrink-0">
+            {draft && (
+              <div className="flex items-center justify-between gap-3 p-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-medium text-sm truncate">{draft.title}</span>
                   <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">Draft</Badge>
-                  <Link href={`/submissions/${s.id}`} aria-label="Open">
-                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                  </Link>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/submit?resume=1">Resume</Link>
+                  </Button>
+                  <DeleteDraftButton onConfirm={handleDeleteDraft} size="sm" label="Delete" />
                 </div>
               </div>
-            ))}
+            )}
+            {dbDrafts
+              .filter((s) => !(draft && (s.formData.useCaseTitle || "").trim() === draft.title))
+              .map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/40">
+                  <Link href={`/submissions/${s.id}`} className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
+                    <div className="text-xs text-muted-foreground">Saved {new Date(s.submittedAt).toLocaleDateString()}</div>
+                  </Link>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">Draft</Badge>
+                    <Link href={`/submissions/${s.id}`} aria-label="Open">
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
           </div>
         </section>
       )}
