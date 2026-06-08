@@ -45,6 +45,8 @@ Log in as **`submitter@uspto.gov`**. While you're logging in, deliver the **arch
 
 > **Confidence note:** the Bedrock FedRAMP High / IL4/5 authorization for Claude in AWS GovCloud is real and current (AWS + Anthropic, 2025). Safe to state as fact.
 
+> **Identity & roles — say this at sign-in (key point):** *"And one thing to flag right at the login: LaunchPad isn't another place you manage users, roles, or access. In your environment, identity and role come from your existing identity provider through single sign-on — OIDC or SAML, with PIV/CAC and MFA per your ICAM policy — and the people, org, and business-unit data is read from your authoritative systems, like Microsoft Dataverse or Oracle/APEX. We map your existing IdP groups to the three roles you see here, so there's no separate user directory to maintain and no parallel access model. LaunchPad is a thin governance layer on top of your sources of truth — we don't ask you to trust our security model, we plug into yours."*
+
 On the landing page: "This is the front door. One place for any staff member to bring an AI idea — and notice sign-up is locked; accounts are provisioned, so nothing pollutes the pipeline."
 
 ### 3. Start a new idea — problem-first + Scout — ~3 min
@@ -119,7 +121,7 @@ On the **Idea Overview** step, Scout drafts a **title and description** from eve
 ### 7. Log out → log in as admin → the pipeline — ~3 min
 Log out, log in as **yourself (admin)**. Open the **pipeline**: the whole portfolio by status, with **color-coded readiness bars** (green = ready, amber = needs work, red = early) — *"at a glance, here's which ideas are actually decision-ready."* Show **filter by business unit and assignee** (multi-select): *"every idea is auto-routed to the reviewer for its business unit."*
 
-> **If asked "can it pull people/roles from our systems of record (Dataverse, Oracle APEX)?":** *"Yes — and it should. The tool shouldn't be another place you maintain people and roles. Identity and group membership come from your IdP via SSO. Reference data — people, products, org units — is read from the authoritative source: Dataverse via its OData Web API, or Oracle/APEX via ORDS. 'Role' and 'business unit' are already first-class here — we route reviewers by business unit today — so swapping seeded users for a live feed is a contained integration. The tool stays a thin governance layer on top of your sources of truth."*
+> **If they drill into the integration** (you covered the headline at sign-in): Dataverse exposes an OAuth2-secured OData (v4) Web API we read from; Oracle/APEX exposes data via ORDS REST endpoints. "Role" and "business unit" are already first-class here — we route reviewers by business unit today — so swapping the seeded users for a live feed is a contained integration, not a rebuild. *"We built it clean specifically so this part is straightforward — we'd scope it with your data owners."*
 
 ### 8. Open the idea → Scout's reviewer read + risk panel → Request info — ~3 min
 Open the idea you just submitted. Show **Scout's read** (advisory verdict, strengths, gaps, suggested disposition — *human decides*) and the **risk panel** (PII / American-built / human review / decisional). Then run the loop: **Request info → Draft with Scout** (it writes the specific gap message) **→ Send.**
