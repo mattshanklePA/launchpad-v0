@@ -197,8 +197,9 @@ Keep every field short and concrete. Do not write paragraphs. Use the submission
     }
   } catch (error) {
     console.error("compareSubmissions AI error, falling back to mock briefing:", error)
+    const detail = error instanceof Error ? error.message : String(error)
     return {
-      recommendation: { fundId: "", headline: "Briefing service unavailable. Use the side-by-side comparison below to decide manually." },
+      recommendation: { fundId: "", headline: `Briefing couldn't be generated: ${detail}. Use the side-by-side comparison below.` },
       differ: "(Briefing unavailable.)",
       portfolioGap: "Review each candidate for baseline data, FedRAMP/ATO timing, and named priority alignment.",
       perSubmission: submissions.map((s) => ({
