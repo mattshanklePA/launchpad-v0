@@ -39,8 +39,29 @@ function readinessBadge(score: string | undefined) {
   }
 }
 
-// Same enum labels as decision-center.tsx — keep in lockstep with the Select
-// options in step-3/5/6/9. (If this duplicates one more time, move it to a util.)
+function verdictBadge(v: string) {
+  switch (v) {
+    case "fund_now":
+      return (
+        <Badge className="bg-green-100 text-green-800 border-green-300">
+          <CheckCircle className="w-3 h-3 mr-1" /> Fund now
+        </Badge>
+      )
+    case "fund_with_conditions":
+      return (
+        <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+          <AlertTriangle className="w-3 h-3 mr-1" /> Fund with conditions
+        </Badge>
+      )
+    default:
+      return (
+        <Badge className="bg-gray-100 text-gray-600 border-gray-300">
+          <AlertCircle className="w-3 h-3 mr-1" /> Hold
+        </Badge>
+      )
+  }
+}
+
 const ENUM_LABELS: Record<string, string> = {
   lt_10: "<10 users",
   "10_50": "10–50 users",
@@ -71,7 +92,6 @@ const ENUM_LABELS: Record<string, string> = {
   controlled: "Controlled",
   public: "Public",
   excluded: "Excluded",
-  // AI model sourcing
   american_built: "American-built",
   open_source_us: "Open-source (U.S.)",
   foreign: "Foreign-built",
@@ -131,6 +151,8 @@ export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
     }
   }
 
+  const recCand = briefing ? briefing.perSubmission.find((p) => p.id === briefing.recommendation.fundId) ?? null : null
+
   return (
     <Card className="mb-6 border-2 border-primary/40">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -140,85 +162,15 @@ export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
             Compare {submissions.length} Use Cases for Funding Decision
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Side-by-side view of selected submissions. Generate an AI briefing for a portfolio-level take.
+            Generate an AI briefing for the recommendation, then open the full comparison if you want the detail.
           </p>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="w-4 h-4" />
         </Button>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Side-by-side comparison grid */}
-        <div className="border rounded-lg p-4 bg-white overflow-x-auto">
-          <div
-            className="grid gap-3 pb-3 border-b-2 border-gray-300"
-            style={{ gridTemplateColumns: `180px repeat(${submissions.length}, minmax(0, 1fr))` }}
-          >
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-1">Dimension</div>
-            {submissions.map((s) => (
-              <div key={s.id} className="space-y-1">
-                <p className="font-semibold text-uspto-blue-primary">{s.formData.useCaseTitle || "Untitled"}</p>
-                <div className="flex items-center gap-2 flex-wrap">{readinessBadge(s.formData.readinessScore)}</div>
-                <p className="text-xs text-muted-foreground">
-                  {s.formData.submitterName || "Anonymous"} · {(s.formData.submitterOffice || "").toUpperCase() || "—"}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <CompareRow label="One-line bet" values={submissions.map((s) => s.formData.executiveSummary)} />
-          <CompareRow
-            label="Target users"
-            values={submissions.map((s) => s.formData.targetUserSummary || s.formData.targetUserContext)}
-          />
-          <CompareRow label="Impact size" values={submissions.map((s) => s.formData.impactedUsersCount)} />
-          <CompareRow
-            label="Problem"
-            values={submissions.map((s) => s.formData.problemDefinition || s.formData.coreProblem)}
-          />
-          <CompareRow label="Severity" values={submissions.map((s) => s.formData.severity)} />
-          <CompareRow
-            label="Solution"
-            values={submissions.map((s) => s.formData.solutionSummary || s.formData.proposedSolution)}
-          />
-          <CompareRow
-            label="Expected user value"
-            values={submissions.map((s) => s.formData.userValueSummary || s.formData.userValue)}
-          />
-          <CompareRow label="Time savings claim" values={submissions.map((s) => s.formData.userTimeSavings)} />
-          <CompareRow
-            label="Business value"
-            values={submissions.map((s) => s.formData.businessValueSummary || s.formData.businessValue)}
-          />
-          <CompareRow label="Cost savings claim" values={submissions.map((s) => s.formData.costSavings)} />
-          <CompareRow
-            label="Strategic alignment"
-            values={submissions.map((s) => s.formData.alignmentSummary || s.formData.relevantOkrs)}
-          />
-          <CompareRow
-            label="Implementation complexity"
-            values={submissions.map((s) => s.formData.implementationComplexity)}
-          />
-          <CompareRow
-            label="Feasibility & risks"
-            values={submissions.map((s) => s.formData.feasibilitySummary || s.formData.dependencies)}
-          />
-          <CompareRow label="Uses PII" values={submissions.map((s) => s.formData.involvesSensitiveData)} />
-          <CompareRow
-            label="AI drives decisions"
-            values={submissions.map((s) => s.formData.aiDecisionalImpact)}
-          />
-          <CompareRow label="Model sourcing" values={submissions.map((s) => s.formData.aiModelSourcing)} />
-          <CompareRow label="Human review" values={submissions.map((s) => s.formData.aiHumanReview)} />
-          <CompareRow
-            label="Success metrics"
-            values={submissions.map((s) => s.formData.metricsSummary || s.formData.successMetrics)}
-          />
-          <CompareRow label="Timeline to results" values={submissions.map((s) => s.formData.timelineForResults)} />
-          <CompareRow label="Readiness summary" values={submissions.map((s) => s.formData.readinessSummary)} />
-        </div>
-
-        {/* AI Briefing Section */}
+      <CardContent className="space-y-5">
+        {/* AI Briefing — recommendation first */}
         <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -230,9 +182,8 @@ export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
             {!briefing && !isLoading && (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Generate an AI-synthesized briefing that compares these candidates across strategic fit, user impact,
-                  feasibility, and operational realities. The briefing names gaps honestly. It does not invent specifics
-                  the submissions don't include.
+                  Generate a decision-first briefing: a clear funding recommendation, a verdict per candidate, and the
+                  one gap that matters most for each. It names gaps honestly and invents nothing.
                 </p>
                 <Button onClick={handleGenerateBrief} size="lg">
                   <Sparkles className="w-4 h-4 mr-2" />
@@ -249,49 +200,137 @@ export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
             )}
 
             {briefing && (
-              <div className="space-y-5 text-sm">
-                <section>
-                  <h4 className="font-semibold mb-1 text-base">How they differ</h4>
-                  <p className="whitespace-pre-wrap leading-relaxed">{briefing.narrative}</p>
-                </section>
-
-                <section>
-                  <h4 className="font-semibold mb-1 text-base">Funding take</h4>
-                  <p className="whitespace-pre-wrap leading-relaxed">{briefing.portfolioTake}</p>
-                </section>
-
-                <section>
-                  <h4 className="font-semibold mb-1 text-base">What's not addressed in this portfolio</h4>
-                  <p className="whitespace-pre-wrap leading-relaxed">{briefing.unaddressedGaps}</p>
-                </section>
-
-                <section>
-                  <h4 className="font-semibold mb-2 text-base">Per-candidate honest snapshot</h4>
-                  <div className="space-y-3">
-                    {briefing.perSubmission.map((p) => (
-                      <div key={p.id} className="border-l-2 border-primary/40 pl-3 py-1">
-                        <p className="font-medium">{p.title}</p>
-                        <p className="text-muted-foreground mt-0.5">{p.oneLine}</p>
-                        <p className="mt-1">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            What this doesn't address:{" "}
-                          </span>
-                          {p.whatItDoesNotAddress}
-                        </p>
-                      </div>
-                    ))}
+              <div className="space-y-4 text-sm">
+                {/* Recommendation banner */}
+                <div className="rounded-lg border-2 border-green-300 bg-green-50 p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-4 h-4 text-green-700" />
+                    <span className="text-xs font-semibold uppercase tracking-wide text-green-800">Recommendation</span>
                   </div>
-                </section>
+                  {recCand && <p className="font-semibold text-green-900">Fund first: {recCand.title}</p>}
+                  <p className="text-green-900 mt-0.5 leading-relaxed">{briefing.recommendation.headline}</p>
+                </div>
 
-                <div className="pt-3 border-t flex justify-end">
+                {/* Per-candidate verdict cards */}
+                <div
+                  className="grid gap-3"
+                  style={{ gridTemplateColumns: `repeat(${briefing.perSubmission.length}, minmax(0, 1fr))` }}
+                >
+                  {briefing.perSubmission.map((p) => (
+                    <div
+                      key={p.id}
+                      className={`rounded-lg border p-3 ${
+                        p.id === briefing.recommendation.fundId ? "border-green-400 bg-green-50/40" : "bg-white"
+                      }`}
+                    >
+                      <p className="font-medium leading-tight">{p.title}</p>
+                      <div className="mt-1.5">{verdictBadge(p.verdict)}</div>
+                      <p className="text-muted-foreground text-xs mt-2 leading-relaxed">{p.oneLine}</p>
+                      <p className="text-xs mt-1.5 leading-relaxed">
+                        <span className="font-semibold text-amber-700">Gap: </span>
+                        {p.gap}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Short context */}
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="rounded-md bg-muted/40 p-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      How they differ
+                    </span>
+                    <p className="mt-1 leading-relaxed">{briefing.differ}</p>
+                  </div>
+                  <div className="rounded-md bg-muted/40 p-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Biggest gap across the set
+                    </span>
+                    <p className="mt-1 leading-relaxed">{briefing.portfolioGap}</p>
+                  </div>
+                </div>
+
+                <div className="pt-1 flex justify-end">
                   <Button variant="outline" size="sm" onClick={handleGenerateBrief} disabled={isLoading}>
-                    Regenerate Briefing
+                    Regenerate
                   </Button>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Full side-by-side comparison — collapsed by default */}
+        <details className="border rounded-lg bg-white">
+          <summary className="cursor-pointer select-none p-3 text-sm font-medium text-uspto-blue-primary">
+            Show full side-by-side comparison ({submissions.length} candidates, all fields)
+          </summary>
+          <div className="p-4 pt-0 overflow-x-auto">
+            <div
+              className="grid gap-3 pb-3 border-b-2 border-gray-300"
+              style={{ gridTemplateColumns: `180px repeat(${submissions.length}, minmax(0, 1fr))` }}
+            >
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-1">Dimension</div>
+              {submissions.map((s) => (
+                <div key={s.id} className="space-y-1">
+                  <p className="font-semibold text-uspto-blue-primary">{s.formData.useCaseTitle || "Untitled"}</p>
+                  <div className="flex items-center gap-2 flex-wrap">{readinessBadge(s.formData.readinessScore)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {s.formData.submitterName || "Anonymous"} · {(s.formData.submitterOffice || "").toUpperCase() || "—"}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <CompareRow label="One-line bet" values={submissions.map((s) => s.formData.executiveSummary)} />
+            <CompareRow
+              label="Target users"
+              values={submissions.map((s) => s.formData.targetUserSummary || s.formData.targetUserContext)}
+            />
+            <CompareRow label="Impact size" values={submissions.map((s) => s.formData.impactedUsersCount)} />
+            <CompareRow
+              label="Problem"
+              values={submissions.map((s) => s.formData.problemDefinition || s.formData.coreProblem)}
+            />
+            <CompareRow label="Severity" values={submissions.map((s) => s.formData.severity)} />
+            <CompareRow
+              label="Solution"
+              values={submissions.map((s) => s.formData.solutionSummary || s.formData.proposedSolution)}
+            />
+            <CompareRow
+              label="Expected user value"
+              values={submissions.map((s) => s.formData.userValueSummary || s.formData.userValue)}
+            />
+            <CompareRow label="Time savings claim" values={submissions.map((s) => s.formData.userTimeSavings)} />
+            <CompareRow
+              label="Business value"
+              values={submissions.map((s) => s.formData.businessValueSummary || s.formData.businessValue)}
+            />
+            <CompareRow label="Cost savings claim" values={submissions.map((s) => s.formData.costSavings)} />
+            <CompareRow
+              label="Strategic alignment"
+              values={submissions.map((s) => s.formData.alignmentSummary || s.formData.relevantOkrs)}
+            />
+            <CompareRow
+              label="Implementation complexity"
+              values={submissions.map((s) => s.formData.implementationComplexity)}
+            />
+            <CompareRow
+              label="Feasibility & risks"
+              values={submissions.map((s) => s.formData.feasibilitySummary || s.formData.dependencies)}
+            />
+            <CompareRow label="Uses PII" values={submissions.map((s) => s.formData.involvesSensitiveData)} />
+            <CompareRow label="AI drives decisions" values={submissions.map((s) => s.formData.aiDecisionalImpact)} />
+            <CompareRow label="Model sourcing" values={submissions.map((s) => s.formData.aiModelSourcing)} />
+            <CompareRow label="Human review" values={submissions.map((s) => s.formData.aiHumanReview)} />
+            <CompareRow
+              label="Success metrics"
+              values={submissions.map((s) => s.formData.metricsSummary || s.formData.successMetrics)}
+            />
+            <CompareRow label="Timeline to results" values={submissions.map((s) => s.formData.timelineForResults)} />
+            <CompareRow label="Readiness summary" values={submissions.map((s) => s.formData.readinessSummary)} />
+          </div>
+        </details>
       </CardContent>
     </Card>
   )
