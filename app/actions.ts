@@ -2,7 +2,7 @@
 
 // LaunchPad Co-Pilot server actions for AI vetting + readiness assessment
 import { generateObject } from "ai"
-import { anthropic } from "@ai-sdk/anthropic"
+import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
 import { formSteps, type FormData } from "@/lib/steps"
 import {
@@ -414,7 +414,7 @@ export async function assessReadiness(
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+      model: getModel(),
       schema: z.object({
         readinessScore: z.enum(["ready", "needs_work", "early_stage"]).describe("Overall readiness rating for leadership review"),
         readinessSummary: z.string().describe("2-3 sentences explaining the rating and key gaps if any"),
@@ -556,7 +556,7 @@ Rules:
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+      model: getModel(),
       schema: z.object({
         focusAreas: z
           .array(z.string())
@@ -641,7 +641,7 @@ export async function validateAndRefineInput(
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+      model: getModel(),
       schema: z.object({
         mode: z
           .enum(["question", "scaffold"])
@@ -804,7 +804,7 @@ export async function suggestIdeaOverview(
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+      model: getModel(),
       schema: z.object({
         title: z.string().describe("A concise 3-8 word, Title Case name for the AI use case"),
         description: z
@@ -866,7 +866,7 @@ Prior readiness verdict: ${formData.readinessScore || "n/a"}
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+      model: getModel(),
       schema: z.object({
         verdict: z.string().describe("1-2 sentence overall read for a reviewer deciding whether this should advance"),
         strengths: z.array(z.string()).describe("2-3 short, specific strengths"),

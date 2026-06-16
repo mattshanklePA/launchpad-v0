@@ -6,7 +6,7 @@
 // only what the submissions actually contain, names gaps honestly.
 
 import { generateObject } from "ai"
-import { anthropic } from "@ai-sdk/anthropic"
+import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
 import { getTenant } from "@/lib/tenant"
@@ -118,7 +118,7 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+      model: getModel(),
       schema: z.object({
         narrative: z
           .string()
