@@ -53,8 +53,8 @@ const config: Config = {
         },
         uspto: {
           blue: {
-            primary: "#355E93",
-            secondary: "#254267",
+            primary: "#0086ca",
+            secondary: "#0a6aa1",
           },
           red: "#C10230",
           gray: {
@@ -62,13 +62,13 @@ const config: Config = {
           },
         },
         dow: {
-          blue: "#355E93",
+          blue: "#0086ca",
           ocean: "#254267",
           space: "#15263B",
           steel: "#AEBFD4",
           hazy: "#EBEFF5",
-          gold: "#FFCD00",
-          "gold-shade": "#B5853C",
+          gold: "#92c73e",
+          "gold-shade": "#6f9a2f",
           gray: "#333333",
         },
       },

@@ -1,17 +1,17 @@
-// DoW tenant configuration (Department of War instance)
+// Packaged Agile demo tenant — wizard content retained; overt agency identity removed
 import type { TenantConfig } from "./types"
 
 export const dow: TenantConfig = {
   id: "dow",
-  shortName: "DoW",
+  shortName: "Packaged Agile",
   productName: "LaunchPad",
-  logoSubtitle: "Department of War AI Use Case Platform",
-  heroHeadline: "The governable front door for AI across the Department of War",
+  logoSubtitle: "Packaged Agile · AI Use-Case Governance",
+  heroHeadline: "The governable front door for AI use cases",
   heroSubtitle:
     "One place to turn AI ideas into vetted, decision-ready use cases, so leaders can fund the strongest ones and catch responsible-AI risks early.",
 
   strategicContext: `
-The Department of War pursues AI under the DoD Data, Analytics, and AI Adoption Strategy and DoD responsible-AI guidance. Reason about every idea using the "AI Hierarchy of Needs": quality, AI-ready data is the foundation; analytics sits on top of it; and Responsible AI governs the whole stack. An idea with no realistic data foundation is not yet a use case, no matter how good the concept.
+Your organization pursues AI under the DoD Data, Analytics, and AI Adoption Strategy and DoD responsible-AI guidance. Reason about every idea using the "AI Hierarchy of Needs": quality, AI-ready data is the foundation; analytics sits on top of it; and Responsible AI governs the whole stack. An idea with no realistic data foundation is not yet a use case, no matter how good the concept.
 
 **Adoption Strategy goals (name the one an idea advances):**
 - Invest in interoperable, federated infrastructure
@@ -29,45 +29,45 @@ The Department of War pursues AI under the DoD Data, Analytics, and AI Adoption 
 - Reliable: explicit, well-defined uses, tested for safety and security across the lifecycle
 - Governable: detect and avoid unintended behavior, with the ability to disengage or deactivate
 
-A serious DoW AI idea does six things: (1) names the specific Adoption-Strategy goal and mission outcome it advances and the mechanism; (2) states whether AI-ready, labeled, accessible data exists today or must be built or relabeled; (3) states its data classification and required Impact Level (Unclassified to IL2; CUI to IL4 or IL5; Secret to IL6); (4) states the human-judgment posture (who decides, where the human reviews, how it can be disengaged); (5) states its maturity (TRL 1-9) and a maturation or sustainment plan; (6) acknowledges what it does not address.
+A serious AI idea does six things: (1) names the specific Adoption-Strategy goal and mission outcome it advances and the mechanism; (2) states whether AI-ready, labeled, accessible data exists today or must be built or relabeled; (3) states its data classification and required Impact Level (Unclassified to IL2; CUI to IL4 or IL5; Secret to IL6); (4) states the human-judgment posture (who decides, where the human reviews, how it can be disengaged); (5) states its maturity (TRL 1-9) and a maturation or sustainment plan; (6) acknowledges what it does not address.
 
 Push back on these anti-patterns: vague "modernization" or "efficiency" with no named priority; no data-readiness plan (the most common reason DoD AI fails per GAO); no human oversight; decisional AI about people with no review; no test-and-evaluation or assurance story; and value claims with no quantification or that ignore sustainment cost. Use the submitter's own words; never invent facts, figures, or program names.
 `,
   leadershipPriorities: "readiness, decision advantage, cost, and risk reduction",
 
   focusAreas: [
-    { id: "adopt_infrastructure", label: "Invest in interoperable, federated infrastructure", category: "DoW AI Adoption Strategy" },
-    { id: "adopt_ecosystem", label: "Advance the data, analytics & AI ecosystem", category: "DoW AI Adoption Strategy" },
-    { id: "adopt_talent", label: "Expand digital talent management", category: "DoW AI Adoption Strategy" },
-    { id: "adopt_data", label: "Improve foundational data management", category: "DoW AI Adoption Strategy" },
-    { id: "adopt_advantage", label: "Deliver capabilities for enduring decision advantage", category: "DoW AI Adoption Strategy" },
+    { id: "adopt_infrastructure", label: "Invest in interoperable, federated infrastructure", category: "AI Adoption Strategy" },
+    { id: "adopt_ecosystem", label: "Advance the data, analytics & AI ecosystem", category: "AI Adoption Strategy" },
+    { id: "adopt_talent", label: "Expand digital talent management", category: "AI Adoption Strategy" },
+    { id: "adopt_data", label: "Improve foundational data management", category: "AI Adoption Strategy" },
+    { id: "adopt_advantage", label: "Deliver capabilities for enduring decision advantage", category: "AI Adoption Strategy" },
     { id: "mission_readiness", label: "Readiness", category: "Mission outcome" },
     { id: "mission_decision", label: "Decision advantage", category: "Mission outcome" },
     { id: "mission_sustainment", label: "Sustainment & logistics", category: "Mission outcome" },
     { id: "mission_protection", label: "Force protection", category: "Mission outcome" },
     { id: "mission_speed", label: "Responsible speed", category: "Mission outcome" },
     { id: "mission_enterprise", label: "Enterprise efficiency", category: "Mission outcome" },
-    { id: "rai_responsible", label: "Responsible (judgment, care, accountability)", category: "DoW AI Ethical Principles" },
-    { id: "rai_equitable", label: "Equitable (minimize unintended bias)", category: "DoW AI Ethical Principles" },
-    { id: "rai_traceable", label: "Traceable (transparent, auditable)", category: "DoW AI Ethical Principles" },
-    { id: "rai_reliable", label: "Reliable (tested for safety and security)", category: "DoW AI Ethical Principles" },
-    { id: "rai_governable", label: "Governable (detect and avoid unintended behavior)", category: "DoW AI Ethical Principles" },
+    { id: "rai_responsible", label: "Responsible (judgment, care, accountability)", category: "AI Ethical Principles" },
+    { id: "rai_equitable", label: "Equitable (minimize unintended bias)", category: "AI Ethical Principles" },
+    { id: "rai_traceable", label: "Traceable (transparent, auditable)", category: "AI Ethical Principles" },
+    { id: "rai_reliable", label: "Reliable (tested for safety and security)", category: "AI Ethical Principles" },
+    { id: "rai_governable", label: "Governable (detect and avoid unintended behavior)", category: "AI Ethical Principles" },
   ],
 
   landingObjectives: [
     {
-      title: "Department of War AI priorities",
+      title: "AI adoption priorities",
       subtitle: "Data, Analytics & AI Adoption Strategy",
       items: [
         { title: "Interoperable, federated infrastructure", description: "Invest in the connective infrastructure that lets data and AI move across the enterprise." },
         { title: "Advance the data, analytics & AI ecosystem", description: "Build and field the tools, models, and partnerships that turn data into advantage." },
         { title: "Expand digital talent management", description: "Grow and retain the workforce able to build, evaluate, and oversee AI." },
-        { title: "Improve foundational data management", description: "Make data visible, accessible, understandable, and trustworthy across the Department." },
+        { title: "Improve foundational data management", description: "Make data visible, accessible, understandable, and trustworthy across the enterprise." },
         { title: "Deliver capabilities for enduring decision advantage", description: "Get responsible AI into the hands of decision-makers and the warfighter." },
       ],
     },
     {
-      title: "Department of War AI ethical principles",
+      title: "Responsible-AI principles",
       subtitle: "Responsible AI",
       items: [
         { title: "Responsible", description: "Exercise appropriate judgment and care; humans remain accountable." },
@@ -94,10 +94,10 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
   },
 
   riskFramework: {
-    label: "DoD AI Ethical Principles + CDAO Responsible AI",
+    label: "DoD AI Ethical Principles + Responsible AI",
     description: "Responsible-AI posture: data classification and Impact Level (Unclassified, CUI, IL4, IL5, IL6), data readiness, American-built model sourcing inside the accredited boundary, mandatory human judgment, bias mitigation, and a test-and-evaluation/assurance plan.",
   },
 
-  theme: { primary: "#355E93", primaryForeground: "#ffffff" },
+  theme: { primary: "#0086ca", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: false, scout: true },
 }

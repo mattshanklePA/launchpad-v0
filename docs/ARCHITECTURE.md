@@ -197,3 +197,7 @@ The repo is licensed **proprietary** (see `LICENSE`): all rights reserved, offer
 - AI calls can exceed the default serverless timeout; set `maxDuration` on the route segment (or a server-component layout) for admin/decisions.
 - Browser never calls Supabase directly; add new data access as API routes.
 - `form_data` JSON is the source of truth for much of a submission; keep the `status` column and JSON in sync via the `lib/submissions` helpers.
+
+## Demo rebrand note (dow branch) — Packaged Agile
+
+For the Tradewinds pitch video, the `dow` tenant's overt "Department of War / DoW / CDAO" identity was removed while **all wizard steps and governance content were retained** (focus areas, risk framework, Scout strategic context, command taxonomy, seeded data). Branding now reads "Packaged Agile · AI Use-Case Governance"; brand color is Packaged Agile blue `#0086ca` with green `#92c73e` accents (`uspto.blue.primary`, `dow.*`, `--primary`, `--ring`). To restore the DoW-branded look, `git revert` this commit. Note: seeded users (admin@dow.mil) and command names (FORSCOM, etc.) still live in the database — neutralizing those requires a reseed.
