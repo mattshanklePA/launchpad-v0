@@ -9,6 +9,7 @@
 
 import type { Submission } from "@/lib/submissions"
 import { getCachedUsers } from "@/lib/dataCache"
+import { getTenant } from "@/lib/tenant"
 
 export type SubmissionStatus =
   | "draft"
@@ -83,18 +84,8 @@ export function getBusinessUnit(s: Submission): string {
 }
 
 export function businessUnitLabel(unit: string): string {
-  const map: Record<string, string> = {
-    patents: "Patents",
-    trademarks: "Trademarks",
-    ocio: "OCIO",
-    ocfo: "OCFO",
-    ogc: "OGC",
-    opia: "OPIA",
-    hr: "Human Resources",
-    cross_functional: "Cross-functional",
-    other: "Other",
-  }
-  return map[unit] || (unit ? unit : "Unspecified")
+  const opt = getTenant().unit.options.find((o) => o.value === unit)
+  return opt ? opt.label : unit || "Unspecified"
 }
 
 // Role-scoped visibility. Submitters see only their own; reviewers/admins all.

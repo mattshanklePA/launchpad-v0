@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge"
 import { User, Settings, LogOut, Shield, Home, LogIn } from "lucide-react"
 import { ensureSeeded, getSession, logout, type Session, hasAdminAccess, isAdmin } from "@/lib/auth"
 
+const darkBtn = "bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
+
 export function Header() {
   const router = useRouter()
   const [session, setSession] = useState<Session | null>(null)
@@ -26,7 +28,6 @@ export function Header() {
     ensureSeeded()
     setSession(getSession())
     setHydrated(true)
-    // Re-check on storage changes (e.g., when user signs in/out in another tab)
     const onStorage = () => setSession(getSession())
     window.addEventListener("storage", onStorage)
     return () => window.removeEventListener("storage", onStorage)
@@ -39,22 +40,21 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white text-uspto-gray-text">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#141414] text-white">
       <div className="container flex h-20 max-w-screen-2xl items-center justify-between">
-        <Link href="https://www.uspto.gov" target="_blank" rel="noopener noreferrer">
-          <Image src="/uspto-logo.png" alt="USPTO Logo" width={120} height={40} className="object-contain" />
+        <Link href={session ? "/home" : "/"}>
+          <LaunchPadLogo size="md" monochrome className="text-white" subtitleClassName="text-dow-steel" />
         </Link>
         <div className="flex items-center gap-4">
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className={darkBtn}>
             <Link href={session ? "/home" : "/"}>
               <Home className="mr-2 h-4 w-4" />
               Home
             </Link>
           </Button>
 
-          {/* Hide the auth UI until we know the session — prevents flicker / hydration mismatch */}
           {!hydrated ? null : !session ? (
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className={darkBtn}>
               <Link href="/login">
                 <LogIn className="mr-2 h-4 w-4" />
                 Sign In
@@ -63,7 +63,7 @@ export function Header() {
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" className={darkBtn}>
                   <User className="mr-2 h-4 w-4" />
                   {session.name}
                 </Button>

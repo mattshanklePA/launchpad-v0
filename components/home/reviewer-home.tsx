@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Scale, ArrowRight, SlidersHorizontal, Users, Database, User } from "lucide-react"
 import { getSession } from "@/lib/auth"
+import { getTenant } from "@/lib/tenant"
 
 function readinessChip(score?: string): { cls: string; label: string } {
   switch (score) {
@@ -133,7 +134,7 @@ export function ReviewerHome() {
 
       <div className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground w-24 shrink-0">Business unit</span>
+          <span className="text-xs text-muted-foreground w-24 shrink-0">{getTenant().unit.label}</span>
           <button type="button" aria-pressed={units.length === 0} className={pill(units.length === 0)} onClick={() => setUnits([])}>All</button>
           {allUnits.map((u) => (
             <button key={u} type="button" aria-pressed={units.includes(u)} className={pill(units.includes(u))} onClick={() => toggle(units, setUnits, u)}>

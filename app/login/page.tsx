@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Rocket, LogIn, AlertCircle, Info, Eye, EyeOff } from "lucide-react"
 import { login, getSession, ensureSeeded } from "@/lib/auth"
+import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 
 function LoginForm() {
   const router = useRouter()
@@ -61,7 +62,7 @@ function LoginForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@uspto.gov"
+              placeholder="you@dow.mil"
               autoComplete="email"
               required
             />
@@ -122,16 +123,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="border-b bg-white">
         <div className="container flex h-20 items-center">
-          <Link href="/" className="flex items-center gap-4">
-            <Image src="/uspto-logo.png" alt="USPTO Logo" width={80} height={26} className="object-contain" />
-            <div className="h-10 border-l border-gray-300" />
-            <div className="flex items-center gap-3">
-              <Rocket className="h-7 w-7 text-uspto-blue-primary" />
-              <div className="flex flex-col">
-                <span className="text-lg font-bold text-uspto-gray-text">LaunchPad</span>
-                <p className="-mt-1 text-xs text-gray-500">USPTO AI Use Case Platform</p>
-              </div>
-            </div>
+          <Link href="/">
+            <LaunchPadLogo size="md" />
           </Link>
         </div>
       </header>

@@ -7,6 +7,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
+import { errToDetail } from "@/lib/errToDetail"
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("POST /api/users/login failed:", error)
     return NextResponse.json(
-      { error: "Login failed", detail: String(error) },
+      { error: "Login failed", detail: errToDetail(error) },
       { status: 500 },
     )
   }

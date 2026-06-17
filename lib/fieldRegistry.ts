@@ -331,7 +331,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     fieldKey: "usptoFocusArea",
     label: "Strategic Focus Areas",
     description:
-      "Multi-select of USPTO Strategic Plan goals and AI Strategy priorities this idea advances.",
+      "Multi-select of Department of War strategy goals and responsible-AI priorities this idea advances.",
     reasonToInclude:
       "Forces explicit linkage to published agency priorities — prevents vague 'modernization' claims.",
     phase: 4,

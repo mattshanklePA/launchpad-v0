@@ -8,9 +8,16 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseClient"
 import { seedSubmissions } from "@/lib/seedSubmissions"
+import { getTenant } from "@/lib/tenant"
 
 export async function POST() {
   try {
+    // Only the USPTO tenant auto-seeds its demo submissions. Other tenants
+    // (DoW, ...) are seeded explicitly via SQL, so skip to avoid cross-tenant
+    // pollution of a fresh database.
+    if (getTenant().id !== "uspto") {
+      return NextResponse.json({ ok: true, seeded: false, reason: "tenant-managed seed" })
+    }
     const supabase = getSupabaseAdmin()
 
     // Idempotency check: count existing rows.

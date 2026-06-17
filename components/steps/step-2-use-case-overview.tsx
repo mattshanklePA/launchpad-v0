@@ -139,7 +139,7 @@ export function Step2UseCaseOverview() {
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="excluded" id="excluded" />
               <Label htmlFor="excluded" className="font-normal">
-                <span className="font-medium">Excluded</span> - This information must stay internal to USPTO
+                <span className="font-medium">Excluded</span> - This information must stay internal to the Department of War
               </Label>
             </div>
           </RadioGroup>

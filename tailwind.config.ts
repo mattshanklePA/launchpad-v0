@@ -53,14 +53,29 @@ const config: Config = {
         },
         uspto: {
           blue: {
-            primary: "#004C93",
-            secondary: "#0072CE",
+            primary: "#355E93",
+            secondary: "#254267",
           },
-          red: "#D22630",
+          red: "#C10230",
           gray: {
             text: "#333333",
           },
         },
+        dow: {
+          blue: "#355E93",
+          ocean: "#254267",
+          space: "#15263B",
+          steel: "#AEBFD4",
+          hazy: "#EBEFF5",
+          gold: "#FFCD00",
+          "gold-shade": "#B5853C",
+          gray: "#333333",
+        },
+      },
+      fontFamily: {
+        sans: ["var(--font-lato)", "system-ui", "sans-serif"],
+        heading: ["var(--font-oswald)", "var(--font-lato)", "sans-serif"],
+        wordmark: ["var(--font-crimson)", "Georgia", "serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

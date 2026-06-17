@@ -89,7 +89,6 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       if (savedStep === "10") {
         localStorage.removeItem(STORAGE_KEY_FORM)
         localStorage.removeItem(STORAGE_KEY_STEP)
-        localStorage.removeItem("aid-editing-id")
         // Fresh start after submission — still auto-fill profile so the next
         // submission doesn't make the user retype Step 1.
         return { ...initialFormData, ...profile }
@@ -145,12 +144,9 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       // starts fresh; the draft is offered via the resume prompt instead.
       if (forceResume || sessionActive) {
         const saved = localStorage.getItem(STORAGE_KEY_STEP)
-        if (saved) {
+        if (saved && saved !== "10") {
           const parsed = parseInt(saved, 10)
-          // Resume only onto an editable step (1-8). The review step (9) and the
-          // post-submit confirmation (10) are never valid resume targets — a
-          // draft hasn't been submitted, so it should reopen inside the wizard.
-          if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 8) return parsed
+          if (Number.isFinite(parsed) && parsed >= 1) return parsed
         }
       }
       return freshStart
@@ -216,7 +212,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         )
         const ss = localStorage.getItem(STORAGE_KEY_STEP)
         const n = ss ? parseInt(ss, 10) : NaN
-        if (Number.isFinite(n) && n >= 1 && n <= 8) step = n
+        if (Number.isFinite(n) && n >= 1 && ss !== "10") step = n
       }
       if (hasContent) {
         setPendingResumeStep(step)
@@ -244,7 +240,6 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       try {
         localStorage.removeItem(STORAGE_KEY_FORM)
         localStorage.removeItem(STORAGE_KEY_STEP)
-        localStorage.removeItem("aid-editing-id")
       } catch (error) {
         console.error("Failed to clear form storage:", error)
       }

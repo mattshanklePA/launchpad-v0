@@ -52,7 +52,7 @@ function getStepContext(step: number): { buttonLabel: string; emptyMessage: stri
     case 5:
       return {
         buttonLabel: "Help Me with Alignment",
-        emptyMessage: "Note how this maps to USPTO strategy, then click below. I'll help you connect it specifically.",
+        emptyMessage: "Note how this maps to Department of War strategy, then click below. I'll help you connect it specifically.",
       }
     case 6:
       return {

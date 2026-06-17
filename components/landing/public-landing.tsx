@@ -6,22 +6,7 @@ import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
 import { getSession, type Session } from "@/lib/auth"
 import { ArrowRight, FileText, Rocket, Lock } from "lucide-react"
-
-const USPTO_GOALS: { title: string; description: string }[] = [
-  { title: "Drive U.S. innovation and global competitiveness", description: "Expand access to the IP system and strengthen U.S. leadership in emerging technology." },
-  { title: "Promote the efficient delivery of reliable IP rights", description: "Reduce pendency and improve quality across patents and trademarks." },
-  { title: "Promote IP protection against new and persistent threats", description: "Strengthen enforcement and defend the integrity of issued IP rights." },
-  { title: "Bring innovation to impact for the public good", description: "Apply the IP and innovation system to national priorities like health, climate, and equity." },
-  { title: "Generate impactful employee and customer experiences", description: "Create rewarding experiences for the USPTO workforce and the public it serves." },
-]
-
-const AI_PRIORITIES: { title: string; description: string }[] = [
-  { title: "Advance IP policies for inclusive AI innovation", description: "Shape policy that supports U.S. AI leadership and stays inclusive of all innovators." },
-  { title: "Build AI capabilities through infrastructure and resources", description: "Invest in the compute, data, and tooling to deploy AI responsibly." },
-  { title: "Promote responsible AI use", description: "Ensure bias mitigation, explainability, and human oversight across AI systems." },
-  { title: "Develop AI expertise within the workforce", description: "Train USPTO staff to evaluate, deploy, and oversee AI in their work." },
-  { title: "Collaborate with government and international partners on AI", description: "Coordinate with peer agencies, OMB, and international IP offices on AI." },
-]
+import { getTenant } from "@/lib/tenant"
 
 function ObjectiveList({ items }: { items: { title: string; description: string }[] }) {
   return (
@@ -42,6 +27,7 @@ function ObjectiveList({ items }: { items: { title: string; description: string 
 }
 
 export function PublicLanding() {
+  const t = getTenant()
   const [session, setSession] = useState<Session | null>(null)
   const [hydrated, setHydrated] = useState(false)
   const [metrics, setMetrics] = useState<{ submitted: number; deployed: number }>({ submitted: 0, deployed: 0 })
@@ -53,7 +39,7 @@ export function PublicLanding() {
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         const subs: any[] = j?.submissions || []
-        const submitted = subs.filter((s) => (s.status || s.formData?.reviewStatus) !== "draft").length
+        const submitted = subs.length
         const deployed = subs.filter((s) => (s.status || s.formData?.reviewStatus) === "approved").length
         setMetrics({ submitted, deployed })
       })
@@ -62,18 +48,18 @@ export function PublicLanding() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="border-b bg-white">
+      <header className="border-b border-white/10 bg-[#141414]">
         <div className="container flex h-20 items-center justify-between">
-          <LaunchPadLogo size="md" />
+          <LaunchPadLogo size="md" monochrome className="text-white" subtitleClassName="text-dow-steel" />
           <div className="flex items-center gap-2">
             {hydrated && (session ? (
               <>
-                <span className="text-sm text-muted-foreground hidden sm:inline">{session.name}</span>
+                <span className="text-sm text-white/70 hidden sm:inline">{session.name}</span>
                 <Button asChild><Link href="/home">Go to dashboard</Link></Button>
               </>
             ) : (
               <>
-                <Button variant="outline" disabled title="Accounts are provisioned by your administrator">
+                <Button variant="outline" disabled title="Accounts are provisioned by your administrator" className="bg-transparent border-white/30 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-100">
                   <Lock className="w-4 h-4 mr-2" />Sign up
                 </Button>
                 <Button asChild><Link href="/login">Log in</Link></Button>
@@ -84,16 +70,25 @@ export function PublicLanding() {
       </header>
 
       <main className="flex-1">
-        <section className="border-b bg-white">
-          <div className="container py-16 sm:py-20 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-uspto-blue-primary/10 mb-5">
-              <Rocket className="w-8 h-8 text-uspto-blue-primary" strokeWidth={2.2} />
+        <section className="relative bg-dow-space">
+          <div
+            className="absolute inset-0 bg-cover bg-top"
+            style={{ backgroundImage: "url('/hero-dow.jpg')" }}
+            aria-hidden="true"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-[#0d1826]/80 via-[#11233b]/80 to-[#0d1826]/94"
+            aria-hidden="true"
+          />
+          <div className="relative container py-20 sm:py-28 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 ring-1 ring-white/15 mb-5">
+              <Rocket className="w-8 h-8 text-white" strokeWidth={2.2} />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-uspto-gray-text">
-              The governable front door for AI at USPTO
+            <h1 className="font-heading text-3xl sm:text-5xl font-semibold tracking-tight text-white drop-shadow-md">
+              {t.heroHeadline}
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              One place to turn AI ideas into vetted, decision-ready use cases, so leadership can fund the strong ones and catch risky ones early.
+            <p className="mt-4 text-lg text-white/85 max-w-2xl mx-auto drop-shadow">
+              {t.heroSubtitle}
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               {session ? (
@@ -109,16 +104,16 @@ export function PublicLanding() {
           </div>
         </section>
 
-        <section className="bg-gray-50 border-b">
+        <section className="bg-dow-ocean border-b border-white/10">
           <div className="container py-10">
             <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-              <div className="rounded-xl border bg-white p-6 text-center">
-                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics.submitted}</div>
-                <div className="text-sm text-muted-foreground mt-1">Use cases submitted</div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+                <div className="text-4xl font-bold text-white">{metrics.submitted}</div>
+                <div className="text-sm text-dow-steel mt-1">Use cases submitted</div>
               </div>
-              <div className="rounded-xl border bg-white p-6 text-center">
-                <div className="text-4xl font-bold text-uspto-blue-primary">{metrics.deployed}</div>
-                <div className="text-sm text-muted-foreground mt-1">Use cases deployed</div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+                <div className="text-4xl font-bold text-white">{metrics.deployed}</div>
+                <div className="text-sm text-dow-steel mt-1">Use cases deployed</div>
               </div>
             </div>
           </div>
@@ -127,24 +122,21 @@ export function PublicLanding() {
         <section className="bg-gray-50 py-14">
           <div className="container">
             <div className="grid lg:grid-cols-2 gap-10">
-              <div>
-                <h2 className="text-xl font-bold text-uspto-gray-text mb-1">USPTO strategic objectives</h2>
-                <p className="text-sm text-muted-foreground mb-4">2022–2026 Strategic Plan</p>
-                <ObjectiveList items={USPTO_GOALS} />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-uspto-gray-text mb-1">USPTO AI strategy</h2>
-                <p className="text-sm text-muted-foreground mb-4">January 2025 AI Strategy priorities</p>
-                <ObjectiveList items={AI_PRIORITIES} />
-              </div>
+              {t.landingObjectives.map((group) => (
+                <div key={group.title}>
+                  <h2 className="font-heading text-xl font-semibold tracking-tight text-dow-space mb-1">{group.title}</h2>
+                  <p className="text-sm text-muted-foreground mb-4">{group.subtitle}</p>
+                  <ObjectiveList items={group.items} />
+                </div>
+              ))}
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t bg-white">
-        <div className="container py-6 text-center text-xs text-muted-foreground">
-          LaunchPad · USPTO AI Use Case Platform
+      <footer className="border-t bg-[#141414]">
+        <div className="container py-6 text-center text-xs text-dow-steel">
+          {t.productName} &middot; {t.logoSubtitle}
         </div>
       </footer>
     </div>

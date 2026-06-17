@@ -110,6 +110,10 @@ export type FormData = {
   aiDecisionalImpact: "yes" | "no" | "" // Does AI make/influence a decision affecting an applicant or employee?
   aiModelSourcing: "american_built" | "open_source_us" | "foreign" | "unknown" | "" // Trump EO compliance
   aiHumanReview: "yes" | "no" | "" // Is there mandatory human review before action?
+  // DoD responsible-AI + maturity disclosures
+  impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
+  dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
+  trl: "" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" // Technology Readiness Level
   feasibilitySummary: string
 
   // Step 10
@@ -178,6 +182,9 @@ export const initialFormData: FormData = {
   dependencies: "",
   involvesSensitiveData: "",
   securityClassification: "",
+  impactLevel: "",
+  dataReadiness: "",
+  trl: "",
   accessControlRequirements: [],
   aiDecisionalImpact: "",
   aiModelSourcing: "",
@@ -217,13 +224,13 @@ export const formSteps: FormStep[] = [
     step: 4,
     name: "Value",
     title: "Define the Value to Users and the Business",
-    prompt: "How does this help users, and what's the business case for USPTO?",
+    prompt: "How does this help users, and what's the business case for the Department of War?",
   },
   {
     step: 5,
     name: "Strategic Alignment",
-    title: "Align with USPTO Goals",
-    prompt: "Does this align with USPTO's strategic priorities? Which ones?",
+    title: "Align with Department of War Goals",
+    prompt: "Does this align with the Department of War's strategic priorities? Which ones?",
   },
   {
     step: 6,

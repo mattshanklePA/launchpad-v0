@@ -6,42 +6,24 @@
 // only what the submissions actually contain, names gaps honestly.
 
 import { generateObject } from "ai"
-import { anthropic } from "@ai-sdk/anthropic"
+import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
-
-export type Verdict = "fund_now" | "fund_with_conditions" | "hold"
+import { getTenant } from "@/lib/tenant"
 
 export type CompareBriefing = {
-  recommendation: { fundId: string; headline: string }
-  differ: string
-  portfolioGap: string
+  narrative: string
+  portfolioTake: string
+  unaddressedGaps: string
   perSubmission: Array<{
     id: string
     title: string
-    verdict: Verdict
     oneLine: string
-    gap: string
+    whatItDoesNotAddress: string
   }>
 }
 
-const USPTO_STRATEGIC_CONTEXT = `
-USPTO operates under two published strategic frameworks. Funding decisions should advance at least one priority from these:
-
-**2022-2026 Strategic Plan goals:**
-- Drive inclusive U.S. innovation and global competitiveness
-- Promote the efficient delivery of reliable IP rights
-- Promote the protection of IP against new and persistent threats
-- Bring innovation to impact for the public good
-- Generate impactful employee and customer experiences by maximizing agency operations
-
-**AI Strategy (January 2025) priorities:**
-- Advance IP policies for inclusive AI innovation
-- Enhance AI capabilities through infrastructure and resources
-- Promote responsible AI use (bias mitigation, explainability, human oversight)
-- Develop AI expertise within the workforce
-- Collaborate with governmental and international partners on AI
-`
+const STRATEGIC_CONTEXT = getTenant().strategicContext
 
 function fmt(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : "(none)"
@@ -105,6 +87,12 @@ Feasibility & security:
   - Sensitive data: ${fmt(d.involvesSensitiveData)}
   - Security classification: ${fmt(d.securityClassification)}
   - Access control: ${fmt(d.accessControlRequirements)}
+  - Data readiness: ${fmt(d.dataReadiness)}
+  - Data classification / Impact Level: ${fmt(d.impactLevel)}
+  - Technology Readiness Level (1-9): ${fmt(d.trl)}
+  - AI decisional impact on people: ${fmt(d.aiDecisionalImpact)}
+  - Model sourcing: ${fmt(d.aiModelSourcing)}
+  - Mandatory human review: ${fmt(d.aiHumanReview)}
   - Summary: ${fmt(d.feasibilitySummary)}
 
 Success metrics:
@@ -130,22 +118,34 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
 
   try {
     const { object } = await generateObject({
-      model: anthropic("claude-sonnet-4-5-20250929"),
+      model: getModel(),
       schema: z.object({
-        recommendation: z.object({
-          fundId: z.string().describe("The id of the single best candidate to fund first. Empty string if none are ready to fund yet."),
-          headline: z.string().describe("One short sentence (about 20 words): who to fund first and the single biggest reason. If none are ready, say so plainly."),
-        }),
-        differ: z.string().describe("ONE short sentence on how the candidates differ (e.g., different user groups, or different points in the same workflow)."),
-        portfolioGap: z.string().describe("ONE short sentence naming the most important thing missing across all of them (e.g., 'none provide baseline data to verify ROI')."),
+        narrative: z
+          .string()
+          .describe(
+            "A comparative narrative (3-5 sentences). How do these candidates differ in approach, target users, expected impact, and strategic priorities? Where do they overlap or compete? Reference DoW priorities by name.",
+          ),
+        portfolioTake: z
+          .string()
+          .describe(
+            "A funding take: if budget supported only one, which has the clearest case and why? If two or three, which combination is complementary (advances different priorities, hits different user groups)? Be specific about which candidate by title. If none are ready to fund yet, say so honestly.",
+          ),
+        unaddressedGaps: z
+          .string()
+          .describe(
+            "What's NOT in the portfolio. Which DoW strategic priorities are these candidates collectively missing? What common gaps appear across multiple submissions (e.g., 'none of these address FedRAMP/ATO timing', 'none have baseline data')?",
+          ),
         perSubmission: z
           .array(
             z.object({
               id: z.string(),
               title: z.string(),
-              verdict: z.enum(["fund_now", "fund_with_conditions", "hold"]).describe("fund_now = clear, ready case; fund_with_conditions = worth funding but only after specific fixes; hold = not ready to fund yet"),
-              oneLine: z.string().describe("About 15 words: what it is and the priority it advances most directly."),
-              gap: z.string().describe("About 15 words: the single most important thing it does not address before funding. Be honest; do not invent."),
+              oneLine: z.string().describe("One sentence: what this is and the named DoW priority it advances most directly."),
+              whatItDoesNotAddress: z
+                .string()
+                .describe(
+                  "1-2 sentences: what THIS submission specifically does not address that a reviewer would want before funding. Be honest. Use the submission's actual gaps — do not invent.",
+                ),
             }),
           )
           .describe("One entry per submission, in the same order as the dossier."),
@@ -153,61 +153,71 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
       messages: [
         {
           role: "system",
-          content: `You are a senior AI strategist at USPTO supporting a CIO/CAIO funding decision. You are NOT here to pitch the submissions — you are here to help the exec make a clear-eyed comparison.
+          content: `You are a senior AI strategist at DoW supporting a CIO/CAIO funding decision. You are NOT here to pitch the submissions — you are here to help the exec make a clear-eyed comparison.
 
-${USPTO_STRATEGIC_CONTEXT}
+${STRATEGIC_CONTEXT}
+
+═══ OVERSIGHT LENS (apply to every candidate) ═══
+For each submission, weigh the signals GAO/DoD-OIG funders actually audit for, and surface gaps in "whatItDoesNotAddress" and "unaddressedGaps":
+- DATA READINESS — is AI-ready data available, or must it be built/relabeled? (the most common reason DoD AI fails) A candidate with no data foundation is not yet fundable, however strong the concept.
+- HUMAN OVERSIGHT — for anything decisional about people/targeting, is human judgment required?
+- CLASSIFICATION / IMPACT LEVEL — is it declared and consistent with the data (CUI -> IL4/IL5)?
+- MATURITY (TRL) — is it stated, with a maturation or sustainment plan if low?
+- SUSTAINMENT COST — does the value claim acknowledge total cost of ownership, not just build?
+In "unaddressedGaps", explicitly call out common shortfalls across the set (e.g., "none state data readiness", "none declare an Impact Level", "none address T&E/assurance").
 
 ═══ ABSOLUTE ANTI-FABRICATION RULES ═══
 - NEVER invent specific numbers, named organizational units, evidence sources, or timelines a submission did not include
 - NEVER assert strategic alignment a submission did not explicitly claim
 - If a submission's claims are vague or unsupported, say so honestly — that's decision-useful information
-- Reference USPTO priorities by name (e.g., "efficient delivery of reliable IP rights"), not by number
-- Submissions may come from any part of USPTO and target any user group (examiners, IT, OGC, applicants, the public, etc.) — do not default to "examiners"
+- Reference DoW priorities by name (e.g., "enduring decision advantage", "readiness", "sustainment"), not by number
+- Submissions may come from any command and target any user group (warfighters, operators, sustainers, analysts, IT, medical, acquisition, etc.) — do not default to one group
 
 ═══ EVALUATION LENSES (apply implicitly, do not call out by name) ═══
 For each submission, the comparison should help the exec understand:
 - Is the user demand real and observable? (or speculative?)
 - Will the target users actually be able to use it? (workflow fit, training overhead)
-- Can USPTO actually build and integrate it? (FedRAMP/ATO, data access, vendor dependencies, technical complexity)
-- Can USPTO sustain it operationally? (procurement, ops, change management, ROI under federal cost realities)
+- Can DoW actually build and integrate it? (FedRAMP/ATO, data access, vendor dependencies, technical complexity)
+- Can DoW sustain it operationally? (procurement, ops, change management, ROI under federal cost realities)
 
 Surface these dimensions through your narrative and per-submission gaps — do not label them with technical terms.
 
 ═══ YOUR TASK ═══
-Read the dossier of ${submissions.length} submissions below. Be brief and decision-first — an exec should grasp the call in five seconds, then skim the rest. Produce:
-1. RECOMMENDATION — the single best candidate to fund first (by id) and one short sentence on why. If none are ready, say so plainly.
-2. PER-SUBMISSION verdict — for each: fund_now / fund_with_conditions / hold, a tight one-liner, and the single most important gap before funding.
-3. DIFFER — one sentence on how the candidates differ.
-4. PORTFOLIO GAP — one sentence on the most important thing missing across all of them.
+Read the dossier of ${submissions.length} submissions below. Then produce:
+1. A comparative NARRATIVE — how do they differ, where do they overlap, which advances which DoW priority most directly
+2. A PORTFOLIO TAKE — funding recommendation grounded in what the submissions actually show (or honest acknowledgment that more work is needed)
+3. UNADDRESSED GAPS — what DoW priorities aren't represented; what common weaknesses appear across multiple candidates
+4. PER-SUBMISSION snapshot — one-liner + specific gaps not addressed in that submission
 
-Keep every field short and concrete. Do not write paragraphs. Use the submissions' own facts; name gaps honestly.`,
+Tone: rigorous, honest, decision-useful. An exec should be able to read this and confidently make a funding call (or confidently say "not yet, here's what I need first").`,
         },
         {
           role: "user",
-          content: `Compare the following ${submissions.length} USPTO AI use case submissions:\n${dossier}`,
+          content: `Compare the following ${submissions.length} DoW AI use case submissions:\n${dossier}`,
         },
       ],
     })
 
     return {
-      recommendation: object.recommendation,
-      differ: object.differ,
-      portfolioGap: object.portfolioGap,
+      narrative: object.narrative,
+      portfolioTake: object.portfolioTake,
+      unaddressedGaps: object.unaddressedGaps,
       perSubmission: object.perSubmission,
     }
   } catch (error) {
     console.error("compareSubmissions AI error, falling back to mock briefing:", error)
-    const detail = error instanceof Error ? error.message : String(error)
     return {
-      recommendation: { fundId: "", headline: `Briefing couldn't be generated: ${detail}. Use the side-by-side comparison below.` },
-      differ: "(Briefing unavailable.)",
-      portfolioGap: "Review each candidate for baseline data, FedRAMP/ATO timing, and named priority alignment.",
+      narrative:
+        "(AI briefing temporarily unavailable.) These submissions span different parts of the DoW portfolio. A comparative analysis requires review of each candidate's target users, strategic priority advanced, and feasibility posture. Manual review recommended in the interim.",
+      portfolioTake:
+        "Unable to generate a portfolio take without AI synthesis. Recommend deferring funding decision until briefing service is available, or conducting manual side-by-side review using the candidate detail cards.",
+      unaddressedGaps:
+        "(Briefing unavailable.) Review each candidate manually for: FedRAMP/ATO timing, named DoW priority alignment, observable evidence of user demand, and quantified expected impact.",
       perSubmission: submissions.map((s) => ({
         id: s.id,
         title: s.formData.useCaseTitle || "Untitled idea",
-        verdict: "hold" as const,
-        oneLine: "AI briefing unavailable — review the submission detail.",
-        gap: "AI synthesis unavailable.",
+        oneLine: "AI briefing unavailable — review submission detail.",
+        whatItDoesNotAddress: "AI briefing unavailable — review submission detail for specific gaps.",
       })),
     }
   }

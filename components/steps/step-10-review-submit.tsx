@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { useForm } from "@/context/form-context"
 import { formSteps, type FormData } from "@/lib/steps"
-import { saveSubmission, patchSubmissionFormData } from "@/lib/submissions"
+import { saveSubmission } from "@/lib/submissions"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -67,7 +67,7 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Refined Business Value Summary", key: "businessValueSummary" },
   ],
   6: [
-    { label: "USPTO Focus Areas", key: "usptoFocusArea" },
+    { label: "Strategic focus areas", key: "usptoFocusArea" },
     { label: "Relevant OKRs / Alignment", key: "relevantOkrs" },
     { label: "Refined Summary", key: "alignmentSummary" },
   ],
@@ -81,6 +81,9 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "AI Decisional Impact", key: "aiDecisionalImpact" },
     { label: "AI Model Sourcing", key: "aiModelSourcing" },
     { label: "Mandatory Human Review", key: "aiHumanReview" },
+    { label: "Data Classification / Impact Level", key: "impactLevel" },
+    { label: "Data Readiness", key: "dataReadiness" },
+    { label: "Technology Readiness Level", key: "trl" },
     { label: "Refined Summary", key: "feasibilitySummary" },
   ],
   8: [
@@ -107,28 +110,13 @@ export function Step10ReviewSubmit() {
   const handleSubmitForVetting = async () => {
     setIsSubmitting(true)
     try {
-      // If we're editing an existing submission, update it in place so the
-      // comment thread + assignment are preserved, and send it back to the
-      // queue. Otherwise create a new submission.
-      const editingId = typeof window !== "undefined" ? localStorage.getItem("aid-editing-id") : null
-      if (editingId) {
-        await patchSubmissionFormData(editingId, { ...formData, reviewStatus: "submitted" })
-        try {
-          localStorage.removeItem("aid-editing-id")
-        } catch {
-          /* ignore */
-        }
-        toast({
-          title: "Changes submitted",
-          description: "Your updated idea was saved and routed back for review.",
-        })
-      } else {
-        await saveSubmission(formData)
-        toast({
-          title: "Submitted for vetting",
-          description: "Your idea has been saved and routed for review.",
-        })
-      }
+      // Persist to Supabase via the API. Every visitor will see this on
+      // their next page load (or on refetch).
+      await saveSubmission(formData)
+      toast({
+        title: "Submitted for vetting",
+        description: "Your idea has been saved and routed for review.",
+      })
       // Brief delay so the toast registers before the page transitions
       setTimeout(() => {
         setCurrentStep(10)
@@ -222,16 +210,31 @@ export function Step10ReviewSubmit() {
     open_source_us: "Open-source (U.S.)",
     foreign: "Foreign-built",
     unknown: "Unknown / TBD",
+    unclassified: "Unclassified / public (IL2)",
+    cui: "CUI (IL4)",
+    il5: "CUI, higher sensitivity (IL5)",
+    il6: "Classified up to Secret (IL6)",
+    ai_ready: "AI-ready data exists",
+    partial: "Partial — needs labeling/cleanup",
+    needs_build: "Must be built / relabeled",
+    "1": "TRL 1", "2": "TRL 2", "3": "TRL 3", "4": "TRL 4", "5": "TRL 5", "6": "TRL 6", "7": "TRL 7", "8": "TRL 8", "9": "TRL 9",
     patents: "Patents",
     trademarks: "Trademarks",
+    forscom: "Forces Command (FORSCOM)",
+    amc: "Army Materiel Command (AMC)",
+    tradoc: "Training & Doctrine Command (TRADOC)",
+    afc: "Army Futures Command (AFC)",
+    medcom: "Army Medical Command (MEDCOM)",
+    arcyber: "Army Cyber Command",
+    sustainment: "Sustainment / Logistics",
     ocio: "OCIO",
     ocfo: "OCFO",
     ogc: "OGC",
     opia: "OPIA",
     hr: "Human Resources",
     other: "Other",
-    patent_examiner: "Patent Examiner",
-    trademark_examiner: "Trademark Examiner",
+    patent_examiner: "Operations / Staff Officer",
+    trademark_examiner: "Analyst",
     supervisory_examiner: "Supervisory Examiner",
     product_owner: "Product Owner",
     lead_product_owner: "Lead Product Owner",
