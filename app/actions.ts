@@ -633,7 +633,7 @@ export async function validateAndRefineInput(
   const stepFormattingGuidelines: Record<number, string> = {
     2: `When producing the scaffold: open with 2-3 sentences naming the problem (severity, mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
     3: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
-    4: `When producing the scaffold: open with 2-3 sentences on user-level benefit (with a quantified time savings), then 2-3 sentences on agency-level business value tied to a named strategic priority.`,
+    4: `When producing the scaffold, output exactly two labeled paragraphs so each can fill its own field. Line 1: "User value:" followed by 2-3 sentences on user-level benefit with a quantified time savings. Then a blank line, then "Business value:" followed by 2-3 sentences on agency-level business value tied to a named strategic priority.`,
     5: `When producing the scaffold: 2-3 sentences mapping the idea to named strategic priorities and the explicit mechanism by which each is advanced.`,
     6: `When producing the scaffold: bullet points covering Technical Feasibility, Security & Compliance, Dependencies, and Primary Risks with mitigation. Address AI risk management: PII use, decisional AI impact, American-built model sourcing.`,
     7: `When producing the scaffold: bullet points for Success Metrics, Leading Indicators, Lagging Indicators, and Timeline.`,

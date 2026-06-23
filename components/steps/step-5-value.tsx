@@ -30,6 +30,19 @@ const benefitOptions = [
   { value: "other", label: "Other" },
 ]
 
+// Scout returns the value scaffold as two labeled paragraphs ("User value:" /
+// "Business value:"). Split them so each refined-summary field gets its half;
+// if the labels are missing, everything goes to the business summary.
+function splitValueScaffold(text: string): { userPart: string; businessPart: string } {
+  const divider = text.match(/business value\s*:/i)
+  if (divider && divider.index !== undefined) {
+    const userPart = text.slice(0, divider.index).replace(/^\s*user value\s*:/i, "").trim()
+    const businessPart = text.slice(divider.index + divider[0].length).trim()
+    return { userPart, businessPart }
+  }
+  return { userPart: "", businessPart: text.trim() }
+}
+
 export function Step5Value() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
@@ -56,7 +69,12 @@ export function Step5Value() {
   // Scout coaches on the business-value summary; user-value summary auto-fills
   // from the same conversation.
   const handleSuggestion = (suggestion: string) => {
-    setFormData((prev) => ({ ...prev, businessValueSummary: suggestion }))
+    const { userPart, businessPart } = splitValueScaffold(suggestion)
+    setFormData((prev) => ({
+      ...prev,
+      userValueSummary: userPart || prev.userValueSummary || "",
+      businessValueSummary: businessPart,
+    }))
   }
 
   return (
