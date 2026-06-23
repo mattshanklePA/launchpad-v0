@@ -586,22 +586,12 @@ Rules:
     console.error("AI Gateway error for strategic alignment suggestion:", error)
     // Soft fallback: best-guess focus areas based on the title/description text.
     // Better than blocking the demo if the API is down.
-    const text = `${formData.useCaseTitle} ${formData.useCaseDescription} ${formData.coreProblem} ${formData.proposedSolution}`.toLowerCase()
-    const guess: string[] = []
-    if (/pendency|backlog|examin|exam |search|prior art/.test(text)) {
-      guess.push("goal_pendency_quality")
-    }
-    if (/operat|ticket|hr|onboard|workflow|process/.test(text)) {
-      guess.push("goal_employee_experience")
-    }
-    if (/security|pii|bias|fairness|explainab/.test(text)) {
-      guess.push("ai_responsible_use")
-    }
-    if (guess.length === 0) {
-      guess.push("ai_infrastructure")
-    }
+    // Tenant-agnostic fallback: use the first 1-2 of the active tenant's focus
+    // areas so the form always gets valid, selectable suggestions when the
+    // model is unavailable.
+    const guess = STRATEGIC_FOCUS_AREAS.slice(0, 2).map((f) => f.id)
     return {
-      focusAreas: guess.slice(0, 2),
+      focusAreas: guess,
       relevantOkrs:
         "This idea aligns with the organization's published strategic priorities. Review the suggested focus areas and add specific references where you have them.",
       alignmentSummary:

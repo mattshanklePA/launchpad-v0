@@ -37,6 +37,7 @@ export function Step7Alignment() {
   const [suggesting, setSuggesting] = useState(false)
   const [suggestion, setSuggestion] = useState<AlignmentSuggestion | null>(null)
   const [autoTried, setAutoTried] = useState(false)
+  const [autoFilled, setAutoFilled] = useState(false)
 
   // Cheap heuristic for "has the submitter filled out the upstream steps enough
   // that a Scout suggestion would be useful?" — title + (problem or solution).
@@ -50,7 +51,7 @@ export function Step7Alignment() {
     Boolean(formData.relevantOkrs?.trim()) ||
     Boolean(formData.alignmentSummary?.trim())
 
-  const fetchSuggestion = async () => {
+  const fetchSuggestion = async (auto = false) => {
     if (!hasUpstreamContext) {
       toast({
         variant: "destructive",
@@ -62,7 +63,17 @@ export function Step7Alignment() {
     setSuggesting(true)
     try {
       const result = await suggestStrategicAlignment(formData)
-      setSuggestion(result)
+      if (auto && result.focusAreas.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          usptoFocusArea: Array.from(new Set([...(prev.usptoFocusArea || []), ...result.focusAreas])),
+          relevantOkrs: prev.relevantOkrs?.trim() ? prev.relevantOkrs : result.relevantOkrs,
+          alignmentSummary: prev.alignmentSummary?.trim() ? prev.alignmentSummary : result.alignmentSummary,
+        }))
+        setAutoFilled(true)
+      } else {
+        setSuggestion(result)
+      }
     } catch (error) {
       console.error("Failed to fetch alignment suggestion:", error)
       toast({
@@ -81,7 +92,7 @@ export function Step7Alignment() {
     if (autoTried) return
     setAutoTried(true)
     if (hasUpstreamContext && !hasUserData) {
-      fetchSuggestion()
+      fetchSuggestion(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -183,7 +194,7 @@ export function Step7Alignment() {
                       <CheckCircle2 className="h-4 w-4 mr-1" />
                       Apply suggestion
                     </Button>
-                    <Button size="sm" variant="outline" onClick={fetchSuggestion} disabled={suggesting}>
+                    <Button size="sm" variant="outline" onClick={() => fetchSuggestion()} disabled={suggesting}>
                       <RefreshCw className="h-3.5 w-3.5 mr-1" />
                       Re-run
                     </Button>
@@ -203,7 +214,7 @@ export function Step7Alignment() {
                 <Sparkles className="h-4 w-4 inline mr-1 text-uspto-blue-primary" />
                 Let Scout draft this for you based on what you've entered.
               </p>
-              <Button size="sm" onClick={fetchSuggestion}>
+              <Button size="sm" onClick={() => fetchSuggestion()}>
                 Get a suggestion
               </Button>
             </div>
@@ -212,10 +223,15 @@ export function Step7Alignment() {
           {/* ─── Focus area selectors (grouped by category) ─── */}
           {isVisible("usptoFocusArea") && (
           <div className="space-y-3">
+            {autoFilled && (
+              <div className="rounded-md border border-uspto-blue-primary/30 bg-uspto-blue-primary/5 px-3 py-2 text-sm">
+                Scout filled this in from your earlier answers. Review and edit as needed.
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <Label>Which Department of War priorities does this advance?</Label>
               {hasUserData && !suggesting && !suggestion && (
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={fetchSuggestion}>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => fetchSuggestion()}>
                   <Sparkles className="h-3 w-3 mr-1" />
                   Re-suggest
                 </Button>
