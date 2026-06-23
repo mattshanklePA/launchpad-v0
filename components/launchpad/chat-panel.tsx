@@ -47,7 +47,7 @@ function getStepContext(step: number): { buttonLabel: string; emptyMessage: stri
       return {
         buttonLabel: "Help Me with Value",
         emptyMessage:
-          "Note the business case in the field above, then click below. I'll help you tie user-level benefit to defensible agency-level numbers.",
+          "Note the user value or business value above, then click below. I'll help you tie user-level benefit to defensible agency-level numbers.",
       }
     case 5:
       return {
@@ -88,6 +88,18 @@ function getInputFieldForStep(step: number): keyof FormData | null {
     default:
       return null
   }
+}
+
+// On the merged Value step (4), Scout engages when EITHER the user-value or
+// business-value field has a draft — not only business value.
+function stepHasDraft(step: number, formData: FormData): boolean {
+  const single = getInputFieldForStep(step)
+  const fields: (keyof FormData)[] = step === 4 ? ["userValue", "businessValue"] : single ? [single] : []
+  if (fields.length === 0) return true
+  return fields.some((fld) => {
+    const v = formData[fld]
+    return typeof v === "string" && v.trim().length > 0
+  })
 }
 
 // Convert local chat messages to the legacy API message shape
@@ -136,9 +148,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
   }
 
   const handleInitialClick = async () => {
-    const field = getInputFieldForStep(step)
-    const userInput = field ? (formData[field] as string) : ""
-    if (!userInput || userInput.trim() === "") {
+    if (!stepHasDraft(step, formData)) {
       toast({
         variant: "destructive",
         title: "Add a draft first",
@@ -187,9 +197,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
   // Scout needs a rough draft in the step's source field before it has
   // anything to work with — gate the initial button on that so a click never
   // silently no-ops.
-  const sourceField = getInputFieldForStep(step)
-  const sourceText = sourceField ? (formData[sourceField] as string | undefined) : undefined
-  const hasDraft = !sourceField || (typeof sourceText === "string" && sourceText.trim().length > 0)
+  const hasDraft = stepHasDraft(step, formData)
 
   return (
     <TooltipProvider>
