@@ -504,7 +504,7 @@ export const seedSubmissions: Submission[] = [
     formData: mk({
       "submitterName": "Daniel Roth",
       "submitterEmail": "daniel.roth@uspto.gov",
-      "submitterRole": "supervisory_examiner",
+      "submitterRole": "manager",
       "submitterOffice": "patents",
       "useCaseTitle": "Examiner Onboarding Knowledge Assistant",
       "publicIndicator": "public",
@@ -558,7 +558,7 @@ export const seedSubmissions: Submission[] = [
       "timelineForResults": "3_6",
       "implementationComplexity": "low",
       "involvesSensitiveData": "no",
-      "aiModelSourcing": "american",
+      "aiModelSourcing": "american_built",
       "aiDecisionalImpact": "no",
       "aiHumanReview": "yes",
       "readinessScore": "needs_work",
