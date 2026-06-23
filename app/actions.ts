@@ -506,8 +506,7 @@ export async function suggestStrategicAlignment(
   // Build context from the prior steps. We only call the AI when the idea
   // has enough body to alignment-match against — title alone isn't enough.
   const haveBody = Boolean(
-    formData.useCaseTitle?.trim() &&
-      (formData.coreProblem?.trim() || formData.proposedSolution?.trim()),
+    formData.coreProblem?.trim() || formData.proposedSolution?.trim(),
   )
   if (!haveBody) {
     return {

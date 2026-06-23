@@ -42,8 +42,7 @@ export function Step7Alignment() {
   // Cheap heuristic for "has the submitter filled out the upstream steps enough
   // that a Scout suggestion would be useful?" — title + (problem or solution).
   const hasUpstreamContext = Boolean(
-    formData.useCaseTitle?.trim() &&
-      (formData.coreProblem?.trim() || formData.proposedSolution?.trim()),
+    formData.coreProblem?.trim() || formData.proposedSolution?.trim(),
   )
 
   const hasUserData =
