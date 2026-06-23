@@ -62,7 +62,7 @@ function LoginForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@dow.mil"
+              placeholder="you@launchpad.com"
               autoComplete="email"
               required
             />

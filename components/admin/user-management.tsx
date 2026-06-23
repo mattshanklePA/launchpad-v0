@@ -213,7 +213,7 @@ export function UserManagement() {
                   type="email"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
-                  placeholder="jane.smith@uspto.gov"
+                  placeholder="jane.smith@launchpad.com"
                 />
               </div>
               <div className="space-y-1">

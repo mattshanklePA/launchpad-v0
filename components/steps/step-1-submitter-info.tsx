@@ -32,7 +32,7 @@ export function Step1SubmitterInfo() {
               type="email"
               value={formData.submitterEmail}
               onChange={(e) => setFormData((prev) => ({ ...prev, submitterEmail: e.target.value }))}
-              placeholder="e.g., jane.doe@army.mil"
+              placeholder="e.g., jane.doe@launchpad.com"
             />
           </div>
         )}
