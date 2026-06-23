@@ -105,7 +105,7 @@ export function Step2UseCaseOverview() {
           id="useCaseTitle"
           value={formData.useCaseTitle}
           onChange={(e) => setFormData((prev) => ({ ...prev, useCaseTitle: e.target.value }))}
-          placeholder="A short, specific name, like AI-Assisted Prior Art Search"
+          placeholder="A short, specific name, like Predictive Maintenance for Ground Vehicles"
         />
       </div>
 
