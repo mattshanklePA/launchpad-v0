@@ -45,7 +45,10 @@ export type FormData = {
     | "developer"
     | "other"
     | ""
-  submitterOffice: "patents" | "trademarks" | "ocio" | "ocfo" | "ogc" | "opia" | "hr" | "other" | ""
+  // Tenant-defined org unit (USPTO business unit, DoC bureau, ...). Options come
+  // from the active tenant's `unit.options`, so this is a free string rather than
+  // a per-tenant union.
+  submitterOffice: string
 
   // Step 2 - Use Case Overview
   useCaseTitle: string

@@ -1,21 +1,36 @@
 // /api/seed
-//   POST → if submissions table is empty, insert the 5 demo submissions.
-//          Otherwise no-op. Idempotent and safe to call on every page load.
+//   POST → if the submissions table is empty, insert the active tenant's demo
+//          submissions. Otherwise no-op. Idempotent and safe to call on load.
+//   GET  → peek at seed status without mutating.
 //
-// The seed data lives in lib/seedSubmissions.ts so we have one source of
-// truth — the API just reads the array and bulk-inserts.
+// Seed data is per-tenant: USPTO uses lib/seedSubmissions.ts, DoC uses
+// lib/seedSubmissionsDoc.ts. Other tenants (DoW, ...) are seeded explicitly via
+// SQL, so the route no-ops for them to avoid cross-tenant pollution.
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseClient"
 import { seedSubmissions } from "@/lib/seedSubmissions"
+import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 import { getTenant } from "@/lib/tenant"
+import type { Submission } from "@/lib/submissions"
+
+// Pick the seed set for the active tenant. Returns null for tenants whose data
+// is managed outside this route (seeded via SQL).
+function seedForActiveTenant(): Submission[] | null {
+  switch (getTenant().id) {
+    case "uspto":
+      return seedSubmissions
+    case "doc":
+      return docSeedSubmissions
+    default:
+      return null
+  }
+}
 
 export async function POST() {
   try {
-    // Only the USPTO tenant auto-seeds its demo submissions. Other tenants
-    // (DoW, ...) are seeded explicitly via SQL, so skip to avoid cross-tenant
-    // pollution of a fresh database.
-    if (getTenant().id !== "uspto") {
+    const seedSet = seedForActiveTenant()
+    if (!seedSet) {
       return NextResponse.json({ ok: true, seeded: false, reason: "tenant-managed seed" })
     }
     const supabase = getSupabaseAdmin()
@@ -36,13 +51,36 @@ export async function POST() {
     }
 
     // Insert the seed set.
-    const rows = seedSubmissions.map((s) => ({
+    const rows = seedSet.map((s) => ({
       id: s.id,
       submitted_at: s.submittedAt,
       form_data: s.formData,
     }))
     const { error } = await supabase.from("submissions").insert(rows)
     if (error) throw error
+
+    // Best-effort: sync the workflow columns (status / owner / business unit)
+    // from each form_data so the pipeline kanban buckets seeds by their real
+    // status and owners. Without this, the status column takes its DB default
+    // ("submitted") and every seeded row stacks in one column. Mirrors the POST
+    // /api/submissions handler; errors are swallowed if the columns aren't present.
+    try {
+      await Promise.all(
+        seedSet.map((s) => {
+          const fd = s.formData as Record<string, unknown>
+          return supabase
+            .from("submissions")
+            .update({
+              status: (fd.reviewStatus as string) || "submitted",
+              owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
+              business_unit: (fd.submitterOffice as string) || null,
+            })
+            .eq("id", s.id)
+        }),
+      )
+    } catch (e) {
+      console.warn("seed workflow column sync skipped:", e)
+    }
 
     return NextResponse.json({
       ok: true,
@@ -58,8 +96,6 @@ export async function POST() {
   }
 }
 
-// POST is the primary action, but allow GET to peek at the seed status without
-// mutating — convenient for debugging.
 export async function GET() {
   try {
     const supabase = getSupabaseAdmin()
@@ -67,10 +103,12 @@ export async function GET() {
       .from("submissions")
       .select("id", { count: "exact", head: true })
     if (error) throw error
+    const seedSet = seedForActiveTenant()
     return NextResponse.json({
+      tenant: getTenant().id,
       existingCount: count ?? 0,
-      seedAvailable: seedSubmissions.length,
-      wouldSeed: (count ?? 0) === 0,
+      seedAvailable: seedSet ? seedSet.length : 0,
+      wouldSeed: Boolean(seedSet) && (count ?? 0) === 0,
     })
   } catch (error) {
     console.error("GET /api/seed failed:", error)
