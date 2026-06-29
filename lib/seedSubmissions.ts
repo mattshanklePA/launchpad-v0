@@ -11,7 +11,7 @@ import { type Submission } from "@/lib/submissions"
 
 const STORAGE_KEY = "launchpad-submissions"
 const SEED_MARKER = "launchpad-seed-version"
-const CURRENT_SEED_VERSION = "v1-2026-05-15"
+const CURRENT_SEED_VERSION = "v2-2026-06-29"
 
 function mk(partial: Partial<FormData>): FormData {
   return { ...initialFormData, ...partial }
@@ -24,6 +24,197 @@ function mk(partial: Partial<FormData>): FormData {
 // now that data lives in Supabase; the localStorage helpers below are kept
 // only as a last-resort fallback if the API is unreachable.
 export const seedSubmissions: Submission[] = [
+  // ── DEMO (Commerce / Doug Freeman): public-facing customer-experience pair. ──
+  // A) Public-facing plain-language assistant — the demo centerpiece. Strong,
+  //    customer-centered, responsible-AI by design; funded "with conditions"
+  //    because it's public-facing (validate groundedness + 508 first).
+  {
+    id: "seed-cx-public-assistant",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // ~2 hours ago
+    formData: mk({
+      submitterName: "Renee Caldwell",
+      submitterEmail: "renee.caldwell@uspto.gov",
+      submitterRole: "product_owner",
+      submitterOffice: "other",
+
+      reviewStatus: "in_review",
+      useCaseTitle: "Plain-Language Customer Assistant for Public Services",
+      useCaseDescription:
+        "A public-facing AI assistant that answers the public's and businesses' common questions and explains application status in plain language — 24/7, in multiple languages, with a citation to the official source behind every answer and a clean handoff to a person. It never determines eligibility or makes a decision about anyone; it helps people understand and navigate.",
+      publicIndicator: "public",
+
+      targetAudience: "applicant",
+      impactedUsersCount: "gt_500",
+      painPoints:
+        "People navigating Commerce services can't get fast, clear answers. They wait days for email or sit in phone queues, the guidance they find is written in program jargon, and limited-English and assistive-technology users are underserved. The contact center is swamped with repetitive 'where is my application / what does this status mean / what do I do next' questions.",
+      targetUserContext:
+        "Members of the public and small businesses interacting with a public-facing Commerce service line, plus the contact-center staff who field their questions. Highest value for first-time applicants and limited-English speakers who don't know the terminology.",
+      targetUserSummary:
+        "The public and businesses using a Commerce public service — especially first-time and limited-English applicants — and the contact-center staff who support them.",
+
+      coreProblem:
+        "The public cannot get fast, plain-language answers about Commerce programs and the status of their applications. Existing self-service content is written for insiders, isn't available after hours or in multiple languages, and pushes avoidable volume into the phone and email queues.",
+      problemImpact:
+        "Repetitive, plain-language questions dominate contact-center volume; routine answers take days by email or long holds by phone. The burden falls hardest on first-time and limited-English customers, eroding trust and accessibility.",
+      affectedSystem: "cross_functional",
+      problemType: ["user_experience", "productivity"],
+      severity: "high",
+      problemDefinition:
+        "Members of the public and businesses lack a fast, accessible, plain-language way to get answers and understand application status across Commerce public services, driving high contact-center volume and an uneven, often inaccessible customer experience.",
+
+      proposedSolution:
+        "A retrieval-grounded assistant that answers only from official, published Commerce content and cites the source for every answer, with plain-language rewriting and multilingual support. For status questions it reads from a scoped, authenticated status API — it never stores or decides anything. Low confidence or anything sensitive routes to a person. Every interaction is logged for oversight. The assistant is informational only; it never determines eligibility or issues a decision.",
+      keyFunctionality: ["question_answering", "search", "summarization", "translation"],
+      solutionSummary:
+        "Source-grounded, plain-language, multilingual public assistant with a citation behind every answer, scoped status lookups, human handoff, and full interaction logging. Informational only — no decisions.",
+
+      userValue:
+        "Anyone can get a clear, correct answer in seconds, after hours, in their own language — and understand what their status means and what to do next — instead of waiting days or decoding jargon.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["less_frustration", "better_decisions", "more_consistent_work"],
+      userValueSummary:
+        "Instant, plain-language, multilingual answers and status explanations, 24/7, with a human one click away.",
+
+      businessValue:
+        "Deflects a large share of repetitive contact-center volume to self-service, shortens response times, and raises trust and accessibility for the public — letting staff focus on the complex cases that actually need a person.",
+      costSavings: "250k_1m",
+      strategicBenefit: ["operational_efficiency", "employee_experience"],
+      businessValueSummary:
+        "Meaningful contact-center deflection and faster responses, with a more accessible, trustworthy customer experience as the headline outcome.",
+
+      usptoFocusArea: ["goal_employee_experience", "goal_public_good", "ai_responsible_use"],
+      relevantOkrs:
+        "Customer-experience and digital-service goals: plain-language and accessibility commitments (21st Century IDEA Act / Section 508), responsible-AI use with human oversight, and bringing service improvements to the public.",
+      alignmentSummary:
+        "Advances customer experience and the public good, executed under responsible-AI guardrails (source-grounded, cited, human-in-the-loop). A human-centered, plain-language front door to Commerce services.",
+
+      implementationComplexity: "medium",
+      resourcesNeeded: ["ml_engineers", "content_owner", "infrastructure"],
+      dependencies:
+        "A clean, authoritative published-content corpus; a scoped, authenticated status API; plain-language and multilingual review; and Section 508 / accessibility validation. The model work is well understood — the real work is content quality, guardrails, and accessibility.",
+      involvesSensitiveData: "yes",
+      securityClassification: "controlled",
+      accessControlRequirements: ["pii_protection", "audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      feasibilitySummary:
+        "Medium complexity. Public-facing means the bar is answer groundedness (no hallucinated guidance), Section 508 conformance, and multilingual accuracy — all validated in a measured pilot. Status lookups touch PII, so they run through a scoped, authenticated API with logging. American-built model, U.S.-hosted; informational only with mandatory human handoff.",
+
+      successMetrics:
+        "Self-service deflection rate, human-rated answer groundedness/accuracy (target: high, with zero un-cited guidance), customer satisfaction, time-to-answer, escalation rate, and language coverage — measured in a pilot against a control.",
+      keyMetrics: ["user_satisfaction", "ticket_volume_reduction", "resolution_time", "adoption_rate"],
+      timelineForResults: "6_12",
+      metricsSummary:
+        "Pilot measures deflection, answer groundedness, CSAT, time-to-answer, and language coverage against a control before scaling.",
+
+      routeTo: ["governance"],
+      reviewerNotes:
+        "High-impact, public-facing CX play. Strong responsible-AI posture; the open item is a validated groundedness/accuracy baseline and 508 conformance before public exposure.",
+
+      readinessScore: "ready",
+      readinessSummary:
+        "Comprehensive and clearly customer-centered, with a responsible-AI design (source-grounded, cited, human handoff, informational only). Because it is public-facing, fund it with one condition: validate answer groundedness, Section 508 conformance, and multilingual accuracy in the pilot before public exposure. Risk posture is otherwise sound.",
+      executiveSummary:
+        "Members of the public and businesses can't get fast, plain-language answers about Commerce services or what their application status means, which overloads the contact center and underserves first-time and limited-English customers. This public-facing assistant answers only from official content with a citation behind every answer, rewrites in plain language across multiple languages, reads status through a scoped authenticated API, and hands off to a person on anything sensitive or low-confidence — it never makes a decision about anyone. Expected outcome: meaningful contact-center deflection, faster responses, and a more accessible, trustworthy customer experience. It is American-built and U.S.-hosted, informational only, human-in-the-loop. Recommend funding with a pilot condition: validate answer groundedness, Section 508 conformance, and multilingual accuracy before public exposure.",
+    } as Partial<FormData>),
+  },
+
+  // B) Internal agent copilot — the Decision Center comparison candidate.
+  //    Same mission (better, faster, more consistent customer service), a
+  //    different point in the workflow, and a lower-risk posture.
+  {
+    id: "seed-cx-agent-assist",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // ~5 hours ago
+    formData: mk({
+      submitterName: "Marcus Bell",
+      submitterEmail: "marcus.bell@uspto.gov",
+      submitterRole: "manager",
+      submitterOffice: "other",
+
+      reviewStatus: "submitted",
+      useCaseTitle: "Contact-Center Response Assistant (Agent Copilot)",
+      useCaseDescription:
+        "An internal copilot that drafts a suggested reply for a customer-service representative to review, edit, and send. It pulls the right answer from the approved knowledge base with citations, never auto-sends, and is not public-facing.",
+      publicIndicator: "public",
+
+      targetAudience: "other",
+      impactedUsersCount: "50_500",
+      painPoints:
+        "Representatives draft the same routine answers from scratch all day, answers vary in quality and consistency between staff, new reps take months to ramp, and response SLAs slip during peak periods.",
+      targetUserContext:
+        "Contact-center representatives who respond to public and business inquiries, and the supervisors who QA their responses. Indirect benefit to every member of the public waiting on a reply.",
+      targetUserSummary:
+        "Contact-center representatives and their supervisors; indirect benefit to the public awaiting responses.",
+
+      coreProblem:
+        "Representatives spend most of their time drafting repetitive responses by hand, with quality and consistency varying by individual, which slows responses and drives avoidable rework and escalations.",
+      problemImpact:
+        "Routine response drafting consumes the bulk of representative time; inconsistent answers generate rework and re-contacts, and SLAs slip when volume spikes.",
+      affectedSystem: "cross_functional",
+      problemType: ["productivity", "user_experience"],
+      severity: "medium",
+      problemDefinition:
+        "Customer-service representatives lack a fast, consistent way to draft accurate responses to common inquiries, slowing response times and producing uneven answer quality across staff.",
+
+      proposedSolution:
+        "A copilot in the agent console that retrieves the right answer from the approved knowledge base and drafts a suggested, cited reply. The representative edits and approves every message before it is sent — the assistant never sends anything. Low-confidence drafts are flagged, and every suggestion and edit is logged.",
+      keyFunctionality: ["question_answering", "summarization", "search"],
+      solutionSummary:
+        "Agent-console copilot that drafts cited replies from the approved knowledge base; the rep edits and approves every send. Internal only; fully logged.",
+
+      userValue:
+        "Representatives answer faster and more consistently, lean on a trusted source instead of memory, and ramp far quicker — with less repetitive drafting.",
+      userTimeSavings: "5_10",
+      otherUserImprovements: ["more_consistent_work", "less_frustration", "better_decisions"],
+      userValueSummary:
+        "Faster, more consistent responses and quicker onboarding for representatives; the rep stays the author and approver.",
+
+      businessValue:
+        "Increases response throughput, shortens response time, and improves answer consistency without putting AI in front of the public — a lower-risk first step that frees staff for complex cases.",
+      costSavings: "250k_1m",
+      strategicBenefit: ["operational_efficiency", "employee_experience"],
+      businessValueSummary:
+        "Higher throughput, faster and more consistent responses, and quicker rep onboarding — with a low-risk, human-approved posture.",
+
+      usptoFocusArea: ["goal_employee_experience", "ai_responsible_use"],
+      relevantOkrs:
+        "Customer-service response-time and quality targets; responsible-AI use with mandatory human review; workforce enablement and faster onboarding.",
+      alignmentSummary:
+        "Improves customer experience indirectly through faster, more consistent staff responses, under a low-risk, human-approved design. Strong responsible-AI posture (internal, every send human-approved).",
+
+      implementationComplexity: "low",
+      resourcesNeeded: ["ml_engineers", "content_owner"],
+      dependencies:
+        "Access to the approved knowledge base and the agent console for integration. The main lift is knowledge-base curation, not modeling. A measured pilot baseline (handle time, consistency) is already available.",
+      involvesSensitiveData: "no",
+      securityClassification: "internal",
+      accessControlRequirements: ["employee_authentication", "audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      feasibilitySummary:
+        "Low complexity and low risk. Internal only, not public-facing; the representative approves every send; full audit logging. Knowledge-base curation is the main effort. American-built, U.S.-hosted, with a measured pilot baseline already collected.",
+
+      successMetrics:
+        "Average handle time, first-contact resolution, QA/consistency pass rate, percentage of responses using a suggested draft, and response-time SLA attainment — tracked against the current baseline.",
+      keyMetrics: ["resolution_time", "productivity", "user_satisfaction", "adoption_rate"],
+      timelineForResults: "3_6",
+      metricsSummary:
+        "Tracks handle time, first-contact resolution, consistency, and draft adoption against an existing pilot baseline.",
+
+      routeTo: ["governance"],
+      reviewerNotes:
+        "Clean, low-risk operational case with a measured baseline and human approval on every send. Strong candidate to move first.",
+
+      readinessScore: "ready",
+      readinessSummary:
+        "Low-risk, well-scoped, and measurable: internal only, human-approved on every send, full logging, American-built, with a pilot baseline already collected. Ready to fund.",
+      executiveSummary:
+        "Customer-service representatives draft the same routine replies by hand all day, with quality varying by person and SLAs slipping at peak. This internal copilot drafts a cited reply from the approved knowledge base for the representative to edit and approve — it never sends on its own and is not public-facing. Expected outcome: faster, more consistent responses and quicker onboarding, freeing staff for complex cases. Low complexity, low risk: human-approved on every send, fully logged, American-built and U.S.-hosted, with a measured pilot baseline already in hand. Ready to fund.",
+    } as Partial<FormData>),
+  },
+
   // 1) Patents — READY. Strong example, shows the tool's "ideal" state.
   {
     id: "seed-patents-prior-art",
@@ -724,6 +915,50 @@ export const seedSubmissions: Submission[] = [
   },
 ]
 
+// ── DEMO in-progress draft (Commerce / Doug Freeman) ──
+// A third, related idea left mid-wizard so the demo can show "save and resume."
+// This is NOT a submission — the landing/home "Resume" affordance reads the
+// in-progress draft straight from localStorage (aid-form-data + aid-current-step),
+// independent of which user is signed in. Resumes at the Solution step with the
+// problem already captured.
+const DEMO_DRAFT_FORM_KEY = "aid-form-data"
+const DEMO_DRAFT_STEP_KEY = "aid-current-step"
+const DEMO_DRAFT_STEP = "3" // Solution step (problem already filled)
+
+const DEMO_IN_PROGRESS_DRAFT: Partial<FormData> = {
+  useCaseDescription:
+    "Proactively tell customers, in plain language, when their application status changes — so they stop having to call or email just to ask 'where is my application?'",
+  publicIndicator: "public",
+  targetAudience: "applicant",
+  impactedUsersCount: "gt_500",
+  painPoints:
+    "Customers have no easy way to know when their application moves forward, so they contact the call center just to ask for a status update — and the updates that do exist are written in internal jargon they can't interpret.",
+  targetUserContext:
+    "Members of the public and businesses waiting on an application decision from a public-facing Commerce service.",
+  targetUserSummary:
+    "The public and businesses awaiting an application outcome from a Commerce public service.",
+  coreProblem:
+    "Customers are left in the dark between status changes, so they generate avoidable call and email volume asking for updates — and when they do see a status, it's in language they can't understand.",
+  problemImpact:
+    "A large share of contact-center volume is simple 'what's my status / what does this mean' inquiries that a proactive, plain-language notification could prevent.",
+  affectedSystem: "cross_functional",
+  problemType: ["user_experience", "productivity"],
+  severity: "medium",
+}
+
+/** Install the demo in-progress draft into localStorage. With force=false, it
+ *  won't clobber a real draft the user already has in progress. */
+function installDemoDraft(force: boolean): void {
+  if (typeof window === "undefined") return
+  try {
+    if (!force && localStorage.getItem(DEMO_DRAFT_FORM_KEY)) return
+    localStorage.setItem(DEMO_DRAFT_FORM_KEY, JSON.stringify(DEMO_IN_PROGRESS_DRAFT))
+    localStorage.setItem(DEMO_DRAFT_STEP_KEY, DEMO_DRAFT_STEP)
+  } catch (error) {
+    console.error("Failed to install demo in-progress draft:", error)
+  }
+}
+
 /**
  * Seeds the demo submissions into localStorage if (a) there are no existing
  * submissions, OR (b) the seed marker is missing or out of date. Safe to call
@@ -760,6 +995,8 @@ export function seedDemoSubmissionsIfEmpty(): void {
     // Otherwise: install the seed set fresh.
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seedSubmissions))
     localStorage.setItem(SEED_MARKER, CURRENT_SEED_VERSION)
+    // Also stage the demo in-progress draft (won't overwrite a real one).
+    installDemoDraft(false)
   } catch (error) {
     console.error("Failed to seed demo submissions:", error)
   }
@@ -773,6 +1010,8 @@ export function reseedDemoSubmissions(): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seedSubmissions))
     localStorage.setItem(SEED_MARKER, CURRENT_SEED_VERSION)
+    // Force-stage the demo in-progress draft on an explicit reset.
+    installDemoDraft(true)
   } catch (error) {
     console.error("Failed to reseed demo submissions:", error)
   }
