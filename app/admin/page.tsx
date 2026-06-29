@@ -1170,8 +1170,8 @@ function AdminPageInner() {
                     Demo Data
                   </CardTitle>
                   <CardDescription>
-                    Pre-loaded sample submissions across business units (Patents, Trademarks, OCIO, HR, OGC) for the
-                    Decision Center demo. Use these controls if the seed didn't load or you want a clean slate.
+                    Pre-loaded sample submissions across business units for the Decision Center demo. Use these
+                    controls if the seed didn&apos;t load or you want a clean slate.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -1200,7 +1200,7 @@ function AdminPageInner() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Reload wipes the Supabase submissions table and re-inserts the 5 demo records. Clear All wipes
+                    Reload wipes the Supabase submissions table and re-inserts the demo records. Clear All wipes
                     everything. Both actions affect what every visitor to the demo site sees.
                   </p>
                 </CardContent>

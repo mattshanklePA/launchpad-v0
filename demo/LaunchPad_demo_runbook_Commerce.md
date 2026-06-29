@@ -192,6 +192,97 @@ Timeline for Results → **6–12 months**
 
 ---
 
+## "How do we get this?" — the acquisition & IP conversation
+
+This question **will** come up — Doug came to you through **Scott Merker (USPTO)**, who raised exactly this concern and who pushed the Commerce-wide vision. So Doug likely already has Scott's framing. Get ahead of it, be forthright, lay out the paths, and signal you're already working the structure behind the scenes. Do **not** wing the legal terms in the room.
+
+### The concern, named honestly (say it before he has to)
+> *"Scott raised the right question, and I want to put it on the table myself: under federal rules, code the government pays to develop — or that a government employee writes — can fall into the public domain under a CC0 license. We never want that to erode the product, and you never want to be locked into us. So we've designed the deal specifically to avoid that, and our counsel is finalizing it now."*
+
+### How we keep it clean (the structure)
+- **Commercial product, licensed — not custom-built for hire, not transferred.** LaunchPad was built at Packaged Agile's private expense. The federal open-source / source-code policy reaches *custom code the government funds*, not a commercial product you license. That's the whole game.
+- **The core stays ours; government-funded work happens only in a thin adapter layer.** Identity, your AI endpoint, storage, connectors, branding, field config — that integration layer is where any government-paid work lives, cleanly separated from the proprietary core. So even when your people are "hands on keyboard," they're working the adapter, not the core. (This is the architecture boundary in `docs/BOUNDARY.md` / `docs/ARCHITECTURE.md` — it's an IP-protection boundary as much as a technical one.)
+- **A great deal for the first customer, without giving the product away.** A free, perpetual, agency-wide license. You pay only for **our people** — configuration, integration, hosting, support — not license fees.
+- **We host it; source isn't handed over.** SaaS or a PA-owned image in your tenant, with **source-code escrow** (not open source) for your continuity comfort.
+
+### The paths to actually contract it (the "vehicles")
+Two are clean for Commerce as a civilian agency:
+- **GSA MAS** — Packaged Agile holds Schedule contract **#47QTCA22D008Z**. Commerce can order against it with a task order — the standard commercial path, minimal friction.
+- **HUBZone sole-source** — Packaged Agile is **SBA HUBZone-certified**, so a Commerce contracting officer can make a **non-competitive (sole-source) award up to $4.5M for services** (FAR 19.1306). That's the fastest route to a scoped first pilot without a full competition.
+- **Buy it as services** — the cleanest framing of all: you're buying our labor to stand it up, with the software provided at no license cost. (Maps directly to Scott's "the meat is the integration.")
+- **Alternatives if those don't fit** — an innovation/pilot or SBIR path (NIST sits inside Commerce), or teaming as a sub to an incumbent. Secondary; lead with GSA MAS + HUBZone.
+
+> **Accuracy guardrail:** PA's *other* vehicles (VA IHT 2.0, USACE BPA, DoD Tradewinds) are agency-specific and mostly **don't** reach civilian Commerce — don't pitch Tradewinds here. GSA MAS and HUBZone sole-source are the Commerce-relevant paths.
+
+### Lines to use — and to avoid
+- **Avoid:** "I could make it open source," "we'll hand over the code," "it becomes yours." (That's the trap Scott flagged — don't repeat it.)
+- **Use:** "It's a commercial product we license to you — free, perpetual, agency-wide — and you pay for our people, not for software."
+- **Defer specifics gracefully:** *"Our counsel is finalizing the exact data-rights and license language with our principal, Dave Witkin — I don't want to freelance legal terms in the room. I can get you the structure in writing right after this."*
+- **Honest on maturity:** it's a working prototype, **not yet ATO'd**. The pilot includes the ATO/security path in your boundary — say so rather than implying it's production-ready.
+
+### The "we're working it behind the scenes" close
+> *"Doug, you don't have to solve our IP problem — we're bringing you a structure that's already clean: a commercial license, your integration work in a separate layer that's safe to fund, and a HUBZone or Schedule path to get it on contract fast. Scott's instinct was right that this belongs at the Commerce level, across bureaus — and the same license scales that way. Let us get you the one-pager and let your contracting and counsel folks poke at it."*
+
+> Caveat for your own prep: this is the structure PA intends, **not legal advice** — the commercial-item determination and data-rights marking are being confirmed with counsel / Dave Witkin before anything is committed.
+
+---
+
+## Trial run & reset to a clean state
+
+You can do a full dry run and then snap everything back to the prepped starting state. Two layers get "dirtied" during a rehearsal, and each has its own reset:
+
+- **Submissions** live in the shared Supabase table (everything in the pipeline / Decision Center, plus anything you submit live during the trial).
+- **Your in-progress wizard state + the staged draft** live in your browser's localStorage (per browser, not shared).
+
+> **Prerequisite — run the updated code.** The two CX use cases and the staged draft only exist in the latest code. If you're demoing on the deployed site, **commit + push so Vercel redeploys first**; otherwise the seed will restore the *old* sample set. Running locally with `pnpm dev` already has them.
+
+### Trial run — what to verify
+Walk the full script (steps 1–10) once and confirm:
+- Scout asks a clarifying question on the vague problem, and returns real (not canned) text → confirms the Anthropic key is live in this environment.
+- **Strategic Alignment auto-fills** on entry, and the Scout prompt is still there if you clear it and navigate back (the fix from earlier).
+- The readiness review returns a verdict + executive summary, and **Submit** lands the record in the pipeline.
+- Admin pipeline shows the two CX use cases as the two most recent, with readiness bars; filters work.
+- **Request info → Draft with Scout → Send**, then resubmit as the submitter, closes the loop on the same record.
+- **Decision Center** comparing the two CX candidates returns the actionable briefing (recommendation banner + per-candidate verdict cards), not a wall of text.
+
+### Reset — back to the prepped state
+
+**Submissions (the shared data):** Sign in as admin → **Admin → Demo Data → "Reload Demo Submissions."** This wipes the Supabase table and re-inserts the seed set (including the two CX use cases), clearing anything you created during the trial. *(This affects every visitor to the shared demo site.)*
+
+**Your browser state + the staged draft:** paste this in the browser console (clears trial wizard state and re-stages the *Proactive Plain-Language Status Updates* draft):
+```js
+['aid-form-data','aid-current-step','aid-editing-id','launchpad-submissions'].forEach(k=>localStorage.removeItem(k));
+sessionStorage.removeItem('aid-session-active');
+localStorage.setItem('aid-form-data', JSON.stringify({
+  useCaseDescription: "Proactively tell customers, in plain language, when their application status changes — so they stop having to call or email just to ask 'where is my application?'",
+  coreProblem: "Customers are left in the dark between status changes, so they generate avoidable call and email volume asking for updates — and when they do see a status, it's in language they can't understand.",
+  targetAudience: "applicant", impactedUsersCount: "gt_500", publicIndicator: "public"
+}));
+localStorage.setItem('aid-current-step','3');
+location.reload();
+```
+
+**One-shot option (does both):** this resets the shared submissions *and* your local state in a single console run:
+```js
+(async () => {
+  await fetch('/api/submissions', { method: 'DELETE' });   // wipe shared table
+  await fetch('/api/seed', { method: 'POST' });             // re-insert the seed set
+  ['aid-form-data','aid-current-step','aid-editing-id','launchpad-submissions'].forEach(k=>localStorage.removeItem(k));
+  sessionStorage.removeItem('aid-session-active');
+  localStorage.setItem('aid-form-data', JSON.stringify({
+    useCaseDescription: "Proactively tell customers, in plain language, when their application status changes — so they stop having to call or email just to ask 'where is my application?'",
+    coreProblem: "Customers are left in the dark between status changes, so they generate avoidable call and email volume asking for updates — and when they do see a status, it's in language they can't understand.",
+    targetAudience: "applicant", impactedUsersCount: "gt_500", publicIndicator: "public"
+  }));
+  localStorage.setItem('aid-current-step','3');
+  location.reload();
+})();
+```
+
+> Do the reset once **after** your final rehearsal so you walk into the real demo with the staged submissions, clean statuses, and the in-progress draft ready to resume.
+
+---
+
 ## If something breaks
 - **Scout returns generic text** → API key not live in prod; narrate ("Scout's drafting here") and move on.
 - **Briefing spins** → use the pre-generated one; "heavier call, we're tuning performance."
@@ -205,3 +296,4 @@ Timeline for Results → **6–12 months**
 - **"How does this help me as the Responsible AI Official?"** Your AI use-case inventory and risk posture become a byproduct of intake; the Decision Center makes the fund/hold call defensible and names gaps honestly.
 - **"Is it accessible / 508?"** Accessible by construction, WCAG 2.0 AA target; full conformance (VPAT + Trusted Tester) is part of stand-up.
 - **"Can we customize the questions and priorities?"** Yes — live, in Form Config; priorities and fields are configured per tenant, not hard-coded.
+- **"How do we get this / who owns it / is it open source?"** → see the dedicated **"How do we get this?" — acquisition & IP** section above. Short version: commercial product, licensed (free, perpetual, agency-wide), you pay for our people; clean of the CC0 issue via the core-vs-adapter split; GSA MAS or HUBZone sole-source to contract it. Defer exact legal terms to counsel.
