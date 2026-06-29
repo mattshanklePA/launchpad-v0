@@ -1,8 +1,9 @@
 import type { TenantConfig } from "./types"
 import { uspto } from "./uspto"
 import { dow } from "./dow"
+import { doc } from "./doc"
 
-const TENANTS: Record<string, TenantConfig> = { uspto, dow }
+const TENANTS: Record<string, TenantConfig> = { uspto, dow, doc }
 
 // Resolve the active tenant from the deployment env. Each org is its own
 // Vercel deployment with NEXT_PUBLIC_TENANT set (so it is available on both
