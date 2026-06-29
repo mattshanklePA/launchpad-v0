@@ -126,15 +126,23 @@ export function Step7Alignment() {
             />
           )}
 
-          {/* Manual trigger when nothing is filled and auto didn't run (e.g. user cleared everything) */}
-          {!filling && !scoutFilled && !hasUserData && hasUpstreamContext && (
+          {/* Persistent Scout entry point. Survives navigating away and back
+              (component state resets on remount, but this is derived only from
+              form data + upstream context, so it always reappears). Shows a
+              cold-start prompt when nothing's filled, and a re-suggest
+              affordance after the user has cleared or edited the fields.
+              Hidden only while the just-filled review banner is on screen, to
+              avoid stacking two Scout prompts. */}
+          {!filling && !(scoutFilled && !bannerDismissed) && hasUpstreamContext && (
             <div className="rounded-lg border bg-muted/30 p-3 flex items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 inline mr-1 text-uspto-blue-primary" />
-                Let Scout fill this in from what you&apos;ve entered.
+                {hasUserData
+                  ? "Want Scout to re-draft your strategic alignment from your earlier answers?"
+                  : "Let Scout fill this in from what you've entered."}
               </p>
-              <Button size="sm" onClick={() => fillFromScout(false)}>
-                Fill with Scout
+              <Button size="sm" onClick={() => fillFromScout(hasUserData)}>
+                {hasUserData ? "Re-suggest with Scout" : "Fill with Scout"}
               </Button>
             </div>
           )}
