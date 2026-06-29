@@ -203,7 +203,32 @@ This question **will** come up — Doug came to you through **Scott Merker (USPT
 - **Commercial product, licensed — not custom-built for hire, not transferred.** LaunchPad was built at Packaged Agile's private expense. The federal open-source / source-code policy reaches *custom code the government funds*, not a commercial product you license. That's the whole game.
 - **The core stays ours; government-funded work happens only in a thin adapter layer.** Identity, your AI endpoint, storage, connectors, branding, field config — that integration layer is where any government-paid work lives, cleanly separated from the proprietary core. So even when your people are "hands on keyboard," they're working the adapter, not the core. (This is the architecture boundary in `docs/BOUNDARY.md` / `docs/ARCHITECTURE.md` — it's an IP-protection boundary as much as a technical one.)
 - **A great deal for the first customer, without giving the product away.** A free, perpetual, agency-wide license. You pay only for **our people** — configuration, integration, hosting, support — not license fees.
-- **We host it; source isn't handed over.** SaaS or a PA-owned image in your tenant, with **source-code escrow** (not open source) for your continuity comfort.
+- **We host it; source isn't handed over** (see *Hosting* below), with **source-code escrow** (not open source) for your continuity comfort.
+
+### Free license, paid build — how the money works (and why it's clean of CC0)
+
+This is the heart of the question, so be crisp. **Zero license fees** — the product is free, perpetual, and agency-wide. We bill only our **people's time (FTE hours)**: configuration, customization, integration with your systems, hosting, and support. So how do we charge for real build work without that code falling into CC0/public domain?
+
+- **The CC0 rule bites two things — and our model avoids both.** It reaches (1) *custom code the government funds and takes delivery of*, and (2) *code a government employee writes* (automatically public domain). In our model **our engineers do the build, not yours**, and the deliverable is a **running, configured, hosted system — a service outcome — not a pile of source code handed to the government to own.** No government-owned code, nothing to open-source.
+- **The valuable core is pre-existing commercial software, built at our private expense.** It's *licensed*, not developed-for-hire under your contract — so the federal source-code / open-source mandate (which targets custom-developed code) doesn't reach it.
+- **Funded custom work is confined to the thin adapter layer.** Connectors, auth, your AI endpoint, config, branding. We're genuinely fine if *that* layer is shareable — it's plumbing, not the IP. The core never enters that conversation.
+- **We assert and mark our data rights** (commercial computer software, restricted rights) so nothing silently defaults to government-purpose or public rights, and we use **escrow** for your continuity instead of open-sourcing.
+- **The contracting tell:** buy it as **services around a commercial product**, not as a **custom software-development deliverable**. Same FTE hours either way — completely different IP outcome.
+
+> Sayable line: *"You're not paying us to write code you then own and have to open-source. You're paying for our people to stand up and run a commercial product we license to you for free. The code stays ours, hosted in your boundary; you get the working capability — at a great price — and none of the CC0 baggage."*
+
+### Hosting — how would we run it?
+
+Three real options; lead with the first for Commerce.
+
+- **In your cloud boundary, PA-managed (recommended).** We deploy LaunchPad as a PA-owned image into **your** AWS GovCloud (or Azure Gov) inside your FedRAMP / ATO boundary — Postgres becomes RDS/Aurora, the app runs on ECS/Fargate, and Claude runs **server-side via Amazon Bedrock** (FedRAMP High, DoD IL4/5, American-built). Your data never leaves your boundary, we manage and patch the image, and **source is never delivered** (image + escrow). Best balance of your security/ATO needs and our IP — and it matches the architecture line you gave at sign-in.
+- **PA-hosted SaaS.** We run it in our cloud and you consume it — fastest to stand up, least ops burden on you. But a SaaS handling federal data generally needs **FedRAMP authorization**, so it's a longer runway for production use; good for a **pilot/sandbox** with non-sensitive data while the in-boundary option is stood up.
+- **Your team hosts, we deploy + support.** You operate it in your environment; we provide the licensed build and do the deployment and support as labor. Source still isn't delivered; escrow covers continuity.
+
+> Sayable line: *"Simplest answer: it runs inside your boundary, on your cloud, with the model already authorized at FedRAMP High through Bedrock — so nothing leaves Commerce control. We manage the image; you never have to take delivery of source for it to keep running."* **Be honest on maturity:** it's a pre-ATO prototype; the pilot includes the security/ATO path in your environment.
+
+**"But if it runs in our cloud, doesn't it become ours / open source?"** (likely Doug question — answer it head-on):
+> *"No — where it runs and who owns it are two different questions. Commercial software runs inside federal boundaries every day and stays the vendor's; deploying into your GovCloud is a data-residency and security fact, not an ownership transfer. What makes code CC0 is who authored it, how it was funded, the data-rights clauses, and whether you take delivery of the source — not the server it sits on. We deploy a PA-owned image, your people never author the core, your data stays yours, and you never take delivery of source — so it runs entirely in your boundary and stays a licensed commercial product. The thing that would create a CC0 claim isn't the hosting — it's structuring it as custom development with government data rights, which is exactly what we're not doing."*
 
 ### The paths to actually contract it (the "vehicles")
 Two are clean for Commerce as a civilian agency:

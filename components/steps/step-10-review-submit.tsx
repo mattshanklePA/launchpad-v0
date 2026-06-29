@@ -129,6 +129,20 @@ export function Step10ReviewSubmit() {
           description: "Your idea has been saved and routed for review.",
         })
       }
+      // Clear the in-progress draft so the just-submitted idea doesn't also
+      // linger as a resumable draft on the dashboard (it now lives as a
+      // submission). This runs regardless of how the user later navigates away
+      // — previously the draft was only cleared if they used the confirmation
+      // page's own buttons (resetForm), so leaving via the top nav left a
+      // duplicate. The confirmation page reads formData from context memory,
+      // not localStorage, so clearing storage here is safe. aid-current-step is
+      // left to become "10" — the marker the FormProvider uses to start fresh.
+      try {
+        localStorage.removeItem("aid-form-data")
+        localStorage.removeItem("aid-editing-id")
+      } catch {
+        /* ignore */
+      }
       // Brief delay so the toast registers before the page transitions
       setTimeout(() => {
         setCurrentStep(10)

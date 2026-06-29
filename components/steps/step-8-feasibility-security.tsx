@@ -29,6 +29,14 @@ export function Step8FeasibilitySecurity() {
   const isVisible = useFieldVisibility()
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
 
+  // Scout on this step coaches the free-text "dependencies" draft into the
+  // feasibility summary. If either the input field (dependencies) or the output
+  // field (feasibilitySummary) is turned off in Form Config, Scout has nothing
+  // to work on — so hide the panel and let the form use the full width instead
+  // of showing a permanently-disabled Scout box. (This step is otherwise just
+  // the mandated AI-risk selections, none of which need Scout.)
+  const showScout = isVisible("dependencies") && isVisible("feasibilitySummary")
+
   const handleToggle = (field: "resourcesNeeded" | "accessControlRequirements", item: string) => {
     const currentItems = formData[field] || []
     const newItems = currentItems.includes(item) ? currentItems.filter((i) => i !== item) : [...currentItems, item]
@@ -36,8 +44,8 @@ export function Step8FeasibilitySecurity() {
   }
 
   return (
-    <div className="grid lg:grid-cols-12 gap-10">
-      <div className="lg:col-span-7">
+    <div className={showScout ? "grid lg:grid-cols-12 gap-10" : ""}>
+      <div className={showScout ? "lg:col-span-7" : ""}>
         <div className="space-y-8">
           {isVisible("dependencies") && (
             <div className="space-y-2">
@@ -242,12 +250,14 @@ export function Step8FeasibilitySecurity() {
           )}
         </div>
       </div>
-      <div className="lg:col-span-5 flex flex-col">
-        <AIdChatPanel
-          step={6}
-          onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, feasibilitySummary: suggestion }))}
-        />
-      </div>
+      {showScout && (
+        <div className="lg:col-span-5 flex flex-col">
+          <AIdChatPanel
+            step={6}
+            onApplySuggestion={(suggestion) => setFormData((prev) => ({ ...prev, feasibilitySummary: suggestion }))}
+          />
+        </div>
+      )}
     </div>
   )
 }
