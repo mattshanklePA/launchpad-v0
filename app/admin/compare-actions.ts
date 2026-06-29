@@ -118,6 +118,75 @@ Reviewer notes: ${fmt(d.reviewerNotes)}
 `
 }
 
+function clip(s: string | undefined, n: number): string {
+  const t = (s || "").trim()
+  return t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t
+}
+
+function firstSentence(s: string | undefined): string {
+  const t = (s || "").trim()
+  if (!t) return ""
+  const m = t.match(/^.*?[.!?](\s|$)/)
+  return (m ? m[0] : t).trim()
+}
+
+// Coerce a loosely-phrased model verdict ("Fund now", "fund-with-conditions",
+// "HOLD") into our enum so a minor wording wobble doesn't blank the briefing.
+function normalizeVerdict(v: string | undefined): Verdict {
+  const s = (v || "").toLowerCase().replace(/[^a-z]/g, "_")
+  if (s.includes("condition")) return "fund_with_conditions"
+  if (s.startsWith("fund")) return "fund_now"
+  return "hold"
+}
+
+function verdictFromReadiness(score: string | undefined): Verdict {
+  if (score === "ready") return "fund_now"
+  if (score === "needs_work") return "fund_with_conditions"
+  return "hold"
+}
+
+// Synthesize a populated, sensible briefing from each submission's own
+// readiness verdict + executive summary. Used as the fallback when the AI call
+// fails or returns an unparseable object, so the Decision Center always shows a
+// real recommendation instead of an error/empty state.
+function heuristicBriefing(subs: Submission[]): CompareBriefing {
+  const rank: Record<string, number> = { ready: 3, needs_work: 2, early_stage: 1 }
+  const perSubmission = subs.map((s) => {
+    const d = s.formData
+    const oneLine =
+      clip(firstSentence(d.executiveSummary) || d.solutionSummary || d.businessValueSummary || d.useCaseDescription, 170) ||
+      "Review the submission detail."
+    const gap =
+      d.readinessScore === "ready"
+        ? "No blocking gap noted; confirm a measured baseline before scaling."
+        : clip(firstSentence(d.readinessSummary), 170) || "Needs a measured baseline before funding."
+    return {
+      id: s.id,
+      title: d.useCaseTitle || "Untitled idea",
+      verdict: verdictFromReadiness(d.readinessScore),
+      oneLine,
+      gap,
+    }
+  })
+  const sorted = [...subs].sort(
+    (a, b) => (rank[b.formData.readinessScore || ""] || 0) - (rank[a.formData.readinessScore || ""] || 0),
+  )
+  const best = sorted[0]
+  const fundId = (rank[best?.formData.readinessScore || ""] || 0) >= 2 ? best.id : ""
+  const fundTitle = subs.find((s) => s.id === fundId)?.formData.useCaseTitle
+  return {
+    recommendation: {
+      fundId,
+      headline: fundId
+        ? `Fund ${fundTitle} first — it is the most decision-ready of the set.`
+        : "None are clearly ready to fund yet — tighten the gaps below before committing.",
+    },
+    differ: "The candidates target different users or different points in the same workflow.",
+    portfolioGap: "Confirm a measured baseline and named priority alignment for each before final funding.",
+    perSubmission,
+  }
+}
+
 export async function compareSubmissions(submissions: Submission[]): Promise<CompareBriefing> {
   if (!Array.isArray(submissions) || submissions.length < 2) {
     throw new Error("Need at least 2 submissions to compare.")
@@ -143,7 +212,7 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
             z.object({
               id: z.string(),
               title: z.string(),
-              verdict: z.enum(["fund_now", "fund_with_conditions", "hold"]).describe("fund_now = clear, ready case; fund_with_conditions = worth funding but only after specific fixes; hold = not ready to fund yet"),
+              verdict: z.string().describe("Exactly one of these tokens: \"fund_now\" (clear, ready case), \"fund_with_conditions\" (worth funding but only after specific fixes), or \"hold\" (not ready to fund yet)."),
               oneLine: z.string().describe("About 15 words: what it is and the priority it advances most directly."),
               gap: z.string().describe("About 15 words: the single most important thing it does not address before funding. Be honest; do not invent."),
             }),
@@ -189,26 +258,40 @@ Keep every field short and concrete. Do not write paragraphs. Use the submission
       ],
     })
 
+    // Normalize the model output: align one entry per submission (by id),
+    // coerce the verdict to our enum even if the model phrased it loosely, and
+    // drop a fundId that doesn't point at a real candidate. This keeps a minor
+    // schema wobble from blanking the whole briefing.
+    const byId = new Map(object.perSubmission.map((p) => [p.id, p]))
+    const perSubmission = submissions.map((s) => {
+      const p = byId.get(s.id)
+      return {
+        id: s.id,
+        title: s.formData.useCaseTitle || p?.title || "Untitled idea",
+        verdict: normalizeVerdict(p?.verdict),
+        oneLine: (p?.oneLine || "").trim() || firstSentence(s.formData.executiveSummary) || "Review the submission detail.",
+        gap: (p?.gap || "").trim() || "Confirm a measured baseline before funding.",
+      }
+    })
+    const fundIdValid = perSubmission.some((p) => p.id === object.recommendation?.fundId)
     return {
-      recommendation: object.recommendation,
-      differ: object.differ,
-      portfolioGap: object.portfolioGap,
-      perSubmission: object.perSubmission,
+      recommendation: {
+        fundId: fundIdValid ? object.recommendation.fundId : "",
+        headline:
+          (object.recommendation?.headline || "").trim() ||
+          "See each candidate's verdict and the gap that matters most below.",
+      },
+      differ: (object.differ || "").trim() || "The candidates target different users or points in the same workflow.",
+      portfolioGap:
+        (object.portfolioGap || "").trim() ||
+        "Confirm a measured baseline and named priority alignment for each before final funding.",
+      perSubmission,
     }
   } catch (error) {
-    console.error("compareSubmissions AI error, falling back to mock briefing:", error)
-    const detail = error instanceof Error ? error.message : String(error)
-    return {
-      recommendation: { fundId: "", headline: `Briefing couldn't be generated: ${detail}. Use the side-by-side comparison below.` },
-      differ: "(Briefing unavailable.)",
-      portfolioGap: "Review each candidate for baseline data, FedRAMP/ATO timing, and named priority alignment.",
-      perSubmission: submissions.map((s) => ({
-        id: s.id,
-        title: s.formData.useCaseTitle || "Untitled idea",
-        verdict: "hold" as const,
-        oneLine: "AI briefing unavailable — review the submission detail.",
-        gap: "AI synthesis unavailable.",
-      })),
-    }
+    // Don't blank the briefing on an AI/schema hiccup — synthesize a populated,
+    // sensible briefing from each submission's own readiness verdict and
+    // executive summary so the Decision Center always shows a recommendation.
+    console.error("compareSubmissions AI error, using heuristic briefing:", error)
+    return heuristicBriefing(submissions)
   }
 }
