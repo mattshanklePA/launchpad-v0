@@ -202,12 +202,12 @@ This question **will** come up — Doug came to you through **Scott Merker (USPT
 ### How we keep it clean (the structure)
 - **Commercial product, licensed — not custom-built for hire, not transferred.** LaunchPad was built at Packaged Agile's private expense. The federal open-source / source-code policy reaches *custom code the government funds*, not a commercial product you license. That's the whole game.
 - **The core stays ours; government-funded work happens only in a thin adapter layer.** Identity, your AI endpoint, storage, connectors, branding, field config — that integration layer is where any government-paid work lives, cleanly separated from the proprietary core. So even when your people are "hands on keyboard," they're working the adapter, not the core. (This is the architecture boundary in `docs/BOUNDARY.md` / `docs/ARCHITECTURE.md` — it's an IP-protection boundary as much as a technical one.)
-- **A great deal for the first customer, without giving the product away.** A free, perpetual, agency-wide license. You pay only for **our people** — configuration, integration, hosting, support — not license fees.
+- **A generous but scoped entry, so we never give the whole department away.** Lead with a free pilot, a free first bureau, or free access for DoC HQ / OCTO governance users (whatever lands). Beyond that scope, bureaus are licensed as we expand, and you pay for **our people** on rollout (configuration, integration, hosting, support). The free piece is the wedge to get in and prove value, not a free department-wide license across the 13 bureaus. This also fits Doug's own framing: Commerce wants to leverage its purchasing power and fund this cost-effectively at the enterprise level.
 - **We host it; source isn't handed over** (see *Hosting* below), with **source-code escrow** (not open source) for your continuity comfort.
 
-### Free license, paid build — how the money works (and why it's clean of CC0)
+### Free to start, paid to scale — how the money works (and why it's clean of CC0)
 
-This is the heart of the question, so be crisp. **Zero license fees** — the product is free, perpetual, and agency-wide. We bill only our **people's time (FTE hours)**: configuration, customization, integration with your systems, hosting, and support. So how do we charge for real build work without that code falling into CC0/public domain?
+This is the heart of the question, so be crisp. The entry is **free but scoped** (a pilot, a first bureau, or the DoC governance layer), and we bill our **people's time (FTE hours)** for the rollout: configuration, customization, integration with your systems, hosting, and support. As it expands across bureaus, the bureaus are licensed. So how do we charge for real build work, and license across the bureaus, without that code falling into CC0/public domain?
 
 - **The CC0 rule bites two things — and our model avoids both.** It reaches (1) *custom code the government funds and takes delivery of*, and (2) *code a government employee writes* (automatically public domain). In our model **our engineers do the build, not yours**, and the deliverable is a **running, configured, hosted system — a service outcome — not a pile of source code handed to the government to own.** No government-owned code, nothing to open-source.
 - **The valuable core is pre-existing commercial software, built at our private expense.** It's *licensed*, not developed-for-hire under your contract — so the federal source-code / open-source mandate (which targets custom-developed code) doesn't reach it.
@@ -215,7 +215,7 @@ This is the heart of the question, so be crisp. **Zero license fees** — the pr
 - **We assert and mark our data rights** (commercial computer software, restricted rights) so nothing silently defaults to government-purpose or public rights, and we use **escrow** for your continuity instead of open-sourcing.
 - **The contracting tell:** buy it as **services around a commercial product**, not as a **custom software-development deliverable**. Same FTE hours either way — completely different IP outcome.
 
-> Sayable line: *"You're not paying us to write code you then own and have to open-source. You're paying for our people to stand up and run a commercial product we license to you for free. The code stays ours, hosted in your boundary; you get the working capability — at a great price — and none of the CC0 baggage."*
+> Sayable line: *"You're not paying us to write code you then own and have to open-source. You're paying for our people to stand up and run a commercial product we license to you. We can make the pilot or the first bureau free to get going, then license bureaus as we scale across the department. The code stays ours, hosted in your boundary; you get the working capability at a great price, and none of the CC0 baggage."*
 
 ### Hosting — how would we run it?
 
@@ -241,7 +241,7 @@ Two are clean for Commerce as a civilian agency:
 
 ### Lines to use — and to avoid
 - **Avoid:** "I could make it open source," "we'll hand over the code," "it becomes yours." (That's the trap Scott flagged — don't repeat it.)
-- **Use:** "It's a commercial product we license to you — free, perpetual, agency-wide — and you pay for our people, not for software."
+- **Use:** "It's a commercial product. We can make the pilot or the first bureau free to get started, license bureaus as we expand, and you pay for our people, not for custom software."
 - **Defer specifics gracefully:** *"Our counsel is finalizing the exact data-rights and license language with our principal, Dave Witkin — I don't want to freelance legal terms in the room. I can get you the structure in writing right after this."*
 - **Honest on maturity:** it's a working prototype, **not yet ATO'd**. The pilot includes the ATO/security path in your boundary — say so rather than implying it's production-ready.
 
@@ -321,4 +321,4 @@ location.reload();
 - **"How does this help me as the Responsible AI Official?"** Your AI use-case inventory and risk posture become a byproduct of intake; the Decision Center makes the fund/hold call defensible and names gaps honestly.
 - **"Is it accessible / 508?"** Accessible by construction, WCAG 2.0 AA target; full conformance (VPAT + Trusted Tester) is part of stand-up.
 - **"Can we customize the questions and priorities?"** Yes — live, in Form Config; priorities and fields are configured per tenant, not hard-coded.
-- **"How do we get this / who owns it / is it open source?"** → see the dedicated **"How do we get this?" — acquisition & IP** section above. Short version: commercial product, licensed (free, perpetual, agency-wide), you pay for our people; clean of the CC0 issue via the core-vs-adapter split; GSA MAS or HUBZone sole-source to contract it. Defer exact legal terms to counsel.
+- **"How do we get this / who owns it / is it open source?"** → see the dedicated **"How do we get this?" — acquisition & IP** section above. Short version: commercial product; free to start (a pilot, a first bureau, or the DoC governance layer) and licensed as it expands across bureaus; you pay for our people; clean of the CC0 issue via the core-vs-adapter split; GSA MAS or HUBZone sole-source to contract it. Defer exact legal terms to counsel.
