@@ -41,10 +41,9 @@ export function Step7Alignment() {
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [autoTried, setAutoTried] = useState(false)
 
-  // Enough upstream context for a useful suggestion? Title + (problem or solution).
+  // Enough upstream context for a useful suggestion? Problem or solution is enough.
   const hasUpstreamContext = Boolean(
-    formData.useCaseTitle?.trim() &&
-      (formData.coreProblem?.trim() || formData.proposedSolution?.trim()),
+    formData.coreProblem?.trim() || formData.proposedSolution?.trim(),
   )
 
   const hasUserData =
