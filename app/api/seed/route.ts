@@ -37,6 +37,30 @@ export async function POST() {
     const { error } = await supabase.from("submissions").insert(rows)
     if (error) throw error
 
+    // Best-effort: sync the workflow columns (status / owner / business unit)
+    // from each form_data so the pipeline kanban buckets seeds by their real
+    // status and shows the right owners. Without this, the status column takes
+    // its DB default ("submitted") and every seeded row stacks in one column.
+    // Mirrors the POST /api/submissions handler; errors are swallowed so the
+    // seed still succeeds if the workflow columns aren't present.
+    try {
+      await Promise.all(
+        seedSubmissions.map((s) => {
+          const fd = s.formData as Record<string, unknown>
+          return supabase
+            .from("submissions")
+            .update({
+              status: (fd.reviewStatus as string) || "submitted",
+              owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
+              business_unit: (fd.submitterOffice as string) || null,
+            })
+            .eq("id", s.id)
+        }),
+      )
+    } catch (e) {
+      console.warn("seed workflow column sync skipped:", e)
+    }
+
     return NextResponse.json({
       ok: true,
       seeded: true,

@@ -215,6 +215,274 @@ export const seedSubmissions: Submission[] = [
     } as Partial<FormData>),
   },
 
+  // ── Submitter-owned records (submitter@uspto.gov) — populate "My ideas" with
+  //    a spread across statuses, including a completed (approved) example. ──
+  {
+    id: "seed-sub-tm-status",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // ~3 days ago
+    formData: mk({
+      submitterName: "USPTO Submitter",
+      submitterEmail: "submitter@uspto.gov",
+      submitterRole: "product_owner",
+      submitterOffice: "trademarks",
+
+      reviewStatus: "approved",
+      useCaseTitle: "Trademark Application Status Assistant",
+      useCaseDescription:
+        "A plain-language assistant that lets trademark applicants ask where their application stands and what the current status means — answered from authoritative TSDR status data with a citation and a clear next step. Informational only; it never changes or decides anything.",
+      publicIndicator: "public",
+
+      targetAudience: "applicant",
+      impactedUsersCount: "gt_500",
+      painPoints:
+        "Applicants flood the Trademark Assistance Center with 'where is my application / what does this status mean' questions, and the status language is full of internal codes the public can't interpret.",
+      targetUserContext:
+        "Trademark applicants and their representatives checking on pending applications, plus the Assistance Center staff who field status questions.",
+      targetUserSummary:
+        "Trademark applicants and representatives checking status; indirectly, the Assistance Center staff who field those calls.",
+
+      coreProblem:
+        "Applicants can't easily understand the status of their trademark application or what to do next, so they generate high call volume on routine status questions.",
+      problemImpact:
+        "A large share of Assistance Center contacts are routine status questions a plain-language, self-service answer could deflect.",
+      affectedSystem: "trademarks",
+      problemType: ["user_experience", "productivity"],
+      severity: "medium",
+      problemDefinition:
+        "Trademark applicants lack a plain-language, self-service way to understand application status and next steps, driving avoidable contact-center volume.",
+
+      proposedSolution:
+        "An assistant that reads status from authoritative TSDR data and explains it in plain language with a citation and a next step. It never changes or decides anything and hands off to a person for anything beyond status.",
+      keyFunctionality: ["question_answering", "summarization", "search"],
+      solutionSummary:
+        "Plain-language, source-grounded trademark status explainer with citations and human handoff. Informational only.",
+
+      userValue:
+        "Applicants understand exactly where they stand and what to do next, in seconds, without waiting on a call.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["less_frustration", "better_decisions"],
+      userValueSummary: "Instant, plain-language status and next-step guidance for applicants.",
+
+      businessValue:
+        "Deflects routine status contacts from the Assistance Center and improves the applicant experience.",
+      costSavings: "50k_250k",
+      strategicBenefit: ["operational_efficiency", "employee_experience"],
+      businessValueSummary: "Meaningful deflection of routine status contacts with a better applicant experience.",
+
+      usptoFocusArea: ["goal_employee_experience", "goal_public_good"],
+      relevantOkrs: "Customer-experience and plain-language commitments; reduce routine contact volume.",
+      alignmentSummary:
+        "Advances customer experience and the public good with a low-risk, informational, source-grounded design.",
+
+      implementationComplexity: "low",
+      resourcesNeeded: ["ml_engineers", "content_owner"],
+      dependencies:
+        "Read access to TSDR status data and the published status-code glossary. Low modeling lift; the main work is plain-language mapping and Section 508 accessibility.",
+      involvesSensitiveData: "no",
+      securityClassification: "internal",
+      accessControlRequirements: ["audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      feasibilitySummary:
+        "Low complexity, low risk: reads existing status data, informational only, human handoff, American-built. Section 508 and plain-language review are the main work.",
+
+      successMetrics:
+        "Status-contact deflection rate, applicant satisfaction, answer accuracy, and time-to-answer measured against a baseline.",
+      keyMetrics: ["ticket_volume_reduction", "user_satisfaction", "resolution_time"],
+      timelineForResults: "3_6",
+      metricsSummary: "Tracks deflection, satisfaction, accuracy, and time-to-answer against a baseline.",
+
+      routeTo: ["governance"],
+      reviewerNotes: "Approved: low-risk, high-value CX improvement with a clean responsible-AI posture.",
+
+      readinessScore: "ready",
+      readinessSummary:
+        "Low-risk, well-scoped, measurable, American-built, informational only with human handoff. Approved for implementation.",
+      executiveSummary:
+        "Trademark applicants can't easily interpret their application status, driving routine call volume. This plain-language assistant reads authoritative status data and explains it with a citation and a next step — informational only, with human handoff. Expected: meaningful contact deflection and a better applicant experience. Low risk, American-built, with Section 508 review in the pilot. Approved.",
+    } as Partial<FormData>),
+  },
+
+  {
+    id: "seed-sub-teas-validator",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 47).toISOString(), // ~2 days ago
+    formData: mk({
+      submitterName: "USPTO Submitter",
+      submitterEmail: "submitter@uspto.gov",
+      submitterRole: "product_owner",
+      submitterOffice: "trademarks",
+
+      reviewStatus: "needs_info",
+      comments: [
+        {
+          id: "c-teas-1",
+          authorName: "Jonathan Moody",
+          authorRole: "reviewer",
+          body: "Useful idea. Before I can score it: what's the baseline filing-error rate today, and can you confirm it only flags issues for the filer to fix — it must never auto-reject a submission?",
+          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
+        },
+      ],
+      useCaseTitle: "Automated TEAS Submission Validator",
+      useCaseDescription:
+        "An assistant that checks a trademark application in TEAS for common, fixable errors before the applicant submits — missing specimens, goods/services classification mismatches, inconsistent owner info — and explains each in plain language so the filer can correct it. It only advises; the applicant decides and submits.",
+      publicIndicator: "public",
+
+      targetAudience: "applicant",
+      impactedUsersCount: "gt_500",
+      painPoints:
+        "Many applications come in with avoidable errors that trigger office actions and rework, delaying the applicant and adding examiner load. Filers often don't know the rules.",
+      targetUserContext:
+        "Pro-se trademark filers and small-business applicants using TEAS, plus examiners who currently catch these errors downstream.",
+      targetUserSummary: "TEAS filers (especially pro-se applicants); indirectly, examiners who handle avoidable office actions.",
+
+      coreProblem:
+        "Applicants submit fixable errors they don't know about, which drives avoidable office actions, rework, and pendency.",
+      problemImpact:
+        "Avoidable filing errors generate office actions and re-filing cycles that delay applicants and consume examiner time.",
+      affectedSystem: "trademarks",
+      problemType: ["productivity", "user_experience"],
+      severity: "medium",
+      problemDefinition:
+        "Trademark applicants lack pre-submission, plain-language guidance on common fixable errors, driving avoidable office actions and rework.",
+
+      proposedSolution:
+        "A pre-submission validator that flags common, rule-based issues and explains each in plain language with the fix. Advisory only — it never blocks or auto-rejects; the applicant makes every change and chooses to submit.",
+      keyFunctionality: ["question_answering", "classification", "summarization"],
+      solutionSummary: "Advisory pre-submission TEAS checker that flags fixable errors in plain language. Applicant decides.",
+
+      userValue: "Fewer surprise office actions and faster approval, with clear guidance on how to fix issues before filing.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["less_frustration", "better_decisions", "more_consistent_work"],
+      userValueSummary: "Catch fixable errors before filing; fewer office actions and faster approval.",
+
+      businessValue: "Reduces avoidable office actions and rework, freeing examiner time and improving the applicant experience.",
+      costSavings: "50k_250k",
+      strategicBenefit: ["operational_efficiency", "employee_experience"],
+      businessValueSummary: "Fewer avoidable office actions and rework; reclaimed examiner time.",
+
+      usptoFocusArea: ["goal_pendency_quality", "goal_employee_experience"],
+      relevantOkrs: "Reduce avoidable office actions; improve first-pass filing quality and applicant experience.",
+      alignmentSummary: "Supports efficient delivery of reliable IP rights and a better applicant experience, with an advisory, human-decides design.",
+
+      implementationComplexity: "medium",
+      resourcesNeeded: ["ml_engineers", "examiner_sme", "content_owner"],
+      dependencies:
+        "Access to TEAS validation rules and historical office-action reasons. Mostly rules + plain-language explanation; limited modeling.",
+      involvesSensitiveData: "no",
+      securityClassification: "internal",
+      accessControlRequirements: ["audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      feasibilitySummary:
+        "Medium complexity; advisory only, never blocks a filing. American-built; needs the validation-rule set and a baseline error rate to size impact.",
+
+      successMetrics: "Avoidable-office-action rate, first-pass filing quality, applicant satisfaction — against a baseline.",
+      keyMetrics: ["error_rate", "user_satisfaction", "quality_improvement"],
+      timelineForResults: "6_12",
+      metricsSummary: "Tracks avoidable office actions and first-pass quality against a baseline (to be measured).",
+
+      routeTo: ["governance"],
+      reviewerNotes: "Needs a measured baseline error rate and explicit confirmation it never auto-rejects.",
+
+      readinessScore: "needs_work",
+      readinessSummary:
+        "Strong, low-risk applicant-experience case. Gaps before scoring: a measured baseline filing-error rate, and explicit confirmation the validator only advises (never auto-rejects).",
+      executiveSummary:
+        "Many trademark applications include avoidable, fixable errors that trigger office actions and rework. This advisory validator flags those in plain language before submission so filers can fix them — it never blocks or auto-rejects. Promising and low-risk; needs a measured baseline error rate and confirmation of the advisory-only design before scoring.",
+    } as Partial<FormData>),
+  },
+
+  {
+    id: "seed-sub-conflict-search",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(), // ~1 day ago
+    formData: mk({
+      submitterName: "USPTO Submitter",
+      submitterEmail: "submitter@uspto.gov",
+      submitterRole: "product_owner",
+      submitterOffice: "trademarks",
+
+      reviewStatus: "in_review",
+      useCaseTitle: "Trademark Conflict Search Advisory Assistant",
+      useCaseDescription:
+        "An advisory assistant that, given a new application's mark and its goods/services, surfaces the most likely conflicting prior marks — accounting for phonetic, visual/design, and goods/services relatedness — ranked, with the basis for each match. The examining attorney reviews and decides the refusal; the AI never issues it.",
+      publicIndicator: "public",
+
+      targetAudience: "trademark_examiner",
+      impactedUsersCount: "gt_500",
+      painPoints:
+        "Examining attorneys manually search for confusingly similar prior marks across word, design, and goods/services dimensions. Searches vary between attorneys, similar marks get missed, and that drives pendency and inconsistent likelihood-of-confusion refusals.",
+      targetUserContext:
+        "Trademark examining attorneys across all law offices, and the supervisory attorneys who review their conflict determinations.",
+      targetUserSummary: "Trademark examining attorneys performing likelihood-of-confusion conflict searches.",
+
+      coreProblem:
+        "Conflict search relies on manual, attorney-by-attorney technique, so similar marks get missed and refusals are inconsistent — driving pendency and quality variance.",
+      problemImpact:
+        "Inconsistent conflict search lengthens examination and produces uneven Section 2(d) refusal outcomes across attorneys.",
+      affectedSystem: "trademarks",
+      problemType: ["productivity", "quality"],
+      severity: "high",
+      problemDefinition:
+        "Trademark examiners lack a consistent, advisory way to surface likely conflicting marks across phonetic, visual, and goods/services dimensions, driving pendency and inconsistent refusals.",
+
+      proposedSolution:
+        "A retrieval/ranking assistant that surfaces the most likely conflicting prior marks with the basis for each (phonetic, visual, goods/services relatedness). The attorney reviews and decides; the AI never issues a refusal. Runs on a U.S.-hosted model inside the USPTO boundary.",
+      keyFunctionality: ["search", "ranking", "summarization"],
+      solutionSummary:
+        "Advisory, ranked conflict-mark surfacing across phonetic/visual/goods-services signals; attorney decides. U.S.-hosted.",
+
+      userValue:
+        "Cuts conflict-search time and surfaces marks an attorney might miss, with the reasoning shown — the attorney stays the decision-maker.",
+      userTimeSavings: "5_10",
+      otherUserImprovements: ["better_decisions", "more_consistent_work", "less_frustration"],
+      userValueSummary: "Faster, more consistent conflict search with the basis shown; attorney decides.",
+
+      businessValue:
+        "Reduces trademark pendency and improves the consistency of Section 2(d) refusals, improving the applicant experience and reducing rework.",
+      costSavings: "gt_1m",
+      strategicBenefit: ["reduce_pendency", "improve_quality"],
+      businessValueSummary:
+        "Lower conflict-search time and more consistent 2(d) outcomes — pendency and quality gains at scale.",
+
+      usptoFocusArea: ["goal_pendency_quality", "ai_responsible_use"],
+      relevantOkrs:
+        "Efficient delivery of reliable IP rights (trademark pendency + quality); responsible AI use with human oversight.",
+      alignmentSummary:
+        "Directly advances efficient delivery of reliable IP rights, under a responsible-AI design (advisory, attorney-in-the-loop, basis shown).",
+
+      implementationComplexity: "medium",
+      resourcesNeeded: ["ml_engineers", "examiner_sme", "infrastructure"],
+      dependencies:
+        "Access to the trademark register and design-code data; integration with the examiner workbench; a U.S.-hosted model inside the boundary.",
+      involvesSensitiveData: "no",
+      securityClassification: "internal",
+      accessControlRequirements: ["examiner_authentication", "audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      feasibilitySummary:
+        "Medium complexity. Advisory only, attorney decides, basis shown for each match. American-built, U.S.-hosted. Integration with the examiner workbench is the main lift.",
+
+      successMetrics:
+        "Conflict-search time per application (target down 30-40%), attorney-rated relevance of surfaced marks, consistency of 2(d) outcomes, and trademark first-action pendency in pilot law offices vs. control.",
+      keyMetrics: ["time_saved", "quality_improvement", "user_satisfaction"],
+      timelineForResults: "6_12",
+      metricsSummary:
+        "Pilot measures search time, surfaced-mark relevance, 2(d) consistency, and pendency against a control.",
+
+      routeTo: ["governance"],
+      reviewerNotes: "Strong, high-value examiner-assist with a clean responsible-AI posture. In review.",
+
+      readinessScore: "ready",
+      readinessSummary:
+        "Comprehensive, measurable, and well-aligned to pendency and quality, with an advisory, attorney-in-the-loop design and American-built sourcing. Ready for AI Council review.",
+      executiveSummary:
+        "Trademark conflict search is manual and varies by attorney, so similar marks get missed and refusals are inconsistent — driving pendency and quality variance. This advisory assistant surfaces the most likely conflicting marks with the basis for each across phonetic, visual, and goods/services signals; the attorney reviews and decides, and the AI never issues a refusal. Expected: 30-40% less search time and more consistent 2(d) outcomes. American-built, U.S.-hosted, attorney-in-the-loop. Ready for AI Council review.",
+    } as Partial<FormData>),
+  },
+
   // 1) Patents — READY. Strong example, shows the tool's "ideal" state.
   {
     id: "seed-patents-prior-art",
