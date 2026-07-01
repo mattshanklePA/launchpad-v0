@@ -20,6 +20,7 @@ export const doc: TenantConfig = {
   heroHeadline: "The governable front door for AI across Commerce",
   heroSubtitle:
     "One place for every bureau to turn AI ideas into vetted, decision-ready, OMB-ready use cases, so the Department can govern, fund, and report across the enterprise.",
+  loginEmailPlaceholder: "you@doc.gov",
 
   strategicContext: `
 The Department of Commerce governs AI across its operating units (bureaus) under the federal AI framework. Every AI idea should clearly advance the Department's mission while meeting federal governance and reporting requirements.

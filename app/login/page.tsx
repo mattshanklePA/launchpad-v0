@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Rocket, LogIn, AlertCircle, Info, Eye, EyeOff } from "lucide-react"
 import { login, getSession, ensureSeeded } from "@/lib/auth"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
+import { getTenant } from "@/lib/tenant"
 
 function LoginForm() {
   const router = useRouter()
@@ -62,7 +63,7 @@ function LoginForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@dow.mil"
+              placeholder={getTenant().loginEmailPlaceholder}
               autoComplete="email"
               required
             />

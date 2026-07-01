@@ -29,16 +29,11 @@ export type JobRole =
   | "other"
   | ""
 
-export type BusinessUnit =
-  | "patents"
-  | "trademarks"
-  | "ocio"
-  | "ocfo"
-  | "ogc"
-  | "opia"
-  | "hr"
-  | "other"
-  | ""
+// Bureau/business-unit code from the active tenant's `getTenant().unit.options`
+// (e.g. "patents" for USPTO, "census" for DoC). A free string, like `office`
+// below, rather than a per-tenant union, since the set of valid values differs
+// by tenant.
+export type BusinessUnit = string
 
 export type User = {
   id: string
