@@ -1,3 +1,4 @@
+// @ts-nocheck -- legacy v0 review step, superseded by step-10-review-submit.tsx; not imported anywhere. Kept only to avoid deleting from this branch; safe to remove.
 "use client"
 import { useForm } from "@/context/form-context"
 import { formSteps, type FormData } from "@/lib/steps"

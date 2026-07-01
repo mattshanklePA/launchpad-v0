@@ -2,16 +2,24 @@ import { describe, it, expect } from "vitest"
 import { getStatus, visibleSubmissions } from "@/lib/reviewWorkflow"
 import type { Submission } from "@/lib/submissions"
 
-// Minimal Submission builder for tests.
-function sub(partial: Partial<Submission> & { formData?: Record<string, unknown> }): Submission {
+type SubInput = {
+  id?: string
+  submittedAt?: string
+  formData?: Record<string, unknown>
+  status?: string
+  ownerEmail?: string
+  businessUnit?: string
+}
+
+// Minimal Submission builder for tests (formData is loosely typed on purpose).
+function sub(p: SubInput): Submission {
   return {
-    id: partial.id || "s1",
-    submittedAt: partial.submittedAt || new Date().toISOString(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formData: (partial.formData || {}) as any,
-    status: partial.status,
-    ownerEmail: partial.ownerEmail,
-    businessUnit: partial.businessUnit,
+    id: p.id ?? "s1",
+    submittedAt: p.submittedAt ?? new Date().toISOString(),
+    formData: (p.formData ?? {}) as any,
+    status: p.status,
+    ownerEmail: p.ownerEmail,
+    businessUnit: p.businessUnit,
   }
 }
 
