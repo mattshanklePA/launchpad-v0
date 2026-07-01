@@ -9,6 +9,7 @@ import {
   getBusinessUnit,
   getAssigneeName,
   businessUnitLabel,
+  visibleSubmissions,
   STATUS_ORDER,
   STATUS_LABEL,
   statusBadgeClasses,
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Scale, ArrowRight, SlidersHorizontal, Users, Database, User } from "lucide-react"
 import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
+import { BureauRollup } from "@/components/admin/bureau-rollup"
 
 function readinessChip(score?: string): { cls: string; label: string } {
   switch (score) {
@@ -59,19 +61,25 @@ export function ReviewerHome() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [units, setUnits] = useState<string[]>([])
   const [assignees, setAssignees] = useState<string[]>([])
+  const [viewer, setViewer] = useState<{ role: string; email?: string; businessUnit?: string } | null>(null)
 
   useEffect(() => {
     if (loaded) setSubs(getSubmissions())
   }, [loaded])
 
   useEffect(() => {
-    setIsAdmin(getSession()?.role === "admin")
+    const s = getSession()
+    setIsAdmin(s?.role === "admin")
+    setViewer(s ? { role: s.role, email: s.email, businessUnit: s.businessUnit } : null)
   }, [])
 
-  const allUnits = Array.from(new Set(subs.map(getBusinessUnit).filter(Boolean))).sort()
-  const allAssignees = Array.from(new Set(subs.map(getAssigneeName).filter(Boolean))).sort()
+  // Roll-down: a bureau-scoped reviewer sees only their unit; admins see all.
+  const scoped = viewer ? visibleSubmissions(subs, viewer) : subs
 
-  const filtered = subs.filter(
+  const allUnits = Array.from(new Set(scoped.map(getBusinessUnit).filter(Boolean))).sort()
+  const allAssignees = Array.from(new Set(scoped.map(getAssigneeName).filter(Boolean))).sort()
+
+  const filtered = scoped.filter(
     (s) =>
       (units.length === 0 || units.includes(getBusinessUnit(s))) &&
       (assignees.length === 0 || assignees.includes(getAssigneeName(s))),
@@ -92,8 +100,12 @@ export function ReviewerHome() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-uspto-gray-text">Pipeline</h1>
-        <p className="text-sm text-muted-foreground mt-1">All AI ideas across business units.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          All AI ideas across {getTenant().unit.label.toLowerCase()}s.
+        </p>
       </div>
+
+      <BureauRollup submissions={scoped} />
 
       <Link
         href="/decisions"

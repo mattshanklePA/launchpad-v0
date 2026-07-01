@@ -92,12 +92,18 @@ export function businessUnitLabel(unit: string): string {
 // NOTE: client-side filter only — not a security boundary (see storage note).
 export function visibleSubmissions(
   all: Submission[],
-  viewer: { role: string; email?: string } | null,
+  viewer: { role: string; email?: string; businessUnit?: string } | null,
 ): Submission[] {
   if (!viewer) return []
   if (viewer.role === "submitter") {
     const me = (viewer.email || "").toLowerCase()
     return all.filter((s) => getOwnerEmail(s) === me)
+  }
+  // Roll-down: a bureau-scoped reviewer (e.g., a bureau deputy CIO) sees only
+  // their own business unit. Department admins, and reviewers without a unit,
+  // see everything (the roll-up).
+  if (viewer.role === "reviewer" && viewer.businessUnit) {
+    return all.filter((s) => getBusinessUnit(s) === viewer.businessUnit)
   }
   return all
 }
