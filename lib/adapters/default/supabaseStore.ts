@@ -28,6 +28,7 @@ function getSubmissions(): Submission[] {
     status: s.status,
     ownerEmail: s.ownerEmail,
     businessUnit: s.businessUnit,
+    office: s.office,
   }))
 }
 

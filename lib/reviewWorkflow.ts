@@ -88,11 +88,23 @@ export function businessUnitLabel(unit: string): string {
   return opt ? opt.label : unit || "Unspecified"
 }
 
+export function getOffice(s: Submission): string {
+  return String(s.office || (s.formData as Record<string, unknown>)?.submitterSubOffice || "")
+}
+
+// Label for an office, scoped to its parent bureau (offices are only unique
+// within a bureau, e.g. "nws" could theoretically collide across bureaus).
+export function officeLabel(unit: string, office: string): string {
+  const bureau = getTenant().unit.options.find((o) => o.value === unit)
+  const opt = bureau?.offices?.find((o) => o.value === office)
+  return opt ? opt.label : office || "Unspecified"
+}
+
 // Role-scoped visibility. Submitters see only their own; reviewers/admins all.
 // NOTE: client-side filter only — not a security boundary (see storage note).
 export function visibleSubmissions(
   all: Submission[],
-  viewer: { role: string; email?: string; businessUnit?: string } | null,
+  viewer: { role: string; email?: string; businessUnit?: string; office?: string } | null,
 ): Submission[] {
   if (!viewer) return []
   if (viewer.role === "submitter") {
@@ -100,10 +112,15 @@ export function visibleSubmissions(
     return all.filter((s) => getOwnerEmail(s) === me)
   }
   // Roll-down: a bureau-scoped reviewer (e.g., a bureau deputy CIO) sees only
-  // their own business unit. Department admins, and reviewers without a unit,
-  // see everything (the roll-up).
+  // their own business unit; an office-scoped reviewer within that bureau
+  // (e.g., NOAA/NWS) is narrowed further to their office. Department admins,
+  // and reviewers without a unit, see everything (the roll-up).
   if (viewer.role === "reviewer" && viewer.businessUnit) {
-    return all.filter((s) => getBusinessUnit(s) === viewer.businessUnit)
+    const inBureau = all.filter((s) => getBusinessUnit(s) === viewer.businessUnit)
+    if (viewer.office) {
+      return inBureau.filter((s) => getOffice(s) === viewer.office)
+    }
+    return inBureau
   }
   return all
 }

@@ -1,11 +1,11 @@
 import type { TenantConfig } from "./types"
 
 // Department of Commerce tenant. A department-level instance spanning the
-// operating units (bureaus). The org taxonomy here is the BUREAU; a second
-// level (bureau -> office) and the DoC->bureau roll-up are added by the
-// parent/child work. Strategic context and risk framing are anchored to the
-// federal AI framework (OMB M-25-21, M-25-22, EO 14179), not to any single
-// bureau's strategic plan.
+// operating units (bureaus). The org taxonomy here is the BUREAU; a handful
+// of bureaus also declare `offices` (their sub-level), giving a third tier:
+// Department -> Bureau -> Office. Strategic context and risk framing are
+// anchored to the federal AI framework (OMB M-25-21, M-25-22, EO 14179), not
+// to any single bureau's strategic plan.
 //
 // Register in lib/tenant/index.ts:  const TENANTS = { uspto, dow, doc }.
 // Deploy with NEXT_PUBLIC_TENANT=doc.
@@ -81,12 +81,36 @@ A serious AI idea names the federal priority and the Department mission it advan
       { value: "os", label: "Office of the Secretary" },
       { value: "bea", label: "Bureau of Economic Analysis (BEA)" },
       { value: "bis", label: "Bureau of Industry and Security (BIS)" },
-      { value: "census", label: "U.S. Census Bureau" },
+      {
+        value: "census",
+        label: "U.S. Census Bureau",
+        offices: [
+          { value: "decennial", label: "Decennial Census Programs" },
+          { value: "economic", label: "Economic Programs" },
+          { value: "demographic", label: "Demographic Programs" },
+        ],
+      },
       { value: "eda", label: "Economic Development Administration (EDA)" },
-      { value: "ita", label: "International Trade Administration (ITA)" },
+      {
+        value: "ita",
+        label: "International Trade Administration (ITA)",
+        offices: [
+          { value: "industry_analysis", label: "Industry & Analysis" },
+          { value: "global_markets", label: "Global Markets" },
+          { value: "enforcement_compliance", label: "Enforcement & Compliance" },
+        ],
+      },
       { value: "mbda", label: "Minority Business Development Agency (MBDA)" },
       { value: "nist", label: "National Institute of Standards and Technology (NIST)" },
-      { value: "noaa", label: "National Oceanic and Atmospheric Administration (NOAA)" },
+      {
+        value: "noaa",
+        label: "National Oceanic and Atmospheric Administration (NOAA)",
+        offices: [
+          { value: "nws", label: "National Weather Service (NWS)" },
+          { value: "nmfs", label: "National Marine Fisheries Service (NMFS)" },
+          { value: "nesdis", label: "National Environmental Satellite, Data, and Information Service (NESDIS)" },
+        ],
+      },
       { value: "ntia", label: "National Telecommunications and Information Administration (NTIA)" },
       { value: "ntis", label: "National Technical Information Service (NTIS)" },
       { value: "uspto", label: "U.S. Patent and Trademark Office (USPTO)" },

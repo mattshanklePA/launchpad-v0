@@ -60,6 +60,8 @@ export type DbUserRow = {
   password: string
   job_role: string | null
   business_unit: string | null
+  // Added by the office-hierarchy migration; optional so reads work pre-migration.
+  office?: string | null
   created_at: string
 }
 
@@ -71,6 +73,8 @@ export type DbSubmissionRow = {
   status?: string | null
   owner_email?: string | null
   business_unit?: string | null
+  // Added by the office-hierarchy migration; optional so reads work pre-migration.
+  office?: string | null
 }
 
 export type DbFormConfigRow = {

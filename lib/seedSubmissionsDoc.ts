@@ -6,6 +6,8 @@
 //
 // submitterOffice values are bureau codes from lib/tenant/doc.ts; labels render
 // via getTenant().unit.options. usptoFocusArea holds DoC focus-area ids.
+// submitterSubOffice, where set, is an office code under that bureau's
+// `offices` (Census, ITA, NOAA) — demonstrates the office roll-up drill-down.
 
 import type { FormData } from "@/lib/steps"
 import { initialFormData } from "@/lib/steps"
@@ -27,6 +29,7 @@ export const docSeedSubmissions: Submission[] = [
       submitterEmail: "dana.whitfield@census.gov",
       submitterRole: "product_owner",
       submitterOffice: "census",
+      submitterSubOffice: "demographic",
       reviewStatus: "in_review",
       useCaseTitle: "Plain-Language Survey Help Assistant",
       useCaseDescription:
@@ -94,6 +97,7 @@ export const docSeedSubmissions: Submission[] = [
       submitterEmail: "marcus.bell@trade.gov",
       submitterRole: "product_owner",
       submitterOffice: "ita",
+      submitterSubOffice: "global_markets",
       reviewStatus: "submitted",
       useCaseTitle: "Exporter Assistance Plain-Language Assistant",
       useCaseDescription:
@@ -347,6 +351,7 @@ export const docSeedSubmissions: Submission[] = [
       submitterEmail: "carlos.mendez@noaa.gov",
       submitterRole: "other",
       submitterOffice: "noaa",
+      submitterSubOffice: "nws",
       reviewStatus: "needs_info",
       comments: [
         {

@@ -74,6 +74,7 @@ export async function POST() {
               status: (fd.reviewStatus as string) || "submitted",
               owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
               business_unit: (fd.submitterOffice as string) || null,
+              office: (fd.submitterSubOffice as string) || null,
             })
             .eq("id", s.id)
         }),

@@ -9,6 +9,7 @@ type SubInput = {
   status?: string
   ownerEmail?: string
   businessUnit?: string
+  office?: string
 }
 
 // Minimal Submission builder for tests (formData is loosely typed on purpose).
@@ -20,6 +21,7 @@ function sub(p: SubInput): Submission {
     status: p.status,
     ownerEmail: p.ownerEmail,
     businessUnit: p.businessUnit,
+    office: p.office,
   }
 }
 
@@ -57,5 +59,34 @@ describe("visibleSubmissions (role scoping + roll-down)", () => {
   })
   it("lets a reviewer without a unit see everything", () => {
     expect(visibleSubmissions(all, { role: "reviewer" })).toHaveLength(2)
+  })
+})
+
+describe("visibleSubmissions (office roll-down)", () => {
+  const all = [
+    sub({ id: "a", businessUnit: "noaa", office: "nws" }),
+    sub({ id: "b", businessUnit: "noaa", office: "nmfs" }),
+    sub({ id: "c", businessUnit: "noaa" }), // bureau-wide, no office set
+    sub({ id: "d", businessUnit: "census", office: "decennial" }),
+    sub({ id: "e", businessUnit: "nist" }), // bureau with no offices configured
+  ]
+
+  it("scopes an office-scoped reviewer to their office within their bureau", () => {
+    const r = visibleSubmissions(all, { role: "reviewer", businessUnit: "noaa", office: "nws" })
+    expect(r.map((s) => s.id)).toEqual(["a"])
+  })
+
+  it("scopes a bureau-only reviewer to the whole bureau, offices included", () => {
+    const r = visibleSubmissions(all, { role: "reviewer", businessUnit: "noaa" })
+    expect(r.map((s) => s.id).sort()).toEqual(["a", "b", "c"])
+  })
+
+  it("lets a department/admin viewer see everything regardless of office", () => {
+    expect(visibleSubmissions(all, { role: "admin" })).toHaveLength(5)
+  })
+
+  it("has parity with today for a bureau with no offices (bureau-only scoping still works)", () => {
+    const r = visibleSubmissions(all, { role: "reviewer", businessUnit: "nist" })
+    expect(r.map((s) => s.id)).toEqual(["e"])
   })
 })

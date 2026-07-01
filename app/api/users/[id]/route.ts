@@ -16,6 +16,7 @@ type ApiUser = {
   role: "admin" | "reviewer" | "submitter"
   jobRole?: string | null
   businessUnit?: string | null
+  office?: string | null
   createdAt: string
 }
 
@@ -27,6 +28,7 @@ function fromRow(row: DbUserRow): ApiUser {
     role: row.role,
     jobRole: row.job_role,
     businessUnit: row.business_unit,
+    office: row.office ?? null,
     createdAt: row.created_at,
   }
 }
@@ -60,6 +62,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
     if (body.jobRole !== undefined) patch.job_role = body.jobRole || null
     if (body.businessUnit !== undefined) patch.business_unit = body.businessUnit || null
+    if (body.office !== undefined) patch.office = body.office || null
 
     if (Object.keys(patch).length === 0) {
       return NextResponse.json({ ok: true, user: fromRow(existing as DbUserRow) })

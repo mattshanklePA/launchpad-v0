@@ -5,7 +5,11 @@
 export type FocusArea = { id: string; label: string; category: string }
 export type Objective = { title: string; description: string }
 export type ObjectiveGroup = { title: string; subtitle: string; items: Objective[] }
-export type UnitOption = { value: string; label: string }
+export type OfficeOption = { value: string; label: string }
+// `offices` is the optional third tier (Department -> Bureau -> Office). Only
+// populated for tenants/bureaus that have one (DoC); absent elsewhere so
+// USPTO/DoW render exactly as before.
+export type UnitOption = { value: string; label: string; offices?: OfficeOption[] }
 
 export type TenantConfig = {
   id: string

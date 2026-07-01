@@ -51,6 +51,10 @@ export type User = {
   createdAt: string
   jobRole?: JobRole
   businessUnit?: BusinessUnit
+  // Office sub-level under businessUnit (DoC bureaus that declare offices).
+  // A free string like submitterSubOffice, rather than a per-tenant union,
+  // since only some bureaus define offices.
+  office?: string
 }
 
 export type Session = {
@@ -61,6 +65,7 @@ export type Session = {
   loggedInAt: string
   jobRole?: JobRole
   businessUnit?: BusinessUnit
+  office?: string
 }
 
 const SESSION_KEY = "launchpad-session"
@@ -83,6 +88,7 @@ export function getAllUsers(): User[] {
     createdAt: u.createdAt,
     jobRole: (u.jobRole as JobRole) || undefined,
     businessUnit: (u.businessUnit as BusinessUnit) || undefined,
+    office: u.office || undefined,
   }))
 }
 
@@ -97,6 +103,7 @@ export function getUserByEmail(email: string): User | null {
     createdAt: u.createdAt,
     jobRole: (u.jobRole as JobRole) || undefined,
     businessUnit: (u.businessUnit as BusinessUnit) || undefined,
+    office: u.office || undefined,
   }
 }
 
@@ -109,6 +116,7 @@ export async function addUser(input: {
   password: string
   jobRole?: JobRole
   businessUnit?: BusinessUnit
+  office?: string
 }): Promise<User | { error: string }> {
   try {
     const res = await fetch("/api/users", {
@@ -163,7 +171,7 @@ export async function updateUserRole(
 
 export async function updateUserProfile(
   id: string,
-  patch: { jobRole?: JobRole; businessUnit?: BusinessUnit },
+  patch: { jobRole?: JobRole; businessUnit?: BusinessUnit; office?: string },
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const res = await fetch(`/api/users/${encodeURIComponent(id)}`, {
@@ -180,6 +188,7 @@ export async function updateUserProfile(
         ...session,
         jobRole: (patch.jobRole as JobRole) ?? session.jobRole,
         businessUnit: (patch.businessUnit as BusinessUnit) ?? session.businessUnit,
+        office: patch.office ?? session.office,
       })
     }
     return { ok: true }
@@ -198,13 +207,14 @@ export function getSession(): Session | null {
     // Self-heal: if profile fields are missing from session but present on
     // the cached user record, backfill so wizard auto-fill works without
     // forcing a re-login.
-    if (session.jobRole === undefined || session.businessUnit === undefined) {
+    if (session.jobRole === undefined || session.businessUnit === undefined || session.office === undefined) {
       const user = getCachedUserById(session.userId)
-      if (user && (user.jobRole !== undefined || user.businessUnit !== undefined)) {
+      if (user && (user.jobRole !== undefined || user.businessUnit !== undefined || user.office !== undefined)) {
         const patched: Session = {
           ...session,
           jobRole: (user.jobRole as JobRole) ?? session.jobRole,
           businessUnit: (user.businessUnit as BusinessUnit) ?? session.businessUnit,
+          office: user.office ?? session.office,
         }
         localStorage.setItem(SESSION_KEY, JSON.stringify(patched))
         return patched

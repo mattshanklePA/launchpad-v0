@@ -118,6 +118,16 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
   },
   {
+    fieldKey: "submitterSubOffice",
+    label: "Office",
+    description: "Office sub-level under the submitter's bureau, for tenants/bureaus that define one (e.g. DoC Census -> Decennial).",
+    reasonToInclude:
+      "Routes the idea to the correct office-scoped reviewer and enables office-level roll-up when a bureau has offices.",
+    phase: 1,
+    step: 1,
+    locked: false,
+  },
+  {
     fieldKey: "useCaseTitle",
     label: "Idea Title",
     description: "Short name for the AI use case.",

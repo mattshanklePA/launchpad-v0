@@ -24,6 +24,7 @@ type ApiSubmission = {
   status?: string
   ownerEmail?: string
   businessUnit?: string
+  office?: string
 }
 
 function fromRow(row: DbSubmissionRow): ApiSubmission {
@@ -34,6 +35,7 @@ function fromRow(row: DbSubmissionRow): ApiSubmission {
     status: row.status ?? undefined,
     ownerEmail: row.owner_email ?? undefined,
     businessUnit: row.business_unit ?? undefined,
+    office: row.office ?? undefined,
   }
 }
 
@@ -86,6 +88,7 @@ export async function POST(req: Request) {
           status: fd.reviewStatus || "submitted",
           owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
           business_unit: fd.submitterOffice || null,
+          office: fd.submitterSubOffice || null,
         })
         .eq("id", id)
       if (colErr) console.warn("workflow column sync skipped:", colErr.message)

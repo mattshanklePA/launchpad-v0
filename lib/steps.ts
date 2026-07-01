@@ -49,6 +49,10 @@ export type FormData = {
   // from the active tenant's `unit.options`, so this is a free string rather than
   // a per-tenant union.
   submitterOffice: string
+  // Office sub-level under submitterOffice, only meaningful when the chosen
+  // bureau declares `offices` (see lib/tenant/types.ts). Empty when the
+  // bureau has no offices or the tenant doesn't use the concept.
+  submitterSubOffice: string
 
   // Step 2 - Use Case Overview
   useCaseTitle: string
@@ -157,6 +161,7 @@ export const initialFormData: FormData = {
   submitterEmail: "",
   submitterRole: "",
   submitterOffice: "",
+  submitterSubOffice: "",
   useCaseTitle: "",
   useCaseDescription: "",
   publicIndicator: "",

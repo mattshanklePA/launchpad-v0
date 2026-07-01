@@ -25,6 +25,7 @@ type ApiUser = {
   role: "admin" | "reviewer" | "submitter"
   jobRole?: string | null
   businessUnit?: string | null
+  office?: string | null
   createdAt: string
 }
 
@@ -36,6 +37,7 @@ function fromRow(row: DbUserRow): ApiUser {
     role: row.role,
     jobRole: row.job_role,
     businessUnit: row.business_unit,
+    office: row.office ?? null,
     createdAt: row.created_at,
   }
 }
@@ -72,6 +74,7 @@ export async function POST(req: Request) {
     const password = String(body.password || "")
     const jobRole = body.jobRole ?? null
     const businessUnit = body.businessUnit ?? null
+    const office = body.office ?? null
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 })
@@ -106,6 +109,7 @@ export async function POST(req: Request) {
       password,
       job_role: jobRole,
       business_unit: businessUnit,
+      office,
       created_at: new Date().toISOString(),
     }
     const { error } = await supabase.from("users").insert(newUser)
