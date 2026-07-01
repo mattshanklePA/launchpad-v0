@@ -64,6 +64,7 @@ function profileFromSession(): Partial<FormData> {
     submitterEmail: s.email || "",
     submitterRole: (s.jobRole as FormData["submitterRole"]) || "",
     submitterOffice: (s.businessUnit as FormData["submitterOffice"]) || "",
+    submitterSubOffice: s.office || "",
   }
 }
 
@@ -109,6 +110,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         "submitterEmail",
         "submitterRole",
         "submitterOffice",
+        "submitterSubOffice",
       ]
       for (const key of submitterKeys) {
         const savedValue = merged[key]

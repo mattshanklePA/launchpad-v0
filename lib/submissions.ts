@@ -23,6 +23,7 @@ export type Submission = {
   status?: string
   ownerEmail?: string
   businessUnit?: string
+  office?: string
 }
 
 /** Synchronous read from the in-memory cache populated by DataProvider. */

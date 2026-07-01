@@ -61,7 +61,7 @@ export function ReviewerHome() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [units, setUnits] = useState<string[]>([])
   const [assignees, setAssignees] = useState<string[]>([])
-  const [viewer, setViewer] = useState<{ role: string; email?: string; businessUnit?: string } | null>(null)
+  const [viewer, setViewer] = useState<{ role: string; email?: string; businessUnit?: string; office?: string } | null>(null)
 
   useEffect(() => {
     if (loaded) setSubs(getSubmissions())
@@ -70,7 +70,7 @@ export function ReviewerHome() {
   useEffect(() => {
     const s = getSession()
     setIsAdmin(s?.role === "admin")
-    setViewer(s ? { role: s.role, email: s.email, businessUnit: s.businessUnit } : null)
+    setViewer(s ? { role: s.role, email: s.email, businessUnit: s.businessUnit, office: s.office } : null)
   }, [])
 
   // Roll-down: a bureau-scoped reviewer sees only their unit; admins see all.

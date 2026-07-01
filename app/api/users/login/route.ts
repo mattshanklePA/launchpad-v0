@@ -41,6 +41,7 @@ export async function POST(req: Request) {
         loggedInAt: new Date().toISOString(),
         jobRole: user.job_role,
         businessUnit: user.business_unit,
+        office: user.office,
       },
     })
   } catch (error) {

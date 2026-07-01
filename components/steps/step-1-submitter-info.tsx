@@ -10,6 +10,11 @@ export function Step1SubmitterInfo() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
 
+  // Dependent dropdown: only bureaus that declare `offices` show one, and it
+  // resets whenever the bureau changes to a bureau without a matching office.
+  const selectedUnit = getTenant().unit.options.find((o) => o.value === formData.submitterOffice)
+  const offices = selectedUnit?.offices || []
+
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -66,13 +71,33 @@ export function Step1SubmitterInfo() {
             <Label htmlFor="submitterOffice">{getTenant().unit.label}</Label>
             <Select
               value={formData.submitterOffice}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, submitterOffice: value as any }))}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, submitterOffice: value as any, submitterSubOffice: "" }))
+              }
             >
               <SelectTrigger id="submitterOffice">
                 <SelectValue placeholder={`Select your ${getTenant().unit.label.toLowerCase()}...`} />
               </SelectTrigger>
               <SelectContent>
                 {getTenant().unit.options.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {isVisible("submitterSubOffice") && offices.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="submitterSubOffice">Office</Label>
+            <Select
+              value={formData.submitterSubOffice}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, submitterSubOffice: value as any }))}
+            >
+              <SelectTrigger id="submitterSubOffice">
+                <SelectValue placeholder="Select your office (optional)..." />
+              </SelectTrigger>
+              <SelectContent>
+                {offices.map((o) => (
                   <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>

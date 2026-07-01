@@ -88,7 +88,19 @@ styles/                  Tailwind globals
 - Two Supabase clients (`lib/supabaseClient.ts`):
   - `getSupabaseAdmin()` — service_role key, bypasses RLS, **server-only**. Never import into client code.
   - `getSupabaseAnon()` — publishable key, browser-safe, **currently unused** (kept for future realtime).
-- Migrations in `db/migrations/`: review workflow, demo status fixes, demo examples, users & assignees.
+- Migrations in `db/migrations/`: review workflow, demo status fixes, demo examples, users & assignees. Tenant-specific migrations live under `db/migrations/<tenant>/` (e.g. `db/migrations/doc/`).
+
+### Org hierarchy: Department -> Bureau -> Office (DoC)
+
+The DoC tenant models a three-tier org taxonomy:
+
+- **Department** — the whole tenant (Commerce). A department/admin viewer or reviewer with no `businessUnit` sees every submission (the roll-up).
+- **Bureau** — `submissions.business_unit` / `users.business_unit`, driven by `getTenant().unit.options` (e.g. `census`, `noaa`). This tier existed before the office work; roll-up is `components/admin/bureau-rollup.tsx`.
+- **Office** — `submissions.office` / `users.office` (added in `db/migrations/doc/0001_office_hierarchy.sql`), an optional sub-level under a bureau. Only bureaus that declare `offices` on their `UnitOption` in `lib/tenant/doc.ts` (currently Census, ITA, NOAA) show an office dropdown in the wizard (`components/steps/step-1-submitter-info.tsx`) or an office drill-down under their roll-up row (`components/admin/office-rollup.tsx`, aggregation in `lib/officeRollup.ts`). Bureaus without offices behave exactly as before — `offices` is optional so USPTO and DoW are unaffected.
+
+Roll-down visibility (`visibleSubmissions` in `lib/reviewWorkflow.ts`) mirrors this: a submitter sees only their own submissions; a reviewer with a `businessUnit` (and optionally an `office`) sees that bureau, narrowed to that office if set; a reviewer/admin with neither sees everything.
+
+**RLS posture:** `0001_office_hierarchy.sql` enables row level security on `submissions` with a policy for the `authenticated` Postgres role that mirrors `visibleSubmissions` (admin claim sees all; bureau claim scopes to `business_unit`; office claim further scopes to `office`), keyed on `auth.jwt() -> 'app_metadata'`. The app currently talks to Supabase only via the service_role client (`getSupabaseAdmin()`), which has `BYPASSRLS`, so these policies do not change any current app behavior — they exist so DB-level scoping is already in place. **Follow-up (not done in this PR):** the app's own auth (`lib/auth.ts`) is a custom users table, not Supabase Auth, so no request today authenticates to Supabase as `authenticated` with `role`/`business_unit`/`office` claims populated — that requires either migrating to Supabase Auth or minting a JWT with those claims per request.
 
 ---
 

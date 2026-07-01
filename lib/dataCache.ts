@@ -20,6 +20,7 @@ export type CachedSubmission = {
   status?: string
   ownerEmail?: string
   businessUnit?: string
+  office?: string
 }
 
 export type CachedUser = {
@@ -29,6 +30,7 @@ export type CachedUser = {
   role: "admin" | "reviewer" | "submitter"
   jobRole?: string | null
   businessUnit?: string | null
+  office?: string | null
   createdAt: string
 }
 
