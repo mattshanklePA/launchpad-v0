@@ -113,6 +113,11 @@ export type FormData = {
   aiDecisionalImpact: "yes" | "no" | "" // Does AI make/influence a decision affecting an applicant or employee?
   aiModelSourcing: "american_built" | "open_source_us" | "foreign" | "unknown" | "" // Trump EO compliance
   aiHumanReview: "yes" | "no" | "" // Is there mandatory human review before action?
+  // OMB federal AI use case inventory fields (M-25-21 companion guidance)
+  stageOfDevelopment: "pre_deployment" | "pilot" | "deployed" | "retired" | ""
+  highImpact: "yes" | "no" | ""
+  hasATO: "yes" | "no" | "in_progress" | ""
+  systemSource: "in_house" | "contract" | "vendor" | ""
   // DoD responsible-AI + maturity disclosures
   impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
   dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
@@ -192,6 +197,10 @@ export const initialFormData: FormData = {
   aiDecisionalImpact: "",
   aiModelSourcing: "",
   aiHumanReview: "",
+  stageOfDevelopment: "",
+  highImpact: "",
+  hasATO: "",
+  systemSource: "",
   feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],

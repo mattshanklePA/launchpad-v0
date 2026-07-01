@@ -28,11 +28,55 @@ export type FieldDefinition = {
   locked: boolean
   // Human-readable reason for the lock — shown in the UI next to the lock icon.
   lockedReason?: string
+  // True if this field feeds the OMB federal AI use case inventory (M-25-21
+  // companion guidance). Surfaces an "OMB" badge next to the field in the wizard.
+  omb?: boolean
 }
 
 // Single flat list. Grouping is computed at render time so admin UI changes
 // don't require reshuffling the registry.
 export const FIELD_REGISTRY: FieldDefinition[] = [
+  // ────── Federal AI use case inventory (OMB) — Phase 4 / Feasibility ──────
+  {
+    fieldKey: "stageOfDevelopment",
+    label: "Stage of Development",
+    description: "Pre-deployment, pilot, deployed, or retired — the OMB inventory maturity stage.",
+    reasonToInclude: "Required field in the OMB AI use case inventory; determines which reporting fields apply.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "highImpact",
+    label: "High-impact AI?",
+    description: "Whether the use case meets OMB's high-impact AI definition (M-25-21).",
+    reasonToInclude: "Required in the OMB inventory; high-impact use cases trigger additional risk-management reporting.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "hasATO",
+    label: "Associated ATO?",
+    description: "Whether the AI system has an Authorization to Operate.",
+    reasonToInclude: "OMB inventory field; signals the security authorization status of the AI system.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "systemSource",
+    label: "Built in-house, under contract, or purchased?",
+    description: "Whether the system was developed in-house, under contract, or purchased from a vendor.",
+    reasonToInclude: "OMB inventory field; also informs acquisition and the custom-code / IP posture.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
   // ────── Phase 1: Setup ──────
   {
     fieldKey: "submitterName",

@@ -10,6 +10,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { ChevronDown, ChevronRight } from "lucide-react"
+import { OmbBadge } from "../launchpad/omb-badge"
 
 const resourceOptions = [
   { value: "dev_staff", label: "Development staff" },
@@ -174,7 +175,7 @@ export function Step8FeasibilitySecurity() {
             </div>
 
             <div className="space-y-2">
-              <Label>Does this use PII or other sensitive personal data?</Label>
+              <Label>Does this use PII or other sensitive personal data? <OmbBadge /></Label>
               <RadioGroup
                 value={formData.involvesSensitiveData}
                 onValueChange={(value) =>
@@ -260,6 +261,107 @@ export function Step8FeasibilitySecurity() {
               </RadioGroup>
             </div>
           </div>
+
+          {/* === OMB federal AI use case inventory === */}
+          {isVisible("stageOfDevelopment") && (
+            <div className="pt-6 mt-6 border-t space-y-5">
+              <div>
+                <h3 className="font-semibold text-lg text-uspto-gray-text">
+                  Federal AI use case inventory <OmbBadge />
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Fields required for the OMB AI use case inventory (M-25-21 companion guidance). Each OMB-required
+                  field is marked with an <OmbBadge /> tag.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stageOfDevelopment">
+                  Stage of development <OmbBadge />
+                </Label>
+                <Select
+                  value={formData.stageOfDevelopment}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, stageOfDevelopment: value as any }))}
+                >
+                  <SelectTrigger id="stageOfDevelopment">
+                    <SelectValue placeholder="Select stage..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pre_deployment">Pre-deployment (development or acquisition)</SelectItem>
+                    <SelectItem value="pilot">Pilot (limited test)</SelectItem>
+                    <SelectItem value="deployed">Deployed / operational</SelectItem>
+                    <SelectItem value="retired">Retired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Is this a high-impact AI use case? <OmbBadge />
+                </Label>
+                <RadioGroup
+                  value={formData.highImpact}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, highImpact: value as any }))}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="hi-yes" />
+                    <Label htmlFor="hi-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="hi-no" />
+                    <Label htmlFor="hi-no">No</Label>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  High-impact use cases carry additional OMB risk-management reporting.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Associated Authorization to Operate (ATO)? <OmbBadge />
+                </Label>
+                <RadioGroup
+                  value={formData.hasATO}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, hasATO: value as any }))}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="ato-yes" />
+                    <Label htmlFor="ato-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="in_progress" id="ato-prog" />
+                    <Label htmlFor="ato-prog">In progress</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="ato-no" />
+                    <Label htmlFor="ato-no">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="systemSource">
+                  Built in-house, under contract, or purchased? <OmbBadge />
+                </Label>
+                <Select
+                  value={formData.systemSource}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, systemSource: value as any }))}
+                >
+                  <SelectTrigger id="systemSource">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="in_house">Developed in-house</SelectItem>
+                    <SelectItem value="contract">Developed under contract</SelectItem>
+                    <SelectItem value="vendor">Purchased from a vendor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           {formData.involvesSensitiveData === "yes" && isVisible("accessControlRequirements") && (
             <div className="space-y-2">
