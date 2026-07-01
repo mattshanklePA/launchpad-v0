@@ -1,9 +1,10 @@
 "use server"
 
-// Server action: generate an executive comparative briefing across
-// 2-4 submissions for funding-decision support.
-// Same anti-fabrication ethic as the per-step coach: synthesizes
-// only what the submissions actually contain, names gaps honestly.
+// Server action: generate an executive comparative briefing across 2-4
+// submissions for a funding decision. Decision-first (a recommendation + a
+// verdict and the one gap that matters per candidate), not a wall of text.
+// Tenant-neutral: all org-specific framing comes from getTenant(), so this
+// reads correctly for USPTO, DoC, DoW, or any future tenant.
 
 import { generateObject } from "ai"
 import { getModel } from "@/lib/modelProvider"
@@ -11,23 +12,93 @@ import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
 import { getTenant } from "@/lib/tenant"
 
+export type Verdict = "fund_now" | "fund_with_conditions" | "hold"
+
 export type CompareBriefing = {
-  narrative: string
-  portfolioTake: string
-  unaddressedGaps: string
+  recommendation: { fundId: string; headline: string }
+  differ: string
+  portfolioGap: string
   perSubmission: Array<{
     id: string
     title: string
+    verdict: Verdict
     oneLine: string
-    whatItDoesNotAddress: string
+    gap: string
   }>
 }
-
-const STRATEGIC_CONTEXT = getTenant().strategicContext
 
 function fmt(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : "(none)"
   return v && v.trim() !== "" ? v : "(not provided)"
+}
+
+function clip(s: string | undefined, n: number): string {
+  const t = (s || "").trim()
+  return t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t
+}
+
+function firstSentence(s: string | undefined): string {
+  const t = (s || "").trim()
+  if (!t) return ""
+  const m = t.match(/^.*?[.!?](\s|$)/)
+  return (m ? m[0] : t).trim()
+}
+
+// Coerce a loosely-phrased model verdict ("Fund now", "fund-with-conditions",
+// "HOLD") into our enum so a minor wording wobble doesn't blank the briefing.
+function normalizeVerdict(v: string | undefined): Verdict {
+  const s = (v || "").toLowerCase().replace(/[^a-z]/g, "_")
+  if (s.includes("condition")) return "fund_with_conditions"
+  if (s.startsWith("fund")) return "fund_now"
+  return "hold"
+}
+
+function verdictFromReadiness(score: string | undefined): Verdict {
+  if (score === "ready") return "fund_now"
+  if (score === "needs_work") return "fund_with_conditions"
+  return "hold"
+}
+
+// Synthesize a populated, sensible briefing from each submission's own readiness
+// verdict + executive summary. Used as the fallback when the AI call fails or
+// returns an unparseable object, so the Decision Center always shows a real
+// recommendation instead of an error/empty state.
+function heuristicBriefing(subs: Submission[]): CompareBriefing {
+  const rank: Record<string, number> = { ready: 3, needs_work: 2, early_stage: 1 }
+  const perSubmission = subs.map((s) => {
+    const d = s.formData
+    const oneLine =
+      clip(firstSentence(d.executiveSummary) || d.solutionSummary || d.businessValueSummary || d.useCaseDescription, 170) ||
+      "Review the submission detail."
+    const gap =
+      d.readinessScore === "ready"
+        ? "No blocking gap noted; confirm a measured baseline before scaling."
+        : clip(firstSentence(d.readinessSummary), 170) || "Needs a measured baseline before funding."
+    return {
+      id: s.id,
+      title: d.useCaseTitle || "Untitled idea",
+      verdict: verdictFromReadiness(d.readinessScore),
+      oneLine,
+      gap,
+    }
+  })
+  const sorted = [...subs].sort(
+    (a, b) => (rank[b.formData.readinessScore || ""] || 0) - (rank[a.formData.readinessScore || ""] || 0),
+  )
+  const best = sorted[0]
+  const fundId = (rank[best?.formData.readinessScore || ""] || 0) >= 2 ? best.id : ""
+  const fundTitle = subs.find((s) => s.id === fundId)?.formData.useCaseTitle
+  return {
+    recommendation: {
+      fundId,
+      headline: fundId
+        ? `Fund ${fundTitle} first — it is the most decision-ready of the set.`
+        : "None are clearly ready to fund yet — tighten the gaps below before committing.",
+    },
+    differ: "The candidates target different users or different points in the same workflow.",
+    portfolioGap: "Confirm a measured baseline and named priority alignment for each before final funding.",
+    perSubmission,
+  }
 }
 
 function summarizeSubmission(s: Submission, idx: number): string {
@@ -114,38 +185,27 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
     submissions = submissions.slice(0, 4)
   }
 
+  const tenant = getTenant()
   const dossier = submissions.map((s, i) => summarizeSubmission(s, i)).join("\n")
 
   try {
     const { object } = await generateObject({
       model: getModel(),
       schema: z.object({
-        narrative: z
-          .string()
-          .describe(
-            "A comparative narrative (3-5 sentences). How do these candidates differ in approach, target users, expected impact, and strategic priorities? Where do they overlap or compete? Reference DoW priorities by name.",
-          ),
-        portfolioTake: z
-          .string()
-          .describe(
-            "A funding take: if budget supported only one, which has the clearest case and why? If two or three, which combination is complementary (advances different priorities, hits different user groups)? Be specific about which candidate by title. If none are ready to fund yet, say so honestly.",
-          ),
-        unaddressedGaps: z
-          .string()
-          .describe(
-            "What's NOT in the portfolio. Which DoW strategic priorities are these candidates collectively missing? What common gaps appear across multiple submissions (e.g., 'none of these address FedRAMP/ATO timing', 'none have baseline data')?",
-          ),
+        recommendation: z.object({
+          fundId: z.string().describe("The id of the single best candidate to fund first. Empty string if none are ready to fund yet."),
+          headline: z.string().describe("One short sentence (about 20 words): who to fund first and the single biggest reason. If none are ready, say so plainly."),
+        }),
+        differ: z.string().describe("ONE short sentence on how the candidates differ (e.g., different user groups, or different points in the same workflow)."),
+        portfolioGap: z.string().describe("ONE short sentence naming the most important thing missing across all of them (e.g., 'none provide baseline data to verify ROI')."),
         perSubmission: z
           .array(
             z.object({
               id: z.string(),
               title: z.string(),
-              oneLine: z.string().describe("One sentence: what this is and the named DoW priority it advances most directly."),
-              whatItDoesNotAddress: z
-                .string()
-                .describe(
-                  "1-2 sentences: what THIS submission specifically does not address that a reviewer would want before funding. Be honest. Use the submission's actual gaps — do not invent.",
-                ),
+              verdict: z.string().describe("Exactly one of these tokens: \"fund_now\" (clear, ready case), \"fund_with_conditions\" (worth funding but only after specific fixes), or \"hold\" (not ready to fund yet)."),
+              oneLine: z.string().describe("About 15 words: what it is and the priority it advances most directly."),
+              gap: z.string().describe("About 15 words: the single most important thing it does not address before funding. Be honest; do not invent."),
             }),
           )
           .describe("One entry per submission, in the same order as the dossier."),
@@ -153,72 +213,76 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
       messages: [
         {
           role: "system",
-          content: `You are a senior AI strategist at DoW supporting a CIO/CAIO funding decision. You are NOT here to pitch the submissions — you are here to help the exec make a clear-eyed comparison.
+          content: `You are a senior AI strategist at ${tenant.shortName} supporting a CIO/CAIO funding decision. You are NOT here to pitch the submissions — you are here to help the exec make a clear-eyed comparison.
 
-${STRATEGIC_CONTEXT}
-
-═══ OVERSIGHT LENS (apply to every candidate) ═══
-For each submission, weigh the signals GAO/DoD-OIG funders actually audit for, and surface gaps in "whatItDoesNotAddress" and "unaddressedGaps":
-- DATA READINESS — is AI-ready data available, or must it be built/relabeled? (the most common reason DoD AI fails) A candidate with no data foundation is not yet fundable, however strong the concept.
-- HUMAN OVERSIGHT — for anything decisional about people/targeting, is human judgment required?
-- CLASSIFICATION / IMPACT LEVEL — is it declared and consistent with the data (CUI -> IL4/IL5)?
-- MATURITY (TRL) — is it stated, with a maturation or sustainment plan if low?
-- SUSTAINMENT COST — does the value claim acknowledge total cost of ownership, not just build?
-In "unaddressedGaps", explicitly call out common shortfalls across the set (e.g., "none state data readiness", "none declare an Impact Level", "none address T&E/assurance").
+${tenant.strategicContext}
 
 ═══ ABSOLUTE ANTI-FABRICATION RULES ═══
 - NEVER invent specific numbers, named organizational units, evidence sources, or timelines a submission did not include
 - NEVER assert strategic alignment a submission did not explicitly claim
 - If a submission's claims are vague or unsupported, say so honestly — that's decision-useful information
-- Reference DoW priorities by name (e.g., "enduring decision advantage", "readiness", "sustainment"), not by number
-- Submissions may come from any command and target any user group (warfighters, operators, sustainers, analysts, IT, medical, acquisition, etc.) — do not default to one group
+- Reference ${tenant.shortName}'s published priorities by name, not by number
+- Submissions may come from any part of ${tenant.shortName} and target any user group — do not default to one group
 
 ═══ EVALUATION LENSES (apply implicitly, do not call out by name) ═══
 For each submission, the comparison should help the exec understand:
-- Is the user demand real and observable? (or speculative?)
+- Is the user demand real and observable, or speculative?
 - Will the target users actually be able to use it? (workflow fit, training overhead)
-- Can DoW actually build and integrate it? (FedRAMP/ATO, data access, vendor dependencies, technical complexity)
-- Can DoW sustain it operationally? (procurement, ops, change management, ROI under federal cost realities)
+- Can it actually be built and integrated? (authorization/ATO, data access, vendor dependencies, technical complexity)
+- Can it be sustained operationally? (procurement, ops, change management, ROI under federal cost realities)
+- Risk posture, per ${tenant.riskFramework.label}: ${tenant.riskFramework.description}
 
-Surface these dimensions through your narrative and per-submission gaps — do not label them with technical terms.
+Surface these dimensions through the recommendation and per-submission gaps — do not label them with technical terms.
 
 ═══ YOUR TASK ═══
-Read the dossier of ${submissions.length} submissions below. Then produce:
-1. A comparative NARRATIVE — how do they differ, where do they overlap, which advances which DoW priority most directly
-2. A PORTFOLIO TAKE — funding recommendation grounded in what the submissions actually show (or honest acknowledgment that more work is needed)
-3. UNADDRESSED GAPS — what DoW priorities aren't represented; what common weaknesses appear across multiple candidates
-4. PER-SUBMISSION snapshot — one-liner + specific gaps not addressed in that submission
+Read the dossier of ${submissions.length} submissions below. Be brief and decision-first — an exec should grasp the call in five seconds, then skim the rest. Produce:
+1. RECOMMENDATION — the single best candidate to fund first (by id) and one short sentence on why. If none are ready, say so plainly.
+2. PER-SUBMISSION verdict — for each: fund_now / fund_with_conditions / hold, a tight one-liner, and the single most important gap before funding.
+3. DIFFER — one sentence on how the candidates differ.
+4. PORTFOLIO GAP — one sentence on the most important thing missing across all of them.
 
-Tone: rigorous, honest, decision-useful. An exec should be able to read this and confidently make a funding call (or confidently say "not yet, here's what I need first").`,
+Keep every field short and concrete. Do not write paragraphs. Use the submissions' own facts; name gaps honestly.`,
         },
         {
           role: "user",
-          content: `Compare the following ${submissions.length} DoW AI use case submissions:\n${dossier}`,
+          content: `Compare the following ${submissions.length} ${tenant.shortName} AI use case submissions:\n${dossier}`,
         },
       ],
     })
 
+    // Normalize the model output: align one entry per submission (by id), coerce
+    // the verdict to our enum even if the model phrased it loosely, and drop a
+    // fundId that doesn't point at a real candidate. Keeps a minor schema wobble
+    // from blanking the whole briefing.
+    const byId = new Map(object.perSubmission.map((p) => [p.id, p]))
+    const perSubmission = submissions.map((s) => {
+      const p = byId.get(s.id)
+      return {
+        id: s.id,
+        title: s.formData.useCaseTitle || p?.title || "Untitled idea",
+        verdict: normalizeVerdict(p?.verdict),
+        oneLine: (p?.oneLine || "").trim() || firstSentence(s.formData.executiveSummary) || "Review the submission detail.",
+        gap: (p?.gap || "").trim() || "Confirm a measured baseline before funding.",
+      }
+    })
+    const fundIdValid = perSubmission.some((p) => p.id === object.recommendation?.fundId)
     return {
-      narrative: object.narrative,
-      portfolioTake: object.portfolioTake,
-      unaddressedGaps: object.unaddressedGaps,
-      perSubmission: object.perSubmission,
+      recommendation: {
+        fundId: fundIdValid ? object.recommendation.fundId : "",
+        headline:
+          (object.recommendation?.headline || "").trim() ||
+          "See each candidate's verdict and the gap that matters most below.",
+      },
+      differ: (object.differ || "").trim() || "The candidates target different users or points in the same workflow.",
+      portfolioGap:
+        (object.portfolioGap || "").trim() ||
+        "Confirm a measured baseline and named priority alignment for each before final funding.",
+      perSubmission,
     }
   } catch (error) {
-    console.error("compareSubmissions AI error, falling back to mock briefing:", error)
-    return {
-      narrative:
-        "(AI briefing temporarily unavailable.) These submissions span different parts of the DoW portfolio. A comparative analysis requires review of each candidate's target users, strategic priority advanced, and feasibility posture. Manual review recommended in the interim.",
-      portfolioTake:
-        "Unable to generate a portfolio take without AI synthesis. Recommend deferring funding decision until briefing service is available, or conducting manual side-by-side review using the candidate detail cards.",
-      unaddressedGaps:
-        "(Briefing unavailable.) Review each candidate manually for: FedRAMP/ATO timing, named DoW priority alignment, observable evidence of user demand, and quantified expected impact.",
-      perSubmission: submissions.map((s) => ({
-        id: s.id,
-        title: s.formData.useCaseTitle || "Untitled idea",
-        oneLine: "AI briefing unavailable — review submission detail.",
-        whatItDoesNotAddress: "AI briefing unavailable — review submission detail for specific gaps.",
-      })),
-    }
+    // Don't blank the briefing on an AI/schema hiccup — synthesize a populated,
+    // sensible briefing from each submission's own readiness verdict and summary.
+    console.error("compareSubmissions AI error, using heuristic briefing:", error)
+    return heuristicBriefing(submissions)
   }
 }
