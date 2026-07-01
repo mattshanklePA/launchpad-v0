@@ -18,13 +18,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
-      # Not --frozen-lockfile yet: the lockfile needs `pnpm install` run locally
-      # once to pick up vitest/jsdom. Switch to --frozen-lockfile after that.
+      # CI sets CI=true, which makes pnpm default to --frozen-lockfile. Override
+      # for now so a slightly-out-of-sync lockfile doesn't fail install. Tighten
+      # to --frozen-lockfile once the lockfile is known-good and committed.
       - name: Install
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Typecheck
         run: pnpm typecheck
