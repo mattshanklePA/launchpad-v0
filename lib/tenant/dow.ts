@@ -10,6 +10,7 @@ export const dow: TenantConfig = {
   heroSubtitle:
     "One place to turn AI ideas into vetted, decision-ready use cases, so leaders can fund the strongest ones and catch responsible-AI risks early.",
   heroImage: "/hero-dow.jpg",
+  loginEmailPlaceholder: "you@army.mil",
 
   strategicContext: `
 The Department of War pursues AI under the DoD Data, Analytics, and AI Adoption Strategy and DoD responsible-AI guidance. Reason about every idea using the "AI Hierarchy of Needs": quality, AI-ready data is the foundation; analytics sits on top of it; and Responsible AI governs the whole stack. An idea with no realistic data foundation is not yet a use case, no matter how good the concept.

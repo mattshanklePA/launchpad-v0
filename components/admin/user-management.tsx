@@ -28,9 +28,11 @@ import {
   type BusinessUnit,
 } from "@/lib/auth"
 import { useDataProvider } from "@/components/data-provider"
+import { getTenant } from "@/lib/tenant"
+import { businessUnitLabel, officeLabel } from "@/lib/reviewWorkflow"
 
-// Display labels for the USPTO profile fields. Kept here (rather than imported
-// from a shared util) so this component is fully self-contained.
+// Job role is USPTO-shaped and not yet tenant-configurable; bureau/office
+// below are tenant-aware via getTenant().unit.options.
 const JOB_ROLE_OPTIONS: { value: JobRole; label: string }[] = [
   { value: "", label: "Not set" },
   { value: "patent_examiner", label: "Patent Examiner" },
@@ -43,23 +45,8 @@ const JOB_ROLE_OPTIONS: { value: JobRole; label: string }[] = [
   { value: "other", label: "Other" },
 ]
 
-const BUSINESS_UNIT_OPTIONS: { value: BusinessUnit; label: string }[] = [
-  { value: "", label: "Not set" },
-  { value: "patents", label: "Patents" },
-  { value: "trademarks", label: "Trademarks" },
-  { value: "ocio", label: "OCIO" },
-  { value: "ocfo", label: "OCFO" },
-  { value: "ogc", label: "OGC" },
-  { value: "opia", label: "OPIA" },
-  { value: "hr", label: "Human Resources" },
-  { value: "other", label: "Other" },
-]
-
 function jobRoleLabel(v?: JobRole): string {
   return JOB_ROLE_OPTIONS.find((o) => o.value === (v || ""))?.label || "—"
-}
-function businessUnitLabel(v?: BusinessUnit): string {
-  return BUSINESS_UNIT_OPTIONS.find((o) => o.value === (v || ""))?.label || "—"
 }
 
 function roleBadge(role: Role) {
@@ -93,11 +80,15 @@ export function UserManagement() {
   const [formRole, setFormRole] = useState<Role>("submitter")
   const [formJobRole, setFormJobRole] = useState<JobRole>("")
   const [formBusinessUnit, setFormBusinessUnit] = useState<BusinessUnit>("")
+  const [formOffice, setFormOffice] = useState("")
   const [formPassword, setFormPassword] = useState("")
   const { toast } = useToast()
   const { refetchUsers } = useDataProvider()
 
   const session = typeof window !== "undefined" ? getSession() : null
+  const unitOptions = getTenant().unit.options
+  const unitLabel = getTenant().unit.label
+  const formOffices = unitOptions.find((o) => o.value === formBusinessUnit)?.offices || []
 
   // Re-render the local users array from the shared cache.
   const refresh = async () => {
@@ -117,6 +108,7 @@ export function UserManagement() {
       password: formPassword,
       jobRole: formJobRole,
       businessUnit: formBusinessUnit,
+      office: formOffice,
     })
     if ("error" in result) {
       toast({ variant: "destructive", title: "Could not add user", description: result.error })
@@ -128,6 +120,7 @@ export function UserManagement() {
     setFormRole("submitter")
     setFormJobRole("")
     setFormBusinessUnit("")
+    setFormOffice("")
     setFormPassword("")
     setShowAddForm(false)
     await refresh()
@@ -171,7 +164,9 @@ export function UserManagement() {
 
   const handleBusinessUnitChange = async (user: User, newBu: BusinessUnit) => {
     if (newBu === (user.businessUnit || "")) return
-    const result = await updateUserProfile(user.id, { businessUnit: newBu })
+    // Reset office whenever the bureau changes — an office only makes sense
+    // scoped to its own bureau.
+    const result = await updateUserProfile(user.id, { businessUnit: newBu, office: "" })
     if (!result.ok) {
       toast({ variant: "destructive", title: "Could not update business unit", description: result.error })
       return
@@ -179,6 +174,20 @@ export function UserManagement() {
     toast({
       title: "Profile updated",
       description: `${user.name}: ${businessUnitLabel(newBu)}`,
+    })
+    await refresh()
+  }
+
+  const handleOfficeChange = async (user: User, newOffice: string) => {
+    if (newOffice === (user.office || "")) return
+    const result = await updateUserProfile(user.id, { office: newOffice })
+    if (!result.ok) {
+      toast({ variant: "destructive", title: "Could not update office", description: result.error })
+      return
+    }
+    toast({
+      title: "Profile updated",
+      description: `${user.name}: ${officeLabel(user.businessUnit || "", newOffice)}`,
     })
     await refresh()
   }
@@ -258,23 +267,48 @@ export function UserManagement() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="newBusinessUnit">Business unit</Label>
+                <Label htmlFor="newBusinessUnit">{unitLabel}</Label>
                 <Select
                   value={formBusinessUnit || "_none"}
-                  onValueChange={(v) => setFormBusinessUnit(v === "_none" ? "" : (v as BusinessUnit))}
+                  onValueChange={(v) => {
+                    setFormBusinessUnit(v === "_none" ? "" : v)
+                    setFormOffice("")
+                  }}
                 >
                   <SelectTrigger id="newBusinessUnit">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {BUSINESS_UNIT_OPTIONS.map((o) => (
-                      <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
+                    <SelectItem value="_none">Not set</SelectItem>
+                    {unitOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
                         {o.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              {formOffices.length > 0 && (
+                <div className="space-y-1">
+                  <Label htmlFor="newOffice">Office</Label>
+                  <Select
+                    value={formOffice || "_none"}
+                    onValueChange={(v) => setFormOffice(v === "_none" ? "" : v)}
+                  >
+                    <SelectTrigger id="newOffice">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Not set</SelectItem>
+                      {formOffices.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <Button onClick={handleAdd}>Create User</Button>
           </div>
@@ -284,6 +318,7 @@ export function UserManagement() {
           {users.map((u) => {
             const isMe = session?.userId === u.id
             const isPrimaryAdmin = u.email === "matt.shankle@uspto.gov"
+            const userOffices = unitOptions.find((o) => o.value === u.businessUnit)?.offices || []
             return (
               <div
                 key={u.id}
@@ -358,25 +393,47 @@ export function UserManagement() {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Business unit</Label>
+                    <Label className="text-xs text-muted-foreground">{unitLabel}</Label>
                     <Select
                       value={u.businessUnit || "_none"}
                       onValueChange={(v) =>
-                        handleBusinessUnitChange(u, v === "_none" ? "" : (v as BusinessUnit))
+                        handleBusinessUnitChange(u, v === "_none" ? "" : v)
                       }
                     >
                       <SelectTrigger className="h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {BUSINESS_UNIT_OPTIONS.map((o) => (
-                          <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
+                        <SelectItem value="_none">Not set</SelectItem>
+                        {unitOptions.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
                             {o.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+                  {userOffices.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Office</Label>
+                      <Select
+                        value={u.office || "_none"}
+                        onValueChange={(v) => handleOfficeChange(u, v === "_none" ? "" : v)}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">Not set</SelectItem>
+                          {userOffices.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               </div>
             )

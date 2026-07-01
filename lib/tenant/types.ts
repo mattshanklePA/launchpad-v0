@@ -23,6 +23,10 @@ export type TenantConfig = {
   // so a tenant never inherits another org's imagery.
   heroImage?: string
 
+  // Example address shown as the login email input's placeholder (e.g.
+  // "you@uspto.gov"), so no tenant ever shows another tenant's domain.
+  loginEmailPlaceholder: string
+
   // AI / prompts
   strategicContext: string   // injected into every Scout prompt
   leadershipPriorities: string // exec-briefing framing (e.g. pendency/quality/cost)
