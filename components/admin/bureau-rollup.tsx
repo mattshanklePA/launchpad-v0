@@ -8,6 +8,7 @@
 
 import type { Submission } from "@/lib/submissions"
 import { getStatus, getBusinessUnit, businessUnitLabel, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
+import { findSimilar } from "@/lib/similarity"
 import { getTenant } from "@/lib/tenant"
 import { Badge } from "@/components/ui/badge"
 
@@ -34,6 +35,15 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const grand = (st: string) => submissions.filter((s) => getStatus(s) === st).length
   const grandHigh = submissions.filter((s) => s.formData.highImpact === "yes").length
 
+  // A use case is a "possible duplicate" when it has a likely match (see
+  // lib/similarity) filed under a different bureau — the "~20 of the same
+  // thing across the bureaus" problem this feature exists to surface.
+  const hasCrossBureauMatch = (s: Submission) =>
+    findSimilar(s, submissions).some((m) => m.bureau !== getBusinessUnit(s))
+  const duplicatesFor = (unit: string) =>
+    submissions.filter((s) => getBusinessUnit(s) === unit && hasCrossBureauMatch(s)).length
+  const grandDuplicates = submissions.filter(hasCrossBureauMatch).length
+
   return (
     <div className="rounded-lg border bg-white p-4">
       <div className="flex items-baseline justify-between mb-3 gap-3">
@@ -55,6 +65,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               ))}
               <th className="text-center font-semibold px-2 py-2">Total</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">High-impact</th>
+              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Possible duplicates</th>
             </tr>
           </thead>
           <tbody>
@@ -77,6 +88,13 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
                     <Badge className="bg-red-100 text-red-800 border-red-300">{highFor(u)}</Badge>
                   )}
                 </td>
+                <td className="text-center px-2 py-2">
+                  {duplicatesFor(u) === 0 ? (
+                    dash
+                  ) : (
+                    <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">{duplicatesFor(u)}</Badge>
+                  )}
+                </td>
               </tr>
             ))}
             <tr className="border-t-2 border-gray-300 font-semibold">
@@ -88,6 +106,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               ))}
               <td className="text-center px-2 py-2">{submissions.length}</td>
               <td className="text-center px-2 py-2">{grandHigh || dash}</td>
+              <td className="text-center px-2 py-2">{grandDuplicates || dash}</td>
             </tr>
           </tbody>
         </table>

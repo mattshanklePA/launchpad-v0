@@ -20,12 +20,13 @@ import {
   STATUS_LABEL,
   statusBadgeClasses,
 } from "@/lib/reviewWorkflow"
+import { findSimilar } from "@/lib/similarity"
 import { assistReviewer } from "@/app/actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  ArrowLeft, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Loader2,
+  ArrowLeft, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Loader2, Copy,
 } from "lucide-react"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
@@ -123,6 +124,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const fd = sub.formData
   const status = getStatus(sub)
   const comments = getComments(sub)
+  const similarMatches = isReviewer ? findSimilar(sub, getSubmissions()) : []
 
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
@@ -200,6 +202,31 @@ export function SubmissionDetail({ id }: { id: string }) {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {isReviewer && similarMatches.length > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <Copy className="w-4 h-4 text-amber-700" />
+            <span className="font-medium text-sm">Similar use cases</span>
+            <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">token-overlap match · confirm before assuming duplicate</Badge>
+          </div>
+          <ul className="space-y-1.5">
+            {similarMatches.map((m) => (
+              <li key={m.submission.id} className="text-sm flex items-center justify-between gap-3">
+                <Link
+                  href={`/submissions/${m.submission.id}`}
+                  className="text-uspto-blue-primary hover:underline truncate"
+                >
+                  {m.submission.formData.useCaseTitle || "Untitled idea"}
+                </Link>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {businessUnitLabel(m.bureau)} · {Math.round(m.score * 100)}% match
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
