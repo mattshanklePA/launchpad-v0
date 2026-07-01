@@ -1,3 +1,4 @@
-allowBuilds:
-  core-js: set this to true or false
-  esbuild: set this to true or false
+# Single-package project (not a monorepo). pnpm requires a `packages` field
+# whenever this file exists; "." registers the repo root as the only package.
+packages:
+  - "."
