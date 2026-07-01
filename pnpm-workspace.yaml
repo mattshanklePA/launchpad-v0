@@ -3,13 +3,14 @@
 packages:
   - "."
 
+# pnpm 10+ blocks dependency build scripts by default and CI treats an
+# unapproved build as a hard error. Approve the ones present in the tree.
 allowBuilds:
   core-js: true
   esbuild: true
-  unrs-resolver: set this to true or false
+  unrs-resolver: true
 
-# pnpm 10+ blocks dependency build scripts by default. Approve the ones this
-# app needs so `pnpm install` doesn't fail with ERR_PNPM_IGNORED_BUILDS.
 onlyBuiltDependencies:
   - core-js
   - esbuild
+  - unrs-resolver
