@@ -15,7 +15,7 @@ import {
   statusBadgeClasses,
 } from "@/lib/reviewWorkflow"
 import { Badge } from "@/components/ui/badge"
-import { Scale, ArrowRight, SlidersHorizontal, Users, Database, User } from "lucide-react"
+import { Scale, ArrowRight, SlidersHorizontal, Users, Database, User, Download } from "lucide-react"
 import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
 import { BureauRollup } from "@/components/admin/bureau-rollup"
@@ -124,7 +124,7 @@ export function ReviewerHome() {
       {isAdmin && (
         <section className="space-y-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin tools</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <Link href="/admin?tab=formconfig" className="rounded-lg border bg-white p-4 hover:bg-muted/30">
               <SlidersHorizontal className="w-5 h-5 text-muted-foreground" />
               <div className="font-medium text-sm mt-2">Form configuration</div>
@@ -140,6 +140,11 @@ export function ReviewerHome() {
               <div className="font-medium text-sm mt-2">Demo data</div>
               <div className="text-xs text-muted-foreground">Seed and reset</div>
             </Link>
+            <a href="/api/export/omb" className="rounded-lg border bg-white p-4 hover:bg-muted/30">
+              <Download className="w-5 h-5 text-muted-foreground" />
+              <div className="font-medium text-sm mt-2">Export OMB inventory (CSV)</div>
+              <div className="text-xs text-muted-foreground">2025 AI use case inventory</div>
+            </a>
           </div>
         </section>
       )}
