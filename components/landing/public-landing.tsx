@@ -70,16 +70,21 @@ export function PublicLanding() {
       </header>
 
       <main className="flex-1">
-        <section className="relative bg-dow-space">
-          <div
-            className="absolute inset-0 bg-cover bg-top"
-            style={{ backgroundImage: "url('/hero-dow.jpg')" }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-[#0d1826]/80 via-[#11233b]/80 to-[#0d1826]/94"
-            aria-hidden="true"
-          />
+        <section className="relative" style={{ backgroundColor: t.theme.primary }}>
+          {t.heroImage && (
+            <>
+              <div
+                className="absolute inset-0 bg-cover bg-top"
+                style={{ backgroundImage: `url('${t.heroImage}')` }}
+                aria-hidden="true"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ backgroundColor: t.theme.primary, opacity: 0.82 }}
+                aria-hidden="true"
+              />
+            </>
+          )}
           <div className="relative container py-20 sm:py-28 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 ring-1 ring-white/15 mb-5">
               <Rocket className="w-8 h-8 text-white" strokeWidth={2.2} />

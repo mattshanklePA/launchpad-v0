@@ -14,6 +14,10 @@ export type TenantConfig = {
   logoSubtitle: string       // under the wordmark
   heroHeadline: string
   heroSubtitle: string
+  // Optional hero background image (a path under public/, e.g. "/hero-dow.jpg").
+  // If unset, the hero uses the tenant's theme color as a clean solid background
+  // so a tenant never inherits another org's imagery.
+  heroImage?: string
 
   // AI / prompts
   strategicContext: string   // injected into every Scout prompt
