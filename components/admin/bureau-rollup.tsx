@@ -12,13 +12,14 @@ import type { Submission } from "@/lib/submissions"
 import { getStatus, getBusinessUnit, businessUnitLabel, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
 import { findSimilar } from "@/lib/similarity"
 import { determineReportability } from "@/lib/ombReportability"
+import { determineConsolidation } from "@/lib/ombConsolidation"
 import { officesForBureau } from "@/lib/officeRollup"
 import { getTenant } from "@/lib/tenant"
 import { Badge } from "@/components/ui/badge"
 import { OfficeRollup } from "@/components/admin/office-rollup"
 
 const dash = <span className="text-muted-foreground/40">–</span>
-const TABLE_COLS = STATUS_ORDER.length + 5 // unit + statuses + total + high-impact + OMB review + duplicates
+const TABLE_COLS = STATUS_ORDER.length + 6 // unit + statuses + total + high-impact + OMB review + duplicates + consolidated
 
 export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -56,6 +57,18 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
     submissions.filter((s) => getBusinessUnit(s) === unit && hasCrossBureauMatch(s)).length
   const grandDuplicates = submissions.filter(hasCrossBureauMatch).length
 
+  // Cross-bureau rationalization: how many of these submissions match one of
+  // OMB's widely-used commercial AI categories and can be reported once across
+  // the department instead of once per bureau (see lib/ombConsolidation.ts).
+  const isConsolidated = (s: Submission) => determineConsolidation(s.formData).status === "Consolidated"
+  const consolidatedFor = (unit: string) =>
+    submissions.filter((s) => getBusinessUnit(s) === unit && isConsolidated(s)).length
+  const grandConsolidated = submissions.filter(isConsolidated).length
+  const consolidatedCategoryCount = new Set(
+    submissions.map((s) => determineConsolidation(s.formData)).filter((c) => c.status === "Consolidated").map((c) => c.category),
+  ).size
+  const reportableEntries = submissions.length - grandConsolidated + consolidatedCategoryCount
+
   const toggleExpanded = (unit: string) =>
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -71,6 +84,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
         <span className="text-xs text-muted-foreground">
           {submissions.length} use cases across {units.length} {unitLower}
           {units.length === 1 ? "" : "s"}
+          {grandConsolidated > 0 && ` · consolidates to ${reportableEntries} OMB reportable ${reportableEntries === 1 ? "entry" : "entries"}`}
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -87,6 +101,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">High-impact</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">OMB review needed</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Possible duplicates</th>
+              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Consolidated (OMB)</th>
             </tr>
           </thead>
           <tbody>
@@ -145,6 +160,13 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
                         <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">{duplicatesFor(u)}</Badge>
                       )}
                     </td>
+                    <td className="text-center px-2 py-2">
+                      {consolidatedFor(u) === 0 ? (
+                        dash
+                      ) : (
+                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">{consolidatedFor(u)}</Badge>
+                      )}
+                    </td>
                   </tr>
                   {hasOffices && isExpanded && (
                     <tr>
@@ -167,6 +189,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               <td className="text-center px-2 py-2">{grandHigh || dash}</td>
               <td className="text-center px-2 py-2">{grandOmbReview || dash}</td>
               <td className="text-center px-2 py-2">{grandDuplicates || dash}</td>
+              <td className="text-center px-2 py-2">{grandConsolidated || dash}</td>
             </tr>
           </tbody>
         </table>
