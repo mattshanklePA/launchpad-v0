@@ -11,13 +11,14 @@ import { ChevronDown, ChevronRight } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, getBusinessUnit, businessUnitLabel, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
 import { findSimilar } from "@/lib/similarity"
+import { determineReportability } from "@/lib/ombReportability"
 import { officesForBureau } from "@/lib/officeRollup"
 import { getTenant } from "@/lib/tenant"
 import { Badge } from "@/components/ui/badge"
 import { OfficeRollup } from "@/components/admin/office-rollup"
 
 const dash = <span className="text-muted-foreground/40">–</span>
-const TABLE_COLS = STATUS_ORDER.length + 4 // unit + statuses + total + high-impact + duplicates
+const TABLE_COLS = STATUS_ORDER.length + 5 // unit + statuses + total + high-impact + OMB review + duplicates
 
 export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -38,8 +39,13 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const highFor = (unit: string) =>
     submissions.filter((s) => getBusinessUnit(s) === unit && s.formData.highImpact === "yes").length
 
+  const needsOmbReview = (s: Submission) => determineReportability(s.formData).status === "review"
+  const ombReviewFor = (unit: string) =>
+    submissions.filter((s) => getBusinessUnit(s) === unit && needsOmbReview(s)).length
+
   const grand = (st: string) => submissions.filter((s) => getStatus(s) === st).length
   const grandHigh = submissions.filter((s) => s.formData.highImpact === "yes").length
+  const grandOmbReview = submissions.filter(needsOmbReview).length
 
   // A use case is a "possible duplicate" when it has a likely match (see
   // lib/similarity) filed under a different bureau — the "~20 of the same
@@ -79,6 +85,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               ))}
               <th className="text-center font-semibold px-2 py-2">Total</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">High-impact</th>
+              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">OMB review needed</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Possible duplicates</th>
             </tr>
           </thead>
@@ -125,6 +132,13 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
                       )}
                     </td>
                     <td className="text-center px-2 py-2">
+                      {ombReviewFor(u) === 0 ? (
+                        dash
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">{ombReviewFor(u)}</Badge>
+                      )}
+                    </td>
+                    <td className="text-center px-2 py-2">
                       {duplicatesFor(u) === 0 ? (
                         dash
                       ) : (
@@ -151,6 +165,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               ))}
               <td className="text-center px-2 py-2">{submissions.length}</td>
               <td className="text-center px-2 py-2">{grandHigh || dash}</td>
+              <td className="text-center px-2 py-2">{grandOmbReview || dash}</td>
               <td className="text-center px-2 py-2">{grandDuplicates || dash}</td>
             </tr>
           </tbody>

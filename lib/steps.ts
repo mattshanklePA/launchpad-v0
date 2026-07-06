@@ -140,6 +140,10 @@ export type FormData = {
   highImpact: "yes" | "no" | ""
   hasATO: "yes" | "no" | "in_progress" | ""
   systemSource: "in_house" | "contract" | "vendor" | ""
+  // Reportability inputs (lib/ombReportability.ts): NSS/IC use and research-only
+  // use are the two OMB inventory exclusions.
+  nationalSecuritySystem: "yes" | "no" | ""
+  researchOnly: "yes" | "no" | ""
   // DoD responsible-AI + maturity disclosures
   impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
   dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
@@ -224,6 +228,8 @@ export const initialFormData: FormData = {
   highImpact: "",
   hasATO: "",
   systemSource: "",
+  nationalSecuritySystem: "",
+  researchOnly: "",
   feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],

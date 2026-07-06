@@ -77,6 +77,27 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
     omb: true,
   },
+  {
+    fieldKey: "nationalSecuritySystem",
+    label: "National Security System / IC use?",
+    description: "Whether this is a National Security System or Intelligence Community use of AI.",
+    reasonToInclude: "OMB inventory field; NSS/IC uses are excluded from the public OMB AI use case inventory.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "researchOnly",
+    label: "Research-only use?",
+    description: "Whether this AI use is limited to research, not an operational mission, service, or decision.",
+    reasonToInclude:
+      "OMB inventory field; research-only uses are excluded unless they control or significantly influence a decision about individuals.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
   // ────── Phase 1: Setup ──────
   {
     fieldKey: "submitterName",

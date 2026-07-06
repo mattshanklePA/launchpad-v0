@@ -358,6 +358,53 @@ export function Step8FeasibilitySecurity() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Is this a National Security System / Intelligence Community use? <OmbBadge />
+                </Label>
+                <RadioGroup
+                  value={formData.nationalSecuritySystem}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, nationalSecuritySystem: value as any }))}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="nss-yes" />
+                    <Label htmlFor="nss-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="nss-no" />
+                    <Label htmlFor="nss-no">No</Label>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  NSS/IC use cases are excluded from the public OMB AI use case inventory.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Is this a research-only use (not an operational mission, service, or decision)? <OmbBadge />
+                </Label>
+                <RadioGroup
+                  value={formData.researchOnly}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, researchOnly: value as any }))}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="research-yes" />
+                    <Label htmlFor="research-yes">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="research-no" />
+                    <Label htmlFor="research-no">No</Label>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  Research-only use is excluded from the inventory — unless it controls or significantly influences a
+                  decision or outcome about individuals.
+                </p>
+              </div>
             </div>
           )}
 

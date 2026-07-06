@@ -122,6 +122,15 @@ The admin dashboard fix above (`okrsLabel`) covered the admin surface only; the 
 - `lib/steps.ts` exports `getFormSteps()` (not a static array) so the two steps whose title/prompt name the organization — Value and Strategic Alignment — resolve `orgName` per tenant at call time; every consumer (`step-wrapper.tsx`, the Step 10 recap cards, `wizard-nav.tsx`, `progress-bar.tsx`, the Scout server actions in `app/actions.ts`) calls the function rather than importing a shared constant.
 - `SUBMITTER_ROLE_LABELS` (also `lib/steps.ts`) is the single source of truth for the `submitterRole` enum's display labels, reused by the "Submitting as…" pill (`form-container.tsx`), the Step 10 recap, and the PDF export (`lib/pdfGenerator.ts`) — previously the pill kept its own stale copy of this map and could show a USPTO-flavored role name regardless of the role actually selected.
 
+#### OMB federal AI use case inventory: fields, export, and reportability
+
+The wizard captures OMB M-25-21 companion-guidance fields on Step 7 (Feasibility & Security) — `stageOfDevelopment`, `highImpact`, `hasATO`, `systemSource`, `nationalSecuritySystem`, `researchOnly` (`lib/steps.ts`), each registered in `lib/fieldRegistry.ts` with `omb: true` (renders an `OmbBadge`, `components/launchpad/omb-badge.tsx`, next to the field). All six are optional, so USPTO/DoW tenants that don't fill them in are unaffected.
+
+Two pieces of pure, unit-tested logic build on those fields:
+
+- **Export** — `lib/ombExport.ts` maps a submission to one CSV row in the OMB inventory's column order (`app/api/export/omb/route.ts` streams it).
+- **Reportability determination** — `lib/ombReportability.ts` (`determineReportability`) decides *whether* a use case must be reported at all, per the OMB "Guidance on 2025 Agency AI Reporting" (June 27, 2025) and the OMB AI Inventory Reporting Cheat Sheet: include at any stage of development if it supports mission/service delivery, enhances internal decisions, or benefits the public; exclude National Security System/Intelligence Community use or research-only use; a research-only use that controls or significantly influences a decision about individuals is reportable despite being research. When a required input (stage, NSS, or research-only) hasn't been answered yet, the result is `"review"`, erring on the side of inclusion. The result (`status` + one-line `reason`) is surfaced on the submission detail view (`components/submissions/submission-detail.tsx`) and as an "OMB review needed" count column in the bureau roll-up (`components/admin/bureau-rollup.tsx`).
+
 ---
 
 ## 6. AI integration
