@@ -21,6 +21,7 @@ import {
   statusBadgeClasses,
 } from "@/lib/reviewWorkflow"
 import { findSimilar } from "@/lib/similarity"
+import { determineReportability, type ReportabilityStatus } from "@/lib/ombReportability"
 import { assistReviewer } from "@/app/actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -39,6 +40,18 @@ const DISPOSITION_LABEL: Record<Assist["suggestedDisposition"], string> = {
 
 function newCommentId() {
   return `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+
+const REPORTABILITY_LABEL: Record<ReportabilityStatus, string> = {
+  reportable: "Reportable to OMB",
+  excluded: "Excluded from OMB inventory",
+  review: "Needs review (OMB)",
+}
+
+const REPORTABILITY_CLASSES: Record<ReportabilityStatus, string> = {
+  reportable: "bg-blue-100 text-blue-800 border-blue-300",
+  excluded: "bg-gray-100 text-gray-600 border-gray-300",
+  review: "bg-amber-100 text-amber-800 border-amber-300",
 }
 
 function RiskRow({ ok, label }: { ok: boolean; label: string }) {
@@ -125,6 +138,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const status = getStatus(sub)
   const comments = getComments(sub)
   const similarMatches = isReviewer ? findSimilar(sub, getSubmissions()) : []
+  const reportability = determineReportability(fd)
 
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
@@ -229,6 +243,18 @@ export function SubmissionDetail({ id }: { id: string }) {
           </ul>
         </div>
       )}
+
+      <div className="rounded-lg border bg-white p-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          OMB reportability
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className={REPORTABILITY_CLASSES[reportability.status]}>
+            {REPORTABILITY_LABEL[reportability.status]}
+          </Badge>
+          <span className="text-sm text-muted-foreground">{reportability.reason}</span>
+        </div>
+      </div>
 
       <div className="rounded-lg border bg-white p-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Risk profile</div>
