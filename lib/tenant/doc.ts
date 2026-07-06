@@ -126,6 +126,8 @@ A serious AI idea names the federal priority and the Department mission it advan
       "Per OMB M-25-21 and Executive Order 14179: PII/sensitive data, decisional impact on individuals, American-built/U.S.-hosted model sourcing, mandatory human review, and high-impact AI determinations.",
   },
 
+  okrsLabel: "OMB / Strategic Priorities",
+
   theme: { primary: "#003366", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: false, scout: true, aiHubExport: true },
 }

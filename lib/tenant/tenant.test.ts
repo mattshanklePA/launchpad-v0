@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { doc } from "@/lib/tenant/doc"
+import { dow } from "@/lib/tenant/dow"
+import { uspto } from "@/lib/tenant/uspto"
 import { getTenant } from "@/lib/tenant"
 
 describe("DoC tenant", () => {
@@ -19,6 +21,18 @@ describe("DoC tenant", () => {
 
   it("enables the AI Hub export feature", () => {
     expect(doc.features.aiHubExport).toBe(true)
+  })
+})
+
+describe("admin dashboard OKRs label", () => {
+  it("never leaks another tenant's org name", () => {
+    expect(doc.okrsLabel).not.toMatch(/Department of War|USPTO/i)
+    expect(dow.okrsLabel).not.toMatch(/Commerce|OMB|USPTO/i)
+    expect(uspto.okrsLabel).not.toMatch(/Department of War|Commerce|OMB/i)
+  })
+
+  it("keeps DoW's existing OKRs label unchanged", () => {
+    expect(dow.okrsLabel).toBe("Department of War OKRs")
   })
 })
 

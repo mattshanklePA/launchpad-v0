@@ -40,6 +40,11 @@ export type TenantConfig = {
   // Org taxonomy (USPTO "business unit" -> DoW "command")
   unit: { label: string; options: UnitOption[] }
 
+  // Label for the admin dashboard's "OKRs / strategic priorities" tab, heading,
+  // and subtitle copy (e.g. "Department of War OKRs", "OMB / Strategic Priorities").
+  // Self-contained — already includes any org qualifier the tenant needs.
+  okrsLabel: string
+
   // Governance framing shown around the AI-risk questions
   riskFramework: { label: string; description: string }
 

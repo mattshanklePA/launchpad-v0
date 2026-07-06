@@ -155,7 +155,7 @@ Required env vars:
 | `RALLY_API_KEY` | Optional. Rally integration. |
 | `NEXT_PUBLIC_TENANT` | Multi-tenant builds only. Selects tenant config; defaults to `uspto`. DoW build uses `dow`. |
 
-**Multi-tenant:** a `getTenant()` resolver keyed off `NEXT_PUBLIC_TENANT` selects branding/config per deployment. Each tenant = separate Vercel project + Supabase instance + git branch (e.g., `USPTO-launchpad`, `dow`).
+**Multi-tenant:** a `getTenant()` resolver keyed off `NEXT_PUBLIC_TENANT` selects branding/config per deployment. Each tenant = separate Vercel project + Supabase instance + git branch (e.g., `USPTO-launchpad`, `dow`). The admin dashboard (`app/admin/page.tsx`) reads its header, subtitle, tab label, and seed OKR/priorities list from `getTenant().okrsLabel` and `getTenant().focusAreas` — no org-specific copy is hardcoded there, so a wrong tenant's strategic-priority term or content never leaks into another org's dashboard.
 
 ---
 
