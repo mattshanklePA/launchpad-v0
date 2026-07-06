@@ -88,6 +88,8 @@ A serious AI idea names the specific priorities it advances, describes the mecha
     description: "Department of Commerce and Executive Order requirements: PII use, decisional impact, American-built model sourcing, and mandatory human review.",
   },
 
+  okrsLabel: "OKRs",
+
   theme: { primary: "#1f4e79", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: true, scout: true },
 }

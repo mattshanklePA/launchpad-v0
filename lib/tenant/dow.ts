@@ -100,6 +100,8 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
     description: "Responsible-AI posture: data classification and Impact Level (Unclassified, CUI, IL4, IL5, IL6), data readiness, American-built model sourcing inside the accredited boundary, mandatory human judgment, bias mitigation, and a test-and-evaluation/assurance plan.",
   },
 
+  okrsLabel: "Department of War OKRs",
+
   theme: { primary: "#355E93", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: false, scout: true },
 }

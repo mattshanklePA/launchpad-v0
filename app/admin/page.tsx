@@ -40,6 +40,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Header } from "@/components/layout/header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 
 // Real USPTO strategic objectives:
 //   - 2022-2026 Strategic Plan — 5 agency-wide goals
@@ -137,6 +138,22 @@ const mockOKRs = [
     progress: 30,
   },
 ]
+
+// DoW's OKR seed list mirrors its own AI Adoption Strategy/Ethical Principles
+// (see mockOKRs above) and stays as-is for the dow tenant. Every other tenant
+// derives its seed list from its own tenant.focusAreas so this tab never shows
+// another org's strategic priorities.
+function getDefaultOKRs(tenant: TenantConfig) {
+  if (tenant.id === "dow") return mockOKRs
+  return tenant.focusAreas.map((fa, i) => ({
+    id: i + 1,
+    title: fa.label,
+    description: fa.category,
+    category: fa.category,
+    status: "active",
+    progress: 50,
+  }))
+}
 
 const mockDrafts = [
   {
@@ -266,7 +283,8 @@ export default function AdminPage() {
 }
 
 function AdminPageInner() {
-  const [okrs, setOKRs] = useState(mockOKRs)
+  const tenant = getTenant()
+  const [okrs, setOKRs] = useState(() => getDefaultOKRs(tenant))
   const [editingOKR, setEditingOKR] = useState<number | null>(null)
   const [newOKR, setNewOKR] = useState({ title: "", description: "", category: "" })
   const [draftsViewMode, setDraftsViewMode] = useState<"cards" | "table">("cards")
@@ -555,7 +573,7 @@ function AdminPageInner() {
           <div>
             <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
             <p className="text-muted-foreground mt-2">
-              Manage Department of War OKRs, monitor the AI idea pipeline, and oversee vetting operations
+              Manage {tenant.okrsLabel}, monitor the AI idea pipeline, and oversee vetting operations
             </p>
           </div>
           {session && (
@@ -575,7 +593,7 @@ function AdminPageInner() {
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="okrs">Department of War OKRs</TabsTrigger>
+            <TabsTrigger value="okrs">{tenant.okrsLabel}</TabsTrigger>
             <TabsTrigger value="drafts">Submissions</TabsTrigger>
             <TabsTrigger value="submitted">Decision Center</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -751,7 +769,7 @@ function AdminPageInner() {
 
           <TabsContent value="okrs" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Department of War OKRs Management</h2>
+              <h2 className="text-2xl font-bold">{tenant.okrsLabel} Management</h2>
               <Button onClick={() => setEditingOKR(-1)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add New OKR
