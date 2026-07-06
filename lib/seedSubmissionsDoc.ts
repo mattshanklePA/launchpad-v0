@@ -437,9 +437,18 @@ export const docSeedSubmissions: Submission[] = [
       // High-impact example (OMB M-25-21 additional risk-management reporting):
       // public-facing, life-safety, AI-decisional — risk fields populated below.
       stageOfDevelopment: "pilot",
+      highImpactFactors: ["safety"],
       highImpact: "yes",
       hasATO: "in_progress",
       systemSource: "contract",
+      aiImpactAssessment:
+        "Intended purpose: faster public comprehension of severe-weather alerts. Expected benefit: quicker protective action, especially for limited-English and low-vision users. Potential risk: a flawed summary could misrepresent an official alert, so the official text is always shown alongside and a forecaster reviews before publish.",
+      preDeploymentTesting: "yes",
+      preDeploymentTestingNote: "Piloted against a sample of historical alerts with forecaster review before wider rollout.",
+      ongoingMonitoringPlan: "yes",
+      ongoingMonitoringNote: "Forecaster approval rate and comprehension metrics tracked each release; any drift triggers a re-review.",
+      humanOversightAppeal: "yes",
+      humanOversightAppealNote: "Forecaster reviews and can reject any summary before it publishes; the official alert is always shown alongside for the public to compare.",
       feasibilitySummary: "Public, life-safety context, so this is high-impact: mandatory forecaster review before publish, official text always shown, validated accuracy. American-built.",
       successMetrics: "Comprehension/time-to-action in testing, forecaster approval rate, accessibility conformance — vs current.",
       keyMetrics: ["user_satisfaction", "quality_improvement"],

@@ -144,6 +144,21 @@ export type FormData = {
   // use are the two OMB inventory exclusions.
   nationalSecuritySystem: "yes" | "no" | ""
   researchOnly: "yes" | "no" | ""
+  // High-impact determination inputs (lib/highImpactDetermination.ts): which
+  // OMB M-25-21 Section 5 categories the AI output could meaningfully affect.
+  // Drives the `highImpact` recommendation; the reviewer keeps the final call.
+  highImpactFactors: string[]
+  // M-25-21 minimum-practice risk-management fields — only required in
+  // practice when highImpact is "yes" (see components/steps/step-8-feasibility-security.tsx).
+  // Trimmed to a demo-usable set; the full M-25-21 practice list can be
+  // expanded here later.
+  aiImpactAssessment: string // intended purpose, expected benefits, potential risks
+  preDeploymentTesting: "yes" | "no" | ""
+  preDeploymentTestingNote: string
+  ongoingMonitoringPlan: "yes" | "no" | ""
+  ongoingMonitoringNote: string
+  humanOversightAppeal: "yes" | "no" | "" // human oversight / appeal mechanism for affected individuals
+  humanOversightAppealNote: string
   // DoD responsible-AI + maturity disclosures
   impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
   dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
@@ -230,6 +245,14 @@ export const initialFormData: FormData = {
   systemSource: "",
   nationalSecuritySystem: "",
   researchOnly: "",
+  highImpactFactors: [],
+  aiImpactAssessment: "",
+  preDeploymentTesting: "",
+  preDeploymentTestingNote: "",
+  ongoingMonitoringPlan: "",
+  ongoingMonitoringNote: "",
+  humanOversightAppeal: "",
+  humanOversightAppealNote: "",
   feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],

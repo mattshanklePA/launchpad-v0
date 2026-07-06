@@ -22,6 +22,11 @@ import { businessUnitLabel, getBusinessUnit } from "@/lib/reviewWorkflow"
 //   aiModelSourcing        -> Model sourcing
 //   aiHumanReview          -> Mandatory human review
 //   aiDecisionalImpact     -> AI decisional impact
+//   (highImpact derived)   -> Reporting Mode — high-impact use cases are always
+//                             reported individually, never consolidated (ties
+//                             to any future bureau-level consolidated reporting;
+//                             see lib/ombReportability.ts's sibling module
+//                             lib/highImpactDetermination.ts)
 export const OMB_COLUMNS = [
   "Use Case ID",
   "Use Case Name",
@@ -29,6 +34,7 @@ export const OMB_COLUMNS = [
   "Bureau/Component",
   "Stage of Development",
   "Is the AI use case high-impact?",
+  "Reporting Mode",
   "What problem is the AI intended to solve?",
   "Expected benefits",
   "Describe the AI system's outputs",
@@ -39,6 +45,11 @@ export const OMB_COLUMNS = [
   "Mandatory human review",
   "AI decisional impact",
 ] as const
+
+/** High-impact use cases are always reported individually, never consolidated. Pure — no I/O. */
+export function reportingMode(fd: Pick<Submission["formData"], "highImpact">): "Individual" | "Consolidated-eligible" {
+  return fd.highImpact === "yes" ? "Individual" : "Consolidated-eligible"
+}
 
 const YES_NO: Record<string, string> = { yes: "Yes", no: "No" }
 
@@ -78,6 +89,7 @@ export function mapSubmissionToOmbRow(submission: Submission, agencyShortName: s
     businessUnitLabel(getBusinessUnit(submission)),
     STAGE_LABELS[fd.stageOfDevelopment] || "",
     YES_NO[fd.highImpact] || "",
+    reportingMode(fd),
     fd.coreProblem || "",
     fd.businessValue || "",
     fd.solutionSummary || "",

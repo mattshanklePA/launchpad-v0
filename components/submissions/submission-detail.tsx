@@ -8,6 +8,7 @@ import {
   getSubmissions,
   setSubmissionStatus,
   addSubmissionComment,
+  patchSubmissionFormData,
   type Submission,
 } from "@/lib/submissions"
 import {
@@ -22,6 +23,7 @@ import {
 } from "@/lib/reviewWorkflow"
 import { findSimilar } from "@/lib/similarity"
 import { determineReportability, type ReportabilityStatus } from "@/lib/ombReportability"
+import { determineHighImpact } from "@/lib/highImpactDetermination"
 import { assistReviewer } from "@/app/actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -139,6 +141,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const comments = getComments(sub)
   const similarMatches = isReviewer ? findSimilar(sub, getSubmissions()) : []
   const reportability = determineReportability(fd)
+  const highImpactRec = determineHighImpact(fd)
 
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
@@ -162,6 +165,13 @@ export function SubmissionDetail({ id }: { id: string }) {
   const setStatus = async (next: Parameters<typeof setSubmissionStatus>[1]) => {
     setBusy(true)
     await setSubmissionStatus(sub.id, next)
+    await reload()
+    setBusy(false)
+  }
+
+  const setHighImpact = async (next: "yes" | "no") => {
+    setBusy(true)
+    await patchSubmissionFormData(sub.id, { highImpact: next })
     await reload()
     setBusy(false)
   }
@@ -255,6 +265,77 @@ export function SubmissionDetail({ id }: { id: string }) {
           <span className="text-sm text-muted-foreground">{reportability.reason}</span>
         </div>
       </div>
+
+      <div className="rounded-lg border bg-white p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            High-impact determination
+          </div>
+          <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">advisory · you decide</Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Recommended:</span>
+          <Badge
+            variant="outline"
+            className={
+              highImpactRec.recommendation === "yes"
+                ? "bg-red-100 text-red-800 border-red-300"
+                : "bg-gray-100 text-gray-600 border-gray-300"
+            }
+          >
+            {highImpactRec.recommendation === "yes" ? "High-impact" : "Not high-impact"}
+          </Badge>
+        </div>
+        <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
+          {highImpactRec.reasons.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
+        <div className="flex items-center gap-2 pt-2 border-t">
+          <span className="text-sm text-muted-foreground">Reviewer determination:</span>
+          {isReviewer ? (
+            <>
+              <Button
+                size="sm"
+                variant={fd.highImpact === "yes" ? "default" : "outline"}
+                disabled={busy}
+                onClick={() => setHighImpact("yes")}
+              >
+                High-impact
+              </Button>
+              <Button
+                size="sm"
+                variant={fd.highImpact === "no" ? "default" : "outline"}
+                disabled={busy}
+                onClick={() => setHighImpact("no")}
+              >
+                Not high-impact
+              </Button>
+            </>
+          ) : (
+            <Badge variant="outline">{fd.highImpact === "yes" ? "High-impact" : fd.highImpact === "no" ? "Not high-impact" : "Not yet set"}</Badge>
+          )}
+        </div>
+      </div>
+
+      {fd.highImpact === "yes" && (
+        <div className="rounded-lg border bg-white p-4 space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            High-impact risk management
+          </div>
+          {fd.aiImpactAssessment && (
+            <div>
+              <div className="text-sm font-medium">AI impact assessment</div>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{fd.aiImpactAssessment}</p>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <RiskRow ok={fd.preDeploymentTesting === "yes"} label={fd.preDeploymentTesting === "yes" ? "Pre-deployment testing done" : "No pre-deployment testing"} />
+            <RiskRow ok={fd.ongoingMonitoringPlan === "yes"} label={fd.ongoingMonitoringPlan === "yes" ? "Ongoing monitoring plan" : "No ongoing monitoring plan"} />
+            <RiskRow ok={fd.humanOversightAppeal === "yes"} label={fd.humanOversightAppeal === "yes" ? "Human oversight/appeal available" : "No human oversight/appeal"} />
+          </div>
+        </div>
+      )}
 
       <div className="rounded-lg border bg-white p-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Risk profile</div>
