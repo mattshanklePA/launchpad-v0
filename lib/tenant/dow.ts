@@ -6,6 +6,7 @@ export const dow: TenantConfig = {
   shortName: "DoW",
   orgName: "Department of War",
   productName: "LaunchPad",
+  assistantName: "Scout",
   logoSubtitle: "Department of War AI Use Case Platform",
   heroHeadline: "The governable front door for AI across the Department of War",
   heroSubtitle:

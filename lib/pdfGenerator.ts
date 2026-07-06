@@ -65,7 +65,7 @@ export function generateSubmissionPDF(formData: FormData) {
   doc.setTextColor(255, 255, 255)
   doc.setFont("helvetica", "bold")
   doc.setFontSize(20)
-  doc.text("LaunchPad", margin, 36)
+  doc.text(tenant.productName, margin, 36)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(11)
   doc.text("AI Use Case Submission", margin, 54)
@@ -245,7 +245,7 @@ export function generateSubmissionPDF(formData: FormData) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(8)
     doc.setTextColor(...GRAY_500)
-    doc.text(`LaunchPad — ${tenant.logoSubtitle}`, margin, pageH - 18)
+    doc.text(`${tenant.productName} — ${tenant.logoSubtitle}`, margin, pageH - 18)
     doc.text(`Page ${i} of ${total}`, pageW - margin, pageH - 18, { align: "right" })
   }
 

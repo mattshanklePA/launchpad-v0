@@ -23,6 +23,7 @@ export type TenantConfig = {
   // sentence needs one (e.g. "the business case for the {orgName}").
   orgName: string
   productName: string        // wordmark, e.g. "LaunchPad"
+  assistantName: string      // in-app AI assistant's name, e.g. "Scout"
   logoSubtitle: string       // under the wordmark
   heroHeadline: string
   heroSubtitle: string

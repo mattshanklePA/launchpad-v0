@@ -76,7 +76,7 @@ export function Step7Alignment() {
       toast({
         variant: "destructive",
         title: "Couldn't get a suggestion",
-        description: "Scout was unreachable. You can fill the fields manually or try again.",
+        description: `${tenant.assistantName} was unreachable. You can fill the fields manually or try again.`,
       })
     } finally {
       setSuggesting(false)
@@ -105,7 +105,7 @@ export function Step7Alignment() {
     }))
     toast({
       title: "Suggestion applied",
-      description: "Review and tweak. These were Scout's first draft, not the final word.",
+      description: `Review and tweak. These were ${tenant.assistantName}'s first draft, not the final word.`,
     })
     setSuggestion(null)
   }
@@ -130,7 +130,7 @@ export function Step7Alignment() {
                   <Sparkles className="h-4 w-4 mt-0.5 text-uspto-blue-primary flex-shrink-0" />
                   <div>
                     <p className="font-semibold text-sm text-uspto-blue-primary">
-                      {suggesting ? "Scout is suggesting alignment…" : "Scout's suggested alignment"}
+                      {suggesting ? `${tenant.assistantName} is suggesting alignment…` : `${tenant.assistantName}'s suggested alignment`}
                     </p>
                     {suggestion && (
                       <p className="text-xs text-muted-foreground mt-0.5 italic">
@@ -206,7 +206,7 @@ export function Step7Alignment() {
             <div className="rounded-lg border bg-muted/30 p-3 flex items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 inline mr-1 text-uspto-blue-primary" />
-                Let Scout draft this for you based on what you've entered.
+                Let {tenant.assistantName} draft this for you based on what you've entered.
               </p>
               <Button size="sm" onClick={fetchSuggestion}>
                 Get a suggestion
@@ -268,7 +268,7 @@ export function Step7Alignment() {
                 Alignment Summary
               </Label>
               <p className="text-sm text-muted-foreground">
-                Executive-ready 2-3 sentence summary. Pre-filled by Scout. Edit to taste.
+                Executive-ready 2-3 sentence summary. Pre-filled by {tenant.assistantName}. Edit to taste.
               </p>
               <TextareaAutosize
                 id="alignmentSummary"

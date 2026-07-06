@@ -8,6 +8,9 @@
 // Otherwise it'll be invisible to the toggle UI and stuck always-on.
 
 import type { FormData } from "@/lib/steps"
+import { getTenant } from "@/lib/tenant"
+
+const ASSISTANT_NAME = getTenant().assistantName
 
 export type FieldDefinition = {
   // Key into FormData. Must exactly match a property name.
@@ -215,11 +218,11 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     label: "Idea Description",
     description: "1-3 sentence narrative explanation of the idea.",
     reasonToInclude:
-      "Gives Scout enough context to coach the submitter through subsequent steps without inventing details.",
+      `Gives ${ASSISTANT_NAME} enough context to coach the submitter through subsequent steps without inventing details.`,
     phase: 5,
     step: 8,
     locked: true,
-    lockedReason: "Required — Scout uses this as the seed context for every step's coaching.",
+    lockedReason: `Required — ${ASSISTANT_NAME} uses this as the seed context for every step's coaching.`,
   },
   {
     fieldKey: "publicIndicator",
@@ -331,7 +334,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 2,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // ────── Phase 3: Solution & Value ──────
@@ -345,7 +348,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     phase: 3,
     step: 3,
     locked: true,
-    lockedReason: "Required — Scout's assessment and the Decision Center both depend on this field.",
+    lockedReason: `Required — ${ASSISTANT_NAME}'s assessment and the Decision Center both depend on this field.`,
   },
   {
     fieldKey: "keyFunctionality",
@@ -367,7 +370,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 3,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // Step 5: Value (merged user + business)
@@ -448,7 +451,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 4,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // ────── Phase 4: Alignment & Feasibility ──────
@@ -483,7 +486,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 5,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // Step 7: Feasibility & Security
@@ -590,7 +593,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 6,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // Step 8: Success Metrics
@@ -632,7 +635,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 7,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 ]
 

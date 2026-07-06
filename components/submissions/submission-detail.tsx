@@ -26,6 +26,7 @@ import { determineReportability, type ReportabilityStatus } from "@/lib/ombRepor
 import { determineHighImpact } from "@/lib/highImpactDetermination"
 import { determineConsolidation } from "@/lib/ombConsolidation"
 import { assistReviewer } from "@/app/actions"
+import { getTenant } from "@/lib/tenant"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
@@ -70,6 +71,7 @@ function RiskRow({ ok, label }: { ok: boolean; label: string }) {
 }
 
 export function SubmissionDetail({ id }: { id: string }) {
+  const tenant = getTenant()
   const { loaded, refetchSubmissions } = useDataProvider()
   const [sub, setSub] = useState<Submission | null>(null)
   const [ready, setReady] = useState(false)
@@ -205,7 +207,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         <div className="rounded-lg border border-uspto-blue-primary/40 bg-white p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-uspto-blue-primary" />
-            <span className="font-medium text-sm">Scout&apos;s read</span>
+            <span className="font-medium text-sm">{tenant.assistantName}&apos;s read</span>
             <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">advisory · you decide</Badge>
           </div>
           {assisting && <div className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Reading the submission…</div>}
@@ -422,7 +424,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                   disabled={busy || assisting}
                   onClick={() => assist?.draftRequestInfo && setComment(assist.draftRequestInfo)}
                 >
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />Draft with Scout
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />Draft with {tenant.assistantName}
                 </Button>
                 <Button size="sm" disabled={busy || !comment.trim()} onClick={() => postComment("needs_info")}>
                   Send &amp; request info

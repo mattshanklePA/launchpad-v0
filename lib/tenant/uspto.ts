@@ -5,6 +5,7 @@ export const uspto: TenantConfig = {
   shortName: "USPTO",
   orgName: "USPTO",
   productName: "LaunchPad",
+  assistantName: "Scout",
   logoSubtitle: "USPTO AI Use Case Platform",
   heroHeadline: "The governable front door for AI at USPTO",
   heroSubtitle:

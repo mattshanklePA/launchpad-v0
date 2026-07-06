@@ -12,7 +12,7 @@ const oswald = Oswald({ subsets: ["latin"], weight: ["400", "500", "600"], varia
 const crimsonPro = Crimson_Pro({ subsets: ["latin"], weight: ["400", "600"], variable: "--font-crimson" })
 
 export const metadata: Metadata = {
-  title: `LaunchPad - ${getTenant().shortName} AI Use Case Intake`,
+  title: `${getTenant().productName} - ${getTenant().shortName} AI Use Case Intake`,
   description: "A step-by-step guided intake platform for vetting and governing AI use cases.",
   generator: "v0.app",
 }

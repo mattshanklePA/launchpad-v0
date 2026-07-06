@@ -4,12 +4,14 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Info, X, Lightbulb, Bot, ClipboardCheck } from "lucide-react"
+import { getTenant } from "@/lib/tenant"
 
 // Client-side hero actions. Keeps the three primary CTAs working:
 //   - Start Idea Submission → /submit
 //   - View Saved Drafts     → smooth-scrolls to the "Your Recent Ideas" card
 //   - How It Works          → opens a short explainer modal
 export function HeroActions() {
+  const tenant = getTenant()
   const [showHowItWorks, setShowHowItWorks] = useState(false)
 
   // Close on Escape for accessibility.
@@ -78,7 +80,7 @@ export function HeroActions() {
               <X className="h-5 w-5" />
             </button>
             <h2 id="how-it-works-title" className="text-2xl font-bold text-uspto-gray-text">
-              How LaunchPad works
+              How {tenant.productName} works
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Turn a rough AI idea into a vetted, decision-ready use case in four short phases.
@@ -96,9 +98,9 @@ export function HeroActions() {
               <li className="flex gap-3">
                 <Bot className="h-5 w-5 flex-shrink-0 text-uspto-blue-primary mt-0.5" />
                 <div>
-                  <p className="font-semibold">2. Refine with LaunchPad Scout</p>
+                  <p className="font-semibold">2. Refine with {tenant.productName} {tenant.assistantName}</p>
                   <p className="text-sm text-muted-foreground">
-                    Scout asks focused questions to sharpen value, strategic alignment, and feasibility —
+                    {tenant.assistantName} asks focused questions to sharpen value, strategic alignment, and feasibility —
                     it never invents facts.
                   </p>
                 </div>
