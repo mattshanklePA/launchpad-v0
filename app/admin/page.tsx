@@ -40,7 +40,9 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Header } from "@/components/layout/header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { getFocusAreasForUnit } from "@/lib/strategicFocusAreas"
 
 // Real USPTO strategic objectives:
 //   - 2022-2026 Strategic Plan — 5 agency-wide goals
@@ -142,13 +144,16 @@ const mockOKRs = [
 // DoW's OKR seed list mirrors its own AI Adoption Strategy/Ethical Principles
 // (see mockOKRs above) and stays as-is for the dow tenant. Every other tenant
 // derives its seed list from its own tenant.focusAreas so this tab never shows
-// another org's strategic priorities.
-function getDefaultOKRs(tenant: TenantConfig) {
+// another org's strategic priorities. When a bureau is selected (DoC) and that
+// bureau declares its own `focusAreas`, its priorities are shown instead of the
+// department-wide list; USPTO/DoW bureaus never declare `focusAreas`, so this
+// falls through to the department list for them unchanged.
+function getDefaultOKRs(tenant: TenantConfig, bureau?: string) {
   if (tenant.id === "dow") return mockOKRs
-  return tenant.focusAreas.map((fa, i) => ({
+  return getFocusAreasForUnit(bureau).map((fa, i) => ({
     id: i + 1,
     title: fa.label,
-    description: fa.category,
+    description: fa.description || fa.category,
     category: fa.category,
     status: "active",
     progress: 50,
@@ -284,7 +289,17 @@ export default function AdminPage() {
 
 function AdminPageInner() {
   const tenant = getTenant()
+  // Bureaus that declare their own strategic priorities (DoC only) — when one
+  // is selected, the OKR tab shows that bureau's focusAreas instead of the
+  // department-wide list. Empty selection = unscoped/department-level.
+  const bureausWithFocusAreas = tenant.unit.options.filter((o) => (o.focusAreas?.length ?? 0) > 0)
+  const [okrBureau, setOkrBureau] = useState<string>("")
   const [okrs, setOKRs] = useState(() => getDefaultOKRs(tenant))
+
+  useEffect(() => {
+    setOKRs(getDefaultOKRs(tenant, okrBureau))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [okrBureau])
   const [editingOKR, setEditingOKR] = useState<number | null>(null)
   const [newOKR, setNewOKR] = useState({ title: "", description: "", category: "" })
   const [draftsViewMode, setDraftsViewMode] = useState<"cards" | "table">("cards")
@@ -768,12 +783,29 @@ function AdminPageInner() {
           </TabsContent>
 
           <TabsContent value="okrs" className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-3">
               <h2 className="text-2xl font-bold">{tenant.okrsLabel} Management</h2>
-              <Button onClick={() => setEditingOKR(-1)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add New OKR
-              </Button>
+              <div className="flex items-center gap-2">
+                {bureausWithFocusAreas.length > 0 && (
+                  <Select value={okrBureau || "__department__"} onValueChange={(v) => setOkrBureau(v === "__department__" ? "" : v)}>
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue placeholder={`Department-level (all ${tenant.unit.label.toLowerCase()}s)`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__department__">Department-level (all {tenant.unit.label.toLowerCase()}s)</SelectItem>
+                      {bureausWithFocusAreas.map((b) => (
+                        <SelectItem key={b.value} value={b.value}>
+                          {b.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Button onClick={() => setEditingOKR(-1)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New OKR
+                </Button>
+              </div>
             </div>
 
             {editingOKR === -1 && (

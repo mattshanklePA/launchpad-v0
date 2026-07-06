@@ -6,7 +6,7 @@ import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
 import { formSteps, type FormData } from "@/lib/steps"
 import {
-  STRATEGIC_FOCUS_AREAS,
+  getFocusAreasForUnit,
   type StrategicFocusAreaId,
   type AlignmentSuggestion,
 } from "@/lib/strategicFocusAreas"
@@ -518,7 +518,10 @@ export async function suggestStrategicAlignment(
     }
   }
 
-  const focusAreaList = STRATEGIC_FOCUS_AREAS.map((f) => `  - ${f.id}: ${f.label} (${f.category})`).join("\n")
+  // Score against the submitter's bureau's own priorities when they've named
+  // one (DoC); falls back to the tenant/department-level list otherwise.
+  const scopedFocusAreas = getFocusAreasForUnit(formData.submitterOffice)
+  const focusAreaList = scopedFocusAreas.map((f) => `  - ${f.id}: ${f.label} (${f.category})`).join("\n")
 
   const context = [
     formData.useCaseTitle && `Title: ${formData.useCaseTitle}`,
@@ -571,9 +574,9 @@ Rules:
       prompt: `Idea context:\n${context}\n\nSuggest the strategic alignment for this idea.`,
     })
 
-    // Validate returned focus area IDs against the canonical list — drop anything
+    // Validate returned focus area IDs against the scoped list — drop anything
     // the AI hallucinated rather than letting bad data into the form.
-    const validIds = new Set(STRATEGIC_FOCUS_AREAS.map((f) => f.id))
+    const validIds = new Set(scopedFocusAreas.map((f) => f.id))
     const cleanFocusAreas = object.focusAreas.filter((id) => validIds.has(id as StrategicFocusAreaId))
 
     return {

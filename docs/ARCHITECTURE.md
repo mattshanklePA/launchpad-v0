@@ -103,6 +103,15 @@ Roll-down visibility (`visibleSubmissions` in `lib/reviewWorkflow.ts`) mirrors t
 
 **RLS posture:** `0001_office_hierarchy.sql` enables row level security on `submissions` with a policy for the `authenticated` Postgres role that mirrors `visibleSubmissions` (admin claim sees all; bureau claim scopes to `business_unit`; office claim further scopes to `office`), keyed on `auth.jwt() -> 'app_metadata'`. The app currently talks to Supabase only via the service_role client (`getSupabaseAdmin()`), which has `BYPASSRLS`, so these policies do not change any current app behavior — they exist so DB-level scoping is already in place. **Follow-up (not done in this PR):** the app's own auth (`lib/auth.ts`) is a custom users table, not Supabase Auth, so no request today authenticates to Supabase as `authenticated` with `role`/`business_unit`/`office` claims populated — that requires either migrating to Supabase Auth or minting a JWT with those claims per request.
 
+#### Per-bureau strategic priorities (DoC)
+
+A `UnitOption` (`lib/tenant/types.ts`) can optionally declare its own `focusAreas?: FocusArea[]` — a bureau's own strategic priorities, in the same `{ id, label, category, description? }` shape as the tenant-level `TenantConfig.focusAreas`. `lib/tenant/doc.ts` populates this for every DoC bureau (source data + citations in `docs/research/doc-bureau-strategic-priorities.md`); the tenant-level `doc.focusAreas` (the OMB/federal-AI-framework list) remains the department-level fallback. USPTO and DoW `UnitOption`s never declare `focusAreas`, so they are unaffected — additive and optional, same pattern as `offices`.
+
+`lib/strategicFocusAreas.ts` exports `getFocusAreasForUnit(businessUnit?: string | null): FocusArea[]`, the single place that resolves "which priority list applies here": it looks up `businessUnit` in `getTenant().unit.options` and returns that bureau's `focusAreas` when declared and non-empty, otherwise `tenant.focusAreas`. Two call sites use it to score/display against the *submission's own bureau* rather than the department-wide list:
+
+- **Strategic Alignment Scout** (`suggestStrategicAlignment` in `app/actions.ts`, UI in `components/steps/step-7-alignment.tsx`) — scopes both the AI prompt's candidate focus-area list and the hallucination-guard validation (`validIds`) to `getFocusAreasForUnit(formData.submitterOffice)`, so a submitter under a bureau is scored against that bureau's mission, not Commerce's.
+- **Admin OKR cards** (`app/admin/page.tsx`, the `{tenant.okrsLabel}` tab) — a bureau selector (rendered only when at least one bureau declares `focusAreas`, i.e. DoC) lets a viewer scope the OKR card list to a single bureau; the default/unscoped selection shows the department-level list, matching prior behavior for USPTO/DoW where no selector renders at all.
+
 ---
 
 ## 6. AI integration
