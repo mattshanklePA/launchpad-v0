@@ -3,6 +3,7 @@ import type { TenantConfig } from "./types"
 export const uspto: TenantConfig = {
   id: "uspto",
   shortName: "USPTO",
+  orgName: "USPTO",
   productName: "LaunchPad",
   logoSubtitle: "USPTO AI Use Case Platform",
   heroHeadline: "The governable front door for AI at USPTO",
@@ -89,6 +90,11 @@ A serious AI idea names the specific priorities it advances, describes the mecha
   },
 
   okrsLabel: "OKRs",
+
+  dataMaturityFraming:
+    "AI-ready, well-labeled data is the foundation of a credible use case; technology maturity should drive funding priority.",
+  modelSourcingGuidance:
+    "Prefer American-built or U.S.-hosted models where possible. Foreign or unknown sourcing requires additional review.",
 
   theme: { primary: "#1f4e79", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: true, scout: true },

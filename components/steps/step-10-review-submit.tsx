@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useForm } from "@/context/form-context"
-import { formSteps, type FormData } from "@/lib/steps"
+import { getFormSteps, SUBMITTER_ROLE_LABELS, type FormData } from "@/lib/steps"
 import { saveSubmission } from "@/lib/submissions"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -15,6 +15,7 @@ import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCir
 import { assessReadiness } from "@/app/actions"
 import { SubmissionGate } from "@/components/steps/submission-gate"
 import { isFieldEnabled, getFormConfig } from "@/lib/formConfig"
+import { getTenant } from "@/lib/tenant"
 
 const routeOptions = [
   { value: "rally", label: "Export to Rally" },
@@ -233,17 +234,15 @@ export function Step10ReviewSubmit() {
     opia: "OPIA",
     hr: "Human Resources",
     other: "Other",
-    patent_examiner: "Operations / Staff Officer",
-    trademark_examiner: "Analyst",
+    ...SUBMITTER_ROLE_LABELS,
     supervisory_examiner: "Supervisory Examiner",
-    product_owner: "Product Owner",
-    lead_product_owner: "Lead Product Owner",
-    developer: "Developer",
-    manager: "Manager",
-    it_staff: "IT Staff",
     applicant: "Applicant",
     it_systems: "IT Systems",
     cross_functional: "Cross-Functional",
+    // Tenant's own org taxonomy (bureau/command codes), so the Business Unit
+    // recap shows the right label instead of a raw value like "bea" or
+    // "forscom" on tenants whose codes aren't in the static list above.
+    ...Object.fromEntries(getTenant().unit.options.map((o) => [o.value, o.label])),
   }
   const prettify = (s: string) => ENUM_LABELS[s] || s
 
@@ -332,7 +331,7 @@ export function Step10ReviewSubmit() {
         </CardContent>
       </Card>
 
-      {formSteps.slice(0, 8).map((step) => {
+      {getFormSteps().slice(0, 8).map((step) => {
         // Filter STEP_FIELDS to only the fields currently enabled in the
         // admin Form Configuration. If a step has zero enabled fields, hide
         // its review card entirely.

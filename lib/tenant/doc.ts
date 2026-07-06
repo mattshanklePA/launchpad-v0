@@ -15,6 +15,7 @@ import type { TenantConfig } from "./types"
 export const doc: TenantConfig = {
   id: "doc",
   shortName: "DOC",
+  orgName: "Department of Commerce",
   productName: "LaunchPad",
   logoSubtitle: "Commerce AI Use Case Platform",
   heroHeadline: "The governable front door for AI across Commerce",
@@ -257,6 +258,11 @@ A serious AI idea names the federal priority and the Department mission it advan
   },
 
   okrsLabel: "OMB / Strategic Priorities",
+
+  dataMaturityFraming:
+    "Federal AI use case inventory reporting expects AI-ready data and a clear maturity story before funding follows.",
+  modelSourcingGuidance:
+    "OMB and EO 14179 prefer American-built or U.S.-hosted models with documented sourcing (per M-25-22). Foreign or unknown sourcing requires additional review.",
 
   theme: { primary: "#003366", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: false, scout: true, aiHubExport: true },

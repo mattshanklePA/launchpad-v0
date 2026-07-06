@@ -1,3 +1,5 @@
+import { getTenant } from "@/lib/tenant"
+
 export type FormStep = {
   step: number
   name: string
@@ -5,6 +7,22 @@ export type FormStep = {
   prompt: string
   phase?: number
   phaseName?: string
+}
+
+// Shared labels for the submitterRole enum (Step 1's "Role" dropdown). Kept
+// in one place and reused everywhere this value is displayed (the wizard's
+// "Submitting as…" pill, the Step 10 recap) so they can't drift out of sync
+// with each other — that drift is what showed a stale "Trademark Examiner"
+// in the pill after the dropdown itself had moved to neutral job titles.
+export const SUBMITTER_ROLE_LABELS: Record<string, string> = {
+  patent_examiner: "Operations / Staff Officer",
+  trademark_examiner: "Analyst",
+  manager: "Manager",
+  it_staff: "IT Staff",
+  product_owner: "Product Owner",
+  lead_product_owner: "Lead Product Owner",
+  developer: "Developer",
+  other: "Other",
 }
 
 // Phase grouping for the progress reframe.
@@ -218,65 +236,71 @@ export const initialFormData: FormData = {
   executiveSummary: "",
 }
 
-export const formSteps: FormStep[] = [
-  {
-    step: 1,
-    name: "Submitter Info",
-    title: "Submitter Information",
-    prompt: "Let's start with who you are.",
-  },
-  {
-    step: 2,
-    name: "Problem & Target Users",
-    title: "Define the Problem and Who It Affects",
-    prompt: "What problem or opportunity are you trying to address, and who's affected by it?",
-  },
-  {
-    step: 3,
-    name: "Proposed Solution",
-    title: "Propose a Solution",
-    prompt: "How would this work? Describe your proposed AI/ML approach.",
-  },
-  {
-    step: 4,
-    name: "Value",
-    title: "Define the Value to Users and the Business",
-    prompt: "How does this help users, and what's the business case for the Department of War?",
-  },
-  {
-    step: 5,
-    name: "Strategic Alignment",
-    title: "Align with Department of War Goals",
-    prompt: "Does this align with the Department of War's strategic priorities? Which ones?",
-  },
-  {
-    step: 6,
-    name: "Feasibility & Security",
-    title: "Assess Feasibility & Security",
-    prompt: "Is this idea feasible? Consider technical, security, and resource realities.",
-  },
-  {
-    step: 7,
-    name: "Success Metrics",
-    title: "Define Success Metrics",
-    prompt: "How will we know this worked? Define measurable success.",
-  },
-  {
-    step: 8,
-    name: "Idea Overview",
-    title: "Name & Summarize Your Idea",
-    prompt: "Scout drafted a title and summary from everything you entered — review and refine.",
-  },
-  {
-    step: 9,
-    name: "Review & Submit",
-    title: "Review & Submit for Vetting",
-    prompt: "Review your idea before submitting it for vetting.",
-  },
-  {
-    step: 10,
-    name: "Submission Complete",
-    title: "Idea Submitted for Vetting",
-    prompt: "Your idea has been submitted and will be vetted by the review team.",
-  },
-]
+// Step title/prompt copy that names the organization is generated per-tenant
+// (via getTenant()) rather than hardcoded, so a Commerce/USPTO deployment
+// never shows another tenant's org name. Everything else is shared.
+export function getFormSteps(): FormStep[] {
+  const { orgName } = getTenant()
+  return [
+    {
+      step: 1,
+      name: "Submitter Info",
+      title: "Submitter Information",
+      prompt: "Let's start with who you are.",
+    },
+    {
+      step: 2,
+      name: "Problem & Target Users",
+      title: "Define the Problem and Who It Affects",
+      prompt: "What problem or opportunity are you trying to address, and who's affected by it?",
+    },
+    {
+      step: 3,
+      name: "Proposed Solution",
+      title: "Propose a Solution",
+      prompt: "How would this work? Describe your proposed AI/ML approach.",
+    },
+    {
+      step: 4,
+      name: "Value",
+      title: "Define the Value to Users and the Business",
+      prompt: `How does this help users, and what's the business case for the ${orgName}?`,
+    },
+    {
+      step: 5,
+      name: "Strategic Alignment",
+      title: `Align with ${orgName} Goals`,
+      prompt: `Does this align with the ${orgName}'s strategic priorities? Which ones?`,
+    },
+    {
+      step: 6,
+      name: "Feasibility & Security",
+      title: "Assess Feasibility & Security",
+      prompt: "Is this idea feasible? Consider technical, security, and resource realities.",
+    },
+    {
+      step: 7,
+      name: "Success Metrics",
+      title: "Define Success Metrics",
+      prompt: "How will we know this worked? Define measurable success.",
+    },
+    {
+      step: 8,
+      name: "Idea Overview",
+      title: "Name & Summarize Your Idea",
+      prompt: "Scout drafted a title and summary from everything you entered — review and refine.",
+    },
+    {
+      step: 9,
+      name: "Review & Submit",
+      title: "Review & Submit for Vetting",
+      prompt: "Review your idea before submitting it for vetting.",
+    },
+    {
+      step: 10,
+      name: "Submission Complete",
+      title: "Idea Submitted for Vetting",
+      prompt: "Your idea has been submitted and will be vetted by the review team.",
+    },
+  ]
+}

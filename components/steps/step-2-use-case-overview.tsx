@@ -10,11 +10,13 @@ import { Wand2, Loader2, Sparkles } from "lucide-react"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { suggestIdeaOverview } from "@/app/actions"
 import { useToast } from "@/components/ui/use-toast"
+import { getTenant } from "@/lib/tenant"
 
 export function Step2UseCaseOverview() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
   const { toast } = useToast()
+  const tenant = getTenant()
   const [drafting, setDrafting] = useState(false)
   const autoTried = useRef(false)
 
@@ -139,7 +141,7 @@ export function Step2UseCaseOverview() {
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="excluded" id="excluded" />
               <Label htmlFor="excluded" className="font-normal">
-                <span className="font-medium">Excluded</span> - This information must stay internal to the Department of War
+                <span className="font-medium">Excluded</span> - This information must stay internal to the {tenant.orgName}
               </Label>
             </div>
           </RadioGroup>

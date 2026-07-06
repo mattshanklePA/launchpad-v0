@@ -17,6 +17,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { suggestStrategicAlignment } from "@/app/actions"
 import { getFocusAreasForUnit, type AlignmentSuggestion } from "@/lib/strategicFocusAreas"
 import type { FocusArea } from "@/lib/tenant/types"
+import { getTenant } from "@/lib/tenant"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { Sparkles, Loader2, CheckCircle2, X, RefreshCw } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
@@ -34,6 +35,7 @@ export function Step7Alignment() {
   const { formData, setFormData } = useForm()
   const { toast } = useToast()
   const isVisible = useFieldVisibility()
+  const tenant = getTenant()
   const [suggesting, setSuggesting] = useState(false)
   const [suggestion, setSuggestion] = useState<AlignmentSuggestion | null>(null)
   const [autoTried, setAutoTried] = useState(false)
@@ -147,7 +149,7 @@ export function Step7Alignment() {
               {suggesting && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Analyzing your problem, solution, and value claims against Department of War priorities…
+                  Analyzing your problem, solution, and value claims against {tenant.orgName} priorities…
                 </div>
               )}
 
@@ -216,7 +218,7 @@ export function Step7Alignment() {
           {isVisible("usptoFocusArea") && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Which Department of War priorities does this advance?</Label>
+              <Label>Which {tenant.orgName} priorities does this advance?</Label>
               {hasUserData && !suggesting && !suggestion && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={fetchSuggestion}>
                   <Sparkles className="h-3 w-3 mr-1" />
@@ -249,7 +251,7 @@ export function Step7Alignment() {
 
           {isVisible("relevantOkrs") && (
             <div className="space-y-2">
-              <Label htmlFor="relevantOkrs">Relevant Department of War OKRs or goals</Label>
+              <Label htmlFor="relevantOkrs">Relevant {tenant.okrsLabel} or goals</Label>
               <Textarea
                 id="relevantOkrs"
                 value={formData.relevantOkrs}

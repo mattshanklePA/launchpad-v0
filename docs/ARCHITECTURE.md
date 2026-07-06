@@ -112,6 +112,16 @@ A `UnitOption` (`lib/tenant/types.ts`) can optionally declare its own `focusArea
 - **Strategic Alignment Scout** (`suggestStrategicAlignment` in `app/actions.ts`, UI in `components/steps/step-7-alignment.tsx`) — scopes both the AI prompt's candidate focus-area list and the hallucination-guard validation (`validIds`) to `getFocusAreasForUnit(formData.submitterOffice)`, so a submitter under a bureau is scored against that bureau's mission, not Commerce's.
 - **Admin OKR cards** (`app/admin/page.tsx`, the `{tenant.okrsLabel}` tab) — a bureau selector (rendered only when at least one bureau declares `focusAreas`, i.e. DoC) lets a viewer scope the OKR card list to a single bureau; the default/unscoped selection shows the department-level list, matching prior behavior for USPTO/DoW where no selector renders at all.
 
+#### Wizard step copy (tenant-aware)
+
+The admin dashboard fix above (`okrsLabel`) covered the admin surface only; the submission wizard itself had its own hardcoded DoW/DoD copy (org name, strategic-priorities framing, and Feasibility & Security's DoD-specific citations) that leaked onto every tenant, including DoC. That copy now comes from `TenantConfig` (`lib/tenant/types.ts`) instead:
+
+- `orgName` — the org's full name/acronym used in wizard prose (e.g. `Align with ${orgName} Goals`). Bare, no leading article; callers add "the" inline where the sentence needs one.
+- `dataMaturityFraming` / `modelSourcingGuidance` — the Feasibility & Security step's "Data readiness & maturity" subtitle and model-sourcing paragraph, since each tenant has its own real framework here (DoD AI Hierarchy of Needs vs. OMB's use-case-inventory framing) rather than one bleeding into another's.
+- `trlSystemName` / `srgCaveat` / `humanReviewCitation` — optional, DoW-only citations (its "Tradewinds" system, the DoD SRG caveat, DoDD 3000.09) that simply don't render when a tenant doesn't set them, instead of a component-level `if (tenant.id === "dow")` branch.
+- `lib/steps.ts` exports `getFormSteps()` (not a static array) so the two steps whose title/prompt name the organization — Value and Strategic Alignment — resolve `orgName` per tenant at call time; every consumer (`step-wrapper.tsx`, the Step 10 recap cards, `wizard-nav.tsx`, `progress-bar.tsx`, the Scout server actions in `app/actions.ts`) calls the function rather than importing a shared constant.
+- `SUBMITTER_ROLE_LABELS` (also `lib/steps.ts`) is the single source of truth for the `submitterRole` enum's display labels, reused by the "Submitting as…" pill (`form-container.tsx`), the Step 10 recap, and the PDF export (`lib/pdfGenerator.ts`) — previously the pill kept its own stale copy of this map and could show a USPTO-flavored role name regardless of the role actually selected.
+
 ---
 
 ## 6. AI integration

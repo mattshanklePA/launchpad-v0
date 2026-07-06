@@ -1,10 +1,11 @@
-// Branded Department of War LaunchPad PDF generator.
-// Produces a multi-page PDF with Department of War header band, exec summary callout,
-// per-section blocks with side badges, key-functionality bullets, focus-area
-// chips, and a readiness assessment banner.
+// Branded LaunchPad PDF generator.
+// Produces a multi-page PDF with a tenant-branded header band, exec summary
+// callout, per-section blocks with side badges, key-functionality bullets,
+// focus-area chips, and a readiness assessment banner.
 
 import { jsPDF } from "jspdf"
-import type { FormData } from "@/lib/steps"
+import { SUBMITTER_ROLE_LABELS, type FormData } from "@/lib/steps"
+import { getTenant } from "@/lib/tenant"
 
 const USPTO_BLUE_PRIMARY: [number, number, number] = [53, 94, 147]
 const USPTO_BLUE_SECONDARY: [number, number, number] = [37, 66, 103]
@@ -36,22 +37,13 @@ function readinessLabel(s?: string): string {
 }
 
 function officeLabel(o?: string): string {
-  const m: Record<string, string> = {
-    patents: "Patents",
-    trademarks: "Trademarks",
-    ocio: "OCIO",
-    ocfo: "OCFO",
-    ogc: "OGC",
-    opia: "OPIA",
-    hr: "Human Resources",
-    other: "Other",
-  }
-  return m[o || ""] || (o || "Unknown")
+  if (!o) return "Unknown"
+  return getTenant().unit.options.find((opt) => opt.value === o)?.label || o
 }
 
 function roleLabel(r?: string): string {
   if (!r) return "Unknown"
-  return r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  return SUBMITTER_ROLE_LABELS[r] || r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function rangeLabel(v: string | undefined, suffix: string): string | undefined {
@@ -60,6 +52,7 @@ function rangeLabel(v: string | undefined, suffix: string): string | undefined {
 }
 
 export function generateSubmissionPDF(formData: FormData) {
+  const tenant = getTenant()
   const doc = new jsPDF({ unit: "pt", format: "letter" })
   const pageW = doc.internal.pageSize.getWidth()
   const pageH = doc.internal.pageSize.getHeight()
@@ -212,7 +205,7 @@ export function generateSubmissionPDF(formData: FormData) {
   bullets("Other user improvements", formData.otherUserImprovements)
   section("Business Value", fmt(formData.businessValueSummary || formData.businessValue), rangeLabel(formData.costSavings, "savings"))
   bullets("Strategic benefits", formData.strategicBenefit)
-  section("Strategic Alignment with Department of War Priorities", fmt(formData.alignmentSummary || formData.relevantOkrs))
+  section(`Strategic Alignment with ${tenant.orgName} Priorities`, fmt(formData.alignmentSummary || formData.relevantOkrs))
   chips("Strategic focus areas", formData.usptoFocusArea)
   section("Feasibility & Security", fmt(formData.feasibilitySummary || formData.dependencies),
     formData.implementationComplexity ? `${formData.implementationComplexity.charAt(0).toUpperCase() + formData.implementationComplexity.slice(1)} complexity` : undefined)
@@ -252,7 +245,7 @@ export function generateSubmissionPDF(formData: FormData) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(8)
     doc.setTextColor(...GRAY_500)
-    doc.text("LaunchPad — Department of War AI Use Case Platform", margin, pageH - 18)
+    doc.text(`LaunchPad — ${tenant.logoSubtitle}`, margin, pageH - 18)
     doc.text(`Page ${i} of ${total}`, pageW - margin, pageH - 18, { align: "right" })
   }
 

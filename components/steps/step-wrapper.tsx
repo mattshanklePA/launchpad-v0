@@ -1,7 +1,7 @@
 "use client"
 import type React from "react"
 import { useForm } from "@/context/form-context"
-import { formSteps } from "@/lib/steps"
+import { getFormSteps } from "@/lib/steps"
 import { getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react"
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export function StepWrapper({ children }: { children: React.ReactNode }) {
   const { currentStep, goToNextStep, goToPreviousStep, isFirstStep, isLastStep, formData } = useForm()
-  const stepInfo = formSteps[currentStep - 1]
+  const stepInfo = getFormSteps()[currentStep - 1]
 
   // What's still required on THIS step? Used to give the submitter a clear,
   // non-blocking hint near the Next button (they can still move freely; the

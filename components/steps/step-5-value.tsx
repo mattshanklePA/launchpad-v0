@@ -14,6 +14,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
+import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
 
 const improvementOptions = [
@@ -23,17 +24,21 @@ const improvementOptions = [
   { value: "other", label: "Other" },
 ]
 
-const benefitOptions = [
-  { value: "improve_quality", label: "Improve mission or operational quality" },
-  { value: "reduce_backlog", label: "Reduce backlog" },
-  { value: "support_goals", label: "Support Department of War strategic goals" },
-  { value: "other", label: "Other" },
-]
+function getBenefitOptions(orgName: string) {
+  return [
+    { value: "improve_quality", label: "Improve mission or operational quality" },
+    { value: "reduce_backlog", label: "Reduce backlog" },
+    { value: "support_goals", label: `Support ${orgName} strategic goals` },
+    { value: "other", label: "Other" },
+  ]
+}
 
 export function Step5Value() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
   const [showOptional, setShowOptional] = usePersistentDisclosure("value")
+  const tenant = getTenant()
+  const benefitOptions = getBenefitOptions(tenant.orgName)
 
   const userSectionVisible =
     isVisible("userValue") || isVisible("userTimeSavings") || isVisible("userValueSummary")
@@ -129,7 +134,7 @@ export function Step5Value() {
             </div>
           )}
 
-          {/* ─── VALUE TO THE BUSINESS (Department of War) ─── */}
+          {/* ─── VALUE TO THE BUSINESS ─── */}
           {businessSectionVisible && (
             <div className={`space-y-6 ${userSectionVisible ? "pt-8 border-t" : ""}`}>
               <div>
@@ -137,7 +142,7 @@ export function Step5Value() {
                   Value to the Business
                 </h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  What changes for the Department of War at the enterprise level: readiness, decision advantage, cost.
+                  What changes for the {tenant.orgName} at the enterprise level: {tenant.leadershipPriorities}.
                 </p>
               </div>
 

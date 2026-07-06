@@ -4,6 +4,7 @@ import type { TenantConfig } from "./types"
 export const dow: TenantConfig = {
   id: "dow",
   shortName: "DoW",
+  orgName: "Department of War",
   productName: "LaunchPad",
   logoSubtitle: "Department of War AI Use Case Platform",
   heroHeadline: "The governable front door for AI across the Department of War",
@@ -101,6 +102,14 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
   },
 
   okrsLabel: "Department of War OKRs",
+
+  dataMaturityFraming:
+    "In the DoD AI Hierarchy of Needs, AI-ready data is the foundation and maturity drives funding.",
+  modelSourcingGuidance:
+    "DoD prefers American-built or U.S.-hosted models running inside the accredited boundary (e.g., Amazon Bedrock in GovCloud, authorized at IL4/IL5). Foreign/unknown sourcing requires additional review.",
+  trlSystemName: "Tradewinds",
+  srgCaveat: "FedRAMP authorization alone does not satisfy the DoD SRG.",
+  humanReviewCitation: "Governable / DoDD 3000.09",
 
   theme: { primary: "#355E93", primaryForeground: "#ffffff" },
   features: { decisionCenter: true, rallyExport: false, scout: true },

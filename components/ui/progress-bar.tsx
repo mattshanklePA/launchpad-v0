@@ -1,13 +1,13 @@
 "use client"
 import { useForm } from "@/context/form-context"
-import { formPhases, formSteps, getPhaseForStep } from "@/lib/steps"
+import { formPhases, getFormSteps, getPhaseForStep } from "@/lib/steps"
 import { isStepEnabled } from "@/lib/formConfig"
 import { getProgressModel } from "@/lib/submissionReadiness"
 import { CheckCircle2 } from "lucide-react"
 
 // Enabled, completable steps that fall inside a phase's range.
 function enabledStepsInPhase(stepStart: number, stepEnd: number): number[] {
-  return formSteps
+  return getFormSteps()
     .filter((s) => s.step >= stepStart && s.step <= stepEnd && isStepEnabled(s.step))
     .map((s) => s.step)
 }
