@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { mapSubmissionToOmbRow, buildOmbCsv, OMB_COLUMNS } from "@/lib/ombExport"
+import { mapSubmissionToOmbRow, buildOmbCsv, OMB_COLUMNS, reportingMode } from "@/lib/ombExport"
 import type { Submission } from "@/lib/submissions"
 
 function sub(formData: Record<string, unknown>): Submission {
@@ -38,6 +38,7 @@ describe("mapSubmissionToOmbRow", () => {
       "Patents",
       "Pilot",
       "Yes",
+      "Individual",
       "Examiners spend too long triaging incoming applications.",
       "Cuts triage time in half.",
       "Ranks applications by urgency for examiner review.",
@@ -60,6 +61,7 @@ describe("mapSubmissionToOmbRow", () => {
       "Unspecified", // businessUnitLabel fallback for an empty unit
       "", // stageOfDevelopment
       "", // highImpact
+      "Consolidated-eligible", // reportingMode — not high-impact, so not forced individual
       "", // coreProblem
       "", // businessValue
       "", // solutionSummary
@@ -70,6 +72,17 @@ describe("mapSubmissionToOmbRow", () => {
       "", // aiHumanReview
       "", // aiDecisionalImpact
     ])
+  })
+})
+
+describe("reportingMode", () => {
+  it("forces individual reporting for high-impact use cases", () => {
+    expect(reportingMode({ highImpact: "yes" })).toBe("Individual")
+  })
+
+  it("is consolidated-eligible for non-high-impact use cases", () => {
+    expect(reportingMode({ highImpact: "no" })).toBe("Consolidated-eligible")
+    expect(reportingMode({ highImpact: "" })).toBe("Consolidated-eligible")
   })
 })
 

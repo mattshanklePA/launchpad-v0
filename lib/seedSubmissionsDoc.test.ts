@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 import { determineReportability } from "@/lib/ombReportability"
+import { determineHighImpact } from "@/lib/highImpactDetermination"
 import { findSimilar } from "@/lib/similarity"
 import { STATUS_ORDER } from "@/lib/reviewWorkflow"
 import { doc } from "@/lib/tenant/doc"
@@ -63,6 +64,13 @@ describe("docSeedSubmissions golden state", () => {
       expect(s.formData.systemSource).toBeTruthy()
       expect(s.formData.aiModelSourcing).toBeTruthy()
       expect(s.formData.aiHumanReview).toBeTruthy()
+      // High-impact risk-management fields (OMB M-25-21 minimum practices).
+      expect(s.formData.aiImpactAssessment).toBeTruthy()
+      expect(s.formData.preDeploymentTesting).toBeTruthy()
+      expect(s.formData.ongoingMonitoringPlan).toBeTruthy()
+      expect(s.formData.humanOversightAppeal).toBeTruthy()
+      // The rule-based recommendation should agree with the self-reported flag.
+      expect(determineHighImpact(s.formData).recommendation).toBe("yes")
     }
   })
 
