@@ -16,7 +16,8 @@ export const doc: TenantConfig = {
   id: "doc",
   shortName: "DOC",
   orgName: "Department of Commerce",
-  productName: "LaunchPad",
+  productName: "Warder",
+  assistantName: "Kestrel",
   logoSubtitle: "Commerce AI Use Case Platform",
   heroHeadline: "The governable front door for AI across Commerce",
   heroSubtitle:

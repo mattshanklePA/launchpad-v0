@@ -15,6 +15,11 @@ describe("DoC tenant", () => {
     expect(values).toContain("uspto")
   })
 
+  it("renames the product to Warder and the assistant to Kestrel", () => {
+    expect(doc.productName).toBe("Warder")
+    expect(doc.assistantName).toBe("Kestrel")
+  })
+
   it("anchors focus areas to the federal AI framework (OMB)", () => {
     expect(doc.focusAreas.length).toBeGreaterThan(0)
     expect(doc.focusAreas.some((f) => f.category.includes("OMB"))).toBe(true)
@@ -40,6 +45,15 @@ describe("admin dashboard OKRs label", () => {
 describe("getTenant", () => {
   it("defaults to uspto when NEXT_PUBLIC_TENANT is unset", () => {
     expect(getTenant().id).toBe("uspto")
+  })
+})
+
+describe("product/assistant naming (issue #31 — Warder/Kestrel for DoC only)", () => {
+  it("keeps USPTO and DoW on LaunchPad + Scout, unaffected by the DoC rename", () => {
+    expect(uspto.productName).toBe("LaunchPad")
+    expect(uspto.assistantName).toBe("Scout")
+    expect(dow.productName).toBe("LaunchPad")
+    expect(dow.assistantName).toBe("Scout")
   })
 })
 

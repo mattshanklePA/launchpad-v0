@@ -44,7 +44,7 @@ export function LaunchPadLogo({
 
   if (variant === "icon") {
     return (
-      <span className={cn("inline-flex items-center", className)} role="img" aria-label="LaunchPad logo">
+      <span className={cn("inline-flex items-center", className)} role="img" aria-label={`${getTenant().productName} logo`}>
         <Rocket className={cn(sz.icon, iconColor)} strokeWidth={2.2} />
         <span className="sr-only">{getTenant().productName}</span>
       </span>
@@ -52,7 +52,7 @@ export function LaunchPadLogo({
   }
 
   return (
-    <span className={cn("inline-flex items-center", sz.gap, className)} role="img" aria-label="LaunchPad logo">
+    <span className={cn("inline-flex items-center", sz.gap, className)} role="img" aria-label={`${getTenant().productName} logo`}>
       <Rocket className={cn(sz.icon, iconColor)} strokeWidth={2.2} />
       <span className="flex flex-col leading-none">
         <span className={cn("font-wordmark font-semibold tracking-tight", sz.title, titleColor, titleClassName)}>{getTenant().productName}</span>

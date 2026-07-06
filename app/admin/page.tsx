@@ -1233,7 +1233,7 @@ function AdminPageInner() {
                     <Input type="number" defaultValue="30" className="mt-1" />
                   </div>
                   <div>
-                    <Label>Scout AI Model</Label>
+                    <Label>{tenant.assistantName} AI Model</Label>
                     <Input defaultValue="claude-sonnet-4-5" className="mt-1" />
                   </div>
                   <div>

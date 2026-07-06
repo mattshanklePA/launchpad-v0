@@ -11,12 +11,14 @@ import { Input } from "../ui/input"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
+import { getTenant } from "@/lib/tenant"
 
 const MAX_FEATURES = 3
 
 export function Step4ProposedSolution() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
+  const tenant = getTenant()
   const [newFeature, setNewFeature] = useState("")
   const [showOptional, setShowOptional] = usePersistentDisclosure("solution")
 
@@ -117,7 +119,7 @@ export function Step4ProposedSolution() {
                 Solution Summary
               </Label>
               <p className="text-sm text-muted-foreground">
-                AI-generated refined summary of your proposed solution. Open Scout to draft or refine.
+                AI-generated refined summary of your proposed solution. Open {tenant.assistantName} to draft or refine.
               </p>
               <TextareaAutosize
                 id="solutionSummary"

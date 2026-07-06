@@ -269,7 +269,7 @@ export const initialFormData: FormData = {
 // (via getTenant()) rather than hardcoded, so a Commerce/USPTO deployment
 // never shows another tenant's org name. Everything else is shared.
 export function getFormSteps(): FormStep[] {
-  const { orgName } = getTenant()
+  const { orgName, assistantName } = getTenant()
   return [
     {
       step: 1,
@@ -317,7 +317,7 @@ export function getFormSteps(): FormStep[] {
       step: 8,
       name: "Idea Overview",
       title: "Name & Summarize Your Idea",
-      prompt: "Scout drafted a title and summary from everything you entered — review and refine.",
+      prompt: `${assistantName} drafted a title and summary from everything you entered — review and refine.`,
     },
     {
       step: 9,
