@@ -24,6 +24,7 @@ import {
 import { findSimilar } from "@/lib/similarity"
 import { determineReportability, type ReportabilityStatus } from "@/lib/ombReportability"
 import { determineHighImpact } from "@/lib/highImpactDetermination"
+import { determineConsolidation } from "@/lib/ombConsolidation"
 import { assistReviewer } from "@/app/actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -142,6 +143,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const similarMatches = isReviewer ? findSimilar(sub, getSubmissions()) : []
   const reportability = determineReportability(fd)
   const highImpactRec = determineHighImpact(fd)
+  const consolidation = determineConsolidation(fd)
 
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
@@ -263,6 +265,30 @@ export function SubmissionDetail({ id }: { id: string }) {
             {REPORTABILITY_LABEL[reportability.status]}
           </Badge>
           <span className="text-sm text-muted-foreground">{reportability.reason}</span>
+        </div>
+      </div>
+
+      <div className="rounded-lg border bg-white p-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          OMB reporting mode
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className={
+              consolidation.status === "Consolidated"
+                ? "bg-purple-100 text-purple-800 border-purple-300"
+                : "bg-gray-100 text-gray-600 border-gray-300"
+            }
+          >
+            {consolidation.status}
+          </Badge>
+          {consolidation.categoryLabel && (
+            <Badge variant="outline" className="bg-muted text-muted-foreground">
+              {consolidation.categoryLabel}
+            </Badge>
+          )}
+          <span className="text-sm text-muted-foreground">{consolidation.reason}</span>
         </div>
       </div>
 

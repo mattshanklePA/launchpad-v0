@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest"
-import { mapSubmissionToOmbRow, buildOmbCsv, OMB_COLUMNS, reportingMode } from "@/lib/ombExport"
+import { mapSubmissionToOmbRow, buildOmbCsv, OMB_COLUMNS } from "@/lib/ombExport"
 import type { Submission } from "@/lib/submissions"
 
-function sub(formData: Record<string, unknown>): Submission {
+function sub(id: string, formData: Record<string, unknown>): Submission {
   return {
-    id: "sub-1",
+    id,
     submittedAt: "2026-01-01T00:00:00.000Z",
     formData: formData as any,
   }
@@ -13,7 +13,7 @@ function sub(formData: Record<string, unknown>): Submission {
 describe("mapSubmissionToOmbRow", () => {
   it("maps a fully-answered submission to OMB column order", () => {
     const row = mapSubmissionToOmbRow(
-      sub({
+      sub("sub-1", {
         useCaseTitle: "Patent Triage Assistant",
         submitterOffice: "patents",
         stageOfDevelopment: "pilot",
@@ -39,6 +39,7 @@ describe("mapSubmissionToOmbRow", () => {
       "Pilot",
       "Yes",
       "Individual",
+      "",
       "Examiners spend too long triaging incoming applications.",
       "Cuts triage time in half.",
       "Ranks applications by urgency for examiner review.",
@@ -53,7 +54,7 @@ describe("mapSubmissionToOmbRow", () => {
   })
 
   it("falls back to empty strings for unanswered fields", () => {
-    const row = mapSubmissionToOmbRow(sub({}), "USPTO")
+    const row = mapSubmissionToOmbRow(sub("sub-1", {}), "USPTO")
     expect(row[0]).toBe("sub-1")
     expect(row.slice(1)).toEqual([
       "", // useCaseTitle
@@ -61,7 +62,8 @@ describe("mapSubmissionToOmbRow", () => {
       "Unspecified", // businessUnitLabel fallback for an empty unit
       "", // stageOfDevelopment
       "", // highImpact
-      "Consolidated-eligible", // reportingMode — not high-impact, so not forced individual
+      "Individual", // Reporting Mode — no category match, so not consolidated
+      "", // Consolidated Category
       "", // coreProblem
       "", // businessValue
       "", // solutionSummary
@@ -73,23 +75,25 @@ describe("mapSubmissionToOmbRow", () => {
       "", // aiDecisionalImpact
     ])
   })
-})
 
-describe("reportingMode", () => {
-  it("forces individual reporting for high-impact use cases", () => {
-    expect(reportingMode({ highImpact: "yes" })).toBe("Individual")
-  })
-
-  it("is consolidated-eligible for non-high-impact use cases", () => {
-    expect(reportingMode({ highImpact: "no" })).toBe("Consolidated-eligible")
-    expect(reportingMode({ highImpact: "" })).toBe("Consolidated-eligible")
+  it("reports the matched category and 'Consolidated' reporting mode for a widely-used commercial AI use case", () => {
+    const row = mapSubmissionToOmbRow(
+      sub("sub-2", {
+        useCaseTitle: "Inbox Assistant",
+        highImpact: "no",
+        coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
+      }),
+      "USPTO",
+    )
+    expect(row[6]).toBe("Consolidated")
+    expect(row[7]).toBe("Email prioritization & categorization")
   })
 })
 
 describe("buildOmbCsv", () => {
   it("emits a header row followed by one row per submission, quoting commas", () => {
     const csv = buildOmbCsv(
-      [sub({ useCaseTitle: "Idea, with a comma", coreProblem: 'Has "quotes" too' })],
+      [sub("sub-1", { useCaseTitle: "Idea, with a comma", coreProblem: 'Has "quotes" too' })],
       "USPTO",
     )
     const lines = csv.trim().split("\n")
@@ -101,5 +105,44 @@ describe("buildOmbCsv", () => {
   it("returns just the header for an empty submission list", () => {
     const csv = buildOmbCsv([], "USPTO")
     expect(csv.trim().split("\n")).toHaveLength(1)
+  })
+
+  it("collapses multiple bureaus' consolidated matches into a single department-level row per category", () => {
+    const emailUseCase = (id: string, office: string) =>
+      sub(id, {
+        useCaseTitle: "Inbox Assistant",
+        submitterOffice: office,
+        highImpact: "no",
+        coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
+      })
+
+    const csv = buildOmbCsv(
+      [emailUseCase("sub-1", "census"), emailUseCase("sub-2", "noaa"), emailUseCase("sub-3", "census")],
+      "DoC",
+    )
+    const lines = csv.trim().split("\n")
+    // header + exactly one consolidated row (not one per submission)
+    expect(lines).toHaveLength(2)
+    expect(lines[1]).toContain("consolidated:email_triage")
+    expect(lines[1]).toContain("Consolidated")
+    expect(lines[1]).toContain("Email prioritization & categorization")
+  })
+
+  it("never collapses high-impact use cases, even when they match a consolidated category", () => {
+    const csv = buildOmbCsv(
+      [
+        sub("sub-1", {
+          useCaseTitle: "Inbox Assistant",
+          highImpact: "yes",
+          coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
+        }),
+      ],
+      "DoC",
+    )
+    const lines = csv.trim().split("\n")
+    expect(lines).toHaveLength(2)
+    expect(lines[1]).toContain("sub-1")
+    expect(lines[1]).toContain("Individual")
+    expect(lines[1]).not.toContain("consolidated:")
   })
 })
