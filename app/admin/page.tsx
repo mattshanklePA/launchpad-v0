@@ -4,7 +4,9 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getSession, hasAdminAccess, isAdmin, logout, ensureSeeded, type Session } from "@/lib/auth"
 import { UserManagement } from "@/components/admin/user-management"
-import { LogOut } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { errToDetail } from "@/lib/errToDetail"
+import { LogOut, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -313,6 +315,9 @@ function AdminPageInner() {
   const [tab, setTab] = useState("overview")
   const router = useRouter()
   const { loaded: dataLoaded, refetchSubmissions } = useDataProvider()
+  const { toast } = useToast()
+  const [resettingDemoData, setResettingDemoData] = useState(false)
+  const [clearingSubmissions, setClearingSubmissions] = useState(false)
 
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab")
@@ -342,6 +347,62 @@ function AdminPageInner() {
   const handleLogout = () => {
     logout()
     router.replace("/login")
+  }
+
+  // Reset Demo Data — wipes Supabase and re-inserts this tenant's deterministic
+  // seed set. Runs async with a spinner + disabled buttons so a slow request
+  // never reads as a frozen page, then refreshes the shared submissions cache
+  // (no full page reload, so a slow network can't interrupt anything mid-flight).
+  const handleResetDemoData = async () => {
+    if (
+      !confirm(
+        `Reset all ${tenant.orgName} demo submissions to the golden demo state? This wipes and re-seeds every visitor's view and cannot be undone.`,
+      )
+    )
+      return
+    setResettingDemoData(true)
+    try {
+      await clearSubmissions()
+      const res = await fetch("/api/seed", { method: "POST" })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        throw new Error(json?.detail || json?.error || `Reset failed (${res.status})`)
+      }
+      if (json?.seeded === false && (json?.existingCount ?? 0) > 0) {
+        throw new Error("Clearing existing submissions didn't fully complete, so the reset was skipped. Try again.")
+      }
+      await refetchSubmissions()
+      toast({
+        title: "Demo data reset",
+        description: `Restored ${json?.insertedCount ?? "the"} ${tenant.orgName} demo submission${json?.insertedCount === 1 ? "" : "s"} to the golden state.`,
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Reset failed",
+        description: error instanceof Error ? error.message : errToDetail(error),
+      })
+    } finally {
+      setResettingDemoData(false)
+    }
+  }
+
+  const handleClearAllSubmissions = async () => {
+    if (!confirm("Clear ALL submissions in the database (visible to every visitor)? This cannot be undone.")) return
+    setClearingSubmissions(true)
+    try {
+      await clearSubmissions()
+      await refetchSubmissions()
+      toast({ title: "Submissions cleared", description: "All submissions have been removed." })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Clear failed",
+        description: error instanceof Error ? error.message : errToDetail(error),
+      })
+    } finally {
+      setClearingSubmissions(false)
+    }
   }
 
   const toggleCompareSelect = (id: string) => {
@@ -1215,27 +1276,31 @@ function AdminPageInner() {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
-                      onClick={async () => {
-                        if (!confirm(`Reset all ${tenant.orgName} demo submissions to the golden demo state? This wipes and re-seeds every visitor's view and cannot be undone.`)) return
-                        // Clear in Supabase, then trigger the server-side seed
-                        // which inserts this tenant's deterministic demo set into
-                        // the now-empty table.
-                        await clearSubmissions()
-                        await fetch("/api/seed", { method: "POST" })
-                        window.location.reload()
-                      }}
+                      onClick={handleResetDemoData}
+                      disabled={resettingDemoData || clearingSubmissions}
                     >
-                      Reset Demo Data
+                      {resettingDemoData ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Resetting…
+                        </>
+                      ) : (
+                        "Reset Demo Data"
+                      )}
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={async () => {
-                        if (!confirm("Clear ALL submissions in the database (visible to every visitor)? This cannot be undone.")) return
-                        await clearSubmissions()
-                        window.location.reload()
-                      }}
+                      onClick={handleClearAllSubmissions}
+                      disabled={resettingDemoData || clearingSubmissions}
                     >
-                      Clear All Submissions
+                      {clearingSubmissions ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Clearing…
+                        </>
+                      ) : (
+                        "Clear All Submissions"
+                      )}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
