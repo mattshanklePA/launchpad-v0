@@ -12,7 +12,7 @@
 //   - upcoming     -> not reached yet and not complete (muted empty circle)
 
 import { useForm } from "@/context/form-context"
-import { formSteps, formPhases } from "@/lib/steps"
+import { getFormSteps, formPhases } from "@/lib/steps"
 import { isStepEnabled } from "@/lib/formConfig"
 import { getProgressModel } from "@/lib/submissionReadiness"
 import { CheckCircle2, Circle, CircleDot, AlertCircle, ClipboardList } from "lucide-react"
@@ -49,7 +49,7 @@ export function WizardNav() {
 
         {formPhases.map((phase) => {
           // Only show steps that are enabled (at least one of their fields is on).
-          const phaseSteps = formSteps.filter(
+          const phaseSteps = getFormSteps().filter(
             (s) => s.step >= phase.stepStart && s.step <= phase.stepEnd && isStepEnabled(s.step),
           )
           // Hide the entire phase if every step in it has been disabled.

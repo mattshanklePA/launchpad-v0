@@ -4,7 +4,7 @@
 import { generateObject } from "ai"
 import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
-import { formSteps, type FormData } from "@/lib/steps"
+import { getFormSteps, type FormData } from "@/lib/steps"
 import {
   getFocusAreasForUnit,
   type StrategicFocusAreaId,
@@ -319,7 +319,7 @@ export type CoPilotResponse = ScoutResponse
 // Mock fallback for when the API is unavailable. Always returns a scaffold
 // (never a question) so the UI doesn't get stuck in a Q&A loop with no AI.
 function getMockResponse(step: number, userInput: string): ScoutResponse {
-  const currentStepInfo = formSteps.find((s) => s.step === step)
+  const currentStepInfo = getFormSteps().find((s) => s.step === step)
   const stepTitle = currentStepInfo?.title || "this step"
   return {
     mode: "scaffold",
@@ -362,9 +362,9 @@ export async function assessReadiness(
   if (formData.aiModelSourcing === "foreign") riskFlags.push("Foreign-built model — EO compliance issue")
   if (formData.aiModelSourcing === "unknown") riskFlags.push("Model sourcing not yet determined")
   if (formData.aiHumanReview === "no") riskFlags.push("No mandatory human review before action")
-  if (formData.dataReadiness === "needs_build") riskFlags.push("No AI-ready data yet — must be collected or labeled first (the most common reason DoD AI fails)")
+  if (formData.dataReadiness === "needs_build") riskFlags.push("No AI-ready data yet — must be collected or labeled first")
   if (formData.dataReadiness === "partial") riskFlags.push("Data only partially AI-ready — labeling/cleanup needed")
-  if (formData.impactLevel === "il6") riskFlags.push("Classified (IL6 / Secret) — requires a SIPRNet enclave and the strictest controls")
+  if (formData.impactLevel === "il6") riskFlags.push("Classified (IL6 / Secret) — requires an accredited secure enclave and the strictest controls")
 
   // Build the brief dimension-by-dimension. A toggleable dimension is included
   // only if at least one backing input field is still enabled in the form
@@ -444,9 +444,9 @@ If a section above (1-3) maps to a dimension listed under "Intentionally NOT Col
 
 EVALUATE THE IDEA HONESTLY:
 
-DOD WEIGHTING — weigh these heavily in the rating, in roughly this order:
-1. DATA READINESS — does AI-ready data exist today? "Must be built/relabeled" is the most common reason DoD AI fails; a strong concept with no data foundation is NOT "ready".
-2. STRATEGIC + MISSION ALIGNMENT — a specifically named Adoption-Strategy goal AND mission outcome (readiness, decision advantage, sustainment, force protection), with a stated mechanism — not "modernization".
+WEIGHTING — weigh these heavily in the rating, in roughly this order:
+1. DATA READINESS — does AI-ready data exist today? "Must be built/relabeled" is the most common reason AI initiatives fail; a strong concept with no data foundation is NOT "ready".
+2. STRATEGIC + MISSION ALIGNMENT — a specifically named strategic priority and mission outcome (see leadership priorities above), with a stated mechanism — not "modernization".
 3. RESPONSIBLE-AI POSTURE — appropriate human judgment for anything decisional, American-built model inside the accredited boundary, declared classification/Impact Level consistent with the data, and bias/traceability addressed.
 4. MATURITY — a declared TRL with a maturation or sustainment plan if low.
 5. VALUE — quantified, caveated outcomes that acknowledge sustainment cost, not adjectives.
@@ -625,7 +625,7 @@ export async function validateAndRefineInput(
   conversationHistory: Message[],
   enabledFields?: Record<string, boolean>,
 ): Promise<ScoutResponse> {
-  const currentStepInfo = formSteps.find((s) => s.step === step)
+  const currentStepInfo = getFormSteps().find((s) => s.step === step)
   if (!currentStepInfo) throw new Error("Invalid step number")
 
   const currentField = getInputFieldForStep(step)

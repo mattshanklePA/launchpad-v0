@@ -9,6 +9,7 @@ import { AIdChatPanel } from "../launchpad/chat-panel"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
+import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { OmbBadge } from "../launchpad/omb-badge"
 
@@ -29,6 +30,7 @@ export function Step8FeasibilitySecurity() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
+  const tenant = getTenant()
 
   const handleToggle = (field: "resourcesNeeded" | "accessControlRequirements", item: string) => {
     const currentItems = formData[field] || []
@@ -88,9 +90,7 @@ export function Step8FeasibilitySecurity() {
           <div className="pt-6 mt-6 border-t space-y-5">
             <div>
               <h3 className="font-semibold text-lg text-uspto-gray-text">Data readiness &amp; maturity</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                In the DoD AI Hierarchy of Needs, AI-ready data is the foundation and maturity drives funding.
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">{tenant.dataMaturityFraming}</p>
             </div>
 
             <div className="space-y-2">
@@ -137,18 +137,17 @@ export function Step8FeasibilitySecurity() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                A required Tradewinds field; lower TRL is fine but should come with a maturation plan.
+                A required{tenant.trlSystemName ? ` ${tenant.trlSystemName}` : ""} field; lower TRL is fine but should come with a maturation plan.
               </p>
             </div>
           </div>
 
-          {/* === Responsible AI gate (DoD AI Ethical Principles) === */}
+          {/* === Responsible AI gate (tenant risk framework) === */}
           <div className="pt-6 mt-6 border-t space-y-5">
             <div>
               <h3 className="font-semibold text-lg text-uspto-gray-text">Responsible AI &amp; security</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Disclosures aligned to the DoD AI Ethical Principles (Responsible, Equitable, Traceable,
-                Reliable, Governable) and CDAO Responsible AI guidance.
+                Disclosures aligned to {tenant.riskFramework.label}.
               </p>
             </div>
 
@@ -169,8 +168,8 @@ export function Step8FeasibilitySecurity() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Classification gates where the AI can run. CUI requires IL4/IL5; FedRAMP authorization alone
-                does not satisfy the DoD SRG.
+                Classification gates where the AI can run. CUI requires IL4/IL5.
+                {tenant.srgCaveat ? ` ${tenant.srgCaveat}` : ""}
               </p>
             </div>
 
@@ -234,15 +233,14 @@ export function Step8FeasibilitySecurity() {
                   <SelectItem value="unknown">Unknown / TBD</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                DoD prefers American-built or U.S.-hosted models running inside the accredited boundary
-                (e.g., Amazon Bedrock in GovCloud, authorized at IL4/IL5). Foreign/unknown sourcing requires
-                additional review.
-              </p>
+              <p className="text-xs text-muted-foreground">{tenant.modelSourcingGuidance}</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Is human judgment required before the AI output drives action? (Governable / DoDD 3000.09)</Label>
+              <Label>
+                Is human judgment required before the AI output drives action?
+                {tenant.humanReviewCitation ? ` (${tenant.humanReviewCitation})` : ""}
+              </Label>
               <RadioGroup
                 value={formData.aiHumanReview}
                 onValueChange={(value) =>

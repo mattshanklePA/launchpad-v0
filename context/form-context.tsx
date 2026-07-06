@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { type FormData, initialFormData, formSteps } from "@/lib/steps"
+import { type FormData, initialFormData, getFormSteps } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
 import { isStepEnabled } from "@/lib/formConfig"
 
@@ -274,7 +274,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     setShowResumePrompt(false)
   }
 
-  const totalSteps = formSteps.length
+  const totalSteps = getFormSteps().length
   // Review is the LAST interactive step before the confirmation page.
   // formSteps now has 10 entries (1-9 interactive + 10 confirmation).
   const reviewStepNumber = 9

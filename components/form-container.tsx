@@ -17,29 +17,8 @@ import { Step11ExportTracking } from "./steps/step-11-export-tracking"
 import { Button } from "@/components/ui/button"
 import { UserCircle2, PencilLine } from "lucide-react"
 import { WizardNav } from "@/components/layout/wizard-nav"
-
-// Same enum labels used elsewhere — kept inline so the banner doesn't depend
-// on a util we haven't created yet.
-const ROLE_LABELS: Record<string, string> = {
-  patent_examiner: "Patent Examiner",
-  trademark_examiner: "Trademark Examiner",
-  manager: "Manager",
-  it_staff: "IT Staff",
-  product_owner: "Product Owner",
-  lead_product_owner: "Lead Product Owner",
-  developer: "Developer",
-  other: "Other",
-}
-const BU_LABELS: Record<string, string> = {
-  patents: "Patents",
-  trademarks: "Trademarks",
-  ocio: "OCIO",
-  ocfo: "OCFO",
-  ogc: "OGC",
-  opia: "OPIA",
-  hr: "Human Resources",
-  other: "Other",
-}
+import { SUBMITTER_ROLE_LABELS } from "@/lib/steps"
+import { getTenant } from "@/lib/tenant"
 
 export function FormContainer() {
   const { currentStep, setCurrentStep, formData, showResumePrompt, continueDraft, startNewForm } = useForm()
@@ -90,8 +69,8 @@ export function FormContainer() {
   // actually have a name to show.
   const showSubmitterPill =
     currentStep >= 2 && currentStep <= 9 && Boolean(formData.submitterName)
-  const roleLabel = ROLE_LABELS[formData.submitterRole as string]
-  const buLabel = BU_LABELS[formData.submitterOffice as string]
+  const roleLabel = SUBMITTER_ROLE_LABELS[formData.submitterRole as string]
+  const buLabel = getTenant().unit.options.find((o) => o.value === formData.submitterOffice)?.label
 
   return (
     <>

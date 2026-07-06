@@ -18,6 +18,10 @@ export type UnitOption = { value: string; label: string; offices?: OfficeOption[
 export type TenantConfig = {
   id: string
   shortName: string          // "USPTO" | "DoW"
+  // Full organization name used in wizard prose (e.g. "Align with {orgName}
+  // Goals"). Bare — no leading article. Callers add "the" inline where the
+  // sentence needs one (e.g. "the business case for the {orgName}").
+  orgName: string
   productName: string        // wordmark, e.g. "LaunchPad"
   logoSubtitle: string       // under the wordmark
   heroHeadline: string
@@ -51,6 +55,23 @@ export type TenantConfig = {
 
   // Governance framing shown around the AI-risk questions
   riskFramework: { label: string; description: string }
+
+  // Feasibility & Security step copy — kept as discrete fields (rather than
+  // baked into the component) so each tenant's real framework shows instead
+  // of one tenant's leaking into another's.
+  // Subtitle under "Data readiness & maturity".
+  dataMaturityFraming: string
+  // Paragraph under "Underlying AI model sourcing" explaining sourcing preference.
+  modelSourcingGuidance: string
+  // Name of the tenant's downstream program-tracking system that requires a
+  // TRL value, if any (e.g. DoW's "Tradewinds"). Omit when no such system exists.
+  trlSystemName?: string
+  // Extra accreditation caveat appended after the Impact Level explanation
+  // (e.g. DoW's FedRAMP-vs-SRG note). Omit when not applicable.
+  srgCaveat?: string
+  // Citation shown alongside the human-review question (e.g. DoW's "DoDD
+  // 3000.09"). Omit when the tenant has no such citation.
+  humanReviewCitation?: string
 
   // Theme accents (wired into UI in a later step)
   theme: { primary: string; primaryForeground: string }
