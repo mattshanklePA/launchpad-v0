@@ -2,14 +2,18 @@
 // (USPTO, Department of War, ...). Everything org-specific lives here and is
 // read via getTenant(); nothing org-specific should be hardcoded in components.
 
-export type FocusArea = { id: string; label: string; category: string }
+export type FocusArea = { id: string; label: string; category: string; description?: string }
 export type Objective = { title: string; description: string }
 export type ObjectiveGroup = { title: string; subtitle: string; items: Objective[] }
 export type OfficeOption = { value: string; label: string }
 // `offices` is the optional third tier (Department -> Bureau -> Office). Only
 // populated for tenants/bureaus that have one (DoC); absent elsewhere so
 // USPTO/DoW render exactly as before.
-export type UnitOption = { value: string; label: string; offices?: OfficeOption[] }
+// `focusAreas` is the bureau's own strategic priorities (DoC only). When
+// present, bureau-scoped views and the Strategic Alignment Scout use these
+// instead of the tenant-level `TenantConfig.focusAreas`; absent elsewhere so
+// USPTO/DoW are unaffected.
+export type UnitOption = { value: string; label: string; offices?: OfficeOption[]; focusAreas?: FocusArea[] }
 
 export type TenantConfig = {
   id: string

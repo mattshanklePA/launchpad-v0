@@ -6,7 +6,7 @@
 // language. The user reviews and accepts/edits. This turns what used to be a
 // cold-start step into a one-click confirmation.
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,20 +15,20 @@ import { Button } from "@/components/ui/button"
 import { AIdChatPanel } from "../launchpad/chat-panel"
 import TextareaAutosize from "react-textarea-autosize"
 import { suggestStrategicAlignment } from "@/app/actions"
-import { STRATEGIC_FOCUS_AREAS, type AlignmentSuggestion } from "@/lib/strategicFocusAreas"
+import { getFocusAreasForUnit, type AlignmentSuggestion } from "@/lib/strategicFocusAreas"
+import type { FocusArea } from "@/lib/tenant/types"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { Sparkles, Loader2, CheckCircle2, X, RefreshCw } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
-// Group the canonical focus areas by category for display.
-const FOCUS_BY_CATEGORY = STRATEGIC_FOCUS_AREAS.reduce<Record<string, typeof STRATEGIC_FOCUS_AREAS[number][]>>(
-  (acc, opt) => {
+// Group a set of focus areas by category for display.
+function groupByCategory(areas: FocusArea[]): Record<string, FocusArea[]> {
+  return areas.reduce<Record<string, FocusArea[]>>((acc, opt) => {
     acc[opt.category] = acc[opt.category] || []
     acc[opt.category].push(opt)
     return acc
-  },
-  {} as Record<string, typeof STRATEGIC_FOCUS_AREAS[number][]>,
-)
+  }, {})
+}
 
 export function Step7Alignment() {
   const { formData, setFormData } = useForm()
@@ -37,6 +37,12 @@ export function Step7Alignment() {
   const [suggesting, setSuggesting] = useState(false)
   const [suggestion, setSuggestion] = useState<AlignmentSuggestion | null>(null)
   const [autoTried, setAutoTried] = useState(false)
+
+  // The submitter's bureau's own priorities when they've named one (DoC);
+  // falls back to the tenant/department-level list otherwise.
+  const focusAreas = useMemo(() => getFocusAreasForUnit(formData.submitterOffice), [formData.submitterOffice])
+  const focusByCategory = useMemo(() => groupByCategory(focusAreas), [focusAreas])
+  const idToLabel = (id: string): string => focusAreas.find((f) => f.id === id)?.label || id
 
   // Cheap heuristic for "has the submitter filled out the upstream steps enough
   // that a Scout suggestion would be useful?" — title + (problem or solution).
@@ -109,9 +115,6 @@ export function Step7Alignment() {
     const next = current.includes(item) ? current.filter((i) => i !== item) : [...current, item]
     setFormData((prev) => ({ ...prev, usptoFocusArea: next }))
   }
-
-  const idToLabel = (id: string): string =>
-    STRATEGIC_FOCUS_AREAS.find((f) => f.id === id)?.label || id
 
   return (
     <div className="grid lg:grid-cols-12 gap-10">
@@ -221,7 +224,7 @@ export function Step7Alignment() {
                 </Button>
               )}
             </div>
-            {Object.entries(FOCUS_BY_CATEGORY).map(([category, options]) => (
+            {Object.entries(focusByCategory).map(([category, options]) => (
               <div key={category} className="space-y-1.5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {category}
