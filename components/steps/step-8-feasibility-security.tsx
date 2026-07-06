@@ -342,12 +342,8 @@ export function Step8FeasibilitySecurity() {
                 </RadioGroup>
                 <p className="text-xs text-muted-foreground">
                   High-impact use cases carry additional OMB risk-management reporting.
-                  {formData.highImpactFactors.length > 0 && (
-                    <>
-                      {" "}
-                      Recommended: <strong>{determineHighImpact(formData).recommendation === "yes" ? "Yes" : "No"}</strong>, based on the factors selected above — you make the final call.
-                    </>
-                  )}
+                  {" "}
+                  Recommended: <strong>{determineHighImpact(formData).recommendation === "yes" ? "Yes" : "No"}</strong>, based on the factors selected above plus the risk answers already captured on this form — you make the final call.
                 </p>
               </div>
 
