@@ -205,7 +205,9 @@ pnpm build    # production build
 pnpm lint
 ```
 
-Seed demo data via the `app/api/seed` route (see `lib/seedSubmissions.ts`).
+Seed demo data via the `app/api/seed` route (see `lib/seedSubmissions.ts` for USPTO, `lib/seedSubmissionsDoc.ts` for DoC).
+
+**DoC demo reset:** the admin Demo Data card's "Reset Demo Data" button (`app/admin/page.tsx`) wipes the tenant's `submissions` table (`clearSubmissions()`) and re-triggers `/api/seed`, which re-inserts `docSeedSubmissions` — a deterministic golden state covering every review status (submitted, in review, needs info, approved, rejected, plus a submitter-owned draft), a near-duplicate comparison pair for the Decision Center, cross-bureau/office coverage, all three OMB reportability outcomes (reportable/excluded/review), and a high-impact example with its risk fields populated. `/api/seed` also syncs the `status`/`owner_email`/`business_unit`/`office` workflow columns from each row's `form_data` after insert — since `office` only exists once the office-hierarchy migration has run, that sync retries without `office` on failure instead of silently no-oping the whole update (the prior bug that left every reseeded row stuck on the default `submitted` status). `lib/seedSubmissionsDoc.test.ts` asserts this shape holds.
 
 ---
 

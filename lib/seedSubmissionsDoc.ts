@@ -1,8 +1,17 @@
-// Department of Commerce demo seed — cross-bureau AI use cases.
-// Used when NEXT_PUBLIC_TENANT=doc. Mirrors the shape of lib/seedSubmissions.ts
-// but spans Commerce bureaus (NIST, Census, ITA, NOAA, USPTO, BIS, OS) with a
-// spread of statuses and a few intentional near-duplicates across bureaus to
-// demonstrate the cross-bureau rationalization / duplicate-detection story.
+// Department of Commerce demo seed — the deterministic "golden state" the
+// admin Demo Data reset restores. Used when NEXT_PUBLIC_TENANT=doc. Mirrors
+// the shape of lib/seedSubmissions.ts but spans Commerce bureaus (NIST,
+// Census, ITA, NOAA, USPTO, BIS, OS, MBDA) with every review status
+// represented (including a draft and a rejected idea), a few intentional
+// near-duplicates across bureaus to demonstrate the cross-bureau
+// rationalization / duplicate-detection story and double as a Decision
+// Center comparison pair, OMB reportability variety (reportable / excluded /
+// needs-review), and a high-impact example with its risk fields populated.
+//
+// Every id and owner email below is deterministic on purpose: the admin
+// "Reset Demo Data" button wipes and re-inserts this exact array, so a
+// submitter logged in with one of these emails sees the same "My ideas" list
+// every time. See app/api/seed/route.ts for the reset/idempotency mechanics.
 //
 // submitterOffice values are bureau codes from lib/tenant/doc.ts; labels render
 // via getTenant().unit.options. usptoFocusArea holds DoC focus-area ids.
@@ -73,6 +82,10 @@ export const docSeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
+      stageOfDevelopment: "pilot",
+      highImpact: "no",
+      hasATO: "in_progress",
+      systemSource: "contract",
       feasibilitySummary:
         "Medium complexity; public-facing so the bar is answer groundedness, 508 conformance, and multilingual accuracy, validated in a pilot. American-built, informational only with human handoff.",
       successMetrics: "Survey completion rate, deflection rate, human-rated answer groundedness, CSAT, language coverage — vs a control.",
@@ -139,6 +152,10 @@ export const docSeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
+      stageOfDevelopment: "pre_deployment",
+      highImpact: "no",
+      hasATO: "no",
+      systemSource: "contract",
       feasibilitySummary: "Medium complexity; public-facing, so groundedness and 508 are the bar. American-built, informational only with specialist handoff.",
       successMetrics: "Deflection rate, exporter satisfaction, answer groundedness, time-to-answer — vs a control.",
       keyMetrics: ["ticket_volume_reduction", "user_satisfaction", "resolution_time"],
@@ -202,6 +219,10 @@ export const docSeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
+      stageOfDevelopment: "pilot",
+      highImpact: "no",
+      hasATO: "no",
+      systemSource: "in_house",
       feasibilitySummary: "Low complexity and low risk: internal only, human-approved on every send, fully logged, American-built, with a measured pilot baseline.",
       successMetrics: "Handle time, first-contact resolution, consistency pass rate, draft-adoption rate — vs a baseline.",
       keyMetrics: ["resolution_time", "productivity", "user_satisfaction"],
@@ -265,6 +286,10 @@ export const docSeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "open_source_us",
       aiHumanReview: "yes",
+      stageOfDevelopment: "deployed",
+      highImpact: "no",
+      hasATO: "yes",
+      systemSource: "in_house",
       feasibilitySummary: "Low complexity, low risk: internal, cited, informational only, U.S.-hosted open-source model.",
       successMetrics: "Search time, answer-acceptance rate, citation accuracy — vs a baseline.",
       keyMetrics: ["time_saved", "user_satisfaction", "quality_improvement"],
@@ -328,6 +353,14 @@ export const docSeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
+      // Clearly REPORTABLE: not NSS/IC, not research-only, and a stage is set —
+      // supports mission/service delivery per lib/ombReportability.ts.
+      stageOfDevelopment: "pilot",
+      nationalSecuritySystem: "no",
+      researchOnly: "no",
+      highImpact: "no",
+      hasATO: "in_progress",
+      systemSource: "contract",
       feasibilitySummary: "Medium complexity; advisory only, attorney decides, basis shown. American-built, U.S.-hosted; workbench integration is the main lift.",
       successMetrics: "Conflict-search time per application, surfaced-mark relevance, 2(d) consistency, pendency in pilot offices vs control.",
       keyMetrics: ["time_saved", "quality_improvement", "user_satisfaction"],
@@ -401,6 +434,12 @@ export const docSeedSubmissions: Submission[] = [
       aiDecisionalImpact: "yes",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
+      // High-impact example (OMB M-25-21 additional risk-management reporting):
+      // public-facing, life-safety, AI-decisional — risk fields populated below.
+      stageOfDevelopment: "pilot",
+      highImpact: "yes",
+      hasATO: "in_progress",
+      systemSource: "contract",
       feasibilitySummary: "Public, life-safety context, so this is high-impact: mandatory forecaster review before publish, official text always shown, validated accuracy. American-built.",
       successMetrics: "Comprehension/time-to-action in testing, forecaster approval rate, accessibility conformance — vs current.",
       keyMetrics: ["user_satisfaction", "quality_improvement"],
@@ -464,6 +503,16 @@ export const docSeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
+      // Clearly EXCLUDED: this signal set feeds export-control enforcement
+      // determinations tied to national security, so it's flagged as a
+      // National Security System / IC use and excluded from the OMB inventory
+      // per lib/ombReportability.ts (independent of its workflow status).
+      stageOfDevelopment: "pre_deployment",
+      nationalSecuritySystem: "yes",
+      researchOnly: "no",
+      highImpact: "no",
+      hasATO: "no",
+      systemSource: "in_house",
       feasibilitySummary: "Sensitive export-control context: advisory only, officer decides, controlled data handling, full logging. Needs a measured baseline.",
       successMetrics: "Triage time, misroute rate, share of incomplete apps caught early — vs a baseline.",
       keyMetrics: ["resolution_time", "error_rate", "productivity"],
@@ -475,6 +524,113 @@ export const docSeedSubmissions: Submission[] = [
       readinessSummary: "Useful operational case in a sensitive domain. Needs a measured baseline and explicit confirmation it never approves or denies a license.",
       executiveSummary:
         "BIS export license applications queue for manual triage, and incomplete ones surface late. This advisory assistant predicts routing and flags incompleteness for a licensing officer, who makes every determination — it never approves or denies. Sensitive domain, controlled data, officer-in-the-loop. Needs a measured baseline before scoring.",
+    } as Partial<FormData>),
+  },
+
+  // 8) MBDA — auto-scoring loan/grant eligibility. Rejected: foreign model
+  // sourcing and no mandatory human review on a decision affecting applicants.
+  {
+    id: "doc-mbda-loan-eligibility-bot",
+    submittedAt: hoursAgo(90),
+    formData: mk({
+      submitterName: "Victor Ibarra",
+      submitterEmail: "victor.ibarra@mbda.gov",
+      submitterRole: "product_owner",
+      submitterOffice: "mbda",
+      reviewStatus: "rejected",
+      comments: [
+        {
+          id: "c-mbda-1",
+          authorName: "Jordan Pierce",
+          authorRole: "reviewer",
+          body: "Rejected as scoped: a foreign-hosted model auto-deciding loan/grant eligibility with no mandatory human review doesn't meet the executive order on model sourcing or our decisional-AI human-review requirement. Resubmit with an American-built model and an officer-in-the-loop approval step before this can be reconsidered.",
+          createdAt: hoursAgo(60),
+        },
+      ],
+      useCaseTitle: "Automated Loan & Grant Eligibility Matcher",
+      useCaseDescription:
+        "An AI system that automatically scores minority business enterprise applicants against federal loan and grant program criteria and issues an eligibility determination without officer review.",
+      publicIndicator: "public",
+      targetAudience: "applicant",
+      impactedUsersCount: "50_500",
+      painPoints: "Eligibility screening is manual and slow, and application volume is outpacing reviewer capacity.",
+      targetUserContext: "Minority business enterprise applicants to MBDA-affiliated loan and grant programs.",
+      targetUserSummary: "MBE applicants awaiting an eligibility determination for federal loan/grant programs.",
+      coreProblem: "Manual eligibility screening is slow and inconsistent as application volume grows.",
+      problemImpact: "Applicants wait longer for a determination, and screening quality varies by reviewer.",
+      affectedSystem: "other",
+      problemType: ["productivity", "quality"],
+      severity: "high",
+      problemDefinition: "Eligibility screening lacks a fast, consistent, and compliant automated path.",
+      proposedSolution:
+        "A scoring model that ingests applicant financials and program criteria and issues a determination directly to the applicant, using a third-party foreign-hosted model to minimize cost.",
+      keyFunctionality: ["classification", "ranking"],
+      solutionSummary: "Automated eligibility scoring and determination issuance using a foreign-hosted model.",
+      userValue: "Applicants would get a faster answer, if the determination were trustworthy.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["less_frustration"],
+      userValueSummary: "Faster (but currently unvetted) eligibility answers for MBE applicants.",
+      businessValue: "Would reduce screening backlog, but not at the cost of a non-compliant decisional system.",
+      costSavings: "50k_250k",
+      strategicBenefit: ["operational_efficiency"],
+      businessValueSummary: "Backlog reduction only justifies the risk once sourcing and human review are fixed.",
+      usptoFocusArea: ["american_ai", "high_impact_mgmt"],
+      relevantOkrs: "Loan/grant processing time; American-built model sourcing (EO 14179); mandatory human review.",
+      alignmentSummary: "Operational goal is sound, but the current design conflicts with federal AI sourcing and human-review requirements.",
+      implementationComplexity: "medium",
+      resourcesNeeded: ["ml_engineers", "infrastructure"],
+      dependencies: "Applicant financial data access; a compliant (American-built) model; an officer-review workflow that does not yet exist.",
+      involvesSensitiveData: "yes",
+      securityClassification: "controlled",
+      accessControlRequirements: ["pii_protection", "audit_logging"],
+      aiDecisionalImpact: "yes",
+      aiModelSourcing: "foreign",
+      aiHumanReview: "no",
+      stageOfDevelopment: "pre_deployment",
+      highImpact: "no",
+      hasATO: "no",
+      systemSource: "vendor",
+      feasibilitySummary: "Rejected as designed: foreign-hosted model plus a fully-automated decision affecting applicants, with no human review — non-compliant on two mandated AI risk questions.",
+      successMetrics: "Screening time and backlog size — not yet measurable given the compliance blockers.",
+      keyMetrics: ["resolution_time", "productivity"],
+      timelineForResults: "3_6",
+      metricsSummary: "Not applicable until the sourcing and human-review issues are resolved.",
+      routeTo: ["governance"],
+      reviewerNotes: "Rejected: foreign model sourcing and no human review on a decision directly affecting applicants. Resubmit with American-built sourcing and an officer-approval step.",
+      readinessScore: "early_stage",
+      readinessSummary: "Not fundable as scoped — non-compliant model sourcing and no human review on an applicant-facing decision. Rework required before resubmission.",
+      executiveSummary:
+        "MBDA's manual loan/grant eligibility screening is slow, but this proposal would auto-issue determinations to applicants using a foreign-hosted model with no human review — non-compliant with EO 14179 and DoC's decisional-AI human-review mandate. Rejected as scoped; resubmit with American-built sourcing and an officer-in-the-loop approval step.",
+    } as Partial<FormData>),
+  },
+
+  // 9) CENSUS (Decennial office) — submitter-owned draft, stopped partway
+  // through the wizard. Deliberately sparse past the early steps so the
+  // submitter's own "My ideas" view has something real to resume/track.
+  {
+    id: "doc-census-decennial-draft",
+    submittedAt: hoursAgo(2),
+    formData: mk({
+      submitterName: "Leah Ochoa",
+      submitterEmail: "leah.ochoa@census.gov",
+      submitterRole: "product_owner",
+      submitterOffice: "census",
+      submitterSubOffice: "decennial",
+      reviewStatus: "draft",
+      useCaseTitle: "Decennial Field Data Quality Triage",
+      useCaseDescription:
+        "An assistant to help field data quality staff triage flagged decennial enumeration records faster. Still drafting the proposed solution and value case.",
+      targetAudience: "other",
+      impactedUsersCount: "50_500",
+      painPoints: "Flagged records pile up faster than staff can review them during peak collection.",
+      targetUserContext: "Decennial field data quality staff reviewing flagged enumeration records.",
+      targetUserSummary: "Decennial field data quality reviewers.",
+      coreProblem: "Flagged enumeration records queue faster than staff can triage them during peak collection.",
+      problemImpact: "Backlog grows during the peak collection window, delaying downstream processing.",
+      affectedSystem: "other",
+      problemType: ["productivity"],
+      severity: "medium",
+      problemDefinition: "Field data quality staff lack a fast way to triage the flagged-record backlog during peak collection.",
     } as Partial<FormData>),
   },
 ]

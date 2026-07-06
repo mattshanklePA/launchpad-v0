@@ -59,29 +59,38 @@ export async function POST() {
     const { error } = await supabase.from("submissions").insert(rows)
     if (error) throw error
 
-    // Best-effort: sync the workflow columns (status / owner / business unit)
-    // from each form_data so the pipeline kanban buckets seeds by their real
-    // status and owners. Without this, the status column takes its DB default
-    // ("submitted") and every seeded row stacks in one column. Mirrors the POST
-    // /api/submissions handler; errors are swallowed if the columns aren't present.
-    try {
-      await Promise.all(
-        seedSet.map((s) => {
-          const fd = s.formData as Record<string, unknown>
-          return supabase
-            .from("submissions")
-            .update({
-              status: (fd.reviewStatus as string) || "submitted",
-              owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
-              business_unit: (fd.submitterOffice as string) || null,
-              office: (fd.submitterSubOffice as string) || null,
-            })
-            .eq("id", s.id)
-        }),
-      )
-    } catch (e) {
-      console.warn("seed workflow column sync skipped:", e)
-    }
+    // Sync the workflow columns (status / owner / business unit / office) from
+    // each form_data so the pipeline kanban buckets seeds by their real status
+    // and owners. Without this, the status column takes its DB default
+    // ("submitted") and every seeded row stacks in one column — the bug this
+    // guards against. `office` only exists once the office-hierarchy migration
+    // has run, so a single combined update would fail (and previously got
+    // silently swallowed) on any project missing that column, leaving every
+    // row's status un-synced. Retry without `office` so status/owner/business
+    // unit still land even when that migration hasn't been applied yet.
+    await Promise.all(
+      seedSet.map(async (s) => {
+        const fd = s.formData as Record<string, unknown>
+        const columns = {
+          status: (fd.reviewStatus as string) || "submitted",
+          owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
+          business_unit: (fd.submitterOffice as string) || null,
+          office: (fd.submitterSubOffice as string) || null,
+        }
+        const { error: fullErr } = await supabase.from("submissions").update(columns).eq("id", s.id)
+        if (!fullErr) return
+
+        const withoutOffice: Record<string, unknown> = { ...columns }
+        delete withoutOffice.office
+        const { error: fallbackErr } = await supabase
+          .from("submissions")
+          .update(withoutOffice)
+          .eq("id", s.id)
+        if (fallbackErr) {
+          console.warn(`seed workflow column sync failed for ${s.id}:`, fallbackErr.message)
+        }
+      }),
+    )
 
     return NextResponse.json({
       ok: true,
