@@ -79,19 +79,29 @@ export async function POST(req: Request) {
 
     // Best-effort sync of the workflow columns. These exist only after the
     // review-workflow migration is applied; until then this update no-ops
-    // (its error is swallowed) and form_data remains the source of truth.
+    // and form_data remains the source of truth. `office` is newer still (the
+    // office-hierarchy migration) — if it's missing, the combined update
+    // fails wholesale and status/owner/business_unit never sync either, so
+    // retry without it rather than swallowing the whole update.
     try {
       const fd = formData as Record<string, any>
-      const { error: colErr } = await supabase
-        .from("submissions")
-        .update({
-          status: fd.reviewStatus || "submitted",
-          owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
-          business_unit: fd.submitterOffice || null,
-          office: fd.submitterSubOffice || null,
-        })
-        .eq("id", id)
-      if (colErr) console.warn("workflow column sync skipped:", colErr.message)
+      const columns = {
+        status: fd.reviewStatus || "submitted",
+        owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
+        business_unit: fd.submitterOffice || null,
+        office: fd.submitterSubOffice || null,
+      }
+      const { error: colErr } = await supabase.from("submissions").update(columns).eq("id", id)
+      if (colErr) {
+        console.warn("workflow column sync (with office) skipped:", colErr.message)
+        const withoutOffice: Record<string, unknown> = { ...columns }
+        delete withoutOffice.office
+        const { error: fallbackErr } = await supabase
+          .from("submissions")
+          .update(withoutOffice)
+          .eq("id", id)
+        if (fallbackErr) console.warn("workflow column sync skipped:", fallbackErr.message)
+      }
     } catch (e) {
       console.warn("workflow column sync threw:", e)
     }

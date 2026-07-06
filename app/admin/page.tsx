@@ -1198,7 +1198,7 @@ function AdminPageInner() {
                 </Card>
               )}
 
-              {/* Demo data controls — only useful during the 5/20 demo prep */}
+              {/* Demo data controls — one-click reset to the tenant's golden demo state */}
               <Card className="border-amber-200 bg-amber-50/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1206,8 +1206,9 @@ function AdminPageInner() {
                     Demo Data
                   </CardTitle>
                   <CardDescription>
-                    Pre-loaded sample submissions across business units (Patents, Trademarks, OCIO, HR, OGC) for the
-                    Decision Center demo. Use these controls if the seed didn't load or you want a clean slate.
+                    Pre-loaded sample submissions across {tenant.unit.label.toLowerCase()}s for the Decision Center
+                    demo — every review status (including a draft and a rejected idea), a comparison pair, and OMB
+                    reportability variety. Use these controls if the seed didn't load or you want a clean slate.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -1215,14 +1216,16 @@ function AdminPageInner() {
                     <Button
                       variant="outline"
                       onClick={async () => {
+                        if (!confirm(`Reset all ${tenant.orgName} demo submissions to the golden demo state? This wipes and re-seeds every visitor's view and cannot be undone.`)) return
                         // Clear in Supabase, then trigger the server-side seed
-                        // which inserts the 5 demo records into the now-empty table.
+                        // which inserts this tenant's deterministic demo set into
+                        // the now-empty table.
                         await clearSubmissions()
                         await fetch("/api/seed", { method: "POST" })
                         window.location.reload()
                       }}
                     >
-                      Reload Demo Submissions
+                      Reset Demo Data
                     </Button>
                     <Button
                       variant="outline"
@@ -1236,8 +1239,9 @@ function AdminPageInner() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Reload wipes the Supabase submissions table and re-inserts the 5 demo records. Clear All wipes
-                    everything. Both actions affect what every visitor to the demo site sees.
+                    Reset Demo Data wipes the Supabase submissions table and re-inserts this tenant&apos;s deterministic
+                    demo set. Clear All wipes everything with nothing re-seeded. Both actions affect what every
+                    visitor to the demo site sees.
                   </p>
                 </CardContent>
               </Card>
