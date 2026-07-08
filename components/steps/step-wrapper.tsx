@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export function StepWrapper({ children }: { children: React.ReactNode }) {
   const { currentStep, goToNextStep, goToPreviousStep, isFirstStep, isLastStep, formData } = useForm()
-  const stepInfo = getFormSteps()[currentStep - 1]
+  const stepInfo = getFormSteps(formData.submitterOffice)[currentStep - 1]
 
   // What's still required on THIS step? Used to give the submitter a clear,
   // non-blocking hint near the Next button (they can still move freely; the

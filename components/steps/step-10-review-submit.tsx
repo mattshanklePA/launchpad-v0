@@ -331,7 +331,7 @@ export function Step10ReviewSubmit() {
         </CardContent>
       </Card>
 
-      {getFormSteps().slice(0, 8).map((step) => {
+      {getFormSteps(formData.submitterOffice).slice(0, 8).map((step) => {
         // Filter STEP_FIELDS to only the fields currently enabled in the
         // admin Form Configuration. If a step has zero enabled fields, hide
         // its review card entirely.

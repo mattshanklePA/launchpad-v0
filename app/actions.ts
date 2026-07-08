@@ -318,8 +318,8 @@ export type CoPilotResponse = ScoutResponse
 
 // Mock fallback for when the API is unavailable. Always returns a scaffold
 // (never a question) so the UI doesn't get stuck in a Q&A loop with no AI.
-function getMockResponse(step: number, userInput: string): ScoutResponse {
-  const currentStepInfo = getFormSteps().find((s) => s.step === step)
+function getMockResponse(step: number, userInput: string, submitterOffice?: string | null): ScoutResponse {
+  const currentStepInfo = getFormSteps(submitterOffice).find((s) => s.step === step)
   const stepTitle = currentStepInfo?.title || "this step"
   return {
     mode: "scaffold",
@@ -625,7 +625,7 @@ export async function validateAndRefineInput(
   conversationHistory: Message[],
   enabledFields?: Record<string, boolean>,
 ): Promise<ScoutResponse> {
-  const currentStepInfo = getFormSteps().find((s) => s.step === step)
+  const currentStepInfo = getFormSteps(formData.submitterOffice).find((s) => s.step === step)
   if (!currentStepInfo) throw new Error("Invalid step number")
 
   const currentField = getInputFieldForStep(step)
@@ -764,7 +764,7 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
     }
   } catch (error) {
     console.error("AI Gateway error, falling back to mock:", error)
-    return getMockResponse(step, userInput)
+    return getMockResponse(step, userInput, formData.submitterOffice)
   }
 }
 

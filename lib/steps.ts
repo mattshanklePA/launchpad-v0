@@ -1,4 +1,4 @@
-import { getTenant } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
 
 export type FormStep = {
   step: number
@@ -268,8 +268,15 @@ export const initialFormData: FormData = {
 // Step title/prompt copy that names the organization is generated per-tenant
 // (via getTenant()) rather than hardcoded, so a Commerce/USPTO deployment
 // never shows another tenant's org name. Everything else is shared.
-export function getFormSteps(): FormStep[] {
+//
+// `submitterOffice` (the wizard's `formData.submitterOffice`) lets the
+// Strategic Alignment step (5) name the submitter's own bureau instead of
+// the department when that bureau has its own strategic priorities (DoC) —
+// see getOrgNameForUnit. Callers that don't have a submitter in scope (e.g.
+// the progress bar) can omit it and get the department-level fallback.
+export function getFormSteps(submitterOffice?: string | null): FormStep[] {
   const { orgName, assistantName } = getTenant()
+  const alignmentOrgName = getOrgNameForUnit(submitterOffice)
   return [
     {
       step: 1,
@@ -298,8 +305,8 @@ export function getFormSteps(): FormStep[] {
     {
       step: 5,
       name: "Strategic Alignment",
-      title: `Align with ${orgName} Goals`,
-      prompt: `Does this align with the ${orgName}'s strategic priorities? Which ones?`,
+      title: `Align with ${alignmentOrgName} Goals`,
+      prompt: `Does this align with the ${alignmentOrgName}'s strategic priorities? Which ones?`,
     },
     {
       step: 6,

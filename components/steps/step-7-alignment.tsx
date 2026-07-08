@@ -17,7 +17,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { suggestStrategicAlignment } from "@/app/actions"
 import { getFocusAreasForUnit, type AlignmentSuggestion } from "@/lib/strategicFocusAreas"
 import type { FocusArea } from "@/lib/tenant/types"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { Sparkles, Loader2, CheckCircle2, X, RefreshCw } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
@@ -45,6 +45,10 @@ export function Step7Alignment() {
   const focusAreas = useMemo(() => getFocusAreasForUnit(formData.submitterOffice), [formData.submitterOffice])
   const focusByCategory = useMemo(() => groupByCategory(focusAreas), [focusAreas])
   const idToLabel = (id: string): string => focusAreas.find((f) => f.id === id)?.label || id
+  // Same bureau-first resolution as focusAreas, for copy that names "the
+  // organization" — keeps the header/label in sync with which priority list
+  // is actually being shown.
+  const alignmentOrgName = useMemo(() => getOrgNameForUnit(formData.submitterOffice), [formData.submitterOffice])
 
   // Cheap heuristic for "has the submitter filled out the upstream steps enough
   // that a Scout suggestion would be useful?" — title + (problem or solution).
@@ -149,7 +153,7 @@ export function Step7Alignment() {
               {suggesting && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Analyzing your problem, solution, and value claims against {tenant.orgName} priorities…
+                  Analyzing your problem, solution, and value claims against {alignmentOrgName} priorities…
                 </div>
               )}
 
@@ -218,7 +222,7 @@ export function Step7Alignment() {
           {isVisible("usptoFocusArea") && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Which {tenant.orgName} priorities does this advance?</Label>
+              <Label>Which {alignmentOrgName} priorities does this advance?</Label>
               {hasUserData && !suggesting && !suggestion && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={fetchSuggestion}>
                   <Sparkles className="h-3 w-3 mr-1" />
