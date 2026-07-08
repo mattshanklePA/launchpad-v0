@@ -10,7 +10,7 @@ import { Fragment, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, getBusinessUnit, businessUnitLabel, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
-import { findSimilar } from "@/lib/similarity"
+import { hasCrossBureauMatch, crossBureauDuplicateCount } from "@/lib/crossBureauDuplicates"
 import { determineReportability } from "@/lib/ombReportability"
 import { determineConsolidation } from "@/lib/ombConsolidation"
 import { officesForBureau } from "@/lib/officeRollup"
@@ -49,13 +49,10 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const grandOmbReview = submissions.filter(needsOmbReview).length
 
   // A use case is a "possible duplicate" when it has a likely match (see
-  // lib/similarity) filed under a different bureau — the "~20 of the same
-  // thing across the bureaus" problem this feature exists to surface.
-  const hasCrossBureauMatch = (s: Submission) =>
-    findSimilar(s, submissions).some((m) => m.bureau !== getBusinessUnit(s))
-  const duplicatesFor = (unit: string) =>
-    submissions.filter((s) => getBusinessUnit(s) === unit && hasCrossBureauMatch(s)).length
-  const grandDuplicates = submissions.filter(hasCrossBureauMatch).length
+  // lib/crossBureauDuplicates) filed under a different bureau — the "~20 of
+  // the same thing across the bureaus" problem this feature exists to surface.
+  const duplicatesFor = (unit: string) => crossBureauDuplicateCount(submissions, unit)
+  const grandDuplicates = submissions.filter((s) => hasCrossBureauMatch(s, submissions)).length
 
   // Cross-bureau rationalization: how many of these submissions match one of
   // OMB's widely-used commercial AI categories and can be reported once across
