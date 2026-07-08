@@ -109,14 +109,15 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
   const [otherInputOpen, setOtherInputOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const tenant = getTenant()
 
+  // Radix ScrollArea scrolls its inner viewport, not the Root element, so a
+  // ref-and-scrollTo on the Root is a no-op. scrollIntoView on a sentinel at
+  // the end of the message list finds whichever ancestor actually scrolls.
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: "smooth" })
-    }
-  }, [messages])
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messages, isLoading])
 
   const handleError = (error: unknown) => {
     console.error(`${tenant.productName} ${tenant.assistantName} Error:`, error)
@@ -212,7 +213,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
             </Tooltip>
           </div>
 
-          <ScrollArea className="flex-1 p-4 max-h-[calc(100vh-20rem)]" ref={scrollAreaRef}>
+          <ScrollArea className="flex-1 p-4 max-h-[calc(100vh-20rem)]">
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground p-8">
@@ -326,10 +327,12 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                   <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
                   <div className="rounded-lg p-3 bg-gray-100 text-sm">
                     <Sparkles className="h-4 w-4 inline animate-pulse mr-1" />
-                    Thinking...
+                    {tenant.assistantName} is thinking...
                   </div>
                 </div>
               )}
+
+              <div ref={bottomRef} />
             </div>
           </ScrollArea>
 
