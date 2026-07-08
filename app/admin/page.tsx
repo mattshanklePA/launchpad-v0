@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Fragment, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getSession, hasAdminAccess, isAdmin, logout, ensureSeeded, type Session } from "@/lib/auth"
 import { UserManagement } from "@/components/admin/user-management"
@@ -32,7 +32,6 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  BarChart3,
   LayoutGrid,
   TableIcon,
   ChevronDown,
@@ -45,6 +44,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { getFocusAreasForUnit } from "@/lib/strategicFocusAreas"
+import { getStatus, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
 
 // Real USPTO strategic objectives:
 //   - 2022-2026 Strategic Plan — 5 agency-wide goals
@@ -269,14 +269,13 @@ const mockSubmitted = [
   },
 ]
 
-const pipelineStats = {
-  totalSubmissions: 128,
-  inProgress: 42,
-  underReview: 23,
-  approved: 15,
-  deployed: 7,
-  avgCompletionTime: "12.5 days",
-  successRate: "78%",
+// Visual treatment per pipeline status, used by the Idea Pipeline Funnel below.
+const FUNNEL_STYLES: Record<string, { bg: string; border: string; text: string; subtext: string }> = {
+  submitted: { bg: "bg-blue-100", border: "border-blue-300", text: "text-blue-700", subtext: "text-blue-600" },
+  in_review: { bg: "bg-blue-200", border: "border-blue-400", text: "text-blue-800", subtext: "text-blue-700" },
+  needs_info: { bg: "bg-amber-100", border: "border-amber-400", text: "text-amber-800", subtext: "text-amber-700" },
+  approved: { bg: "bg-green-100", border: "border-green-400", text: "text-green-700", subtext: "text-green-600" },
+  rejected: { bg: "bg-red-100", border: "border-red-300", text: "text-red-700", subtext: "text-red-600" },
 }
 
 // Wrapper that provides shared app data to the admin page. The actual page
@@ -456,6 +455,21 @@ function AdminPageInner() {
   // Prefer real submissions; fall back to mocks only if there are none yet,
   // so the demo still shows visual content on a fresh browser.
   const drafts = hydrated && realDrafts.length > 0 ? realDrafts : []
+
+  // --- Overview stats + funnel (derived from the real pipeline, not mocked) ---
+  const statusCounts = STATUS_ORDER.reduce<Record<string, number>>((acc, st) => {
+    acc[st] = submissions.filter((s) => getStatus(s) === st).length
+    return acc
+  }, {})
+  const totalSubmissions = submissions.length
+  const approvedCount = statusCounts.approved || 0
+  const rejectedCount = statusCounts.rejected || 0
+  const decidedCount = approvedCount + rejectedCount
+  const successRateLabel = decidedCount > 0 ? `${Math.round((approvedCount / decidedCount) * 100)}%` : "—"
+  const inVettingCount = totalSubmissions - approvedCount - rejectedCount
+  const recentSubmissions = [...submissions]
+    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+    .slice(0, 3)
 
   // --- Analytics (derived from the real pipeline, not random) ---
   const buCounts = drafts.reduce<Record<string, number>>((acc, d) => {
@@ -678,26 +692,26 @@ function AdminPageInner() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-3">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Ideas Submitted</CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pipelineStats.totalSubmissions}</div>
-                  <p className="text-xs text-muted-foreground">+12% from last month</p>
+                  <div className="text-2xl font-bold">{totalSubmissions}</div>
+                  <p className="text-xs text-muted-foreground">All-time submissions</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                  <CardTitle className="text-sm font-medium">In Vetting</CardTitle>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pipelineStats.inProgress}</div>
-                  <p className="text-xs text-muted-foreground">In Vetting</p>
+                  <div className="text-2xl font-bold">{inVettingCount}</div>
+                  <p className="text-xs text-muted-foreground">Awaiting a decision</p>
                 </CardContent>
               </Card>
 
@@ -707,19 +721,10 @@ function AdminPageInner() {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pipelineStats.successRate}</div>
-                  <p className="text-xs text-muted-foreground">Ideas vetted to approved</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Avg. Completion</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{pipelineStats.avgCompletionTime}</div>
-                  <p className="text-xs text-muted-foreground">Avg. vetting time</p>
+                  <div className="text-2xl font-bold">{successRateLabel}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {decidedCount > 0 ? "Approved of decided ideas" : "No decisions yet"}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -728,58 +733,36 @@ function AdminPageInner() {
             <Card>
               <CardHeader>
                 <CardTitle>Idea Pipeline Funnel</CardTitle>
-                <CardDescription>Flow of ideas from submission to production</CardDescription>
+                <CardDescription>Flow of ideas from submission to decision</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
-                  {/* Ideas Submitted */}
-                  <div className="flex-1 min-w-[140px]">
-                    <div className="bg-blue-100 border-2 border-blue-300 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-700">{pipelineStats.totalSubmissions}</div>
-                      <div className="text-sm font-medium text-blue-600">Ideas Submitted</div>
-                    </div>
+                {totalSubmissions === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No submissions yet. The funnel will populate as ideas come in.
+                  </p>
+                ) : (
+                  <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
+                    {STATUS_ORDER.map((st, i) => {
+                      const n = statusCounts[st] || 0
+                      const pct = Math.round((n / totalSubmissions) * 100)
+                      const style = FUNNEL_STYLES[st]
+                      return (
+                        <Fragment key={st}>
+                          <div className="flex-1 min-w-[140px]">
+                            <div className={`${style.bg} border-2 ${style.border} rounded-lg p-4 text-center`}>
+                              <div className={`text-2xl font-bold ${style.text}`}>{n}</div>
+                              <div className={`text-sm font-medium ${style.subtext}`}>{STATUS_LABEL[st]}</div>
+                              <div className={`text-xs ${style.subtext} mt-1`}>{pct}% of submitted</div>
+                            </div>
+                          </div>
+                          {i < STATUS_ORDER.length - 1 && (
+                            <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                          )}
+                        </Fragment>
+                      )
+                    })}
                   </div>
-                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
-                  
-                  {/* In Vetting */}
-                  <div className="flex-1 min-w-[140px]">
-                    <div className="bg-blue-200 border-2 border-blue-400 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-800">{pipelineStats.inProgress}</div>
-                      <div className="text-sm font-medium text-blue-700">In Vetting</div>
-                      <div className="text-xs text-blue-600 mt-1">{Math.round((pipelineStats.inProgress / pipelineStats.totalSubmissions) * 100)}% of submitted</div>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
-                  
-                  {/* Vetted & Submitted */}
-                  <div className="flex-1 min-w-[140px]">
-                    <div className="bg-blue-300 border-2 border-blue-500 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-900">{pipelineStats.underReview}</div>
-                      <div className="text-sm font-medium text-blue-800">Vetted & Submitted</div>
-                      <div className="text-xs text-blue-700 mt-1">{Math.round((pipelineStats.underReview / pipelineStats.inProgress) * 100)}% of in vetting</div>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
-                  
-                  {/* Approved */}
-                  <div className="flex-1 min-w-[140px]">
-                    <div className="bg-green-100 border-2 border-green-400 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-green-700">{pipelineStats.approved}</div>
-                      <div className="text-sm font-medium text-green-600">Approved</div>
-                      <div className="text-xs text-green-500 mt-1">{Math.round((pipelineStats.approved / pipelineStats.underReview) * 100)}% of vetted</div>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-6 h-6 text-gray-400 flex-shrink-0" />
-                  
-                  {/* In Production */}
-                  <div className="flex-1 min-w-[140px]">
-                    <div className="bg-green-200 border-2 border-green-500 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-green-800">{pipelineStats.deployed}</div>
-                      <div className="text-sm font-medium text-green-700">In Production</div>
-                      <div className="text-xs text-green-600 mt-1">{Math.round((pipelineStats.deployed / pipelineStats.approved) * 100)}% of approved</div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -789,29 +772,25 @@ function AdminPageInner() {
                   <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">New idea: AI-Powered Patent Search</p>
-                        <p className="text-xs text-muted-foreground">2 hours ago</p>
-                      </div>
+                  {recentSubmissions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No submissions yet.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {recentSubmissions.map((s) => (
+                        <div key={s.id} className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              New idea: {s.formData.useCaseTitle || "Untitled idea"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(s.submittedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Vetting complete: Trademark Classification</p>
-                        <p className="text-xs text-muted-foreground">5 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">OKR updated: IT Infrastructure Modernization</p>
-                        <p className="text-xs text-muted-foreground">1 day ago</p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -821,22 +800,17 @@ function AdminPageInner() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Patents</span>
-                      <span className="text-sm font-medium">45 submissions</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Trademarks</span>
-                      <span className="text-sm font-medium">32 submissions</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">OCIO</span>
-                      <span className="text-sm font-medium">28 submissions</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">OGC</span>
-                      <span className="text-sm font-medium">12 submissions</span>
-                    </div>
+                    {buRows.map(([bu, count]) => (
+                      <div key={bu} className="flex justify-between items-center">
+                        <span className="text-sm">{bu}</span>
+                        <span className="text-sm font-medium">
+                          {count} submission{count === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    ))}
+                    {buRows.length === 0 && (
+                      <p className="text-sm text-muted-foreground">No submissions yet.</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
