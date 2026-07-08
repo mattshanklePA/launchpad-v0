@@ -107,11 +107,7 @@ function LoginForm() {
         <div className="mt-6 pt-4 border-t flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="w-3 h-3 flex-shrink-0 mt-0.5" />
           <span>
-            Don&apos;t have an account? You can still{" "}
-            <Link href="/submit" className="underline">
-              submit ideas
-            </Link>{" "}
-            without signing in. Sign in is required only for admin and decision tools.
+            Use your bureau account to sign in. Don&apos;t have credentials? Check the runbook for demo accounts.
           </span>
         </div>
       </CardContent>
