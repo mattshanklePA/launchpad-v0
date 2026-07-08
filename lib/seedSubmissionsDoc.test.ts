@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 import { determineReportability } from "@/lib/ombReportability"
 import { determineHighImpact } from "@/lib/highImpactDetermination"
+import { determineConsolidation } from "@/lib/ombConsolidation"
 import { findSimilar } from "@/lib/similarity"
 import { STATUS_ORDER } from "@/lib/reviewWorkflow"
 import { doc } from "@/lib/tenant/doc"
@@ -96,5 +97,55 @@ describe("docSeedSubmissions golden state", () => {
         (s.formData.executiveSummary || "").length > 0,
     )
     expect(polished.length).toBeGreaterThanOrEqual(1)
+  })
+
+  describe("cross-bureau consolidated trio (issue #33)", () => {
+    // These three ids are the money-shot demo case: independently submitted by
+    // three different bureaus, all matching the same OMB "widely-used
+    // commercial AI" category, so the bureau roll-up's consolidated-vs-
+    // individual OMB reporting count actually collapses instead of reading
+    // 1:1 with the submission count.
+    const trioIds = ["doc-nist-meeting-transcription", "doc-noaa-ops-meeting-recap", "doc-ita-mission-debrief-transcription"]
+
+    it("has all three trio submissions present, non-high-impact, across three different bureaus", () => {
+      const trio = trioIds.map((id) => asSubmissions.find((s) => s.id === id))
+      for (const s of trio) expect(s).toBeTruthy()
+
+      const bureaus = new Set(trio.map((s) => s!.formData.submitterOffice))
+      expect(bureaus.size).toBe(3)
+      expect(bureaus).toEqual(new Set(["nist", "noaa", "ita"]))
+
+      for (const s of trio) expect(s!.formData.highImpact).toBe("no")
+    })
+
+    it("classifies all three as Consolidated under the same OMB category", () => {
+      const results = trioIds.map((id) => {
+        const s = asSubmissions.find((sub) => sub.id === id)!
+        return determineConsolidation(s.formData)
+      })
+
+      for (const r of results) expect(r.status).toBe("Consolidated")
+
+      const categories = new Set(results.map((r) => r.category))
+      expect(categories.size).toBe(1)
+      expect(categories.has("meeting_transcription")).toBe(true)
+    })
+
+    it("spreads the trio across submitted / in review / approved statuses", () => {
+      const statuses = trioIds.map((id) => asSubmissions.find((s) => s.id === id)!.formData.reviewStatus)
+      expect(new Set(statuses)).toEqual(new Set(["submitted", "in_review", "approved"]))
+    })
+
+    it("collapses the department roll-up: 12 use cases consolidate to 10 OMB reportable entries", () => {
+      expect(asSubmissions.length).toBe(12)
+
+      const consolidated = asSubmissions.filter((s) => determineConsolidation(s.formData).status === "Consolidated")
+      const categoryCount = new Set(
+        consolidated.map((s) => determineConsolidation(s.formData).category),
+      ).size
+      const reportableEntries = asSubmissions.length - consolidated.length + categoryCount
+
+      expect(reportableEntries).toBe(10)
+    })
   })
 })
