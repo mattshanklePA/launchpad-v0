@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,11 @@ import {
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { computeRiskProfile, riskBadgeClass } from "@/lib/riskProfile"
+
+// Higher rank sorts first in the Decision Center list; unassessed drafts (rank 0)
+// always trail the fully-assessed candidates. Mirrors the ranking used for the
+// AI comparison briefing in app/admin/compare-actions.ts.
+const READINESS_RANK: Record<string, number> = { ready: 3, needs_work: 2, early_stage: 1 }
 
 function readinessBadge(score: string | undefined) {
   switch (score) {
@@ -236,7 +241,20 @@ export function DecisionCenter() {
   // Filter to only show submissions awaiting decision.
   // All real submissions have an implicit "needs_review" lifecycle status —
   // i.e., they were submitted and are awaiting exec review.
-  const readyForDecision = submissions
+  //
+  // Sort fully-assessed candidates first so the opening card is never a draft
+  // with a "Not Assessed" badge and all-dash metrics. Tie-break by submittedAt
+  // (newest first) then id so the order is deterministic across reloads.
+  const readyForDecision = useMemo(() => {
+    return [...submissions].sort((a, b) => {
+      const rankDiff =
+        (READINESS_RANK[b.formData.readinessScore || ""] || 0) -
+        (READINESS_RANK[a.formData.readinessScore || ""] || 0)
+      if (rankDiff !== 0) return rankDiff
+      if (a.submittedAt !== b.submittedAt) return a.submittedAt < b.submittedAt ? 1 : -1
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+    })
+  }, [submissions])
 
   const toggleSelect = (id: string) => {
     setSelectedForCompare((prev) => {
