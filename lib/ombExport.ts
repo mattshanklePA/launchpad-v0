@@ -6,6 +6,7 @@
 import type { Submission } from "@/lib/submissions"
 import { businessUnitLabel, getBusinessUnit } from "@/lib/reviewWorkflow"
 import { determineConsolidation, CONSOLIDATION_CATEGORIES, type ConsolidationCategoryId } from "@/lib/ombConsolidation"
+import { csvLine } from "@/lib/csv"
 
 // LaunchPad field -> OMB inventory column mapping:
 //   id                     -> Use Case ID
@@ -102,18 +103,6 @@ export function mapSubmissionToOmbRow(submission: Submission, agencyShortName: s
     YES_NO[fd.aiHumanReview] || "",
     YES_NO[fd.aiDecisionalImpact] || "",
   ]
-}
-
-// RFC 4180 field escaping: quote any field containing a comma, quote, or newline.
-function csvEscape(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
-
-function csvLine(values: string[]): string {
-  return values.map(csvEscape).join(",")
 }
 
 /** One department-level CSV row standing in for every submission consolidated under `categoryId`. Pure — no I/O. */

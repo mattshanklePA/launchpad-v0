@@ -251,6 +251,22 @@ export const docSeedSubmissions: Submission[] = [
       submitterRole: "it_staff",
       submitterOffice: "nist",
       reviewStatus: "approved",
+      // Bureau sign-off + department final approval (lib/bureauSignoff.ts,
+      // issue #54) — demonstrates the full two-tier flow: NIST signs off, then
+      // the department confirms.
+      bureauSignoff: {
+        bureau: "nist",
+        decision: "approved",
+        signedOffByName: "Alan Brooks",
+        signedOffByEmail: "alan.brooks@nist.gov",
+        signedOffAt: hoursAgo(38),
+      },
+      departmentApproval: {
+        decision: "approved",
+        byName: "Renee Caldwell",
+        byEmail: "renee.caldwell@doc.gov",
+        at: hoursAgo(24),
+      },
       useCaseTitle: "Standards & Publications Knowledge Assistant",
       useCaseDescription:
         "An internal cited-source assistant that helps NIST staff find and summarize relevant standards, publications, and internal guidance, with links to the source documents.",
@@ -551,6 +567,15 @@ export const docSeedSubmissions: Submission[] = [
       submitterRole: "product_owner",
       submitterOffice: "mbda",
       reviewStatus: "rejected",
+      // Bureau sign-off (lib/bureauSignoff.ts) records rejections too, not
+      // just approvals.
+      bureauSignoff: {
+        bureau: "mbda",
+        decision: "rejected",
+        signedOffByName: "Jordan Pierce",
+        signedOffByEmail: "jordan.pierce@mbda.gov",
+        signedOffAt: hoursAgo(60),
+      },
       comments: [
         {
           id: "c-mbda-1",
@@ -803,6 +828,10 @@ export const docSeedSubmissions: Submission[] = [
       submitterOffice: "ita",
       submitterSubOffice: "industry_analysis",
       reviewStatus: "approved",
+      // Deliberately no bureauSignoff (lib/bureauSignoff.ts) — an approval from
+      // before the sign-off feature existed, showing up as "pending" in the
+      // approval transparency view/roll-up despite already being approved.
+      // Demonstrates exactly the gap this feature closes.
       useCaseTitle: "Trade Mission Debrief Meeting Transcription Assistant",
       useCaseDescription:
         "An internal tool that transcribes trade-mission debrief meetings and drafts a structured recap of findings and follow-ups for the analyst team, replacing manual note-taking.",

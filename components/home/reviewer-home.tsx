@@ -20,6 +20,9 @@ import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
 import { BureauRollup } from "@/components/admin/bureau-rollup"
 import { RationalizationPanel } from "@/components/admin/rationalization-panel"
+import { ApprovalTransparency } from "@/components/admin/approval-transparency"
+import { hasDepartmentTransparency } from "@/lib/bureauSignoff"
+import { tenantHasBureauTier } from "@/lib/rationalization"
 
 function readinessChip(score?: string): { cls: string; label: string } {
   switch (score) {
@@ -108,6 +111,8 @@ export function ReviewerHome() {
 
       <BureauRollup submissions={scoped} />
 
+      <ApprovalTransparency submissions={subs} />
+
       <RationalizationPanel submissions={scoped} />
 
       <Link
@@ -148,6 +153,13 @@ export function ReviewerHome() {
               <div className="font-medium text-sm mt-2">Export OMB inventory (CSV)</div>
               <div className="text-xs text-muted-foreground">2025 AI use case inventory</div>
             </a>
+            {tenantHasBureauTier() && hasDepartmentTransparency(viewer) && (
+              <a href="/api/export/approval" className="rounded-lg border bg-white p-4 hover:bg-muted/30">
+                <Download className="w-5 h-5 text-muted-foreground" />
+                <div className="font-medium text-sm mt-2">Export approval report (CSV)</div>
+                <div className="text-xs text-muted-foreground">Bureau sign-off &amp; department approval</div>
+              </a>
+            )}
           </div>
         </section>
       )}
