@@ -18,7 +18,7 @@
 
 import type { Submission } from "@/lib/submissions"
 import { getBusinessUnit } from "@/lib/reviewWorkflow"
-import { findSimilar } from "@/lib/similarity"
+import { findSimilar, similarity } from "@/lib/similarity"
 import { determineConsolidation } from "@/lib/ombConsolidation"
 
 export const ROLLUP_DUPLICATE_THRESHOLD = 0.25
@@ -33,6 +33,19 @@ function sameConsolidationCategory(a: Submission, b: Submission): boolean {
 export function hasCrossBureauMatch(s: Submission, all: Submission[]): boolean {
   return findSimilar(s, all, { threshold: ROLLUP_DUPLICATE_THRESHOLD }).some(
     (m) => m.bureau !== getBusinessUnit(s) && !sameConsolidationCategory(s, m.submission),
+  )
+}
+
+// Pairwise version of the same roll-up-strength rule, exported for
+// lib/rationalization.ts's clustering (which needs an edge test between two
+// specific submissions rather than "does `s` have any match"). Kept in sync
+// with hasCrossBureauMatch's filters by construction — both apply the same
+// threshold, cross-bureau, and not-same-OMB-category rules.
+export function isCrossBureauDuplicatePair(a: Submission, b: Submission): boolean {
+  return (
+    getBusinessUnit(a) !== getBusinessUnit(b) &&
+    !sameConsolidationCategory(a, b) &&
+    similarity(a, b) >= ROLLUP_DUPLICATE_THRESHOLD
   )
 }
 

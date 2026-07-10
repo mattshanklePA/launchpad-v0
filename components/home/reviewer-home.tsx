@@ -19,6 +19,7 @@ import { Scale, ArrowRight, SlidersHorizontal, Users, Database, User, Download }
 import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
 import { BureauRollup } from "@/components/admin/bureau-rollup"
+import { RationalizationPanel } from "@/components/admin/rationalization-panel"
 
 function readinessChip(score?: string): { cls: string; label: string } {
   switch (score) {
@@ -106,6 +107,8 @@ export function ReviewerHome() {
       </div>
 
       <BureauRollup submissions={scoped} />
+
+      <RationalizationPanel submissions={scoped} />
 
       <Link
         href="/decisions"
