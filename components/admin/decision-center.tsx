@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +20,7 @@ import {
   Target,
   Sparkles,
 } from "lucide-react"
-import { getSubmissions, type Submission } from "@/lib/submissions"
+import type { Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { computeRiskProfile, riskBadgeClass } from "@/lib/riskProfile"
 
@@ -227,16 +227,12 @@ function DecisionCard({ submission, selected, onToggleSelect }: DecisionCardProp
   )
 }
 
-export function DecisionCenter() {
-  const [submissions, setSubmissions] = useState<Submission[]>([])
-  const [hydrated, setHydrated] = useState(false)
+// `submissions` must already be scoped to the viewer (see lib/reviewWorkflow's
+// visibleSubmissions) — this component does not re-scope, so passing the
+// unfiltered list here would leak other bureaus' submissions.
+export function DecisionCenter({ submissions }: { submissions: Submission[] }) {
   const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set())
   const [showComparison, setShowComparison] = useState(false)
-
-  useEffect(() => {
-    setSubmissions(getSubmissions())
-    setHydrated(true)
-  }, [])
 
   // Filter to only show submissions awaiting decision.
   // All real submissions have an implicit "needs_review" lifecycle status —
@@ -271,14 +267,6 @@ export function DecisionCenter() {
   }
 
   const selectedSubmissions = readyForDecision.filter((s) => selectedForCompare.has(s.id))
-
-  if (!hydrated) {
-    return (
-      <div className="space-y-4">
-        <div className="h-24 animate-pulse bg-muted/50 rounded" />
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
