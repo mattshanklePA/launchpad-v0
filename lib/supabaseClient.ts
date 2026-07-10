@@ -80,6 +80,9 @@ export type DbSubmissionRow = {
 export type DbFormConfigRow = {
   id: number
   enabled: Record<string, boolean>
+  // Added by db/migrations/doc/0002_field_cascade_mandatory.sql; optional so
+  // reads work pre-migration and on tenants (USPTO/DoW) that never add it.
+  mandatory?: Record<string, boolean> | null
   updated_at: string
   updated_by: string | null
 }

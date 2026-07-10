@@ -1,0 +1,206 @@
+import { describe, it, expect, afterEach } from "vitest"
+import {
+  FIELD_REGISTRY,
+  FIELD_REGISTRY_BY_KEY,
+  fieldLevel,
+  fieldsForBureau,
+  canToggleField,
+  canMarkFieldMandatory,
+  isDepartmentLevelViewer,
+  type FieldDefinition,
+} from "@/lib/fieldRegistry"
+
+const withTenant = (id: string, run: () => void) => {
+  const prev = process.env.NEXT_PUBLIC_TENANT
+  process.env.NEXT_PUBLIC_TENANT = id
+  try {
+    run()
+  } finally {
+    if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = prev
+  }
+}
+
+afterEach(() => {
+  delete process.env.NEXT_PUBLIC_TENANT
+})
+
+// A synthetic bureau-scoped optional field for tests — the registry itself
+// doesn't define one yet (see the TODO in lib/fieldRegistry.ts), but the
+// mechanism must support one once a bureau adds it.
+const censusOnlyField: FieldDefinition = {
+  fieldKey: "successMetrics", // reuse a real FormData key so type-checking stays honest
+  label: "Census-only field",
+  description: "test fixture",
+  reasonToInclude: "test fixture",
+  phase: 4,
+  step: 7,
+  level: "bureau",
+  businessUnit: "census",
+  locked: false,
+}
+
+describe("fieldLevel", () => {
+  it("defaults to 'bureau' when unset", () => {
+    expect(fieldLevel({ level: undefined } as FieldDefinition)).toBe("bureau")
+  })
+  it("returns the explicit level when set", () => {
+    expect(fieldLevel({ level: "omb" } as FieldDefinition)).toBe("omb")
+  })
+})
+
+describe("registry cascade metadata", () => {
+  it("marks the DoC-mandated AI risk fields as level: department, locked", () => {
+    for (const key of ["involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview"]) {
+      const def = FIELD_REGISTRY_BY_KEY[key]
+      expect(def.level).toBe("department")
+      expect(def.locked).toBe(true)
+    }
+  })
+
+  it("marks the OMB inventory fields as level: omb", () => {
+    const ombFields = FIELD_REGISTRY.filter((f) => f.omb)
+    expect(ombFields.length).toBeGreaterThan(0)
+    for (const f of ombFields) expect(f.level).toBe("omb")
+  })
+
+  it("leaves OMB inventory fields unlocked in the registry itself — the cascade enforces the mandate only for bureau-tier tenants", () => {
+    const stage = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+    expect(stage.locked).toBe(false)
+  })
+})
+
+describe("fieldsForBureau", () => {
+  it("returns OMB + department + a bureau's own scoped fields, and never another bureau's", () => {
+    withTenant("doc", () => {
+      // No registry field is bureau-scoped yet (see the TODO in
+      // lib/fieldRegistry.ts) — temporarily add one so this test exercises
+      // the real `fieldsForBureau`, not a reimplementation of its logic.
+      const mandatoryKeys = FIELD_REGISTRY.filter((f) => fieldLevel(f) !== "bureau").map((f) => f.fieldKey)
+      FIELD_REGISTRY.push(censusOnlyField)
+      try {
+        const census = fieldsForBureau("census")
+        const nist = fieldsForBureau("nist")
+
+        expect(census).toContain(censusOnlyField)
+        expect(nist).not.toContain(censusOnlyField)
+
+        // Every OMB/department field is present for both bureaus.
+        for (const key of mandatoryKeys) {
+          expect(census.some((f) => f.fieldKey === key)).toBe(true)
+          expect(nist.some((f) => f.fieldKey === key)).toBe(true)
+        }
+      } finally {
+        FIELD_REGISTRY.pop()
+      }
+    })
+  })
+
+  it("returns the general optional pool (unscoped bureau-level fields) for every bureau", () => {
+    withTenant("doc", () => {
+      const forCensus = fieldsForBureau("census")
+      const forNist = fieldsForBureau("nist")
+      // coreProblem is level: "bureau" (default) with no businessUnit — general pool.
+      expect(forCensus.some((f) => f.fieldKey === "coreProblem")).toBe(true)
+      expect(forNist.some((f) => f.fieldKey === "coreProblem")).toBe(true)
+    })
+  })
+
+  it("returns the full registry unfiltered for tenants without a bureau tier (USPTO/DoW)", () => {
+    withTenant("uspto", () => {
+      expect(fieldsForBureau("patents")).toEqual(FIELD_REGISTRY)
+      expect(fieldsForBureau(undefined)).toEqual(FIELD_REGISTRY)
+    })
+    withTenant("dow", () => {
+      expect(fieldsForBureau("forscom")).toEqual(FIELD_REGISTRY)
+    })
+  })
+})
+
+describe("isDepartmentLevelViewer", () => {
+  it("is true for an OS-bureau viewer or a viewer with no bureau assignment", () => {
+    expect(isDepartmentLevelViewer({ role: "admin", businessUnit: "os" })).toBe(true)
+    expect(isDepartmentLevelViewer({ role: "admin" })).toBe(true)
+    expect(isDepartmentLevelViewer({ role: "admin", businessUnit: "" })).toBe(true)
+  })
+  it("is false for a bureau-scoped viewer, and for no viewer", () => {
+    expect(isDepartmentLevelViewer({ role: "admin", businessUnit: "census" })).toBe(false)
+    expect(isDepartmentLevelViewer(null)).toBe(false)
+    expect(isDepartmentLevelViewer(undefined)).toBe(false)
+  })
+})
+
+describe("canToggleField", () => {
+  it("is never togglable when locked, regardless of level or tenant", () => {
+    withTenant("doc", () => {
+      const def = FIELD_REGISTRY_BY_KEY["involvesSensitiveData"]
+      expect(canToggleField(def, { role: "admin", businessUnit: "os" })).toBe(false)
+      expect(canToggleField(def, { role: "admin" })).toBe(false)
+    })
+  })
+
+  it("is never togglable for an OMB/department field on a bureau-tier tenant, even by a department admin", () => {
+    withTenant("doc", () => {
+      const def = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"] // level: omb, locked: false
+      expect(canToggleField(def, { role: "admin", businessUnit: "census" })).toBe(false)
+      expect(canToggleField(def, { role: "admin", businessUnit: "os" })).toBe(false)
+      expect(canToggleField(def, { role: "admin" })).toBe(false)
+    })
+  })
+
+  it("treats the same OMB field as a plain optional toggle on a flat tenant (USPTO/DoW unaffected)", () => {
+    withTenant("uspto", () => {
+      const def = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+      expect(canToggleField(def, { role: "admin", businessUnit: "patents" })).toBe(true)
+    })
+    withTenant("dow", () => {
+      const def = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+      expect(canToggleField(def, { role: "admin" })).toBe(true)
+    })
+  })
+
+  it("a bureau-scoped optional field is togglable only by that bureau's viewer, or a department-level viewer", () => {
+    withTenant("doc", () => {
+      expect(canToggleField(censusOnlyField, { role: "admin", businessUnit: "census" })).toBe(true)
+      expect(canToggleField(censusOnlyField, { role: "admin", businessUnit: "nist" })).toBe(false)
+      expect(canToggleField(censusOnlyField, { role: "admin", businessUnit: "os" })).toBe(true)
+      expect(canToggleField(censusOnlyField, { role: "admin" })).toBe(true)
+    })
+  })
+
+  it("the general optional pool is togglable by any admin, unless a department admin has since marked it mandatory", () => {
+    withTenant("doc", () => {
+      const def = FIELD_REGISTRY_BY_KEY["coreProblem"] // locked: true system field — swap for an unlocked one
+      const unlocked = FIELD_REGISTRY_BY_KEY["problemImpact"] // level: bureau (default), unlocked, unscoped
+      expect(canToggleField(unlocked, { role: "admin", businessUnit: "census" })).toBe(true)
+      expect(canToggleField(unlocked, { role: "admin", businessUnit: "nist" })).toBe(true)
+      expect(canToggleField(unlocked, { role: "admin", businessUnit: "census" }, { mandatory: true })).toBe(false)
+      expect(canToggleField(unlocked, { role: "admin", businessUnit: "os" }, { mandatory: true })).toBe(true)
+      expect(def.locked).toBe(true) // sanity check on the fixture assumption above
+    })
+  })
+})
+
+describe("canMarkFieldMandatory", () => {
+  it("only a department-level viewer can mark an ordinary bureau field mandatory, and only on a bureau-tier tenant", () => {
+    withTenant("doc", () => {
+      const unlocked = FIELD_REGISTRY_BY_KEY["problemImpact"]
+      expect(canMarkFieldMandatory(unlocked, { role: "admin", businessUnit: "os" })).toBe(true)
+      expect(canMarkFieldMandatory(unlocked, { role: "admin" })).toBe(true)
+      expect(canMarkFieldMandatory(unlocked, { role: "admin", businessUnit: "census" })).toBe(false)
+    })
+    withTenant("uspto", () => {
+      const unlocked = FIELD_REGISTRY_BY_KEY["problemImpact"]
+      expect(canMarkFieldMandatory(unlocked, { role: "admin" })).toBe(false)
+    })
+  })
+
+  it("cannot mark a locked or already-mandatory (omb/department) field mandatory — already non-togglable", () => {
+    withTenant("doc", () => {
+      const lockedSystemField = FIELD_REGISTRY_BY_KEY["coreProblem"]
+      const ombField = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+      expect(canMarkFieldMandatory(lockedSystemField, { role: "admin" })).toBe(false)
+      expect(canMarkFieldMandatory(ombField, { role: "admin" })).toBe(false)
+    })
+  })
+})

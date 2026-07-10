@@ -33,7 +33,7 @@ const accessOptions = [
 
 export function Step8FeasibilitySecurity() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility()
+  const isVisible = useFieldVisibility(formData.submitterOffice)
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
   const tenant = getTenant()
 

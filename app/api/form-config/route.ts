@@ -1,9 +1,17 @@
 // /api/form-config
-//   GET → returns the single-row form config (enabled map)
-//   PUT { enabled, updatedBy? } → replaces the enabled map
+//   GET → returns the single-row form config (enabled + mandatory maps)
+//   PUT { enabled?, mandatory?, updatedBy? } → replaces whichever map(s) are
+//     provided (at least one required) — a partial upsert so setFieldEnabled
+//     and setFieldMandatory (lib/formConfig.ts) can each write their own map
+//     without clobbering the other.
 //
 // Single-row pattern (row id = 1). The schema enforces this with a CHECK
 // constraint so this endpoint always upserts onto id = 1.
+//
+// `mandatory` (DoC field-config cascade, issue #57 — OS/department admin
+// "mandatory for all bureaus" overrides) requires
+// db/migrations/doc/0002_field_cascade_mandatory.sql. USPTO/DoW never send
+// it, so their deployments work unmigrated.
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbFormConfigRow } from "@/lib/supabaseClient"
@@ -44,6 +52,7 @@ function errToDetail(error: unknown): string {
 
 type ApiFormConfig = {
   enabled: Record<string, boolean>
+  mandatory: Record<string, boolean>
   updatedAt: string
   updatedBy?: string | null
 }
@@ -51,6 +60,7 @@ type ApiFormConfig = {
 function fromRow(row: DbFormConfigRow): ApiFormConfig {
   return {
     enabled: row.enabled || {},
+    mandatory: row.mandatory || {},
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
   }
@@ -69,7 +79,7 @@ export async function GET() {
       // Defensive: schema seeds row 1 on table creation, but if someone wiped
       // it, return the empty default so the client treats all fields as enabled.
       return NextResponse.json(
-        { config: { enabled: {}, updatedAt: new Date().toISOString() } },
+        { config: { enabled: {}, mandatory: {}, updatedAt: new Date().toISOString() } },
         { headers: NO_STORE },
       )
     }
@@ -87,20 +97,28 @@ export async function PUT(req: Request) {
   try {
     const body = await req.json()
     const enabled = body.enabled
+    const mandatory = body.mandatory
     const updatedBy = body.updatedBy ?? null
-    if (!enabled || typeof enabled !== "object") {
-      return NextResponse.json({ error: "Missing enabled map" }, { status: 400 })
+    const hasEnabled = enabled !== undefined && enabled !== null
+    const hasMandatory = mandatory !== undefined && mandatory !== null
+    if (!hasEnabled && !hasMandatory) {
+      return NextResponse.json({ error: "Missing enabled or mandatory map" }, { status: 400 })
     }
+    if (hasEnabled && typeof enabled !== "object") {
+      return NextResponse.json({ error: "enabled must be an object" }, { status: 400 })
+    }
+    if (hasMandatory && typeof mandatory !== "object") {
+      return NextResponse.json({ error: "mandatory must be an object" }, { status: 400 })
+    }
+    const row: Record<string, unknown> = {
+      id: 1,
+      updated_at: new Date().toISOString(),
+      updated_by: updatedBy,
+    }
+    if (hasEnabled) row.enabled = enabled
+    if (hasMandatory) row.mandatory = mandatory
     const supabase = getSupabaseAdmin()
-    const { error } = await supabase.from("form_config").upsert(
-      {
-        id: 1,
-        enabled,
-        updated_at: new Date().toISOString(),
-        updated_by: updatedBy,
-      },
-      { onConflict: "id" },
-    )
+    const { error } = await supabase.from("form_config").upsert(row, { onConflict: "id" })
     if (error) throw error
     return NextResponse.json({ ok: true })
   } catch (error) {

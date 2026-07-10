@@ -1,9 +1,18 @@
 "use client"
 
-// Admin Form Configuration panel. Shows every toggleable field in the wizard,
-// grouped by phase, with a Switch to enable/disable each one. Locked fields
-// (system-critical and DoC-mandated AI risk questions) render as disabled
-// with a lock icon and an explanation. Toggle clicks persist immediately.
+// Admin Form Configuration panel. Shows every field in scope for the current
+// viewer's bureau (`fieldsForBureau` — the DoC field-config cascade, issue
+// #57), grouped by phase, with a Switch to enable/disable each one.
+//
+// Level-aware: an OMB/department-mandated field, a locked system field, or a
+// field an OS/department admin has marked mandatory for all bureaus all
+// render as on and disabled with a hint explaining why. A bureau-scoped
+// optional field (`level: "bureau"` + `businessUnit`) only appears for, and
+// is only togglable by, that bureau's own admin (or a department-level
+// viewer). Everything else — the general optional field pool — behaves
+// exactly as before: togglable by any admin. USPTO/DoW have no bureau tier,
+// so `fieldsForBureau`/`canToggleField` no-op the whole cascade for them and
+// this panel renders exactly as it did before issue #57.
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,19 +20,26 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Lock, RotateCcw, SlidersHorizontal, Eye, EyeOff } from "lucide-react"
+import { Lock, RotateCcw, SlidersHorizontal, Eye, EyeOff, Landmark, Building2 } from "lucide-react"
 import {
-  FIELD_REGISTRY,
+  fieldsForBureau,
+  fieldLevel,
+  canToggleField,
+  canMarkFieldMandatory,
   type FieldDefinition,
+  type FieldViewer,
 } from "@/lib/fieldRegistry"
 import {
   getFormConfig,
   setFieldEnabled,
+  setFieldMandatory,
+  isFieldMandatory,
   resetFormConfig,
   type FormConfig,
 } from "@/lib/formConfig"
 import { formPhases } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
+import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import { subscribeToCache } from "@/lib/dataCache"
 
 export function FormConfigPanel() {
@@ -40,10 +56,14 @@ export function FormConfigPanel() {
     return subscribeToCache(sync)
   }, [])
 
+  const session = getSession()
+  const viewer: FieldViewer = session ? { role: session.role, businessUnit: session.businessUnit } : null
+  const fields = fieldsForBureau(session?.businessUnit)
+
   const handleToggle = async (field: FieldDefinition, next: boolean) => {
-    if (field.locked) return
-    const session = getSession()
-    const result = await setFieldEnabled(field.fieldKey, next, session?.email)
+    if (!config) return
+    if (!canToggleField(field, viewer, { mandatory: !!config.mandatory[field.fieldKey] })) return
+    const result = await setFieldEnabled(field.fieldKey, next, session?.email, viewer)
     if (!result.ok) {
       toast({
         variant: "destructive",
@@ -56,6 +76,23 @@ export function FormConfigPanel() {
     toast({
       title: next ? "Field enabled" : "Field disabled",
       description: `"${field.label}" will ${next ? "appear in" : "be hidden from"} the wizard for every visitor on next load.`,
+    })
+  }
+
+  const handleToggleMandatory = async (field: FieldDefinition, next: boolean) => {
+    const result = await setFieldMandatory(field.fieldKey, next, session?.email, viewer)
+    if (!result.ok) {
+      toast({
+        variant: "destructive",
+        title: "Couldn't update field",
+        description: result.error || "Unknown error",
+      })
+      return
+    }
+    setConfig(getFormConfig())
+    toast({
+      title: next ? "Marked mandatory for all bureaus" : "No longer mandatory",
+      description: `"${field.label}" ${next ? "now appears for, and can't be turned off by, every bureau." : "is back to an optional field bureaus can toggle."}`,
     })
   }
 
@@ -82,12 +119,14 @@ export function FormConfigPanel() {
     )
   }
 
-  // Compute counts for the header summary
-  const totalToggleable = FIELD_REGISTRY.filter((f) => !f.locked).length
-  const totalEnabled = FIELD_REGISTRY.filter(
-    (f) => f.locked || config.enabled[f.fieldKey] !== false,
+  // Compute counts for the header summary — scoped to `fields` (this
+  // viewer's bureau) rather than the full registry, so a bureau admin's
+  // counts reflect what they can actually see.
+  const totalToggleable = fields.filter((f) => !f.locked && !isFieldMandatory(f.fieldKey, config)).length
+  const totalEnabled = fields.filter(
+    (f) => f.locked || isFieldMandatory(f.fieldKey, config) || config.enabled[f.fieldKey] !== false,
   ).length
-  const totalDisabled = FIELD_REGISTRY.length - totalEnabled
+  const totalDisabled = fields.length - totalEnabled
 
   return (
     <Card>
@@ -119,17 +158,17 @@ export function FormConfigPanel() {
           </span>
           <span>
             <Lock className="h-3 w-3 inline mr-1 text-uspto-blue-primary" />
-            {FIELD_REGISTRY.length - totalToggleable} locked (system / compliance)
+            {fields.length - totalToggleable} locked / mandatory
           </span>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {formPhases.map((phase) => {
-          const phaseFields = FIELD_REGISTRY.filter((f) => f.phase === phase.phase)
+          const phaseFields = fields.filter((f) => f.phase === phase.phase)
           if (phaseFields.length === 0) return null
 
           const enabledInPhase = phaseFields.filter(
-            (f) => f.locked || config.enabled[f.fieldKey] !== false,
+            (f) => f.locked || isFieldMandatory(f.fieldKey, config) || config.enabled[f.fieldKey] !== false,
           ).length
 
           return (
@@ -148,12 +187,30 @@ export function FormConfigPanel() {
 
               <div className="space-y-2">
                 {phaseFields.map((field) => {
-                  const enabled = field.locked || config.enabled[field.fieldKey] !== false
+                  const level = fieldLevel(field)
+                  const mandatoryOverride = !!config.mandatory[field.fieldKey]
+                  const mandatory = isFieldMandatory(field.fieldKey, config)
+                  const enabled = field.locked || mandatory || config.enabled[field.fieldKey] !== false
+                  const toggleAllowed = canToggleField(field, viewer, { mandatory: mandatoryOverride })
+                  const promoteAllowed = canMarkFieldMandatory(field, viewer)
+                  const owningBureauLabel = field.businessUnit ? businessUnitLabel(field.businessUnit) : null
+
+                  let levelHint: string | null = null
+                  if (level === "omb" && !toggleAllowed) {
+                    levelHint = "Required by OMB — mandatory for every bureau, cannot be turned off."
+                  } else if (level === "department" && !toggleAllowed) {
+                    levelHint = "Required by the Department — mandatory for every bureau, cannot be turned off."
+                  } else if (mandatoryOverride) {
+                    levelHint = "Marked mandatory for all bureaus by a department admin."
+                  } else if (owningBureauLabel) {
+                    levelHint = `${owningBureauLabel} optional field — only that bureau can toggle it.`
+                  }
+
                   return (
                     <div
                       key={field.fieldKey}
                       className={`rounded-lg border p-3 transition-colors ${
-                        field.locked
+                        field.locked || (level !== "bureau" && !toggleAllowed) || mandatoryOverride
                           ? "bg-uspto-blue-primary/5 border-uspto-blue-primary/20"
                           : enabled
                             ? "bg-white"
@@ -173,7 +230,30 @@ export function FormConfigPanel() {
                                 Locked
                               </Badge>
                             )}
-                            {!field.locked && !enabled && (
+                            {level === "omb" && (
+                              <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
+                                <Landmark className="h-2.5 w-2.5 mr-1" />
+                                OMB
+                              </Badge>
+                            )}
+                            {level === "department" && (
+                              <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
+                                <Building2 className="h-2.5 w-2.5 mr-1" />
+                                Department
+                              </Badge>
+                            )}
+                            {mandatoryOverride && (
+                              <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
+                                <Lock className="h-2.5 w-2.5 mr-1" />
+                                Mandatory (all bureaus)
+                              </Badge>
+                            )}
+                            {owningBureauLabel && (
+                              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                {owningBureauLabel} only
+                              </Badge>
+                            )}
+                            {!field.locked && !mandatory && !enabled && (
                               <Badge variant="outline" className="text-[10px] text-muted-foreground">
                                 Hidden from wizard
                               </Badge>
@@ -189,14 +269,27 @@ export function FormConfigPanel() {
                               {field.lockedReason}
                             </p>
                           )}
+                          {levelHint && (
+                            <p className="text-xs text-uspto-blue-primary italic">{levelHint}</p>
+                          )}
                         </div>
-                        <div className="flex-shrink-0 pt-1">
+                        <div className="flex-shrink-0 pt-1 flex flex-col items-end gap-2">
                           <Switch
                             checked={enabled}
-                            disabled={field.locked}
+                            disabled={!toggleAllowed}
                             onCheckedChange={(next) => handleToggle(field, next)}
                             aria-label={`${field.label}: ${enabled ? "on" : "off"}`}
                           />
+                          {promoteAllowed && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[10px] text-muted-foreground"
+                              onClick={() => handleToggleMandatory(field, !mandatoryOverride)}
+                            >
+                              {mandatoryOverride ? "Unmark mandatory" : "Mark mandatory for all bureaus"}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
