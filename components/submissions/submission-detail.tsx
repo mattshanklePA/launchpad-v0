@@ -30,7 +30,17 @@ import {
   clusterForSubmission,
   getRationalization,
   rationalizationBlockReason,
+  tenantHasBureauTier,
 } from "@/lib/rationalization"
+import {
+  getBureauSignoff,
+  getDepartmentApproval,
+  buildBureauSignoffPatch,
+  buildDepartmentApprovalPatch,
+  hasDepartmentTransparency,
+  departmentFinalApprovalEnabled,
+  type SignoffDecision,
+} from "@/lib/bureauSignoff"
 import { assistReviewer } from "@/app/actions"
 import { getTenant } from "@/lib/tenant"
 import { Button } from "@/components/ui/button"
@@ -160,6 +170,13 @@ export function SubmissionDetail({ id }: { id: string }) {
   const highImpactRec = determineHighImpact(fd)
   const consolidation = determineConsolidation(fd)
 
+  // Dispersed bureau sign-off + department approval transparency (lib/bureauSignoff.ts).
+  const showBureauTier = tenantHasBureauTier()
+  const bureauSignoff = getBureauSignoff(sub)
+  const departmentApproval = getDepartmentApproval(sub)
+  const isDeptViewer = hasDepartmentTransparency(viewer)
+  const deptTierEnabled = departmentFinalApprovalEnabled(tenant)
+
   // Unlike similarMatches above (deliberately scoped to the viewer), the
   // rationalization gate must see the true cross-bureau cluster regardless of
   // who's approving — a bureau-scoped reviewer approving their half of a
@@ -203,7 +220,35 @@ export function SubmissionDetail({ id }: { id: string }) {
     // but re-check here so no other caller of setStatus can bypass the gate.
     if (next === "approved" && blockReason) return
     setBusy(true)
-    await setSubmissionStatus(sub.id, next)
+    if ((next === "approved" || next === "rejected") && tenantHasBureauTier()) {
+      // Record the bureau sign-off in the same patch as the status flip (see
+      // lib/bureauSignoff.ts) — "each bureau signs its own" now leaves a record
+      // of who and when instead of just moving the status.
+      await patchSubmissionFormData(sub.id, {
+        reviewStatus: next,
+        ...buildBureauSignoffPatch(sub, next, {
+          signedOffByName: session?.name || session?.email || "Reviewer",
+          signedOffByEmail: session?.email || "",
+          signedOffAt: new Date().toISOString(),
+        }),
+      })
+    } else {
+      await setSubmissionStatus(sub.id, next)
+    }
+    await reload()
+    setBusy(false)
+  }
+
+  const setDepartmentApproval = async (decision: SignoffDecision) => {
+    setBusy(true)
+    await patchSubmissionFormData(
+      sub.id,
+      buildDepartmentApprovalPatch(decision, {
+        byName: session?.name || session?.email || "Department admin",
+        byEmail: session?.email || "",
+        at: new Date().toISOString(),
+      }),
+    )
     await reload()
     setBusy(false)
   }
@@ -230,6 +275,13 @@ export function SubmissionDetail({ id }: { id: string }) {
         <Badge variant="outline" className={statusBadgeClasses(status)}>{STATUS_LABEL[status]}</Badge>
       </div>
 
+      {showBureauTier && bureauSignoff && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          {bureauSignoff.decision === "rejected" ? "Rejected" : "Signed off"} by {bureauSignoff.signedOffByName}, {businessUnitLabel(bureauSignoff.bureau)}, {new Date(bureauSignoff.signedOffAt).toLocaleDateString()}
+        </p>
+      )}
+
       {isReviewer && (
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => setStatus("approved")} disabled={busy || !!blockReason} title={blockReason}>
@@ -241,6 +293,35 @@ export function SubmissionDetail({ id }: { id: string }) {
             <span className="text-xs text-amber-700 flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5" />Rationalization pending
             </span>
+          )}
+        </div>
+      )}
+
+      {showBureauTier && deptTierEnabled && isDeptViewer && bureauSignoff && (
+        <div className={`rounded-lg border p-4 space-y-2 ${departmentApproval ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"}`}>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-uspto-blue-primary" />
+            <span className="font-medium text-sm">Department final approval</span>
+            <Badge
+              variant="outline"
+              className={departmentApproval ? "bg-green-100 text-green-800 border-green-300" : "bg-amber-100 text-amber-800 border-amber-300"}
+            >
+              {departmentApproval ? (departmentApproval.decision === "approved" ? "Confirmed" : "Confirmed rejection") : "Awaiting department confirmation"}
+            </Badge>
+          </div>
+          {departmentApproval ? (
+            <p className="text-sm text-muted-foreground">
+              {departmentApproval.decision === "approved" ? "Approved" : "Rejected"} by {departmentApproval.byName} on {new Date(departmentApproval.at).toLocaleDateString()}.
+            </p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" disabled={busy} onClick={() => setDepartmentApproval("approved")}>
+                <Check className="w-3.5 h-3.5 mr-1.5" />Confirm department approval
+              </Button>
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => setDepartmentApproval("rejected")}>
+                <X className="w-3.5 h-3.5 mr-1.5" />Confirm department rejection
+              </Button>
+            </div>
           )}
         </div>
       )}
