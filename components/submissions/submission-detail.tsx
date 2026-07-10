@@ -25,13 +25,19 @@ import { findSimilar } from "@/lib/similarity"
 import { determineReportability, type ReportabilityStatus } from "@/lib/ombReportability"
 import { determineHighImpact } from "@/lib/highImpactDetermination"
 import { determineConsolidation } from "@/lib/ombConsolidation"
+import {
+  clusterDuplicates,
+  clusterForSubmission,
+  getRationalization,
+  rationalizationBlockReason,
+} from "@/lib/rationalization"
 import { assistReviewer } from "@/app/actions"
 import { getTenant } from "@/lib/tenant"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  ArrowLeft, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Loader2, Copy,
+  ArrowLeft, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Loader2, Copy, Users,
 } from "lucide-react"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
@@ -154,6 +160,25 @@ export function SubmissionDetail({ id }: { id: string }) {
   const highImpactRec = determineHighImpact(fd)
   const consolidation = determineConsolidation(fd)
 
+  // Unlike similarMatches above (deliberately scoped to the viewer), the
+  // rationalization gate must see the true cross-bureau cluster regardless of
+  // who's approving — a bureau-scoped reviewer approving their half of a
+  // cross-bureau duplicate still needs to be blocked even though they can't
+  // see the other bureau's submission from their own roll-down view.
+  const allSubmissions = getSubmissions()
+  const clusters = clusterDuplicates(allSubmissions)
+  const cluster = clusterForSubmission(sub, clusters)
+  const rationalizationDecision = getRationalization(sub)
+  const blockReason = rationalizationBlockReason(sub, clusters)
+  const clusterMembers = cluster
+    ? cluster.memberIds
+        .map((cid) => allSubmissions.find((s) => s.id === cid))
+        .filter((s): s is Submission => !!s && s.id !== sub.id)
+    : []
+  const leadSubmission = rationalizationDecision?.leadSubmissionId
+    ? allSubmissions.find((s) => s.id === rationalizationDecision.leadSubmissionId)
+    : undefined
+
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
     setBusy(true)
@@ -174,6 +199,9 @@ export function SubmissionDetail({ id }: { id: string }) {
   }
 
   const setStatus = async (next: Parameters<typeof setSubmissionStatus>[1]) => {
+    // Defense-in-depth: the Approve button is already disabled while blocked,
+    // but re-check here so no other caller of setStatus can bypass the gate.
+    if (next === "approved" && blockReason) return
     setBusy(true)
     await setSubmissionStatus(sub.id, next)
     await reload()
@@ -203,10 +231,53 @@ export function SubmissionDetail({ id }: { id: string }) {
       </div>
 
       {isReviewer && (
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setStatus("approved")} disabled={busy}><Check className="w-4 h-4 mr-1.5" />Approve</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={() => setStatus("approved")} disabled={busy || !!blockReason} title={blockReason}>
+            <Check className="w-4 h-4 mr-1.5" />Approve
+          </Button>
           <Button variant="outline" onClick={() => document.getElementById("comment-box")?.focus()} disabled={busy}><MessageSquare className="w-4 h-4 mr-1.5" />Request info</Button>
           <Button variant="outline" onClick={() => setStatus("rejected")} disabled={busy}><X className="w-4 h-4 mr-1.5" />Reject</Button>
+          {blockReason && (
+            <span className="text-xs text-amber-700 flex items-center gap-1">
+              <AlertTriangle className="w-3.5 h-3.5" />Rationalization pending
+            </span>
+          )}
+        </div>
+      )}
+
+      {isReviewer && cluster && (
+        <div className={`rounded-lg border p-4 space-y-2 ${blockReason ? "border-amber-300 bg-amber-50" : "border-green-300 bg-green-50"}`}>
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-amber-700" />
+            <span className="font-medium text-sm">Cross-bureau rationalization</span>
+            <Badge
+              variant="outline"
+              className={blockReason ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-green-100 text-green-800 border-green-300"}
+            >
+              {blockReason
+                ? "Rationalization pending"
+                : rationalizationDecision?.decision === "consolidated"
+                  ? "Consolidated"
+                  : "Keep separate"}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {blockReason
+              ? "This use case closely matches work filed under another bureau. A department/OS reviewer must mark this cluster consolidated or keep-separate — see the Rationalization panel on the Pipeline page — before it can be approved."
+              : rationalizationDecision?.decision === "consolidated"
+                ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}.`
+                : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}` : ""}.`}
+          </p>
+          <ul className="space-y-1.5">
+            {clusterMembers.map((m) => (
+              <li key={m.id} className="text-sm flex items-center justify-between gap-3">
+                <Link href={`/submissions/${m.id}`} className="text-uspto-blue-primary hover:underline truncate">
+                  {m.formData.useCaseTitle || "Untitled idea"}
+                </Link>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{businessUnitLabel(getBusinessUnit(m))}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
