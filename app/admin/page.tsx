@@ -44,7 +44,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { getFocusAreasForUnit } from "@/lib/strategicFocusAreas"
-import { getStatus, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
+import { getStatus, STATUS_ORDER, STATUS_LABEL, visibleSubmissions } from "@/lib/reviewWorkflow"
 
 // Real USPTO strategic objectives:
 //   - 2022-2026 Strategic Plan — 5 agency-wide goals
@@ -335,13 +335,16 @@ function AdminPageInner() {
     setAuthChecked(true)
   }, [router])
 
-  // Re-hydrate the local submissions array whenever the cache changes.
+  // Re-hydrate the local submissions array whenever the cache changes, scoped
+  // to the viewer (bureau-scoped admins/reviewers only see their own bureau —
+  // see lib/reviewWorkflow's visibleSubmissions).
   useEffect(() => {
-    if (dataLoaded) {
-      setSubmissions(getSubmissions())
+    if (dataLoaded && session) {
+      const viewer = { role: session.role, email: session.email, businessUnit: session.businessUnit, office: session.office }
+      setSubmissions(visibleSubmissions(getSubmissions(), viewer))
       setHydrated(true)
     }
-  }, [dataLoaded])
+  }, [dataLoaded, session])
 
   const handleLogout = () => {
     logout()
@@ -1103,7 +1106,7 @@ function AdminPageInner() {
           </TabsContent>
 
           <TabsContent value="submitted" className="space-y-6">
-            <DecisionCenter />
+            <DecisionCenter submissions={submissions} />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">

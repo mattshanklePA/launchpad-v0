@@ -100,8 +100,10 @@ export function officeLabel(unit: string, office: string): string {
   return opt ? opt.label : office || "Unspecified"
 }
 
-// Role-scoped visibility. Submitters see only their own; reviewers/admins all.
-// NOTE: client-side filter only — not a security boundary (see storage note).
+// Role-scoped visibility. Submitters see only their own; reviewers/admins all
+// unless bureau-scoped (see roll-down below).
+// NOTE: client-side filter only — not a security boundary (see storage note,
+// and the RLS-per-claim follow-up in docs/ARCHITECTURE.md).
 export function visibleSubmissions(
   all: Submission[],
   viewer: { role: string; email?: string; businessUnit?: string; office?: string } | null,
@@ -111,11 +113,16 @@ export function visibleSubmissions(
     const me = (viewer.email || "").toLowerCase()
     return all.filter((s) => getOwnerEmail(s) === me)
   }
-  // Roll-down: a bureau-scoped reviewer (e.g., a bureau deputy CIO) sees only
-  // their own business unit; an office-scoped reviewer within that bureau
-  // (e.g., NOAA/NWS) is narrowed further to their office. Department admins,
-  // and reviewers without a unit, see everything (the roll-up).
-  if (viewer.role === "reviewer" && viewer.businessUnit) {
+  // Roll-down: a bureau-scoped reviewer (e.g., a bureau deputy CIO) or a
+  // bureau-scoped admin (e.g., a bureau's own admin) sees only their own
+  // business unit; an office-scoped viewer within that bureau (e.g.,
+  // NOAA/NWS) is narrowed further to their office. The Office of the
+  // Secretary (business_unit === "os"), department-level admins (no unit),
+  // and reviewers without a unit are the only cross-bureau views (the
+  // roll-up) — an admin's bureau assignment hard-limits them just like a
+  // reviewer's.
+  const bureauScoped = viewer.role === "reviewer" || (viewer.role === "admin" && viewer.businessUnit !== "os")
+  if (bureauScoped && viewer.businessUnit) {
     const inBureau = all.filter((s) => getBusinessUnit(s) === viewer.businessUnit)
     if (viewer.office) {
       return inBureau.filter((s) => getOffice(s) === viewer.office)

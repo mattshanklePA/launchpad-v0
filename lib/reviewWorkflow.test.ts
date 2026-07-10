@@ -90,3 +90,38 @@ describe("visibleSubmissions (office roll-down)", () => {
     expect(r.map((s) => s.id)).toEqual(["e"])
   })
 })
+
+describe("visibleSubmissions (admin bureau roll-down — DoC hard limit)", () => {
+  const all = [
+    sub({ id: "a", businessUnit: "noaa", office: "nws" }),
+    sub({ id: "b", businessUnit: "noaa", office: "nmfs" }),
+    sub({ id: "c", businessUnit: "census" }),
+    sub({ id: "d", businessUnit: "os" }),
+  ]
+
+  it("scopes a non-os bureau admin to their own bureau, like a reviewer", () => {
+    const r = visibleSubmissions(all, { role: "admin", businessUnit: "noaa" })
+    expect(r.map((s) => s.id).sort()).toEqual(["a", "b"])
+  })
+
+  it("narrows a bureau admin to their office when set", () => {
+    const r = visibleSubmissions(all, { role: "admin", businessUnit: "noaa", office: "nws" })
+    expect(r.map((s) => s.id)).toEqual(["a"])
+  })
+
+  it("never lets a bureau admin see another bureau's submissions", () => {
+    const r = visibleSubmissions(all, { role: "admin", businessUnit: "census" })
+    expect(r.map((s) => s.id)).toEqual(["c"])
+    expect(r.some((s) => s.id === "a" || s.id === "b" || s.id === "d")).toBe(false)
+  })
+
+  it("lets an OS admin (business_unit = os) see every bureau (the roll-up)", () => {
+    const r = visibleSubmissions(all, { role: "admin", businessUnit: "os" })
+    expect(r).toHaveLength(4)
+  })
+
+  it("lets the department admin (business_unit = null) see every bureau (the roll-up)", () => {
+    const r = visibleSubmissions(all, { role: "admin" })
+    expect(r).toHaveLength(4)
+  })
+})

@@ -14,10 +14,10 @@ import {
 import {
   getStatus,
   getComments,
-  getOwnerEmail,
   getBusinessUnit,
   getAssigneeName,
   businessUnitLabel,
+  visibleSubmissions,
   STATUS_LABEL,
   statusBadgeClasses,
 } from "@/lib/reviewWorkflow"
@@ -128,9 +128,13 @@ export function SubmissionDetail({ id }: { id: string }) {
     )
   }
 
-  const me = (session?.email || "").toLowerCase()
-  const isOwner = getOwnerEmail(sub) === me
-  if (role === "submitter" && !isOwner) {
+  // Same scope as every other list view (lib/reviewWorkflow's
+  // visibleSubmissions): a submitter only their own, a bureau-scoped
+  // reviewer/admin only their bureau — so a direct link to another bureau's
+  // submission doesn't bypass the roll-down.
+  const viewer = { role, email: session?.email, businessUnit: session?.businessUnit, office: session?.office }
+  const hasAccess = visibleSubmissions([sub], viewer).length > 0
+  if (!hasAccess) {
     return (
       <div className="space-y-4">
         <Link href="/home" className="text-sm text-uspto-blue-primary hover:underline"><ArrowLeft className="w-4 h-4 inline mr-1" />Back</Link>
@@ -142,7 +146,10 @@ export function SubmissionDetail({ id }: { id: string }) {
   const fd = sub.formData
   const status = getStatus(sub)
   const comments = getComments(sub)
-  const similarMatches = isReviewer ? findSimilar(sub, getSubmissions()) : []
+  // Scoped to the viewer's visible set too — a bureau-scoped reviewer/admin
+  // should only see "similar use case" matches within their own bureau; the
+  // cross-bureau duplicate surface is for OS/department-level viewers only.
+  const similarMatches = isReviewer ? findSimilar(sub, visibleSubmissions(getSubmissions(), viewer)) : []
   const reportability = determineReportability(fd)
   const highImpactRec = determineHighImpact(fd)
   const consolidation = determineConsolidation(fd)
