@@ -101,7 +101,7 @@ function buildSubmissionContext(formData: FormData, currentStep: number): string
   }
 
   if (lines.length === 0) {
-    return "(No prior context — this is the submitter's first Scout interaction.)"
+    return `(No prior context — this is the submitter's first ${TENANT.assistantName} interaction.)`
   }
   return lines.join("\n")
 }
@@ -318,13 +318,13 @@ export type CoPilotResponse = ScoutResponse
 
 // Mock fallback for when the API is unavailable. Always returns a scaffold
 // (never a question) so the UI doesn't get stuck in a Q&A loop with no AI.
-function getMockResponse(step: number, userInput: string): ScoutResponse {
-  const currentStepInfo = getFormSteps().find((s) => s.step === step)
+function getMockResponse(step: number, userInput: string, submitterOffice?: string | null): ScoutResponse {
+  const currentStepInfo = getFormSteps(submitterOffice).find((s) => s.step === step)
   const stepTitle = currentStepInfo?.title || "this step"
   return {
     mode: "scaffold",
     summary:
-      "(Scout is temporarily unavailable. Here's a generic scaffold — please fill in the bracketed sections with your specific details.)",
+      `(${TENANT.assistantName} is temporarily unavailable. Here's a generic scaffold — please fill in the bracketed sections with your specific details.)`,
     scaffoldText: userInput
       ? `${userInput}\n\n[Add the following specifics:\n- WHO specifically (which user group, what unit)\n- WHAT evidence you've observed\n- HOW OFTEN this occurs\n- WHICH strategic priority this advances by name\n- WHAT measurable outcome you expect]`
       : `[Describe ${stepTitle} with:\n- Specific user group (not just a generic role)\n- Observable evidence you've seen\n- Frequency and severity\n- Connection to a named strategic priority\n- Measurable expected outcome]`,
@@ -540,7 +540,7 @@ export async function suggestStrategicAlignment(
 
 ${HUMANIZATION_GUIDELINES}
 
-You are Scout, an AI advisor helping ${TENANT.shortName} staff align AI ideas with published strategic priorities. You will receive a submitter's idea (problem, solution, value claims) and must return:
+You are ${TENANT.assistantName}, an AI advisor helping ${TENANT.shortName} staff align AI ideas with published strategic priorities. You will receive a submitter's idea (problem, solution, value claims) and must return:
 
 1. A list of 1-3 focus area IDs that this idea CLEARLY advances. Use ONLY the canonical IDs from this list:
 ${focusAreaList}
@@ -609,7 +609,7 @@ Rules:
         "This idea aligns with the organization's published strategic priorities. Review the suggested focus areas and add specific references where you have them.",
       alignmentSummary:
         "This idea connects to the organization's published strategic priorities. Review the suggested focus areas and refine the alignment language for your specific use case.",
-      rationale: "(Auto-suggested locally — Scout was unavailable. Verify these match your idea before submitting.)",
+      rationale: `(Auto-suggested locally — ${TENANT.assistantName} was unavailable. Verify these match your idea before submitting.)`,
     }
   }
 }
@@ -625,7 +625,7 @@ export async function validateAndRefineInput(
   conversationHistory: Message[],
   enabledFields?: Record<string, boolean>,
 ): Promise<ScoutResponse> {
-  const currentStepInfo = getFormSteps().find((s) => s.step === step)
+  const currentStepInfo = getFormSteps(formData.submitterOffice).find((s) => s.step === step)
   if (!currentStepInfo) throw new Error("Invalid step number")
 
   const currentField = getInputFieldForStep(step)
@@ -764,7 +764,7 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
     }
   } catch (error) {
     console.error("AI Gateway error, falling back to mock:", error)
-    return getMockResponse(step, userInput)
+    return getMockResponse(step, userInput, formData.submitterOffice)
   }
 }
 
@@ -790,7 +790,7 @@ export async function suggestIdeaOverview(
       title: "",
       description: "",
       error:
-        "Fill in the problem and solution first — Scout drafts the title and summary from your earlier answers.",
+        `Fill in the problem and solution first — ${TENANT.assistantName} drafts the title and summary from your earlier answers.`,
     }
   }
 
@@ -832,7 +832,7 @@ ${HUMANIZATION_GUIDELINES}`,
     return {
       title: fallbackTitle,
       description: [problem, solution].filter(Boolean).join(" ").slice(0, 280),
-      error: "Scout was unavailable — drafted from your inputs locally. Edit to fit.",
+      error: `${TENANT.assistantName} was unavailable — drafted from your inputs locally. Edit to fit.`,
     }
   }
 }
@@ -906,7 +906,7 @@ You are ADVISORY ONLY. The human reviewer makes the decision; never imply you ar
     console.error("assistReviewer failed, returning fallback:", error)
     return {
       verdict:
-        "Scout is temporarily unavailable. Review the submission against problem clarity, quantified value, strategic alignment, feasibility, and the AI risk answers.",
+        `${TENANT.assistantName} is temporarily unavailable. Review the submission against problem clarity, quantified value, strategic alignment, feasibility, and the AI risk answers.`,
       strengths: [],
       gaps: ["Could not generate an AI read — assess manually."],
       suggestedDisposition: "request_info",

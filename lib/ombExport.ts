@@ -5,6 +5,8 @@
 
 import type { Submission } from "@/lib/submissions"
 import { businessUnitLabel, getBusinessUnit } from "@/lib/reviewWorkflow"
+import { determineConsolidation, CONSOLIDATION_CATEGORIES, type ConsolidationCategoryId } from "@/lib/ombConsolidation"
+import { csvLine } from "@/lib/csv"
 
 // LaunchPad field -> OMB inventory column mapping:
 //   id                     -> Use Case ID
@@ -22,6 +24,14 @@ import { businessUnitLabel, getBusinessUnit } from "@/lib/reviewWorkflow"
 //   aiModelSourcing        -> Model sourcing
 //   aiHumanReview          -> Mandatory human review
 //   aiDecisionalImpact     -> AI decisional impact
+//   (lib/ombConsolidation) -> Reporting Mode + Consolidated Category — is this
+//                             use case Individual or Consolidated (matches one
+//                             of OMB's widely-used commercial AI categories)?
+//                             High-impact use cases are always Individual (see
+//                             lib/highImpactDetermination.ts). Consolidated
+//                             matches are collapsed to a single department-wide
+//                             row per category in buildOmbCsv() below rather
+//                             than one row per bureau submission.
 export const OMB_COLUMNS = [
   "Use Case ID",
   "Use Case Name",
@@ -29,6 +39,8 @@ export const OMB_COLUMNS = [
   "Bureau/Component",
   "Stage of Development",
   "Is the AI use case high-impact?",
+  "Reporting Mode",
+  "Consolidated Category",
   "What problem is the AI intended to solve?",
   "Expected benefits",
   "Describe the AI system's outputs",
@@ -71,6 +83,7 @@ const MODEL_SOURCING_LABELS: Record<string, string> = {
 /** Maps one submission to a CSV row (values in OMB_COLUMNS order). Pure — no I/O. */
 export function mapSubmissionToOmbRow(submission: Submission, agencyShortName: string): string[] {
   const fd = submission.formData
+  const consolidation = determineConsolidation(fd)
   return [
     submission.id,
     fd.useCaseTitle || "",
@@ -78,6 +91,8 @@ export function mapSubmissionToOmbRow(submission: Submission, agencyShortName: s
     businessUnitLabel(getBusinessUnit(submission)),
     STAGE_LABELS[fd.stageOfDevelopment] || "",
     YES_NO[fd.highImpact] || "",
+    consolidation.status,
+    consolidation.categoryLabel || "",
     fd.coreProblem || "",
     fd.businessValue || "",
     fd.solutionSummary || "",
@@ -90,23 +105,69 @@ export function mapSubmissionToOmbRow(submission: Submission, agencyShortName: s
   ]
 }
 
-// RFC 4180 field escaping: quote any field containing a comma, quote, or newline.
-function csvEscape(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
+/** One department-level CSV row standing in for every submission consolidated under `categoryId`. Pure — no I/O. */
+function buildConsolidatedOmbRow(
+  categoryId: ConsolidationCategoryId,
+  categoryLabel: string,
+  matches: Submission[],
+  agencyShortName: string,
+): string[] {
+  const bureaus = Array.from(new Set(matches.map((s) => businessUnitLabel(getBusinessUnit(s))))).sort()
+  const bureauSummary = `${bureaus.length} bureau${bureaus.length === 1 ? "" : "s"}: ${bureaus.join(", ")}`
+  const problemSummary = `Reported once across the department per OMB's widely-used commercial AI category guidance — consolidates ${matches.length} bureau submission${matches.length === 1 ? "" : "s"} (${bureaus.join(", ")}) into this single department-level entry.`
+  return [
+    `consolidated:${categoryId}`,
+    `${categoryLabel} (consolidated)`,
+    agencyShortName,
+    bureauSummary,
+    "",
+    "No",
+    "Consolidated",
+    categoryLabel,
+    problemSummary,
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]
 }
 
-function csvLine(values: string[]): string {
-  return values.map(csvEscape).join(",")
-}
-
-/** Builds the full CSV string (header + one row per submission). Pure — no I/O. */
+/**
+ * Builds the full CSV string: one row per individually-reported submission
+ * (including every high-impact use case), plus a single department-level row
+ * per consolidated category — never one row per bureau for a category OMB
+ * lets the department report once. Pure — no I/O.
+ */
 export function buildOmbCsv(submissions: Submission[], agencyShortName: string): string {
   const lines = [csvLine([...OMB_COLUMNS])]
+
+  const consolidatedGroups = new Map<ConsolidationCategoryId, { label: string; matches: Submission[] }>()
+
   for (const s of submissions) {
-    lines.push(csvLine(mapSubmissionToOmbRow(s, agencyShortName)))
+    const consolidation = determineConsolidation(s.formData)
+    if (consolidation.status === "Consolidated" && consolidation.category) {
+      const group = consolidatedGroups.get(consolidation.category) ?? {
+        label: consolidation.categoryLabel || consolidation.category,
+        matches: [],
+      }
+      group.matches.push(s)
+      consolidatedGroups.set(consolidation.category, group)
+    } else {
+      lines.push(csvLine(mapSubmissionToOmbRow(s, agencyShortName)))
+    }
   }
+
+  // Iterate in CONSOLIDATION_CATEGORIES order (not submission order) so the
+  // export is deterministic regardless of how submissions are sorted.
+  for (const { id } of CONSOLIDATION_CATEGORIES) {
+    const group = consolidatedGroups.get(id)
+    if (!group) continue
+    lines.push(csvLine(buildConsolidatedOmbRow(id, group.label, group.matches, agencyShortName)))
+  }
+
   return lines.join("\n") + "\n"
 }

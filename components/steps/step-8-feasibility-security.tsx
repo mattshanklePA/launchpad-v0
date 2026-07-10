@@ -12,6 +12,11 @@ import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { OmbBadge } from "../launchpad/omb-badge"
+import { determineHighImpact, HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
+
+const highImpactFactorOptions: { value: HighImpactFactor; label: string }[] = (
+  Object.keys(HIGH_IMPACT_FACTOR_LABELS) as HighImpactFactor[]
+).map((value) => ({ value, label: HIGH_IMPACT_FACTOR_LABELS[value] }))
 
 const resourceOptions = [
   { value: "dev_staff", label: "Development staff" },
@@ -32,7 +37,7 @@ export function Step8FeasibilitySecurity() {
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
   const tenant = getTenant()
 
-  const handleToggle = (field: "resourcesNeeded" | "accessControlRequirements", item: string) => {
+  const handleToggle = (field: "resourcesNeeded" | "accessControlRequirements" | "highImpactFactors", item: string) => {
     const currentItems = formData[field] || []
     const newItems = currentItems.includes(item) ? currentItems.filter((i) => i !== item) : [...currentItems, item]
     setFormData((prev) => ({ ...prev, [field]: newItems }))
@@ -293,6 +298,30 @@ export function Step8FeasibilitySecurity() {
                 </Select>
               </div>
 
+              {isVisible("highImpactFactors") && (
+                <div className="space-y-2">
+                  <Label>
+                    Could this AI&apos;s output meaningfully affect any of the following? <OmbBadge />
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    OMB M-25-21 Section 5 high-impact criteria — select all that apply.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {highImpactFactorOptions.map((option) => (
+                      <Toggle
+                        key={option.value}
+                        pressed={formData.highImpactFactors.includes(option.value)}
+                        onPressedChange={() => handleToggle("highImpactFactors", option.value)}
+                        variant="outline"
+                        className="rounded-full px-3 py-1 text-sm h-auto"
+                      >
+                        {option.label}
+                      </Toggle>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>
                   Is this a high-impact AI use case? <OmbBadge />
@@ -313,8 +342,119 @@ export function Step8FeasibilitySecurity() {
                 </RadioGroup>
                 <p className="text-xs text-muted-foreground">
                   High-impact use cases carry additional OMB risk-management reporting.
+                  {" "}
+                  Recommended: <strong>{determineHighImpact(formData).recommendation === "yes" ? "Yes" : "No"}</strong>, based on the factors selected above plus the risk answers already captured on this form — you make the final call.
                 </p>
               </div>
+
+              {formData.highImpact === "yes" && isVisible("aiImpactAssessment") && (
+                <div className="space-y-5 pl-4 border-l-2 border-blue-200">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    High-impact risk management <OmbBadge />
+                  </p>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="aiImpactAssessment">
+                      AI impact assessment <OmbBadge />
+                    </Label>
+                    <Textarea
+                      id="aiImpactAssessment"
+                      value={formData.aiImpactAssessment}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, aiImpactAssessment: e.target.value }))}
+                      placeholder="Intended purpose, expected benefits, and potential risks of this AI system..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Pre-deployment / real-world testing done? <OmbBadge />
+                    </Label>
+                    <RadioGroup
+                      value={formData.preDeploymentTesting}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, preDeploymentTesting: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="pretest-yes" />
+                        <Label htmlFor="pretest-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="pretest-no" />
+                        <Label htmlFor="pretest-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                    <Textarea
+                      value={formData.preDeploymentTestingNote}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, preDeploymentTestingNote: e.target.value }))
+                      }
+                      placeholder="Note (optional)..."
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Ongoing monitoring plan? <OmbBadge />
+                    </Label>
+                    <RadioGroup
+                      value={formData.ongoingMonitoringPlan}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, ongoingMonitoringPlan: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="monitor-yes" />
+                        <Label htmlFor="monitor-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="monitor-no" />
+                        <Label htmlFor="monitor-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                    <Textarea
+                      value={formData.ongoingMonitoringNote}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, ongoingMonitoringNote: e.target.value }))}
+                      placeholder="Note (optional)..."
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Human oversight / appeal mechanism for affected individuals? <OmbBadge />
+                    </Label>
+                    <RadioGroup
+                      value={formData.humanOversightAppeal}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, humanOversightAppeal: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="appeal-yes" />
+                        <Label htmlFor="appeal-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="appeal-no" />
+                        <Label htmlFor="appeal-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                    <Textarea
+                      value={formData.humanOversightAppealNote}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, humanOversightAppealNote: e.target.value }))
+                      }
+                      placeholder="Note (optional)..."
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>

@@ -6,7 +6,11 @@
 // near-duplicates across bureaus to demonstrate the cross-bureau
 // rationalization / duplicate-detection story and double as a Decision
 // Center comparison pair, OMB reportability variety (reportable / excluded /
-// needs-review), and a high-impact example with its risk fields populated.
+// needs-review), a high-impact example with its risk fields populated, and a
+// cross-bureau consolidated trio (items 10-12: NIST/NOAA/ITA, all matching
+// lib/ombConsolidation.ts's "meeting_transcription" category) so the bureau
+// roll-up's consolidated-vs-individual OMB reporting story actually collapses
+// — see lib/seedSubmissionsDoc.test.ts's "consolidation" describe block.
 //
 // Every id and owner email below is deterministic on purpose: the admin
 // "Reset Demo Data" button wipes and re-inserts this exact array, so a
@@ -247,6 +251,22 @@ export const docSeedSubmissions: Submission[] = [
       submitterRole: "it_staff",
       submitterOffice: "nist",
       reviewStatus: "approved",
+      // Bureau sign-off + department final approval (lib/bureauSignoff.ts,
+      // issue #54) — demonstrates the full two-tier flow: NIST signs off, then
+      // the department confirms.
+      bureauSignoff: {
+        bureau: "nist",
+        decision: "approved",
+        signedOffByName: "Alan Brooks",
+        signedOffByEmail: "alan.brooks@nist.gov",
+        signedOffAt: hoursAgo(38),
+      },
+      departmentApproval: {
+        decision: "approved",
+        byName: "Renee Caldwell",
+        byEmail: "renee.caldwell@doc.gov",
+        at: hoursAgo(24),
+      },
       useCaseTitle: "Standards & Publications Knowledge Assistant",
       useCaseDescription:
         "An internal cited-source assistant that helps NIST staff find and summarize relevant standards, publications, and internal guidance, with links to the source documents.",
@@ -437,9 +457,18 @@ export const docSeedSubmissions: Submission[] = [
       // High-impact example (OMB M-25-21 additional risk-management reporting):
       // public-facing, life-safety, AI-decisional — risk fields populated below.
       stageOfDevelopment: "pilot",
+      highImpactFactors: ["safety"],
       highImpact: "yes",
       hasATO: "in_progress",
       systemSource: "contract",
+      aiImpactAssessment:
+        "Intended purpose: faster public comprehension of severe-weather alerts. Expected benefit: quicker protective action, especially for limited-English and low-vision users. Potential risk: a flawed summary could misrepresent an official alert, so the official text is always shown alongside and a forecaster reviews before publish.",
+      preDeploymentTesting: "yes",
+      preDeploymentTestingNote: "Piloted against a sample of historical alerts with forecaster review before wider rollout.",
+      ongoingMonitoringPlan: "yes",
+      ongoingMonitoringNote: "Forecaster approval rate and comprehension metrics tracked each release; any drift triggers a re-review.",
+      humanOversightAppeal: "yes",
+      humanOversightAppealNote: "Forecaster reviews and can reject any summary before it publishes; the official alert is always shown alongside for the public to compare.",
       feasibilitySummary: "Public, life-safety context, so this is high-impact: mandatory forecaster review before publish, official text always shown, validated accuracy. American-built.",
       successMetrics: "Comprehension/time-to-action in testing, forecaster approval rate, accessibility conformance — vs current.",
       keyMetrics: ["user_satisfaction", "quality_improvement"],
@@ -538,6 +567,15 @@ export const docSeedSubmissions: Submission[] = [
       submitterRole: "product_owner",
       submitterOffice: "mbda",
       reviewStatus: "rejected",
+      // Bureau sign-off (lib/bureauSignoff.ts) records rejections too, not
+      // just approvals.
+      bureauSignoff: {
+        bureau: "mbda",
+        decision: "rejected",
+        signedOffByName: "Jordan Pierce",
+        signedOffByEmail: "jordan.pierce@mbda.gov",
+        signedOffAt: hoursAgo(60),
+      },
       comments: [
         {
           id: "c-mbda-1",
@@ -631,6 +669,227 @@ export const docSeedSubmissions: Submission[] = [
       problemType: ["productivity"],
       severity: "medium",
       problemDefinition: "Field data quality staff lack a fast way to triage the flagged-record backlog during peak collection.",
+    } as Partial<FormData>),
+  },
+
+  // 10) NIST — internal committee meeting transcription. Submitted.
+  // [consolidation trio A — "meeting_transcription", see lib/ombConsolidation.ts]
+  {
+    id: "doc-nist-meeting-transcription",
+    submittedAt: hoursAgo(15),
+    formData: mk({
+      submitterName: "Grace Liu",
+      submitterEmail: "grace.liu@nist.gov",
+      submitterRole: "it_staff",
+      submitterOffice: "nist",
+      reviewStatus: "submitted",
+      useCaseTitle: "Standards Committee Meeting Transcription & Action-Item Assistant",
+      useCaseDescription:
+        "An internal tool that transcribes NIST standards working-group and committee meetings and drafts a list of decisions and action items for the meeting lead to review before it's circulated to attendees.",
+      publicIndicator: "excluded",
+      targetAudience: "other",
+      impactedUsersCount: "50_500",
+      painPoints:
+        "Staff who run standards committee meetings spend hours after each session writing up notes and tracking down who owns each action item.",
+      targetUserContext: "NIST staff who lead or attend standards working-group and committee meetings.",
+      targetUserSummary: "NIST staff running or attending standards committee meetings who need accurate notes and action items fast.",
+      coreProblem: "Committee meeting write-ups are manual, so decisions and action items are slow to circulate and sometimes get missed.",
+      problemImpact: "Slow write-ups delay follow-through on committee decisions and action items.",
+      affectedSystem: "cross_functional",
+      problemType: ["productivity"],
+      severity: "medium",
+      problemDefinition: "Staff lack a fast, accurate way to turn a committee meeting into a summary and action-item list, delaying follow-through.",
+      proposedSolution:
+        "An assistant that transcribes the meeting audio, drafts a summary of decisions, and lists action items with an owner and due date for the meeting lead to review before circulating. Never sends automatically.",
+      keyFunctionality: ["summarization", "question_answering"],
+      solutionSummary: "Meeting transcription plus a reviewed summary and action-item list; the meeting lead approves every circulation.",
+      userValue: "Staff get an accurate meeting summary and action-item list in minutes instead of hours of manual note-taking.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["less_frustration", "more_consistent_work"],
+      userValueSummary: "Minutes, not hours, to turn a committee meeting into a reviewed summary and action-item list.",
+      businessValue: "Faster meeting write-ups keep standards work moving and reduce dropped action items across committees.",
+      costSavings: "lt_50k",
+      strategicBenefit: ["operational_efficiency"],
+      businessValueSummary: "Reclaimed staff time and fewer dropped action items across standards committees.",
+      usptoFocusArea: ["omb_innovation", "customer_experience"],
+      relevantOkrs: "Staff productivity; meeting-to-action-item turnaround; responsible-AI use.",
+      alignmentSummary: "Internal productivity gain with a low-risk, human-reviewed design.",
+      implementationComplexity: "low",
+      resourcesNeeded: ["ml_engineers"],
+      dependencies: "Meeting-recording consent workflow; access to committee calendars.",
+      involvesSensitiveData: "no",
+      securityClassification: "internal",
+      accessControlRequirements: ["employee_authentication", "audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      stageOfDevelopment: "pilot",
+      nationalSecuritySystem: "no",
+      researchOnly: "no",
+      highImpact: "no",
+      hasATO: "no",
+      systemSource: "in_house",
+      feasibilitySummary: "Low complexity, low risk: internal committee meetings only, human-reviewed before circulation, American-built.",
+      successMetrics: "Write-up turnaround time, action-item completion rate, meeting-lead satisfaction — vs a baseline.",
+      keyMetrics: ["time_saved", "user_satisfaction"],
+      timelineForResults: "3_6",
+      metricsSummary: "Tracks write-up turnaround and action-item completion against a baseline.",
+      routeTo: ["governance"],
+      reviewerNotes:
+        "Matches the OMB widely-used-commercial-AI meeting-transcription category — worth checking whether other bureaus are running something similar before we fund separate builds.",
+      readinessScore: "ready",
+      readinessSummary: "Low-risk, well-scoped internal productivity tool; human-reviewed before every circulation.",
+      executiveSummary:
+        "NIST committee leads spend hours writing up meeting notes and tracking action items by hand. This assistant transcribes the meeting, drafts a summary and action-item list, and lets the meeting lead review before it's shared. Expected: faster turnaround and fewer dropped action items. Low risk, American-built, human-reviewed.",
+    } as Partial<FormData>),
+  },
+
+  // 11) NOAA (NESDIS) — internal briefing recap. In review.
+  // [consolidation trio B — "meeting_transcription"]
+  {
+    id: "doc-noaa-ops-meeting-recap",
+    submittedAt: hoursAgo(33),
+    formData: mk({
+      submitterName: "Erin Castillo",
+      submitterEmail: "erin.castillo@noaa.gov",
+      submitterRole: "manager",
+      submitterOffice: "noaa",
+      submitterSubOffice: "nesdis",
+      reviewStatus: "in_review",
+      useCaseTitle: "Operations Briefing Meeting Summary & Transcript Tool",
+      useCaseDescription:
+        "An internal tool that summarizes daily satellite-operations briefing meetings into a short recap of decisions and open items, alongside the full transcript, for staff who couldn't attend.",
+      publicIndicator: "excluded",
+      targetAudience: "other",
+      impactedUsersCount: "50_500",
+      painPoints: "Staff who miss the daily operations briefing have no fast way to catch up beyond asking a colleague to recap it.",
+      targetUserContext: "NESDIS satellite-operations staff who need to catch up on daily briefing meetings they couldn't attend.",
+      targetUserSummary: "Operations staff catching up on briefing meetings they missed.",
+      coreProblem: "Staff who miss a briefing meeting lack a fast, accurate way to catch up on what was decided.",
+      problemImpact: "Missed context slows follow-through on operational decisions made in briefings staff couldn't attend.",
+      affectedSystem: "cross_functional",
+      problemType: ["productivity", "user_experience"],
+      severity: "low",
+      problemDefinition: "Staff who miss a daily briefing meeting lack a fast, accurate way to catch up on what was decided.",
+      proposedSolution:
+        "A tool that posts a short recap of the briefing meeting's decisions and open items alongside the full transcript to the team channel. The briefing lead reviews before it's posted.",
+      keyFunctionality: ["summarization"],
+      solutionSummary: "Reviewed meeting recap plus the full transcript, posted for anyone who missed the briefing.",
+      userValue: "Staff catch up on a missed briefing in two minutes instead of tracking down a colleague.",
+      userTimeSavings: "lt_1",
+      otherUserImprovements: ["less_frustration"],
+      userValueSummary: "Fast catch-up on missed briefings without interrupting a colleague.",
+      businessValue: "Keeps operations staff aligned on daily decisions even when they miss the live briefing.",
+      costSavings: "lt_50k",
+      strategicBenefit: ["operational_efficiency"],
+      businessValueSummary: "Better alignment on daily operational decisions at low cost.",
+      usptoFocusArea: ["customer_experience"],
+      relevantOkrs: "Operations-team alignment; responsible-AI use.",
+      alignmentSummary: "Low-risk internal productivity gain for operations staff.",
+      implementationComplexity: "low",
+      resourcesNeeded: ["ml_engineers"],
+      dependencies: "Briefing-meeting recording tool; team channel integration.",
+      involvesSensitiveData: "no",
+      securityClassification: "internal",
+      accessControlRequirements: ["employee_authentication"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      stageOfDevelopment: "pre_deployment",
+      nationalSecuritySystem: "no",
+      researchOnly: "no",
+      highImpact: "no",
+      hasATO: "no",
+      systemSource: "in_house",
+      feasibilitySummary: "Low complexity, low risk: internal-only recap reviewed by the briefing lead before posting. American-built.",
+      successMetrics: "Catch-up time, briefing-lead review turnaround, staff-reported alignment — vs a baseline.",
+      keyMetrics: ["time_saved", "user_satisfaction"],
+      timelineForResults: "3_6",
+      metricsSummary: "Tracks catch-up time and staff-reported alignment against a baseline.",
+      routeTo: ["governance"],
+      reviewerNotes:
+        "Same OMB meeting-transcription/summarization category as NIST's committee assistant — a candidate for one shared department build instead of several.",
+      readinessScore: "needs_work",
+      readinessSummary: "Useful, low-risk internal tool; still needs a briefing-lead review workflow defined before it's ready.",
+      executiveSummary:
+        "NESDIS staff who miss the daily operations briefing have no fast way to catch up. This tool posts a reviewed recap of decisions and open items alongside the full transcript. Expected: faster catch-up and better alignment. Low risk, American-built, reviewed before posting.",
+    } as Partial<FormData>),
+  },
+
+  // 12) ITA (Industry & Analysis) — trade-mission debrief transcription. Approved.
+  // [consolidation trio C — "meeting_transcription"]
+  {
+    id: "doc-ita-mission-debrief-transcription",
+    submittedAt: hoursAgo(18),
+    formData: mk({
+      submitterName: "Sofia Reyes",
+      submitterEmail: "sofia.reyes@trade.gov",
+      submitterRole: "product_owner",
+      submitterOffice: "ita",
+      submitterSubOffice: "industry_analysis",
+      reviewStatus: "approved",
+      // Deliberately no bureauSignoff (lib/bureauSignoff.ts) — an approval from
+      // before the sign-off feature existed, showing up as "pending" in the
+      // approval transparency view/roll-up despite already being approved.
+      // Demonstrates exactly the gap this feature closes.
+      useCaseTitle: "Trade Mission Debrief Meeting Transcription Assistant",
+      useCaseDescription:
+        "An internal tool that transcribes trade-mission debrief meetings and drafts a structured recap of findings and follow-ups for the analyst team, replacing manual note-taking.",
+      publicIndicator: "excluded",
+      targetAudience: "other",
+      impactedUsersCount: "10_50",
+      painPoints:
+        "Analysts who run trade-mission debrief meetings spend significant time afterward writing up findings by hand, and details get lost between missions.",
+      targetUserContext: "ITA industry & analysis staff who lead or attend trade-mission debrief meetings.",
+      targetUserSummary: "Industry & Analysis staff turning trade-mission debrief meetings into usable findings.",
+      coreProblem: "Debrief meeting write-ups are manual, so findings are slow to compile and details get lost between missions.",
+      problemImpact: "Slow, inconsistent write-ups delay downstream analysis and can lose findings between missions.",
+      affectedSystem: "cross_functional",
+      problemType: ["productivity", "quality"],
+      severity: "medium",
+      problemDefinition: "Analysts lack a fast, consistent way to turn a debrief meeting into structured findings for downstream use.",
+      proposedSolution:
+        "An assistant that transcribes the debrief meeting and drafts a structured recap of findings and follow-ups, which the analyst reviews and edits before it's filed. Never files automatically.",
+      keyFunctionality: ["summarization", "question_answering"],
+      solutionSummary: "Reviewed meeting transcription plus a structured findings recap the analyst approves before filing.",
+      userValue: "Analysts get a structured, reviewed recap in minutes instead of hours of manual write-up, with fewer lost details.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["more_consistent_work", "less_frustration"],
+      userValueSummary: "Faster, more consistent debrief write-ups with fewer lost findings.",
+      businessValue: "Speeds up how trade-mission findings reach downstream analysis and keeps the mission record more complete.",
+      costSavings: "50k_250k",
+      strategicBenefit: ["operational_efficiency"],
+      businessValueSummary: "Faster findings turnaround and a more complete mission record.",
+      usptoFocusArea: ["customer_experience"],
+      relevantOkrs: "Trade-mission findings turnaround; responsible-AI use.",
+      alignmentSummary: "Internal productivity gain for the analyst team under a reviewed, low-risk design.",
+      implementationComplexity: "low",
+      resourcesNeeded: ["ml_engineers", "content_owner"],
+      dependencies: "Debrief-meeting recording workflow; case file integration.",
+      involvesSensitiveData: "no",
+      securityClassification: "internal",
+      accessControlRequirements: ["employee_authentication", "audit_logging"],
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      stageOfDevelopment: "deployed",
+      nationalSecuritySystem: "no",
+      researchOnly: "no",
+      highImpact: "no",
+      hasATO: "yes",
+      systemSource: "in_house",
+      feasibilitySummary: "Low complexity, low risk: internal debrief meetings only, analyst-reviewed before filing. American-built.",
+      successMetrics: "Write-up turnaround, findings-completeness rate, analyst satisfaction — vs a baseline.",
+      keyMetrics: ["time_saved", "quality_improvement", "user_satisfaction"],
+      timelineForResults: "3_6",
+      metricsSummary: "Tracks write-up turnaround and findings completeness against a baseline.",
+      routeTo: ["governance"],
+      reviewerNotes:
+        "Approved: same OMB meeting-transcription category NIST and NOAA independently proposed — strong case to consolidate into one department-wide build.",
+      readinessScore: "ready",
+      readinessSummary: "Low-risk, deployed internal productivity tool; analyst-reviewed before every filing. Approved.",
+      executiveSummary:
+        "ITA analysts spend significant time writing up trade-mission debrief meetings by hand, and details get lost between missions. This assistant transcribes the debrief and drafts a structured findings recap the analyst reviews before filing. Expected: faster turnaround and a more complete record. Low risk, American-built, deployed.",
     } as Partial<FormData>),
   },
 ]

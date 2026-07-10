@@ -8,6 +8,9 @@
 // Otherwise it'll be invisible to the toggle UI and stuck always-on.
 
 import type { FormData } from "@/lib/steps"
+import { getTenant } from "@/lib/tenant"
+
+const ASSISTANT_NAME = getTenant().assistantName
 
 export type FieldDefinition = {
   // Key into FormData. Must exactly match a property name.
@@ -98,6 +101,57 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
     omb: true,
   },
+  {
+    fieldKey: "highImpactFactors",
+    label: "High-impact factors",
+    description: "Which OMB M-25-21 Section 5 categories (rights, safety, benefits access, resource allocation, enforcement) the AI output could meaningfully affect.",
+    reasonToInclude: "Drives the rule-based high-impact recommendation (lib/highImpactDetermination.ts) instead of relying on a bare self-reported flag.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  // ────── High-impact risk-management fields (only surfaced when highImpact = yes) ──────
+  {
+    fieldKey: "aiImpactAssessment",
+    label: "AI impact assessment",
+    description: "Intended purpose, expected benefits, and potential risks of the AI system.",
+    reasonToInclude: "M-25-21 minimum practice for high-impact AI: an impact assessment before deployment.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "preDeploymentTesting",
+    label: "Pre-deployment / real-world testing done?",
+    description: "Whether the AI system was tested before deployment, including real-world/live-environment testing.",
+    reasonToInclude: "M-25-21 minimum practice for high-impact AI: pre-deployment testing.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "ongoingMonitoringPlan",
+    label: "Ongoing monitoring plan?",
+    description: "Whether there's a plan to monitor the AI system's performance after deployment.",
+    reasonToInclude: "M-25-21 minimum practice for high-impact AI: ongoing monitoring.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "humanOversightAppeal",
+    label: "Human oversight / appeal mechanism?",
+    description: "Whether affected individuals have a human oversight or appeal mechanism available.",
+    reasonToInclude: "M-25-21 minimum practice for high-impact AI: human oversight and an appeal path for affected individuals.",
+    phase: 4,
+    step: 6,
+    locked: false,
+    omb: true,
+  },
   // ────── Phase 1: Setup ──────
   {
     fieldKey: "submitterName",
@@ -164,11 +218,11 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     label: "Idea Description",
     description: "1-3 sentence narrative explanation of the idea.",
     reasonToInclude:
-      "Gives Scout enough context to coach the submitter through subsequent steps without inventing details.",
+      `Gives ${ASSISTANT_NAME} enough context to coach the submitter through subsequent steps without inventing details.`,
     phase: 5,
     step: 8,
     locked: true,
-    lockedReason: "Required — Scout uses this as the seed context for every step's coaching.",
+    lockedReason: `Required — ${ASSISTANT_NAME} uses this as the seed context for every step's coaching.`,
   },
   {
     fieldKey: "publicIndicator",
@@ -280,7 +334,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 2,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // ────── Phase 3: Solution & Value ──────
@@ -294,7 +348,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     phase: 3,
     step: 3,
     locked: true,
-    lockedReason: "Required — Scout's assessment and the Decision Center both depend on this field.",
+    lockedReason: `Required — ${ASSISTANT_NAME}'s assessment and the Decision Center both depend on this field.`,
   },
   {
     fieldKey: "keyFunctionality",
@@ -316,7 +370,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 3,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // Step 5: Value (merged user + business)
@@ -397,7 +451,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 4,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // ────── Phase 4: Alignment & Feasibility ──────
@@ -432,7 +486,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 5,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // Step 7: Feasibility & Security
@@ -539,7 +593,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 6,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 
   // Step 8: Success Metrics
@@ -581,7 +635,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     step: 7,
     locked: true,
     lockedReason:
-      "Holds Scout's drafted summary — locked on so the AI output always has a field to land in.",
+      `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
   },
 ]
 

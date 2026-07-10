@@ -5,7 +5,7 @@
 
 import { jsPDF } from "jspdf"
 import { SUBMITTER_ROLE_LABELS, type FormData } from "@/lib/steps"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
 
 const USPTO_BLUE_PRIMARY: [number, number, number] = [53, 94, 147]
 const USPTO_BLUE_SECONDARY: [number, number, number] = [37, 66, 103]
@@ -65,7 +65,7 @@ export function generateSubmissionPDF(formData: FormData) {
   doc.setTextColor(255, 255, 255)
   doc.setFont("helvetica", "bold")
   doc.setFontSize(20)
-  doc.text("LaunchPad", margin, 36)
+  doc.text(tenant.productName, margin, 36)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(11)
   doc.text("AI Use Case Submission", margin, 54)
@@ -205,7 +205,7 @@ export function generateSubmissionPDF(formData: FormData) {
   bullets("Other user improvements", formData.otherUserImprovements)
   section("Business Value", fmt(formData.businessValueSummary || formData.businessValue), rangeLabel(formData.costSavings, "savings"))
   bullets("Strategic benefits", formData.strategicBenefit)
-  section(`Strategic Alignment with ${tenant.orgName} Priorities`, fmt(formData.alignmentSummary || formData.relevantOkrs))
+  section(`Strategic Alignment with ${getOrgNameForUnit(formData.submitterOffice)} Priorities`, fmt(formData.alignmentSummary || formData.relevantOkrs))
   chips("Strategic focus areas", formData.usptoFocusArea)
   section("Feasibility & Security", fmt(formData.feasibilitySummary || formData.dependencies),
     formData.implementationComplexity ? `${formData.implementationComplexity.charAt(0).toUpperCase() + formData.implementationComplexity.slice(1)} complexity` : undefined)
@@ -245,7 +245,7 @@ export function generateSubmissionPDF(formData: FormData) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(8)
     doc.setTextColor(...GRAY_500)
-    doc.text(`LaunchPad — ${tenant.logoSubtitle}`, margin, pageH - 18)
+    doc.text(`${tenant.productName} — ${tenant.logoSubtitle}`, margin, pageH - 18)
     doc.text(`Page ${i} of ${total}`, pageW - margin, pageH - 18, { align: "right" })
   }
 

@@ -17,7 +17,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { suggestStrategicAlignment } from "@/app/actions"
 import { getFocusAreasForUnit, type AlignmentSuggestion } from "@/lib/strategicFocusAreas"
 import type { FocusArea } from "@/lib/tenant/types"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { Sparkles, Loader2, CheckCircle2, X, RefreshCw } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
@@ -45,6 +45,10 @@ export function Step7Alignment() {
   const focusAreas = useMemo(() => getFocusAreasForUnit(formData.submitterOffice), [formData.submitterOffice])
   const focusByCategory = useMemo(() => groupByCategory(focusAreas), [focusAreas])
   const idToLabel = (id: string): string => focusAreas.find((f) => f.id === id)?.label || id
+  // Same bureau-first resolution as focusAreas, for copy that names "the
+  // organization" — keeps the header/label in sync with which priority list
+  // is actually being shown.
+  const alignmentOrgName = useMemo(() => getOrgNameForUnit(formData.submitterOffice), [formData.submitterOffice])
 
   // Cheap heuristic for "has the submitter filled out the upstream steps enough
   // that a Scout suggestion would be useful?" — title + (problem or solution).
@@ -76,7 +80,7 @@ export function Step7Alignment() {
       toast({
         variant: "destructive",
         title: "Couldn't get a suggestion",
-        description: "Scout was unreachable. You can fill the fields manually or try again.",
+        description: `${tenant.assistantName} was unreachable. You can fill the fields manually or try again.`,
       })
     } finally {
       setSuggesting(false)
@@ -105,7 +109,7 @@ export function Step7Alignment() {
     }))
     toast({
       title: "Suggestion applied",
-      description: "Review and tweak. These were Scout's first draft, not the final word.",
+      description: `Review and tweak. These were ${tenant.assistantName}'s first draft, not the final word.`,
     })
     setSuggestion(null)
   }
@@ -130,7 +134,7 @@ export function Step7Alignment() {
                   <Sparkles className="h-4 w-4 mt-0.5 text-uspto-blue-primary flex-shrink-0" />
                   <div>
                     <p className="font-semibold text-sm text-uspto-blue-primary">
-                      {suggesting ? "Scout is suggesting alignment…" : "Scout's suggested alignment"}
+                      {suggesting ? `${tenant.assistantName} is suggesting alignment…` : `${tenant.assistantName}'s suggested alignment`}
                     </p>
                     {suggestion && (
                       <p className="text-xs text-muted-foreground mt-0.5 italic">
@@ -149,7 +153,7 @@ export function Step7Alignment() {
               {suggesting && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Analyzing your problem, solution, and value claims against {tenant.orgName} priorities…
+                  Analyzing your problem, solution, and value claims against {alignmentOrgName} priorities…
                 </div>
               )}
 
@@ -206,7 +210,7 @@ export function Step7Alignment() {
             <div className="rounded-lg border bg-muted/30 p-3 flex items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 inline mr-1 text-uspto-blue-primary" />
-                Let Scout draft this for you based on what you've entered.
+                Let {tenant.assistantName} draft this for you based on what you've entered.
               </p>
               <Button size="sm" onClick={fetchSuggestion}>
                 Get a suggestion
@@ -218,7 +222,7 @@ export function Step7Alignment() {
           {isVisible("usptoFocusArea") && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Which {tenant.orgName} priorities does this advance?</Label>
+              <Label>Which {alignmentOrgName} priorities does this advance?</Label>
               {hasUserData && !suggesting && !suggestion && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={fetchSuggestion}>
                   <Sparkles className="h-3 w-3 mr-1" />
@@ -268,7 +272,7 @@ export function Step7Alignment() {
                 Alignment Summary
               </Label>
               <p className="text-sm text-muted-foreground">
-                Executive-ready 2-3 sentence summary. Pre-filled by Scout. Edit to taste.
+                Executive-ready 2-3 sentence summary. Pre-filled by {tenant.assistantName}. Edit to taste.
               </p>
               <TextareaAutosize
                 id="alignmentSummary"

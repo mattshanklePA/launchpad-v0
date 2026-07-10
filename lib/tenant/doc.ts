@@ -16,7 +16,8 @@ export const doc: TenantConfig = {
   id: "doc",
   shortName: "DOC",
   orgName: "Department of Commerce",
-  productName: "LaunchPad",
+  productName: "Warder",
+  assistantName: "Kestrel",
   logoSubtitle: "Commerce AI Use Case Platform",
   heroHeadline: "The governable front door for AI across Commerce",
   heroSubtitle:
@@ -265,5 +266,9 @@ A serious AI idea names the federal priority and the Department mission it advan
     "OMB and EO 14179 prefer American-built or U.S.-hosted models with documented sourcing (per M-25-22). Foreign or unknown sourcing requires additional review.",
 
   theme: { primary: "#003366", primaryForeground: "#ffffff" },
-  features: { decisionCenter: true, rallyExport: false, scout: true, aiHubExport: true },
+  // departmentFinalApproval: optional second sign-off tier on top of bureau
+  // sign-off (see lib/bureauSignoff.ts) — bureau signs off, then an OS/
+  // department admin confirms. Bureau sign-off works fully without it; unset
+  // (false) for USPTO/DoW, which have no bureau tier to layer it onto anyway.
+  features: { decisionCenter: true, rallyExport: false, scout: true, aiHubExport: true, departmentFinalApproval: true },
 }

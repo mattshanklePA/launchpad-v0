@@ -1,4 +1,4 @@
-import { getTenant } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
 
 export type FormStep = {
   step: number
@@ -144,6 +144,21 @@ export type FormData = {
   // use are the two OMB inventory exclusions.
   nationalSecuritySystem: "yes" | "no" | ""
   researchOnly: "yes" | "no" | ""
+  // High-impact determination inputs (lib/highImpactDetermination.ts): which
+  // OMB M-25-21 Section 5 categories the AI output could meaningfully affect.
+  // Drives the `highImpact` recommendation; the reviewer keeps the final call.
+  highImpactFactors: string[]
+  // M-25-21 minimum-practice risk-management fields — only required in
+  // practice when highImpact is "yes" (see components/steps/step-8-feasibility-security.tsx).
+  // Trimmed to a demo-usable set; the full M-25-21 practice list can be
+  // expanded here later.
+  aiImpactAssessment: string // intended purpose, expected benefits, potential risks
+  preDeploymentTesting: "yes" | "no" | ""
+  preDeploymentTestingNote: string
+  ongoingMonitoringPlan: "yes" | "no" | ""
+  ongoingMonitoringNote: string
+  humanOversightAppeal: "yes" | "no" | "" // human oversight / appeal mechanism for affected individuals
+  humanOversightAppealNote: string
   // DoD responsible-AI + maturity disclosures
   impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
   dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
@@ -230,6 +245,14 @@ export const initialFormData: FormData = {
   systemSource: "",
   nationalSecuritySystem: "",
   researchOnly: "",
+  highImpactFactors: [],
+  aiImpactAssessment: "",
+  preDeploymentTesting: "",
+  preDeploymentTestingNote: "",
+  ongoingMonitoringPlan: "",
+  ongoingMonitoringNote: "",
+  humanOversightAppeal: "",
+  humanOversightAppealNote: "",
   feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],
@@ -245,8 +268,15 @@ export const initialFormData: FormData = {
 // Step title/prompt copy that names the organization is generated per-tenant
 // (via getTenant()) rather than hardcoded, so a Commerce/USPTO deployment
 // never shows another tenant's org name. Everything else is shared.
-export function getFormSteps(): FormStep[] {
-  const { orgName } = getTenant()
+//
+// `submitterOffice` (the wizard's `formData.submitterOffice`) lets the
+// Strategic Alignment step (5) name the submitter's own bureau instead of
+// the department when that bureau has its own strategic priorities (DoC) —
+// see getOrgNameForUnit. Callers that don't have a submitter in scope (e.g.
+// the progress bar) can omit it and get the department-level fallback.
+export function getFormSteps(submitterOffice?: string | null): FormStep[] {
+  const { orgName, assistantName } = getTenant()
+  const alignmentOrgName = getOrgNameForUnit(submitterOffice)
   return [
     {
       step: 1,
@@ -275,8 +305,8 @@ export function getFormSteps(): FormStep[] {
     {
       step: 5,
       name: "Strategic Alignment",
-      title: `Align with ${orgName} Goals`,
-      prompt: `Does this align with the ${orgName}'s strategic priorities? Which ones?`,
+      title: `Align with ${alignmentOrgName} Goals`,
+      prompt: `Does this align with the ${alignmentOrgName}'s strategic priorities? Which ones?`,
     },
     {
       step: 6,
@@ -294,7 +324,7 @@ export function getFormSteps(): FormStep[] {
       step: 8,
       name: "Idea Overview",
       title: "Name & Summarize Your Idea",
-      prompt: "Scout drafted a title and summary from everything you entered — review and refine.",
+      prompt: `${assistantName} drafted a title and summary from everything you entered — review and refine.`,
     },
     {
       step: 9,

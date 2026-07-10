@@ -12,6 +12,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient"
 import { seedSubmissions } from "@/lib/seedSubmissions"
 import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 import { getTenant } from "@/lib/tenant"
+import { errToDetail } from "@/lib/errToDetail"
 import type { Submission } from "@/lib/submissions"
 
 // Pick the seed set for the active tenant. Returns null for tenants whose data
@@ -50,47 +51,38 @@ export async function POST() {
       })
     }
 
-    // Insert the seed set.
-    const rows = seedSet.map((s) => ({
-      id: s.id,
-      submitted_at: s.submittedAt,
-      form_data: s.formData,
-    }))
-    const { error } = await supabase.from("submissions").insert(rows)
+    // Build fully-formed rows up front — including the workflow columns
+    // (status / owner / business unit / office) — so seeding is a single
+    // insert instead of a bulk insert followed by up to N per-row updates.
+    // That insert-then-update-per-row pattern was slow enough to make the
+    // admin "Reset Demo Data" button look hung, and if the page was reloaded
+    // mid-flight the per-row updates could be interrupted, leaving some rows
+    // stuck on their DB-default status (e.g. no rejected/high-impact/reportable
+    // example surfacing even though the seed data has them).
+    const rows = seedSet.map((s) => {
+      const fd = s.formData as Record<string, unknown>
+      return {
+        id: s.id,
+        submitted_at: s.submittedAt,
+        form_data: s.formData,
+        status: (fd.reviewStatus as string) || "submitted",
+        owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
+        business_unit: (fd.submitterOffice as string) || null,
+        office: (fd.submitterSubOffice as string) || null,
+      }
+    })
+
+    // `office` only exists once the office-hierarchy migration has run;
+    // retry as a single batch without it rather than failing the whole seed
+    // (and rather than falling back per-row, which reintroduces the slowness
+    // this rewrite is meant to avoid).
+    let { error } = await supabase.from("submissions").insert(rows)
+    if (error) {
+      console.warn("seed insert (with office) failed, retrying without office:", error.message)
+      const rowsWithoutOffice = rows.map(({ office: _office, ...rest }) => rest)
+      ;({ error } = await supabase.from("submissions").insert(rowsWithoutOffice))
+    }
     if (error) throw error
-
-    // Sync the workflow columns (status / owner / business unit / office) from
-    // each form_data so the pipeline kanban buckets seeds by their real status
-    // and owners. Without this, the status column takes its DB default
-    // ("submitted") and every seeded row stacks in one column — the bug this
-    // guards against. `office` only exists once the office-hierarchy migration
-    // has run, so a single combined update would fail (and previously got
-    // silently swallowed) on any project missing that column, leaving every
-    // row's status un-synced. Retry without `office` so status/owner/business
-    // unit still land even when that migration hasn't been applied yet.
-    await Promise.all(
-      seedSet.map(async (s) => {
-        const fd = s.formData as Record<string, unknown>
-        const columns = {
-          status: (fd.reviewStatus as string) || "submitted",
-          owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
-          business_unit: (fd.submitterOffice as string) || null,
-          office: (fd.submitterSubOffice as string) || null,
-        }
-        const { error: fullErr } = await supabase.from("submissions").update(columns).eq("id", s.id)
-        if (!fullErr) return
-
-        const withoutOffice: Record<string, unknown> = { ...columns }
-        delete withoutOffice.office
-        const { error: fallbackErr } = await supabase
-          .from("submissions")
-          .update(withoutOffice)
-          .eq("id", s.id)
-        if (fallbackErr) {
-          console.warn(`seed workflow column sync failed for ${s.id}:`, fallbackErr.message)
-        }
-      }),
-    )
 
     return NextResponse.json({
       ok: true,
@@ -100,7 +92,7 @@ export async function POST() {
   } catch (error) {
     console.error("POST /api/seed failed:", error)
     return NextResponse.json(
-      { error: "Failed to seed submissions", detail: String(error) },
+      { error: "Failed to seed submissions", detail: errToDetail(error) },
       { status: 500 },
     )
   }
@@ -123,7 +115,7 @@ export async function GET() {
   } catch (error) {
     console.error("GET /api/seed failed:", error)
     return NextResponse.json(
-      { error: "Failed to check seed status", detail: String(error) },
+      { error: "Failed to check seed status", detail: errToDetail(error) },
       { status: 500 },
     )
   }

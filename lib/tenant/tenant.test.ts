@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest"
 import { doc } from "@/lib/tenant/doc"
 import { dow } from "@/lib/tenant/dow"
 import { uspto } from "@/lib/tenant/uspto"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
 import { getFormSteps } from "@/lib/steps"
 
 describe("DoC tenant", () => {
@@ -13,6 +13,11 @@ describe("DoC tenant", () => {
     expect(values).toContain("nist")
     expect(values).toContain("census")
     expect(values).toContain("uspto")
+  })
+
+  it("renames the product to Warder and the assistant to Kestrel", () => {
+    expect(doc.productName).toBe("Warder")
+    expect(doc.assistantName).toBe("Kestrel")
   })
 
   it("anchors focus areas to the federal AI framework (OMB)", () => {
@@ -40,6 +45,15 @@ describe("admin dashboard OKRs label", () => {
 describe("getTenant", () => {
   it("defaults to uspto when NEXT_PUBLIC_TENANT is unset", () => {
     expect(getTenant().id).toBe("uspto")
+  })
+})
+
+describe("product/assistant naming (issue #31 — Warder/Kestrel for DoC only)", () => {
+  it("keeps USPTO and DoW on LaunchPad + Scout, unaffected by the DoC rename", () => {
+    expect(uspto.productName).toBe("LaunchPad")
+    expect(uspto.assistantName).toBe("Scout")
+    expect(dow.productName).toBe("LaunchPad")
+    expect(dow.assistantName).toBe("Scout")
   })
 })
 
@@ -107,6 +121,56 @@ describe("wizard step copy (issue #16 — DoW branding leaking into the DoC wiza
         const alignmentStep = steps.find((s) => s.name === "Strategic Alignment")!
         expect(alignmentStep.title).toBe("Align with Department of War Goals")
         expect(alignmentStep.prompt).toBe("Does this align with the Department of War's strategic priorities? Which ones?")
+      })
+    })
+  })
+
+  describe("bureau-level Strategic Alignment copy (issue #38)", () => {
+    const withTenant = (id: string, run: () => void) => {
+      const prev = process.env.NEXT_PUBLIC_TENANT
+      process.env.NEXT_PUBLIC_TENANT = id
+      try {
+        run()
+      } finally {
+        if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+        else process.env.NEXT_PUBLIC_TENANT = prev
+      }
+    }
+
+    afterEach(() => {
+      delete process.env.NEXT_PUBLIC_TENANT
+    })
+
+    it("names the submitter's bureau when it declares its own strategic priorities", () => {
+      withTenant("doc", () => {
+        expect(getOrgNameForUnit("census")).toBe("U.S. Census Bureau")
+        const steps = getFormSteps("census")
+        const alignmentStep = steps.find((s) => s.name === "Strategic Alignment")!
+        expect(alignmentStep.title).toBe("Align with U.S. Census Bureau Goals")
+        expect(alignmentStep.prompt).toBe("Does this align with the U.S. Census Bureau's strategic priorities? Which ones?")
+      })
+    })
+
+    it("falls back to the department name when no bureau is set", () => {
+      withTenant("doc", () => {
+        expect(getOrgNameForUnit(undefined)).toBe("Department of Commerce")
+        expect(getOrgNameForUnit("")).toBe("Department of Commerce")
+        const steps = getFormSteps()
+        const alignmentStep = steps.find((s) => s.name === "Strategic Alignment")!
+        expect(alignmentStep.title).toBe("Align with Department of Commerce Goals")
+      })
+    })
+
+    it("leaves USPTO and DoW unaffected even though their `unit.options` are populated", () => {
+      withTenant("uspto", () => {
+        expect(getOrgNameForUnit("patents")).toBe("USPTO")
+        const steps = getFormSteps("patents")
+        expect(steps.find((s) => s.name === "Strategic Alignment")!.title).toBe("Align with USPTO Goals")
+      })
+      withTenant("dow", () => {
+        expect(getOrgNameForUnit("forscom")).toBe("Department of War")
+        const steps = getFormSteps("forscom")
+        expect(steps.find((s) => s.name === "Strategic Alignment")!.title).toBe("Align with Department of War Goals")
       })
     })
   })

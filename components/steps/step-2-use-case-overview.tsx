@@ -38,7 +38,7 @@ export function Step2UseCaseOverview() {
         if (mode === "manual") {
           toast({
             title: "Draft updated",
-            description: result.error || "Scout re-drafted your title and summary. Edit as needed.",
+            description: result.error || `${tenant.assistantName} re-drafted your title and summary. Edit as needed.`,
           })
         }
       } else if (mode === "manual") {
@@ -80,10 +80,10 @@ export function Step2UseCaseOverview() {
         <p className="text-sm text-muted-foreground">
           {drafting ? (
             <span className="flex items-center gap-2 text-uspto-blue-primary">
-              <Sparkles className="h-4 w-4 animate-pulse" /> Scout is drafting your title and summary…
+              <Sparkles className="h-4 w-4 animate-pulse" /> {tenant.assistantName} is drafting your title and summary…
             </span>
           ) : (
-            "Scout drafted these from everything you entered. Review and edit before submitting."
+            `${tenant.assistantName} drafted these from everything you entered. Review and edit before submitting.`
           )}
         </p>
         <Button
@@ -95,7 +95,7 @@ export function Step2UseCaseOverview() {
           disabled={drafting || !hasContext}
         >
           {drafting ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Wand2 className="mr-1 h-3 w-3" />}
-          Re-draft with Scout
+          Re-draft with {tenant.assistantName}
         </Button>
       </div>
 

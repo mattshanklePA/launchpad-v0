@@ -17,6 +17,7 @@ import { AIdChatPanel } from "@/components/launchpad/chat-panel"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
+import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
 
 const problemTypeOptions = [
@@ -30,6 +31,7 @@ const problemTypeOptions = [
 export function Step3ProblemAndUsers() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility()
+  const tenant = getTenant()
   const [showOptional, setShowOptional] = usePersistentDisclosure("problem")
 
   const usersSectionVisible =
@@ -275,7 +277,7 @@ export function Step3ProblemAndUsers() {
                   Refined Problem & Users Summary
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  AI-generated summary tying the problem to its affected users. Open Scout from the right
+                  AI-generated summary tying the problem to its affected users. Open {tenant.assistantName} from the right
                   panel to draft or refine.
                 </p>
                 <TextareaAutosize

@@ -10,21 +10,27 @@ import { Fragment, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, getBusinessUnit, businessUnitLabel, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
-import { findSimilar } from "@/lib/similarity"
+import { hasCrossBureauMatch, crossBureauDuplicateCount } from "@/lib/crossBureauDuplicates"
 import { determineReportability } from "@/lib/ombReportability"
+import { determineConsolidation } from "@/lib/ombConsolidation"
 import { officesForBureau } from "@/lib/officeRollup"
+import { tenantHasBureauTier } from "@/lib/rationalization"
+import { signoffProgress } from "@/lib/bureauSignoff"
 import { getTenant } from "@/lib/tenant"
 import { Badge } from "@/components/ui/badge"
 import { OfficeRollup } from "@/components/admin/office-rollup"
 
 const dash = <span className="text-muted-foreground/40">–</span>
-const TABLE_COLS = STATUS_ORDER.length + 5 // unit + statuses + total + high-impact + OMB review + duplicates
 
 export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const unitLabel = getTenant().unit.label
   const unitLower = unitLabel.toLowerCase()
   const configOrder = getTenant().unit.options.map((o) => o.value)
+  // Sign-off column only applies where bureau sign-off exists (DoC) — USPTO/DoW
+  // render exactly as before. See lib/bureauSignoff.ts.
+  const showSignoff = tenantHasBureauTier()
+  const TABLE_COLS = STATUS_ORDER.length + (showSignoff ? 7 : 6) // unit + statuses + total + high-impact + OMB review + duplicates + consolidated [+ signed off]
 
   const units = Array.from(new Set(submissions.map(getBusinessUnit).filter(Boolean))).sort((a, b) => {
     const ia = configOrder.indexOf(a)
@@ -48,13 +54,31 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const grandOmbReview = submissions.filter(needsOmbReview).length
 
   // A use case is a "possible duplicate" when it has a likely match (see
-  // lib/similarity) filed under a different bureau — the "~20 of the same
-  // thing across the bureaus" problem this feature exists to surface.
-  const hasCrossBureauMatch = (s: Submission) =>
-    findSimilar(s, submissions).some((m) => m.bureau !== getBusinessUnit(s))
-  const duplicatesFor = (unit: string) =>
-    submissions.filter((s) => getBusinessUnit(s) === unit && hasCrossBureauMatch(s)).length
-  const grandDuplicates = submissions.filter(hasCrossBureauMatch).length
+  // lib/crossBureauDuplicates) filed under a different bureau — the "~20 of
+  // the same thing across the bureaus" problem this feature exists to surface.
+  const duplicatesFor = (unit: string) => crossBureauDuplicateCount(submissions, unit)
+  const grandDuplicates = submissions.filter((s) => hasCrossBureauMatch(s, submissions)).length
+
+  // Cross-bureau rationalization: how many of these submissions match one of
+  // OMB's widely-used commercial AI categories and can be reported once across
+  // the department instead of once per bureau (see lib/ombConsolidation.ts).
+  const isConsolidated = (s: Submission) => determineConsolidation(s.formData).status === "Consolidated"
+  const consolidatedFor = (unit: string) =>
+    submissions.filter((s) => getBusinessUnit(s) === unit && isConsolidated(s)).length
+  const grandConsolidated = submissions.filter(isConsolidated).length
+  const consolidatedCategoryCount = new Set(
+    submissions.map((s) => determineConsolidation(s.formData)).filter((c) => c.status === "Consolidated").map((c) => c.category),
+  ).size
+  const reportableEntries = submissions.length - grandConsolidated + consolidatedCategoryCount
+
+  // Sign-off coverage: of a bureau's use cases, how many have a recorded
+  // bureau sign-off (approved-with-signoff — see lib/bureauSignoff.ts's
+  // signoffProgress). Distinct from the "Approved" status column: an
+  // approved item without a sign-off record (e.g. legacy data predating this
+  // feature) still counts toward "Approved" but not toward "Signed off".
+  const signedOffFor = (unit: string) =>
+    submissions.filter((s) => getBusinessUnit(s) === unit && signoffProgress(s) === "signed_off").length
+  const grandSignedOff = submissions.filter((s) => signoffProgress(s) === "signed_off").length
 
   const toggleExpanded = (unit: string) =>
     setExpanded((prev) => {
@@ -71,6 +95,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
         <span className="text-xs text-muted-foreground">
           {submissions.length} use cases across {units.length} {unitLower}
           {units.length === 1 ? "" : "s"}
+          {grandConsolidated > 0 && ` · consolidates to ${reportableEntries} OMB reportable ${reportableEntries === 1 ? "entry" : "entries"}`}
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -87,6 +112,8 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">High-impact</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">OMB review needed</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Possible duplicates</th>
+              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Consolidated (OMB)</th>
+              {showSignoff && <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Signed off</th>}
             </tr>
           </thead>
           <tbody>
@@ -145,6 +172,18 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
                         <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">{duplicatesFor(u)}</Badge>
                       )}
                     </td>
+                    <td className="text-center px-2 py-2">
+                      {consolidatedFor(u) === 0 ? (
+                        dash
+                      ) : (
+                        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">{consolidatedFor(u)}</Badge>
+                      )}
+                    </td>
+                    {showSignoff && (
+                      <td className="text-center px-2 py-2 whitespace-nowrap">
+                        {signedOffFor(u)}/{totalFor(u)}
+                      </td>
+                    )}
                   </tr>
                   {hasOffices && isExpanded && (
                     <tr>
@@ -167,6 +206,12 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               <td className="text-center px-2 py-2">{grandHigh || dash}</td>
               <td className="text-center px-2 py-2">{grandOmbReview || dash}</td>
               <td className="text-center px-2 py-2">{grandDuplicates || dash}</td>
+              <td className="text-center px-2 py-2">{grandConsolidated || dash}</td>
+              {showSignoff && (
+                <td className="text-center px-2 py-2 whitespace-nowrap">
+                  {grandSignedOff}/{submissions.length}
+                </td>
+              )}
             </tr>
           </tbody>
         </table>
