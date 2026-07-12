@@ -54,6 +54,12 @@ export const OMB_COLUMNS = [
 
 const YES_NO: Record<string, string> = { yes: "Yes", no: "No" }
 
+const HIGH_IMPACT_LABELS: Record<string, string> = {
+  high_impact: "High-impact",
+  presumed_not_high_impact: "Presumed high-impact, but determined not high-impact",
+  not_high_impact: "Not high-impact",
+}
+
 const STAGE_LABELS: Record<string, string> = {
   pre_deployment: "Pre-Deployment",
   pilot: "Pilot",
@@ -90,7 +96,7 @@ export function mapSubmissionToOmbRow(submission: Submission, agencyShortName: s
     agencyShortName,
     businessUnitLabel(getBusinessUnit(submission)),
     STAGE_LABELS[fd.stageOfDevelopment] || "",
-    YES_NO[fd.highImpact] || "",
+    HIGH_IMPACT_LABELS[fd.highImpact] || "",
     consolidation.status,
     consolidation.categoryLabel || "",
     fd.coreProblem || "",
@@ -121,7 +127,7 @@ function buildConsolidatedOmbRow(
     agencyShortName,
     bureauSummary,
     "",
-    "No",
+    "Not high-impact",
     "Consolidated",
     categoryLabel,
     problemSummary,

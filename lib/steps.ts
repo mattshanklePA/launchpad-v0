@@ -136,19 +136,48 @@ export type FormData = {
   aiModelSourcing: "american_built" | "open_source_us" | "foreign" | "unknown" | "" // Trump EO compliance
   aiHumanReview: "yes" | "no" | "" // Is there mandatory human review before action?
   // OMB federal AI use case inventory fields (M-25-21 companion guidance).
-  // Field numbers below refer to docs/omb-2025-inventory-fields.md's 32-field list.
-  stageOfDevelopment: "pre_deployment" | "pilot" | "deployed" | "retired" | "" // #7
-  highImpact: "yes" | "no" | "" // #8
-  hasATO: "yes" | "no" | "in_progress" | "" // #16
-  atoSystemName: string // #16 sub-field — system name, only meaningful once hasATO is "yes"
+  // Field numbers below refer to docs/omb-2025-inventory-fields.md's 34-field
+  // data-dictionary list (25 base + 9 high-impact-only).
+  stageOfDevelopment: "pre_deployment" | "pilot" | "deployed" | "retired" | "" // #6
+  highImpact: "high_impact" | "presumed_not_high_impact" | "not_high_impact" | "" // #7
+  highImpactJustification: string // #8 — required only when highImpact is "presumed_not_high_impact"
+  topicArea:
+    | "administrative_functions"
+    | "cybersecurity"
+    | "emergency_management"
+    | "energy_environment"
+    | "government_benefits_processing"
+    | "health_medical"
+    | "human_resources"
+    | "information_technology"
+    | "international_affairs"
+    | "law_enforcement"
+    | "other"
+    | "procurement_financial_management"
+    | "science"
+    | "service_delivery"
+    | "transportation"
+    | "" // #9
+  aiClassification:
+    | "agentic_ai"
+    | "classical_predictive_ml"
+    | "computer_vision"
+    | "generative_ai"
+    | "nlp"
+    | "reinforcement_learning"
+    | "" // #10
+  hasATO: "yes" | "no" | "in_progress" | "" // #17 (kept an extra "in_progress" beyond OMB's Yes/No for in-flight status)
+  atoSystemName: string // #18 sub-field — system name, only meaningful once hasATO is "yes"
   systemSource: "in_house" | "contract" | "vendor" | "" // #15
-  systemSourceVendorName: string // #15 sub-field — vendor name, only meaningful once systemSource is contract/vendor
+  systemSourceVendorName: string // #16 sub-field — vendor name, only meaningful once systemSource is contract/vendor
   operationalDate: string // #14 — date the use case became operational, or the pilot's start date
-  trainingDataDescription: string // #17 — data used to train/fine-tune/evaluate the model(s)
-  federalDataCatalogLink: string // #18 — Federal Data Catalog entry link, if publicly disclosed
-  piaLink: string // #20 — Privacy Impact Assessment link, if publicly available
-  customCode: "yes" | "no" | "" // #22 — does this project include custom-developed code?
-  openSourceCodeLink: string // #23 — public source code link, only meaningful once customCode is "yes"
+  trainingDataDescription: string // #19 — data used to train/fine-tune/evaluate the model(s)
+  federalDataCatalogLink: string // #20 — Federal Data Catalog entry link, if publicly disclosed
+  hasPii: "yes" | "no" | "" // #21 — OMB inventory field; distinct from the DoC-mandated involvesSensitiveData below
+  piaLink: string // #22 — Privacy Impact Assessment link, if publicly available
+  demographicFeatures: string[] // #23 — select-multiple; demographic variables used as model features
+  customCode: "yes" | "no" | "" // #24 — does this project include custom-developed code?
+  openSourceCodeLink: string // #25 — public source code link, only meaningful once customCode is "yes"
   // Reportability inputs (lib/ombReportability.ts): NSS/IC use and research-only
   // use are the two OMB inventory exclusions.
   nationalSecuritySystem: "yes" | "no" | ""
@@ -157,20 +186,29 @@ export type FormData = {
   // OMB M-25-21 Section 5 categories the AI output could meaningfully affect.
   // Drives the `highImpact` recommendation; the reviewer keeps the final call.
   highImpactFactors: string[]
-  // M-25-21 minimum-practice risk-management fields — only required in
-  // practice when highImpact is "yes" (see components/steps/step-8-feasibility-security.tsx).
-  // Trimmed to a demo-usable set; the full M-25-21 practice list can be
-  // expanded here later.
-  aiImpactAssessment: string // intended purpose, expected benefits, potential risks
-  preDeploymentTesting: "yes" | "no" | ""
+  // M-25-21 minimum-practice risk-management fields (#26-34) — required only
+  // once highImpact is "high_impact" AND stageOfDevelopment is "deployed"
+  // (see components/steps/step-8-feasibility-security.tsx). Every multiple-choice
+  // field in this group also permits "In-progress" and a CAIO-waiver answer,
+  // not just Yes/No.
+  preDeploymentTesting: "yes" | "in_progress" | "waived" | "" // #26
   preDeploymentTestingNote: string
-  ongoingMonitoringPlan: "yes" | "no" | ""
+  aiImpactAssessmentCompleted: "yes" | "in_progress" | "waived" | "" // #27
+  aiImpactAssessment: string // #28 — potential impacts and how they were identified
+  independentReviewConducted:
+    | "yes_other_office"
+    | "yes_oversight_board"
+    | "yes_caio"
+    | "in_progress"
+    | "waived"
+    | "" // #29
+  ongoingMonitoringPlan: "yes" | "in_progress" | "waived" | "" // #30
   ongoingMonitoringNote: string
-  humanOversightAppeal: "yes" | "no" | "" // human oversight / appeal mechanism for affected individuals
+  operatorTrainingEstablished: "yes" | "in_progress" | "waived" | "" // #31
+  failSafeMechanism: "yes" | "not_applicable" | "in_progress" | "waived" | "" // #32
+  humanOversightAppeal: "yes" | "not_applicable" | "in_progress" | "law_precludes" | "waived" | "" // #33 — appeal process for affected individuals
   humanOversightAppealNote: string
-  independentReviewConducted: "yes" | "no" | "" // #27 — has an independent review of the use case been conducted?
-  operatorTrainingEstablished: "yes" | "no" | "" // #29 — periodic training for operators to interpret/act on AI output?
-  failSafeMechanism: "yes" | "no" | "" // #30 — appropriate fail-safe minimizing risk of significant harm?
+  publicConsultationSteps: string[] // #34 — select-multiple; steps taken to consult end users and the public
   // DoD responsible-AI + maturity disclosures
   impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
   dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
@@ -253,6 +291,9 @@ export const initialFormData: FormData = {
   aiHumanReview: "",
   stageOfDevelopment: "",
   highImpact: "",
+  highImpactJustification: "",
+  topicArea: "",
+  aiClassification: "",
   hasATO: "",
   atoSystemName: "",
   systemSource: "",
@@ -260,22 +301,26 @@ export const initialFormData: FormData = {
   operationalDate: "",
   trainingDataDescription: "",
   federalDataCatalogLink: "",
+  hasPii: "",
   piaLink: "",
+  demographicFeatures: [],
   customCode: "",
   openSourceCodeLink: "",
   nationalSecuritySystem: "",
   researchOnly: "",
   highImpactFactors: [],
-  aiImpactAssessment: "",
   preDeploymentTesting: "",
   preDeploymentTestingNote: "",
+  aiImpactAssessmentCompleted: "",
+  aiImpactAssessment: "",
+  independentReviewConducted: "",
   ongoingMonitoringPlan: "",
   ongoingMonitoringNote: "",
-  humanOversightAppeal: "",
-  humanOversightAppealNote: "",
-  independentReviewConducted: "",
   operatorTrainingEstablished: "",
   failSafeMechanism: "",
+  humanOversightAppeal: "",
+  humanOversightAppealNote: "",
+  publicConsultationSteps: [],
   feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],

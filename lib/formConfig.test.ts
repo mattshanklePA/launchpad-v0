@@ -98,32 +98,67 @@ describe("isFieldVisible", () => {
     })
   })
 
-  describe("high-impact risk fields (aiImpactAssessment, preDeploymentTesting, ongoingMonitoringPlan, humanOversightAppeal, independentReviewConducted, operatorTrainingEstablished, failSafeMechanism)", () => {
+  describe("high-impact risk fields (#26-34)", () => {
     const riskFields: (keyof FormData)[] = [
-      "aiImpactAssessment",
       "preDeploymentTesting",
-      "ongoingMonitoringPlan",
-      "humanOversightAppeal",
+      "aiImpactAssessmentCompleted",
+      "aiImpactAssessment",
       "independentReviewConducted",
+      "ongoingMonitoringPlan",
       "operatorTrainingEstablished",
       "failSafeMechanism",
+      "humanOversightAppeal",
+      "publicConsultationSteps",
     ]
 
     it("hidden pre-deployment even when high-impact", () => {
       for (const key of riskFields) {
-        expect(isFieldVisible(key, fd({ highImpact: "yes", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+        expect(isFieldVisible(key, fd({ highImpact: "high_impact", stageOfDevelopment: "pre_deployment" }))).toBe(false)
       }
     })
 
     it("hidden once deployed if not high-impact", () => {
       for (const key of riskFields) {
-        expect(isFieldVisible(key, fd({ highImpact: "no", stageOfDevelopment: "deployed" }))).toBe(false)
+        expect(isFieldVisible(key, fd({ highImpact: "not_high_impact", stageOfDevelopment: "deployed" }))).toBe(false)
       }
     })
 
     it("visible only once both high-impact AND deployed", () => {
       for (const key of riskFields) {
-        expect(isFieldVisible(key, fd({ highImpact: "yes", stageOfDevelopment: "deployed" }))).toBe(true)
+        expect(isFieldVisible(key, fd({ highImpact: "high_impact", stageOfDevelopment: "deployed" }))).toBe(true)
+      }
+    })
+  })
+
+  describe("highImpactJustification (dependent sub-field: highImpact = presumed_not_high_impact)", () => {
+    it("hidden unless the high-impact answer is 'presumed, but determined not'", () => {
+      expect(isFieldVisible("highImpactJustification", fd({ highImpact: "high_impact" }))).toBe(false)
+      expect(isFieldVisible("highImpactJustification", fd({ highImpact: "not_high_impact" }))).toBe(false)
+      expect(isFieldVisible("highImpactJustification", fd())).toBe(false)
+    })
+    it("visible when presumed high-impact but determined not", () => {
+      expect(isFieldVisible("highImpactJustification", fd({ highImpact: "presumed_not_high_impact" }))).toBe(true)
+    })
+  })
+
+  describe("topicArea / aiClassification (stage-dependent: pre-deployment onward)", () => {
+    it("hidden until a development stage is chosen, visible for any non-retired stage", () => {
+      for (const key of ["topicArea", "aiClassification"] as const) {
+        expect(isFieldVisible(key, fd())).toBe(false)
+        expect(isFieldVisible(key, fd({ stageOfDevelopment: "pre_deployment" }))).toBe(true)
+        expect(isFieldVisible(key, fd({ stageOfDevelopment: "pilot" }))).toBe(true)
+        expect(isFieldVisible(key, fd({ stageOfDevelopment: "deployed" }))).toBe(true)
+        expect(isFieldVisible(key, fd({ stageOfDevelopment: "retired" }))).toBe(false)
+      }
+    })
+  })
+
+  describe("hasPii / demographicFeatures (stage-dependent: pilot or deployed)", () => {
+    it("hidden pre-deployment, visible for pilot or deployed", () => {
+      for (const key of ["hasPii", "demographicFeatures"] as const) {
+        expect(isFieldVisible(key, fd({ stageOfDevelopment: "pre_deployment" }))).toBe(false)
+        expect(isFieldVisible(key, fd({ stageOfDevelopment: "pilot" }))).toBe(true)
+        expect(isFieldVisible(key, fd({ stageOfDevelopment: "deployed" }))).toBe(true)
       }
     })
   })
@@ -138,25 +173,32 @@ describe("isFieldVisible", () => {
     })
   })
 
-  describe("atoSystemName (dependent sub-field: hasATO = yes)", () => {
+  describe("atoSystemName (dependent sub-field: hasATO = yes AND stage is pilot/deployed)", () => {
     it("hidden when hasATO is no, in_progress, or unset", () => {
-      expect(isFieldVisible("atoSystemName", fd({ hasATO: "no" }))).toBe(false)
-      expect(isFieldVisible("atoSystemName", fd({ hasATO: "in_progress" }))).toBe(false)
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "no", stageOfDevelopment: "deployed" }))).toBe(false)
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "in_progress", stageOfDevelopment: "deployed" }))).toBe(false)
       expect(isFieldVisible("atoSystemName", fd())).toBe(false)
     })
-    it("visible when hasATO is yes", () => {
-      expect(isFieldVisible("atoSystemName", fd({ hasATO: "yes" }))).toBe(true)
+    it("hidden when hasATO is yes but the stage isn't pilot/deployed yet", () => {
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "yes", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+    })
+    it("visible when hasATO is yes and stage is pilot or deployed", () => {
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "yes", stageOfDevelopment: "pilot" }))).toBe(true)
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "yes", stageOfDevelopment: "deployed" }))).toBe(true)
     })
   })
 
-  describe("systemSourceVendorName (dependent sub-field: systemSource is contract/vendor)", () => {
+  describe("systemSourceVendorName (dependent sub-field: systemSource is contract/vendor AND stage is pilot/deployed)", () => {
     it("hidden when developed in-house or unset", () => {
-      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "in_house" }))).toBe(false)
+      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "in_house", stageOfDevelopment: "deployed" }))).toBe(false)
       expect(isFieldVisible("systemSourceVendorName", fd())).toBe(false)
     })
-    it("visible when under contract or purchased", () => {
-      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "contract" }))).toBe(true)
-      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "vendor" }))).toBe(true)
+    it("hidden when vendor/contract but the stage isn't pilot/deployed yet", () => {
+      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "contract", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+    })
+    it("visible when under contract or purchased and stage is pilot or deployed", () => {
+      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "contract", stageOfDevelopment: "pilot" }))).toBe(true)
+      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "vendor", stageOfDevelopment: "deployed" }))).toBe(true)
     })
   })
 
@@ -191,17 +233,17 @@ describe("isFieldVisible", () => {
     ]
 
     it("pre-deployment, non-high-impact: none of the gated fields show", () => {
-      const data = fd({ stageOfDevelopment: "pre_deployment", highImpact: "no", involvesSensitiveData: "no" })
+      const data = fd({ stageOfDevelopment: "pre_deployment", highImpact: "not_high_impact", involvesSensitiveData: "no" })
       expect(GATED_FIELDS.filter((k) => isFieldVisible(k, data))).toEqual([])
     })
 
     it("deployed, non-high-impact: only the stage-dependent field (hasATO) shows", () => {
-      const data = fd({ stageOfDevelopment: "deployed", highImpact: "no", involvesSensitiveData: "no" })
+      const data = fd({ stageOfDevelopment: "deployed", highImpact: "not_high_impact", involvesSensitiveData: "no" })
       expect(GATED_FIELDS.filter((k) => isFieldVisible(k, data))).toEqual(["hasATO"])
     })
 
     it("deployed and high-impact: hasATO plus all four risk fields show", () => {
-      const data = fd({ stageOfDevelopment: "deployed", highImpact: "yes", involvesSensitiveData: "no" })
+      const data = fd({ stageOfDevelopment: "deployed", highImpact: "high_impact", involvesSensitiveData: "no" })
       expect(GATED_FIELDS.filter((k) => isFieldVisible(k, data))).toEqual([
         "hasATO",
         "aiImpactAssessment",

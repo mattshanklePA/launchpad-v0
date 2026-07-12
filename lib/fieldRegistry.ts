@@ -79,6 +79,15 @@ export function fieldLevel(field: FieldDefinition): FieldLevel {
   return field.level ?? "bureau"
 }
 
+// Shared `showWhen` predicates for the OMB inventory's conditional-disclosure
+// rules (docs/omb-2025-inventory-fields.md's "Required when" column) — kept
+// as named functions so the same gate is never hand-duplicated (and drifted)
+// across fields that share it.
+const stageAtOrPastPreDeployment = (fd: FormData) =>
+  fd.stageOfDevelopment === "pre_deployment" || fd.stageOfDevelopment === "pilot" || fd.stageOfDevelopment === "deployed"
+const stagePilotOrDeployed = (fd: FormData) => fd.stageOfDevelopment === "pilot" || fd.stageOfDevelopment === "deployed"
+const highImpactAndDeployed = (fd: FormData) => fd.highImpact === "high_impact" && fd.stageOfDevelopment === "deployed"
+
 // Single flat list. Grouping is computed at render time so admin UI changes
 // don't require reshuffling the registry.
 export const FIELD_REGISTRY: FieldDefinition[] = [
@@ -94,21 +103,13 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
   // bureau-admin-togglable fields. Hard-coding `locked: true` here would wrongly
   // lock them for USPTO/DoW too, since this registry is shared across tenants.
   //
-  // Reconciled against docs/omb-2025-inventory-fields.md (the OMB-exact
-  // 32-field list: 23 base + 9 high-impact-only). Every base/high-impact
-  // field whose data type is Free Text/Link/Date/Email/binary Yes-No is
-  // represented below (annotated with its #N from that doc) — that covers 27
-  // of the 32. The remaining 5 (#4 Bureau/Component and #9 Use Case Topic
-  // Area, #10 AI Classification, #21 demographic variables, #32 end-user/
-  // public feedback consultation) are "Multiple Choice"/"Select all that
-  // apply" fields whose OMB-defined answer-option lists aren't in the
-  // extracted doc (it gives field name + data type, not the pick-list
-  // values) — #4 already has a stand-in (`submitterOffice`, collected in
-  // Step 1, tenant-defined options); the other 4 have no representation yet.
-  // Inventing option lists for federal compliance reporting would risk
-  // shipping wrong values, so they're left out rather than guessed — add
-  // them once OMB's actual value lists are available (e.g. an appendix page
-  // of the source PDF/DOCX, or a follow-up from the program office).
+  // Reconciled against docs/omb-2025-inventory-fields.md — OMB's published
+  // data dictionary, 34 fields (25 base + 9 high-impact-only). `id`,
+  // `use_case_name`, `agency_bureau`, `contact_email`, and `is_withheld`
+  // (#1-5) already have stand-ins collected elsewhere in the wizard
+  // (`useCaseTitle`, `submitterOffice`, `submitterEmail`, `publicIndicator`)
+  // and aren't re-declared here. `#N` comments below refer to that doc's row
+  // numbers.
   {
     fieldKey: "stageOfDevelopment",
     label: "Stage of Development",
@@ -123,7 +124,8 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
   {
     fieldKey: "highImpact",
     label: "High-impact AI?",
-    description: "Whether the use case meets OMB's high-impact AI definition (M-25-21).",
+    description:
+      "High-impact / presumed high-impact but determined not / not high-impact — OMB's three-way high-impact determination (M-25-21).",
     reasonToInclude: "Required in the OMB inventory; high-impact use cases trigger additional risk-management reporting.",
     phase: 4,
     step: 6,
@@ -132,10 +134,46 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     omb: true,
   },
   {
+    fieldKey: "highImpactJustification",
+    label: "High-impact justification",
+    description: "Justification for why a presumed high-impact use case was determined not to be high-impact.",
+    reasonToInclude: "OMB inventory field #8 — required whenever the high-impact answer is 'presumed but determined not'.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: (fd) => fd.highImpact === "presumed_not_high_impact",
+  },
+  {
+    fieldKey: "topicArea",
+    label: "Use Case Topic Area",
+    description: "The OMB topic-area category this AI use case falls under.",
+    reasonToInclude: "OMB inventory field #9 — required once a development stage is set.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: stageAtOrPastPreDeployment,
+  },
+  {
+    fieldKey: "aiClassification",
+    label: "AI Classification",
+    description: "The type of AI/ML technique this use case employs (agentic, generative, computer vision, etc.).",
+    reasonToInclude: "OMB inventory field #10 — required once a development stage is set.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: stageAtOrPastPreDeployment,
+  },
+  {
     fieldKey: "hasATO",
     label: "Associated ATO?",
     description: "Whether the AI system has an Authorization to Operate.",
-    reasonToInclude: "OMB inventory field; signals the security authorization status of the AI system.",
+    reasonToInclude: "OMB inventory field #17; signals the security authorization status of the AI system.",
     phase: 4,
     step: 6,
     level: "omb",
@@ -143,42 +181,43 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     omb: true,
     // ATO is only meaningful once the system is running somewhere other than
     // a lab — pre-deployment ideas have nothing to authorize yet.
-    showWhen: (fd) => fd.stageOfDevelopment === "pilot" || fd.stageOfDevelopment === "deployed",
+    showWhen: stagePilotOrDeployed,
   },
   {
     fieldKey: "atoSystemName",
     label: "ATO system name",
     description: "The authorized system's name, if the AI use case has an ATO.",
-    reasonToInclude: "OMB inventory sub-field for field #16 — only meaningful once an ATO exists.",
+    reasonToInclude: "OMB inventory sub-field for field #18 — only meaningful once an ATO exists.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
-    showWhen: (fd) => fd.hasATO === "yes",
+    showWhen: (fd) => fd.hasATO === "yes" && stagePilotOrDeployed(fd),
   },
   {
     fieldKey: "systemSource",
     label: "Built in-house, under contract, or purchased?",
     description: "Whether the system was developed in-house, under contract, or purchased from a vendor.",
-    reasonToInclude: "OMB inventory field; also informs acquisition and the custom-code / IP posture.",
+    reasonToInclude: "OMB inventory field #15; also informs acquisition and the custom-code / IP posture.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: stagePilotOrDeployed,
   },
   {
     fieldKey: "systemSourceVendorName",
     label: "Vendor name",
     description: "The vendor's name, if the system was purchased or developed under contract.",
-    reasonToInclude: "OMB inventory sub-field for field #15 — only meaningful once a vendor/contractor is involved.",
+    reasonToInclude: "OMB inventory sub-field for field #16 — only meaningful once a vendor/contractor is involved.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
-    showWhen: (fd) => fd.systemSource === "contract" || fd.systemSource === "vendor",
+    showWhen: (fd) => (fd.systemSource === "contract" || fd.systemSource === "vendor") && stagePilotOrDeployed(fd),
   },
   {
     fieldKey: "operationalDate",
@@ -190,56 +229,84 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: stagePilotOrDeployed,
   },
   {
     fieldKey: "trainingDataDescription",
     label: "Training / evaluation data",
     description: "Description of the data used to train, fine-tune, and/or evaluate the model(s) used in this use case.",
-    reasonToInclude: "OMB inventory field #17.",
+    reasonToInclude: "OMB inventory field #19.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: stagePilotOrDeployed,
   },
   {
     fieldKey: "federalDataCatalogLink",
     label: "Federal Data Catalog entry",
     description: "Link to the Federal Data Catalog entry, if the training/eval data is publicly disclosed as an open government data asset.",
-    reasonToInclude: "OMB inventory field #18.",
+    reasonToInclude: "OMB inventory field #20. Optional — never required.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
+  },
+  {
+    fieldKey: "hasPii",
+    label: "Involves PII maintained by the agency?",
+    description: "Whether the AI use case involves personally identifiable information the agency maintains.",
+    reasonToInclude:
+      "OMB inventory field #21 — a distinct federal mandate from the Department's own PII/sensitive-data question below; both are kept.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: stagePilotOrDeployed,
   },
   {
     fieldKey: "piaLink",
     label: "Privacy Impact Assessment (PIA) link",
     description: "Link to the AI use case's associated Privacy Impact Assessment, if publicly available.",
-    reasonToInclude: "OMB inventory field #20.",
+    reasonToInclude: "OMB inventory field #22. Optional — never required.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
+  },
+  {
+    fieldKey: "demographicFeatures",
+    label: "Demographic variables used as model features",
+    description: "Which demographic variables (if any) are used as features by the model(s).",
+    reasonToInclude: "OMB inventory field #23 — select all that apply.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: stagePilotOrDeployed,
   },
   {
     fieldKey: "customCode",
     label: "Includes custom-developed code?",
     description: "Whether this project includes custom-developed code.",
-    reasonToInclude: "OMB inventory field #22.",
+    reasonToInclude: "OMB inventory field #24.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: stagePilotOrDeployed,
   },
   {
     fieldKey: "openSourceCodeLink",
     label: "Open source code link",
     description: "Link to the publicly available source code, if the custom-developed code is open source.",
-    reasonToInclude: "OMB inventory sub-field for field #23 — only meaningful once custom code exists.",
+    reasonToInclude: "OMB inventory sub-field for field #25 — only meaningful once custom code exists. Optional — never required.",
     phase: 4,
     step: 6,
     level: "omb",
@@ -281,92 +348,118 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
     omb: true,
   },
-  // ────── High-impact risk-management fields (issue #60: only surfaced once
-  // highImpact = "yes" AND the system is fully deployed — a pre-deployment or
-  // pilot high-impact idea has nothing to assess/monitor/appeal yet) ──────
-  {
-    fieldKey: "aiImpactAssessment",
-    label: "AI impact assessment",
-    description: "Intended purpose, expected benefits, and potential risks of the AI system.",
-    reasonToInclude: "M-25-21 minimum practice for high-impact AI: an impact assessment before deployment.",
-    phase: 4,
-    step: 6,
-    level: "omb",
-    locked: false,
-    omb: true,
-    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
-  },
+  // ────── High-impact risk-management fields (#26-34, issue #60: only
+  // surfaced once highImpact = "high_impact" AND the system is fully
+  // deployed — a pre-deployment or pilot high-impact idea has nothing to
+  // assess/monitor/appeal yet). Every multiple-choice field here also
+  // permits "In-progress" and a CAIO-waiver answer, not just Yes/No. ──────
   {
     fieldKey: "preDeploymentTesting",
     label: "Pre-deployment / real-world testing done?",
     description: "Whether the AI system was tested before deployment, including real-world/live-environment testing.",
-    reasonToInclude: "M-25-21 minimum practice for high-impact AI: pre-deployment testing.",
+    reasonToInclude: "OMB inventory field #26 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
-    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
+    showWhen: highImpactAndDeployed,
   },
   {
-    fieldKey: "ongoingMonitoringPlan",
-    label: "Ongoing monitoring plan?",
-    description: "Whether there's a plan to monitor the AI system's performance after deployment.",
-    reasonToInclude: "M-25-21 minimum practice for high-impact AI: ongoing monitoring.",
-    phase: 4,
-    step: 6,
-    level: "omb",
-    locked: false,
-    omb: true,
-    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
-  },
-  {
-    fieldKey: "humanOversightAppeal",
-    label: "Human oversight / appeal mechanism?",
-    description: "Whether affected individuals have a human oversight or appeal mechanism available.",
-    reasonToInclude: "M-25-21 minimum practice for high-impact AI: human oversight and an appeal path for affected individuals.",
-    phase: 4,
-    step: 6,
-    level: "omb",
-    locked: false,
-    omb: true,
-    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
-  },
-  {
-    fieldKey: "independentReviewConducted",
-    label: "Independent review conducted?",
-    description: "Whether an independent review of the AI use case has been conducted.",
+    fieldKey: "aiImpactAssessmentCompleted",
+    label: "AI impact assessment completed?",
+    description: "Whether an AI impact assessment has been completed for this use case.",
     reasonToInclude: "OMB inventory field #27 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
-    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
+    showWhen: highImpactAndDeployed,
   },
   {
-    fieldKey: "operatorTrainingEstablished",
-    label: "Periodic operator training established?",
-    description: "Whether the agency has established sufficient and periodic training for operators of the AI to interpret and act on its output and manage associated risks.",
+    fieldKey: "aiImpactAssessment",
+    label: "Potential impacts and how they were identified",
+    description: "Intended purpose, expected benefits, and potential risks of the AI system.",
+    reasonToInclude: "OMB inventory field #28 — M-25-21 minimum practice for high-impact AI: an impact assessment before deployment.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: highImpactAndDeployed,
+  },
+  {
+    fieldKey: "independentReviewConducted",
+    label: "Independent review conducted?",
+    description: "Whether an independent review of the AI use case has been conducted.",
     reasonToInclude: "OMB inventory field #29 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
-    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
+    showWhen: highImpactAndDeployed,
   },
   {
-    fieldKey: "failSafeMechanism",
-    label: "Appropriate fail-safe in place?",
-    description: "Whether the AI use case has an appropriate fail-safe that minimizes the risk of significant harm.",
-    reasonToInclude: "OMB inventory field #30 — M-25-21 minimum practice for high-impact AI.",
+    fieldKey: "ongoingMonitoringPlan",
+    label: "Ongoing monitoring plan?",
+    description: "Whether there's a plan to monitor the AI system's performance after deployment.",
+    reasonToInclude: "OMB inventory field #30 — M-25-21 minimum practice for high-impact AI: ongoing monitoring.",
     phase: 4,
     step: 6,
     level: "omb",
     locked: false,
     omb: true,
-    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
+    showWhen: highImpactAndDeployed,
+  },
+  {
+    fieldKey: "operatorTrainingEstablished",
+    label: "Periodic operator training established?",
+    description: "Whether the agency has established sufficient and periodic training for operators of the AI to interpret and act on its output and manage associated risks.",
+    reasonToInclude: "OMB inventory field #31 — M-25-21 minimum practice for high-impact AI.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: highImpactAndDeployed,
+  },
+  {
+    fieldKey: "failSafeMechanism",
+    label: "Appropriate fail-safe in place?",
+    description: "Whether the AI use case has an appropriate fail-safe that minimizes the risk of significant harm.",
+    reasonToInclude: "OMB inventory field #32 — M-25-21 minimum practice for high-impact AI.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: highImpactAndDeployed,
+  },
+  {
+    fieldKey: "humanOversightAppeal",
+    label: "Established appeal process?",
+    description: "Whether affected individuals have an established appeal process available.",
+    reasonToInclude: "OMB inventory field #33 — M-25-21 minimum practice for high-impact AI: an appeal path for affected individuals.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: highImpactAndDeployed,
+  },
+  {
+    fieldKey: "publicConsultationSteps",
+    label: "Steps taken to consult end users and the public",
+    description: "Which steps were taken to consult end users and the public on this AI use case.",
+    reasonToInclude: "OMB inventory field #34 — M-25-21 minimum practice for high-impact AI. Select all that apply.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+    showWhen: highImpactAndDeployed,
   },
   // ────── Phase 1: Setup ──────
   {

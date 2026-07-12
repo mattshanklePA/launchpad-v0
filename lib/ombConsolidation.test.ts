@@ -4,7 +4,7 @@ import { determineConsolidation, CONSOLIDATION_CATEGORIES } from "@/lib/ombConso
 describe("determineConsolidation", () => {
   it("classifies a category match as Consolidated and surfaces which category matched", () => {
     const result = determineConsolidation({
-      highImpact: "no",
+      highImpact: "not_high_impact",
       useCaseTitle: "Inbox Assistant",
       coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
       proposedSolution: "An AI tool that triages and categorizes incoming email by urgency.",
@@ -17,7 +17,7 @@ describe("determineConsolidation", () => {
 
   it("matches the code generation category", () => {
     const result = determineConsolidation({
-      highImpact: "no",
+      highImpact: "not_high_impact",
       useCaseTitle: "Dev Copilot",
       coreProblem: "Engineers spend too long writing boilerplate code.",
       solutionSummary: "An AI coding assistant that helps generate code from natural-language prompts.",
@@ -28,7 +28,7 @@ describe("determineConsolidation", () => {
 
   it("is Individual for a use case that doesn't match any widely-used commercial AI category", () => {
     const result = determineConsolidation({
-      highImpact: "no",
+      highImpact: "not_high_impact",
       useCaseTitle: "Patent Triage Assistant",
       coreProblem: "Examiners spend too long triaging incoming patent applications for prior art conflicts.",
       solutionSummary: "Ranks incoming patent applications by urgency and prior-art risk for examiner review.",
@@ -40,7 +40,7 @@ describe("determineConsolidation", () => {
 
   it("forces Individual for high-impact use cases even when a category matches", () => {
     const result = determineConsolidation({
-      highImpact: "yes",
+      highImpact: "high_impact",
       useCaseTitle: "Inbox Assistant",
       coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
       proposedSolution: "An AI tool that triages and categorizes incoming email by urgency.",
@@ -52,7 +52,7 @@ describe("determineConsolidation", () => {
 
   it("forces Individual for high-impact use cases with no category match", () => {
     const result = determineConsolidation({
-      highImpact: "yes",
+      highImpact: "high_impact",
       useCaseTitle: "Benefits Eligibility Model",
       coreProblem: "Determines applicant eligibility for a federal assistance program.",
     })

@@ -9,7 +9,7 @@ type SubInput = {
   businessUnit: string
   office?: string
   status?: string
-  highImpact?: "yes" | "no" | ""
+  highImpact?: "high_impact" | "presumed_not_high_impact" | "not_high_impact" | ""
 }
 
 function sub(p: SubInput): Submission {
@@ -40,7 +40,7 @@ describe("officesForBureau", () => {
 
 describe("officeRollupRows", () => {
   const submissions = [
-    sub({ id: "a", businessUnit: "noaa", office: "nws", status: "approved", highImpact: "yes" }),
+    sub({ id: "a", businessUnit: "noaa", office: "nws", status: "approved", highImpact: "high_impact" }),
     sub({ id: "b", businessUnit: "noaa", office: "nws", status: "in_review" }),
     sub({ id: "c", businessUnit: "noaa", office: "nmfs", status: "submitted" }),
     sub({ id: "d", businessUnit: "noaa" }), // no office set -> "Unassigned"
