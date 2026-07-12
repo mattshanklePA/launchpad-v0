@@ -17,7 +17,7 @@ const MAX_FEATURES = 3
 
 export function Step4ProposedSolution() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility(formData.submitterOffice)
+  const isVisible = useFieldVisibility(formData)
   const tenant = getTenant()
   const [newFeature, setNewFeature] = useState("")
   const [showOptional, setShowOptional] = usePersistentDisclosure("solution")

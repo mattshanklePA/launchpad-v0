@@ -21,7 +21,7 @@ const metricOptions = [
 
 export function Step9OutcomeMeasurements() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility(formData.submitterOffice)
+  const isVisible = useFieldVisibility(formData)
   const [showOptional, setShowOptional] = usePersistentDisclosure("metrics")
 
   const handleMetricToggle = (item: string) => {

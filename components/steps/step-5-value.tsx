@@ -35,7 +35,7 @@ function getBenefitOptions(orgName: string) {
 
 export function Step5Value() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility(formData.submitterOffice)
+  const isVisible = useFieldVisibility(formData)
   const [showOptional, setShowOptional] = usePersistentDisclosure("value")
   const tenant = getTenant()
   const benefitOptions = getBenefitOptions(tenant.orgName)

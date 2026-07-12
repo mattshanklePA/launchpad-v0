@@ -62,6 +62,16 @@ export type FieldDefinition = {
   // True if this field feeds the OMB federal AI use case inventory (M-25-21
   // companion guidance). Surfaces an "OMB" badge next to the field in the wizard.
   omb?: boolean
+  // Conditional disclosure (issue #60): whether this field should render at
+  // all for the submission in progress, given everything answered so far —
+  // on top of (not instead of) the cascade (`fieldsForBureau`) and the
+  // admin on/off toggle (`isFieldEnabled`). Absent means "always show once
+  // enabled" (today's behavior for every pre-existing field). Only gates
+  // *visibility*; it never changes whether a field is mandatory-when-shown.
+  // The single resolver that combines all three checks is `isFieldVisible`
+  // in lib/formConfig.ts — the wizard and lib/submissionReadiness.ts both
+  // call through it so a hidden field is never demanded at submit time.
+  showWhen?: (formData: FormData) => boolean
 }
 
 /** `field.level`, defaulting to "bureau" when unset — the single place that resolves the default. */
@@ -84,15 +94,25 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
   // bureau-admin-togglable fields. Hard-coding `locked: true` here would wrongly
   // lock them for USPTO/DoW too, since this registry is shared across tenants.
   //
-  // TODO(issue #57): this is the current, hand-curated subset of the OMB
-  // inventory field set (carried over from the pre-cascade registry, not the
-  // full prescriptive list). The authoritative current-year field names/
-  // formats live in context/Guidance-on-2025-Agency-Artificial-Intelligence-
+  // TODO(issue #57, still open as of #60): this is the current, hand-curated
+  // subset of the OMB inventory field set (carried over from the pre-cascade
+  // registry, not the full prescriptive 32-field list). Issue #60 asked to
+  // reconcile against docs/omb-2025-inventory-fields.md, but that file does
+  // not exist in this repo (checked `git log --all`) — the only source
+  // material is still context/Guidance-on-2025-Agency-Artificial-Intelligence-
   // Reporting-.pdf and context/OMB AI Inventory Reporting Cheat Sheet -
-  // 12-5-25.docx — neither could be parsed in this environment (no
-  // poppler-utils/pdftotext for the PDF; docx text extraction needs a tool
-  // this sandbox doesn't have approval to run). Read those two documents and
-  // reconcile this list against them: add any missing OMB-mandated field as a
+  // 12-5-25.docx, and neither could be parsed in this environment (no
+  // poppler-utils/pdftotext for the PDF; docx text extraction needs shell
+  // tooling — python3/unzip — this sandbox doesn't have approval to run).
+  // Unblocking this needs one of: (a) committing the authoritative field list
+  // as docs/omb-2025-inventory-fields.md, or (b) granting pdftotext/poppler-
+  // utils or unzip execution so a future run can extract the source text
+  // itself. #60 did add the conditional-disclosure mechanism (`showWhen` on
+  // `FieldDefinition`, resolved by `isFieldVisible` in lib/formConfig.ts) and
+  // wired it onto the fields already here (hasATO, the four high-impact risk
+  // fields, accessControlRequirements) — that mechanism is ready for the
+  // remaining ~9 unreconciled fields once the source list is available. Once
+  // unblocked, reconcile this list against it: add any missing OMB-mandated field as a
   // new `level: "omb"` entry (config change only, per
   // `fieldsForBureau`/`canToggleField` below — no code change needed), and
   // fix any field here whose label/description doesn't match the current-
@@ -129,6 +149,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     level: "omb",
     locked: false,
     omb: true,
+    // ATO is only meaningful once the system is running somewhere other than
+    // a lab — pre-deployment ideas have nothing to authorize yet.
+    showWhen: (fd) => fd.stageOfDevelopment === "pilot" || fd.stageOfDevelopment === "deployed",
   },
   {
     fieldKey: "systemSource",
@@ -175,7 +198,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
     omb: true,
   },
-  // ────── High-impact risk-management fields (only surfaced when highImpact = yes) ──────
+  // ────── High-impact risk-management fields (issue #60: only surfaced once
+  // highImpact = "yes" AND the system is fully deployed — a pre-deployment or
+  // pilot high-impact idea has nothing to assess/monitor/appeal yet) ──────
   {
     fieldKey: "aiImpactAssessment",
     label: "AI impact assessment",
@@ -186,6 +211,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
   },
   {
     fieldKey: "preDeploymentTesting",
@@ -197,6 +223,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
   },
   {
     fieldKey: "ongoingMonitoringPlan",
@@ -208,6 +235,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
   },
   {
     fieldKey: "humanOversightAppeal",
@@ -219,6 +247,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     level: "omb",
     locked: false,
     omb: true,
+    showWhen: (fd) => fd.highImpact === "yes" && fd.stageOfDevelopment === "deployed",
   },
   // ────── Phase 1: Setup ──────
   {
@@ -618,6 +647,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     phase: 4,
     step: 6,
     locked: false,
+    // Dependent sub-field (issue #60): meaningless without PII/sensitive data
+    // in play.
+    showWhen: (fd) => fd.involvesSensitiveData === "yes",
   },
   {
     fieldKey: "aiDecisionalImpact",

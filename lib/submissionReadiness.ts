@@ -10,7 +10,7 @@
 // than a 100-char rambling title. We trust the AI to surface real quality.
 
 import type { FormData } from "@/lib/steps"
-import { isFieldEnabled } from "@/lib/formConfig"
+import { isFieldVisible } from "@/lib/formConfig"
 
 export type MissingReason = "missing" | "not_assessed" | "low_quality"
 
@@ -42,14 +42,18 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   const missing: MissingItem[] = []
   const warnings: MissingItem[] = []
 
-  // Local helper that respects the admin Form Configuration. A disabled field
-  // is by definition not required — skip the check entirely.
+  // Local helper that respects the admin Form Configuration and each field's
+  // `showWhen` prerequisite (issue #60): a disabled field, or one whose
+  // prerequisite isn't met yet (so the wizard doesn't render it), is by
+  // definition not required — skip the check entirely. Same resolver the
+  // wizard uses (`isFieldVisible`), so "still needed to submit" can never
+  // demand a field the submitter can't currently see.
   const need = (
     field: keyof FormData,
     item: Omit<MissingItem, "field"> & { field?: string },
     test: () => boolean,
   ) => {
-    if (!isFieldEnabled(field)) return
+    if (!isFieldVisible(field, formData)) return
     if (test()) missing.push({ ...item, field: (item.field as string) || (field as string) })
   }
 
@@ -145,7 +149,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     "involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview",
     "successMetrics", "timelineForResults",
   ]
-  const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldEnabled(k)).length
+  const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldVisible(k, formData)).length
   const totalChecks = enabledRequiredCount + 1 // + 1 for the AI quality gate
   const passed = Math.max(0, totalChecks - missing.length)
   const completenessPercent = Math.max(0, Math.min(100, Math.round((passed / totalChecks) * 100)))

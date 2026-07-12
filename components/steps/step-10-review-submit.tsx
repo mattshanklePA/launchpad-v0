@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCircle, Send } from "lucide-react"
 import { assessReadiness } from "@/app/actions"
 import { SubmissionGate } from "@/components/steps/submission-gate"
-import { isFieldEnabled, getFormConfig } from "@/lib/formConfig"
+import { isFieldVisible, getFormConfig } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
 
 const routeOptions = [
@@ -335,7 +335,7 @@ export function Step10ReviewSubmit() {
         // Filter STEP_FIELDS to only the fields currently enabled in the
         // admin Form Configuration. If a step has zero enabled fields, hide
         // its review card entirely.
-        const fields = (STEP_FIELDS[step.step] || []).filter(({ key }) => isFieldEnabled(key, formData.submitterOffice))
+        const fields = (STEP_FIELDS[step.step] || []).filter(({ key }) => isFieldVisible(key, formData))
         if (fields.length === 0) return null
         return (
           <Card key={step.step}>

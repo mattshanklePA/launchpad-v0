@@ -8,7 +8,7 @@ import { getTenant } from "@/lib/tenant"
 
 export function Step1SubmitterInfo() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility(formData.submitterOffice)
+  const isVisible = useFieldVisibility(formData)
 
   // Dependent dropdown: only bureaus that declare `offices` show one, and it
   // resets whenever the bureau changes to a bureau without a matching office.
