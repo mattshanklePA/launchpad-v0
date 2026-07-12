@@ -13,7 +13,10 @@ import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { FieldRequirementBadge } from "../launchpad/field-requirement-badge"
-import { determineHighImpact, HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
+import { AiProposedHint } from "../launchpad/ai-proposed-hint"
+import { HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
+import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
+import { useAiPropose } from "@/hooks/use-ai-propose"
 
 const highImpactFactorOptions: { value: HighImpactFactor; label: string }[] = (
   Object.keys(HIGH_IMPACT_FACTOR_LABELS) as HighImpactFactor[]
@@ -92,6 +95,23 @@ export function Step8FeasibilitySecurity() {
   const isVisible = useFieldVisibility(formData)
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
   const tenant = getTenant()
+
+  // AI-proposed, submitter-confirmed OMB fields (issue #61) — each wraps the
+  // same pure determination module a reviewer sees elsewhere, pre-fills once
+  // while the field is still empty, and shows a one-line rationale. `null`
+  // (topicArea/aiClassification when no keyword match) is left blank and
+  // flagged rather than guessed.
+  const highImpactProposal = proposeHighImpact(formData)
+  useAiPropose("highImpact", formData.highImpact, setFormData, highImpactProposal)
+
+  const topicAreaProposal = proposeTopicArea(formData)
+  useAiPropose("topicArea", formData.topicArea, setFormData, topicAreaProposal)
+
+  const aiClassificationProposal = proposeAiClassification(formData)
+  useAiPropose("aiClassification", formData.aiClassification, setFormData, aiClassificationProposal)
+
+  const hasPiiProposal = proposeHasPii(formData)
+  useAiPropose("hasPii", formData.hasPii, setFormData, hasPiiProposal)
 
   const handleToggle = (
     field: "resourcesNeeded" | "accessControlRequirements" | "highImpactFactors" | "demographicFeatures" | "publicConsultationSteps",
@@ -413,9 +433,8 @@ export function Step8FeasibilitySecurity() {
                 </RadioGroup>
                 <p className="text-xs text-muted-foreground">
                   High-impact use cases carry additional OMB risk-management reporting.
-                  {" "}
-                  Recommended: <strong>{determineHighImpact(formData).recommendation === "yes" ? "High-impact" : "Not high-impact"}</strong>, based on the factors selected above plus the risk answers already captured on this form — you make the final call.
                 </p>
+                <AiProposedHint proposal={highImpactProposal} />
               </div>
 
               {isVisible("highImpactJustification") && (
@@ -453,6 +472,7 @@ export function Step8FeasibilitySecurity() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <AiProposedHint proposal={topicAreaProposal} />
                 </div>
               )}
 
@@ -476,6 +496,7 @@ export function Step8FeasibilitySecurity() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <AiProposedHint proposal={aiClassificationProposal} />
                 </div>
               )}
 
@@ -937,6 +958,7 @@ export function Step8FeasibilitySecurity() {
                         <Label htmlFor="haspii-no">No</Label>
                       </div>
                     </RadioGroup>
+                    <AiProposedHint proposal={hasPiiProposal} flagWhenEmpty={false} />
                   </div>
                 )}
 

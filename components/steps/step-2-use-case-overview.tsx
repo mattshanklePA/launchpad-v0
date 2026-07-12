@@ -11,6 +11,9 @@ import { useFieldVisibility } from "@/lib/formConfig"
 import { suggestIdeaOverview } from "@/app/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { getTenant } from "@/lib/tenant"
+import { proposePublicIndicator } from "@/lib/ombAutofill"
+import { useAiPropose } from "@/hooks/use-ai-propose"
+import { AiProposedHint } from "@/components/launchpad/ai-proposed-hint"
 
 export function Step2UseCaseOverview() {
   const { formData, setFormData } = useForm()
@@ -19,6 +22,12 @@ export function Step2UseCaseOverview() {
   const tenant = getTenant()
   const [drafting, setDrafting] = useState(false)
   const autoTried = useRef(false)
+
+  // AI-proposed, submitter-confirmed: OMB's "should this be withheld from
+  // public reporting?" (field #5) — defaults to public/"No" unless a
+  // security signal already on the form says otherwise (issue #61).
+  const publicIndicatorProposal = proposePublicIndicator(formData)
+  useAiPropose("publicIndicator", formData.publicIndicator, setFormData, publicIndicatorProposal)
 
   // Scout can synthesize a title + description from everything captured earlier
   // (problem, solution, value, alignment, feasibility, metrics).
@@ -145,6 +154,7 @@ export function Step2UseCaseOverview() {
               </Label>
             </div>
           </RadioGroup>
+          <AiProposedHint proposal={publicIndicatorProposal} />
         </div>
       )}
     </div>
