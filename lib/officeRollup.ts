@@ -31,7 +31,7 @@ function buildRow(value: string, label: string, rows: Submission[]): OfficeRollu
     label,
     counts,
     total: rows.length,
-    highImpact: rows.filter((s) => s.formData.highImpact === "yes").length,
+    highImpact: rows.filter((s) => s.formData.highImpact === "high_impact").length,
   }
 }
 

@@ -58,7 +58,7 @@ describe("docSeedSubmissions golden state", () => {
   })
 
   it("includes at least one high-impact example with its risk fields populated", () => {
-    const highImpact = asSubmissions.filter((s) => s.formData.highImpact === "yes")
+    const highImpact = asSubmissions.filter((s) => s.formData.highImpact === "high_impact")
     expect(highImpact.length).toBeGreaterThanOrEqual(1)
     for (const s of highImpact) {
       expect(s.formData.hasATO).toBeTruthy()
@@ -115,7 +115,7 @@ describe("docSeedSubmissions golden state", () => {
       expect(bureaus.size).toBe(3)
       expect(bureaus).toEqual(new Set(["nist", "noaa", "ita"]))
 
-      for (const s of trio) expect(s!.formData.highImpact).toBe("no")
+      for (const s of trio) expect(s!.formData.highImpact).toBe("not_high_impact")
     })
 
     it("classifies all three as Consolidated under the same OMB category", () => {

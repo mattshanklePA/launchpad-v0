@@ -32,13 +32,71 @@ const accessOptions = [
   { value: "other", label: "Other" },
 ]
 
+// OMB topic-area options (docs/omb-2025-inventory-fields.md field #9).
+const topicAreaOptions = [
+  { value: "administrative_functions", label: "Administrative Functions" },
+  { value: "cybersecurity", label: "Cybersecurity" },
+  { value: "emergency_management", label: "Emergency Management" },
+  { value: "energy_environment", label: "Energy and the Environment" },
+  { value: "government_benefits_processing", label: "Government Benefits Processing" },
+  { value: "health_medical", label: "Health and Medical" },
+  { value: "human_resources", label: "Human Resources" },
+  { value: "information_technology", label: "Information Technology" },
+  { value: "international_affairs", label: "International Affairs" },
+  { value: "law_enforcement", label: "Law Enforcement" },
+  { value: "procurement_financial_management", label: "Procurement and Financial Management" },
+  { value: "science", label: "Science" },
+  { value: "service_delivery", label: "Service Delivery" },
+  { value: "transportation", label: "Transportation" },
+  { value: "other", label: "Other" },
+]
+
+// OMB AI classification options (field #10).
+const aiClassificationOptions = [
+  { value: "agentic_ai", label: "Agentic AI" },
+  { value: "classical_predictive_ml", label: "Classical/Predictive Machine Learning" },
+  { value: "computer_vision", label: "Computer Vision" },
+  { value: "generative_ai", label: "Generative AI" },
+  { value: "nlp", label: "Natural Language Processing" },
+  { value: "reinforcement_learning", label: "Reinforcement Learning" },
+]
+
+// OMB demographic-features options (field #23, select multiple).
+const demographicFeatureOptions = [
+  { value: "race_ethnicity", label: "Race/Ethnicity" },
+  { value: "sex", label: "Sex" },
+  { value: "age", label: "Age" },
+  { value: "religious_affiliation", label: "Religious Affiliation" },
+  { value: "socioeconomic_status", label: "Socioeconomic Status" },
+  { value: "ability_status", label: "Ability Status" },
+  { value: "residency_status", label: "Residency Status" },
+  { value: "marital_status", label: "Marital Status" },
+  { value: "income", label: "Income" },
+  { value: "employment_status", label: "Employment Status" },
+  { value: "none", label: "None of the above" },
+  { value: "other", label: "Other" },
+]
+
+// OMB public-consultation steps options (field #34, select multiple).
+const publicConsultationOptions = [
+  { value: "direct_usability_testing", label: "Direct usability testing" },
+  { value: "general_solicitation", label: "General solicitations of public feedback/comments" },
+  { value: "public_hearings", label: "Public hearings or meetings" },
+  { value: "other", label: "Other" },
+  { value: "in_progress", label: "In-progress" },
+  { value: "waived", label: "Agency CAIO has waived this minimum practice" },
+]
+
 export function Step8FeasibilitySecurity() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility(formData)
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
   const tenant = getTenant()
 
-  const handleToggle = (field: "resourcesNeeded" | "accessControlRequirements" | "highImpactFactors", item: string) => {
+  const handleToggle = (
+    field: "resourcesNeeded" | "accessControlRequirements" | "highImpactFactors" | "demographicFeatures" | "publicConsultationSteps",
+    item: string,
+  ) => {
     const currentItems = formData[field] || []
     const newItems = currentItems.includes(item) ? currentItems.filter((i) => i !== item) : [...currentItems, item]
     setFormData((prev) => ({ ...prev, [field]: newItems }))
@@ -338,42 +396,94 @@ export function Step8FeasibilitySecurity() {
                 <RadioGroup
                   value={formData.highImpact}
                   onValueChange={(value) => setFormData((prev) => ({ ...prev, highImpact: value as any }))}
-                  className="flex gap-4"
+                  className="flex flex-col gap-2"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="hi-yes" />
-                    <Label htmlFor="hi-yes">Yes</Label>
+                    <RadioGroupItem value="high_impact" id="hi-yes" />
+                    <Label htmlFor="hi-yes">High-impact</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="hi-no" />
-                    <Label htmlFor="hi-no">No</Label>
+                    <RadioGroupItem value="presumed_not_high_impact" id="hi-presumed" />
+                    <Label htmlFor="hi-presumed">Presumed high-impact, but determined not high-impact</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="not_high_impact" id="hi-no" />
+                    <Label htmlFor="hi-no">Not high-impact</Label>
                   </div>
                 </RadioGroup>
                 <p className="text-xs text-muted-foreground">
                   High-impact use cases carry additional OMB risk-management reporting.
                   {" "}
-                  Recommended: <strong>{determineHighImpact(formData).recommendation === "yes" ? "Yes" : "No"}</strong>, based on the factors selected above plus the risk answers already captured on this form — you make the final call.
+                  Recommended: <strong>{determineHighImpact(formData).recommendation === "yes" ? "High-impact" : "Not high-impact"}</strong>, based on the factors selected above plus the risk answers already captured on this form — you make the final call.
                 </p>
               </div>
+
+              {isVisible("highImpactJustification") && (
+                <div className="space-y-2">
+                  <Label htmlFor="highImpactJustification">
+                    Justification <FieldRequirementBadge fieldKey="highImpactJustification" />
+                  </Label>
+                  <Textarea
+                    id="highImpactJustification"
+                    value={formData.highImpactJustification}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, highImpactJustification: e.target.value }))}
+                    placeholder="Why was this presumed high-impact use case determined not to be high-impact?"
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              {isVisible("topicArea") && (
+                <div className="space-y-2">
+                  <Label htmlFor="topicArea">
+                    Use case topic area <FieldRequirementBadge fieldKey="topicArea" />
+                  </Label>
+                  <Select
+                    value={formData.topicArea}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, topicArea: value as any }))}
+                  >
+                    <SelectTrigger id="topicArea">
+                      <SelectValue placeholder="Select topic area..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {topicAreaOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {isVisible("aiClassification") && (
+                <div className="space-y-2">
+                  <Label htmlFor="aiClassification">
+                    AI classification <FieldRequirementBadge fieldKey="aiClassification" />
+                  </Label>
+                  <Select
+                    value={formData.aiClassification}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, aiClassification: value as any }))}
+                  >
+                    <SelectTrigger id="aiClassification">
+                      <SelectValue placeholder="Select classification..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aiClassificationOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {isVisible("aiImpactAssessment") && (
                 <div className="space-y-5 pl-4 border-l-2 border-blue-200">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     High-impact risk management <FieldRequirementBadge fieldKey="aiImpactAssessment" />
                   </p>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="aiImpactAssessment">
-                      AI impact assessment <FieldRequirementBadge fieldKey="aiImpactAssessment" />
-                    </Label>
-                    <Textarea
-                      id="aiImpactAssessment"
-                      value={formData.aiImpactAssessment}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, aiImpactAssessment: e.target.value }))}
-                      placeholder="Intended purpose, expected benefits, and potential risks of this AI system..."
-                      rows={3}
-                    />
-                  </div>
 
                   <div className="space-y-2">
                     <Label>
@@ -385,15 +495,19 @@ export function Step8FeasibilitySecurity() {
                       onValueChange={(value) =>
                         setFormData((prev) => ({ ...prev, preDeploymentTesting: value as any }))
                       }
-                      className="flex gap-4"
+                      className="flex flex-col gap-2"
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="yes" id="pretest-yes" />
                         <Label htmlFor="pretest-yes">Yes</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="pretest-no" />
-                        <Label htmlFor="pretest-no">No</Label>
+                        <RadioGroupItem value="in_progress" id="pretest-prog" />
+                        <Label htmlFor="pretest-prog">In-progress</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="waived" id="pretest-waived" />
+                        <Label htmlFor="pretest-waived">Agency CAIO has waived this minimum practice</Label>
                       </div>
                     </RadioGroup>
                     <Textarea
@@ -408,6 +522,81 @@ export function Step8FeasibilitySecurity() {
 
                   <div className="space-y-2">
                     <Label>
+                      AI impact assessment completed?{" "}
+                      <FieldRequirementBadge fieldKey="aiImpactAssessmentCompleted" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.aiImpactAssessmentCompleted}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, aiImpactAssessmentCompleted: value as any }))
+                      }
+                      className="flex flex-col gap-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="assess-completed-yes" />
+                        <Label htmlFor="assess-completed-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="in_progress" id="assess-completed-prog" />
+                        <Label htmlFor="assess-completed-prog">In-progress</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="waived" id="assess-completed-waived" />
+                        <Label htmlFor="assess-completed-waived">Agency CAIO has waived this minimum practice</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="aiImpactAssessment">
+                      Potential impacts and how they were identified{" "}
+                      <FieldRequirementBadge fieldKey="aiImpactAssessment" />
+                    </Label>
+                    <Textarea
+                      id="aiImpactAssessment"
+                      value={formData.aiImpactAssessment}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, aiImpactAssessment: e.target.value }))}
+                      placeholder="Intended purpose, expected benefits, and potential risks of this AI system..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Independent review conducted? <FieldRequirementBadge fieldKey="independentReviewConducted" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.independentReviewConducted}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, independentReviewConducted: value as any }))
+                      }
+                      className="flex flex-col gap-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes_other_office" id="indreview-office" />
+                        <Label htmlFor="indreview-office">Yes — by another agency office/reviewer not involved in development</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes_oversight_board" id="indreview-board" />
+                        <Label htmlFor="indreview-board">Yes — by an agency AI oversight board</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes_caio" id="indreview-caio" />
+                        <Label htmlFor="indreview-caio">Yes — by the CAIO</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="in_progress" id="indreview-prog" />
+                        <Label htmlFor="indreview-prog">In-progress</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="waived" id="indreview-waived" />
+                        <Label htmlFor="indreview-waived">Agency CAIO has waived this minimum practice</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
                       Ongoing monitoring plan? <FieldRequirementBadge fieldKey="ongoingMonitoringPlan" />
                     </Label>
                     <RadioGroup
@@ -415,15 +604,19 @@ export function Step8FeasibilitySecurity() {
                       onValueChange={(value) =>
                         setFormData((prev) => ({ ...prev, ongoingMonitoringPlan: value as any }))
                       }
-                      className="flex gap-4"
+                      className="flex flex-col gap-2"
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="yes" id="monitor-yes" />
-                        <Label htmlFor="monitor-yes">Yes</Label>
+                        <Label htmlFor="monitor-yes">Yes, sufficient monitoring protocols established</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="monitor-no" />
-                        <Label htmlFor="monitor-no">No</Label>
+                        <RadioGroupItem value="in_progress" id="monitor-prog" />
+                        <Label htmlFor="monitor-prog">In-progress</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="waived" id="monitor-waived" />
+                        <Label htmlFor="monitor-waived">Agency CAIO has waived this minimum practice</Label>
                       </div>
                     </RadioGroup>
                     <Textarea
@@ -436,7 +629,64 @@ export function Step8FeasibilitySecurity() {
 
                   <div className="space-y-2">
                     <Label>
-                      Human oversight / appeal mechanism for affected individuals?{" "}
+                      Periodic operator training established?{" "}
+                      <FieldRequirementBadge fieldKey="operatorTrainingEstablished" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.operatorTrainingEstablished}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, operatorTrainingEstablished: value as any }))
+                      }
+                      className="flex flex-col gap-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="optraining-yes" />
+                        <Label htmlFor="optraining-yes">Yes, sufficient and periodic training established</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="in_progress" id="optraining-prog" />
+                        <Label htmlFor="optraining-prog">In-progress</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="waived" id="optraining-waived" />
+                        <Label htmlFor="optraining-waived">Agency CAIO has waived this minimum practice</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Appropriate fail-safe in place? <FieldRequirementBadge fieldKey="failSafeMechanism" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.failSafeMechanism}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, failSafeMechanism: value as any }))
+                      }
+                      className="flex flex-col gap-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="failsafe-yes" />
+                        <Label htmlFor="failsafe-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="not_applicable" id="failsafe-na" />
+                        <Label htmlFor="failsafe-na">Not applicable</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="in_progress" id="failsafe-prog" />
+                        <Label htmlFor="failsafe-prog">In-progress</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="waived" id="failsafe-waived" />
+                        <Label htmlFor="failsafe-waived">Agency CAIO has waived this minimum practice</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Established appeal process for impacted individuals?{" "}
                       <FieldRequirementBadge fieldKey="humanOversightAppeal" />
                     </Label>
                     <RadioGroup
@@ -444,15 +694,27 @@ export function Step8FeasibilitySecurity() {
                       onValueChange={(value) =>
                         setFormData((prev) => ({ ...prev, humanOversightAppeal: value as any }))
                       }
-                      className="flex gap-4"
+                      className="flex flex-col gap-2"
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="yes" id="appeal-yes" />
-                        <Label htmlFor="appeal-yes">Yes</Label>
+                        <Label htmlFor="appeal-yes">Yes, appeal process established</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="appeal-no" />
-                        <Label htmlFor="appeal-no">No</Label>
+                        <RadioGroupItem value="not_applicable" id="appeal-na" />
+                        <Label htmlFor="appeal-na">Not applicable</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="in_progress" id="appeal-prog" />
+                        <Label htmlFor="appeal-prog">In-progress</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="law_precludes" id="appeal-law" />
+                        <Label htmlFor="appeal-law">Law/operational limits preclude appeal</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="waived" id="appeal-waived" />
+                        <Label htmlFor="appeal-waived">Agency CAIO has waived this minimum practice</Label>
                       </div>
                     </RadioGroup>
                     <Textarea
@@ -467,69 +729,23 @@ export function Step8FeasibilitySecurity() {
 
                   <div className="space-y-2">
                     <Label>
-                      Independent review conducted? <FieldRequirementBadge fieldKey="independentReviewConducted" />
+                      Steps taken to consult end users and the public{" "}
+                      <FieldRequirementBadge fieldKey="publicConsultationSteps" />
                     </Label>
-                    <RadioGroup
-                      value={formData.independentReviewConducted}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, independentReviewConducted: value as any }))
-                      }
-                      className="flex gap-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="indreview-yes" />
-                        <Label htmlFor="indreview-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="indreview-no" />
-                        <Label htmlFor="indreview-no">No</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>
-                      Periodic operator training established?{" "}
-                      <FieldRequirementBadge fieldKey="operatorTrainingEstablished" />
-                    </Label>
-                    <RadioGroup
-                      value={formData.operatorTrainingEstablished}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, operatorTrainingEstablished: value as any }))
-                      }
-                      className="flex gap-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="optraining-yes" />
-                        <Label htmlFor="optraining-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="optraining-no" />
-                        <Label htmlFor="optraining-no">No</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>
-                      Appropriate fail-safe in place? <FieldRequirementBadge fieldKey="failSafeMechanism" />
-                    </Label>
-                    <RadioGroup
-                      value={formData.failSafeMechanism}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, failSafeMechanism: value as any }))
-                      }
-                      className="flex gap-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="failsafe-yes" />
-                        <Label htmlFor="failsafe-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="failsafe-no" />
-                        <Label htmlFor="failsafe-no">No</Label>
-                      </div>
-                    </RadioGroup>
+                    <p className="text-xs text-muted-foreground">Select all that apply.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {publicConsultationOptions.map((option) => (
+                        <Toggle
+                          key={option.value}
+                          pressed={formData.publicConsultationSteps.includes(option.value)}
+                          onPressedChange={() => handleToggle("publicConsultationSteps", option.value)}
+                          variant="outline"
+                          className="rounded-full px-3 py-1 text-sm h-auto"
+                        >
+                          {option.label}
+                        </Toggle>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -574,24 +790,26 @@ export function Step8FeasibilitySecurity() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="systemSource">
-                  Built in-house, under contract, or purchased? <FieldRequirementBadge fieldKey="systemSource" />
-                </Label>
-                <Select
-                  value={formData.systemSource}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, systemSource: value as any }))}
-                >
-                  <SelectTrigger id="systemSource">
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="in_house">Developed in-house</SelectItem>
-                    <SelectItem value="contract">Developed under contract</SelectItem>
-                    <SelectItem value="vendor">Purchased from a vendor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {isVisible("systemSource") && (
+                <div className="space-y-2">
+                  <Label htmlFor="systemSource">
+                    Built in-house, under contract, or purchased? <FieldRequirementBadge fieldKey="systemSource" />
+                  </Label>
+                  <Select
+                    value={formData.systemSource}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, systemSource: value as any }))}
+                  >
+                    <SelectTrigger id="systemSource">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="in_house">Developed in-house</SelectItem>
+                      <SelectItem value="contract">Developed under contract</SelectItem>
+                      <SelectItem value="vendor">Purchased from a vendor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {isVisible("systemSourceVendorName") && (
                 <div className="space-y-2">
@@ -607,17 +825,19 @@ export function Step8FeasibilitySecurity() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="operationalDate">
-                  Operational / pilot start date <FieldRequirementBadge fieldKey="operationalDate" />
-                </Label>
-                <Input
-                  id="operationalDate"
-                  type="date"
-                  value={formData.operationalDate}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, operationalDate: e.target.value }))}
-                />
-              </div>
+              {isVisible("operationalDate") && (
+                <div className="space-y-2">
+                  <Label htmlFor="operationalDate">
+                    Operational / pilot start date <FieldRequirementBadge fieldKey="operationalDate" />
+                  </Label>
+                  <Input
+                    id="operationalDate"
+                    type="date"
+                    value={formData.operationalDate}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, operationalDate: e.target.value }))}
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>
@@ -671,18 +891,20 @@ export function Step8FeasibilitySecurity() {
               <div className="pt-4 space-y-5">
                 <h4 className="text-sm font-semibold text-uspto-gray-text">Data &amp; code disclosures</h4>
 
-                <div className="space-y-2">
-                  <Label htmlFor="trainingDataDescription">
-                    Training / evaluation data <FieldRequirementBadge fieldKey="trainingDataDescription" />
-                  </Label>
-                  <Textarea
-                    id="trainingDataDescription"
-                    value={formData.trainingDataDescription}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, trainingDataDescription: e.target.value }))}
-                    placeholder="Describe the data used to train, fine-tune, and/or evaluate the model(s)..."
-                    rows={3}
-                  />
-                </div>
+                {isVisible("trainingDataDescription") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="trainingDataDescription">
+                      Training / evaluation data <FieldRequirementBadge fieldKey="trainingDataDescription" />
+                    </Label>
+                    <Textarea
+                      id="trainingDataDescription"
+                      value={formData.trainingDataDescription}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, trainingDataDescription: e.target.value }))}
+                      placeholder="Describe the data used to train, fine-tune, and/or evaluate the model(s)..."
+                      rows={3}
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="federalDataCatalogLink">
@@ -696,6 +918,28 @@ export function Step8FeasibilitySecurity() {
                   />
                 </div>
 
+                {isVisible("hasPii") && (
+                  <div className="space-y-2">
+                    <Label>
+                      Involves PII maintained by the agency? <FieldRequirementBadge fieldKey="hasPii" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.hasPii}
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, hasPii: value as any }))}
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="haspii-yes" />
+                        <Label htmlFor="haspii-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="haspii-no" />
+                        <Label htmlFor="haspii-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="piaLink">
                     Privacy Impact Assessment (PIA) link <FieldRequirementBadge fieldKey="piaLink" />
@@ -708,25 +952,50 @@ export function Step8FeasibilitySecurity() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>
-                    Does this project include custom-developed code? <FieldRequirementBadge fieldKey="customCode" />
-                  </Label>
-                  <RadioGroup
-                    value={formData.customCode}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, customCode: value as any }))}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="customcode-yes" />
-                      <Label htmlFor="customcode-yes">Yes</Label>
+                {isVisible("demographicFeatures") && (
+                  <div className="space-y-2">
+                    <Label>
+                      Demographic variables used as model features{" "}
+                      <FieldRequirementBadge fieldKey="demographicFeatures" />
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Select all that apply.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {demographicFeatureOptions.map((option) => (
+                        <Toggle
+                          key={option.value}
+                          pressed={formData.demographicFeatures.includes(option.value)}
+                          onPressedChange={() => handleToggle("demographicFeatures", option.value)}
+                          variant="outline"
+                          className="rounded-full px-3 py-1 text-sm h-auto"
+                        >
+                          {option.label}
+                        </Toggle>
+                      ))}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="customcode-no" />
-                      <Label htmlFor="customcode-no">No</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                  </div>
+                )}
+
+                {isVisible("customCode") && (
+                  <div className="space-y-2">
+                    <Label>
+                      Does this project include custom-developed code? <FieldRequirementBadge fieldKey="customCode" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.customCode}
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, customCode: value as any }))}
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="customcode-yes" />
+                        <Label htmlFor="customcode-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="customcode-no" />
+                        <Label htmlFor="customcode-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
 
                 {isVisible("openSourceCodeLink") && (
                   <div className="space-y-2">

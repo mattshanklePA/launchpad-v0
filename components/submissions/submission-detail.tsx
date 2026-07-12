@@ -58,6 +58,12 @@ const DISPOSITION_LABEL: Record<Assist["suggestedDisposition"], string> = {
   reject: "Reject",
 }
 
+const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
+  high_impact: "High-impact",
+  presumed_not_high_impact: "Presumed, but not high-impact",
+  not_high_impact: "Not high-impact",
+}
+
 function newCommentId() {
   return `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
@@ -253,7 +259,7 @@ export function SubmissionDetail({ id }: { id: string }) {
     setBusy(false)
   }
 
-  const setHighImpact = async (next: "yes" | "no") => {
+  const setHighImpact = async (next: "high_impact" | "presumed_not_high_impact" | "not_high_impact") => {
     setBusy(true)
     await patchSubmissionFormData(sub.id, { highImpact: next })
     await reload()
@@ -478,34 +484,42 @@ export function SubmissionDetail({ id }: { id: string }) {
             <li key={i}>{r}</li>
           ))}
         </ul>
-        <div className="flex items-center gap-2 pt-2 border-t">
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
           <span className="text-sm text-muted-foreground">Reviewer determination:</span>
           {isReviewer ? (
             <>
               <Button
                 size="sm"
-                variant={fd.highImpact === "yes" ? "default" : "outline"}
+                variant={fd.highImpact === "high_impact" ? "default" : "outline"}
                 disabled={busy}
-                onClick={() => setHighImpact("yes")}
+                onClick={() => setHighImpact("high_impact")}
               >
                 High-impact
               </Button>
               <Button
                 size="sm"
-                variant={fd.highImpact === "no" ? "default" : "outline"}
+                variant={fd.highImpact === "presumed_not_high_impact" ? "default" : "outline"}
                 disabled={busy}
-                onClick={() => setHighImpact("no")}
+                onClick={() => setHighImpact("presumed_not_high_impact")}
+              >
+                Presumed, but not high-impact
+              </Button>
+              <Button
+                size="sm"
+                variant={fd.highImpact === "not_high_impact" ? "default" : "outline"}
+                disabled={busy}
+                onClick={() => setHighImpact("not_high_impact")}
               >
                 Not high-impact
               </Button>
             </>
           ) : (
-            <Badge variant="outline">{fd.highImpact === "yes" ? "High-impact" : fd.highImpact === "no" ? "Not high-impact" : "Not yet set"}</Badge>
+            <Badge variant="outline">{HIGH_IMPACT_BADGE_LABELS[fd.highImpact] || "Not yet set"}</Badge>
           )}
         </div>
       </div>
 
-      {fd.highImpact === "yes" && (
+      {fd.highImpact === "high_impact" && (
         <div className="rounded-lg border bg-white p-4 space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             High-impact risk management
@@ -517,9 +531,9 @@ export function SubmissionDetail({ id }: { id: string }) {
             </div>
           )}
           <div className="flex flex-wrap gap-2 pt-1">
-            <RiskRow ok={fd.preDeploymentTesting === "yes"} label={fd.preDeploymentTesting === "yes" ? "Pre-deployment testing done" : "No pre-deployment testing"} />
-            <RiskRow ok={fd.ongoingMonitoringPlan === "yes"} label={fd.ongoingMonitoringPlan === "yes" ? "Ongoing monitoring plan" : "No ongoing monitoring plan"} />
-            <RiskRow ok={fd.humanOversightAppeal === "yes"} label={fd.humanOversightAppeal === "yes" ? "Human oversight/appeal available" : "No human oversight/appeal"} />
+            <RiskRow ok={fd.preDeploymentTesting === "yes"} label={`Pre-deployment testing: ${fd.preDeploymentTesting || "not set"}`} />
+            <RiskRow ok={fd.ongoingMonitoringPlan === "yes"} label={`Ongoing monitoring: ${fd.ongoingMonitoringPlan || "not set"}`} />
+            <RiskRow ok={fd.humanOversightAppeal === "yes"} label={`Appeal process: ${fd.humanOversightAppeal || "not set"}`} />
           </div>
         </div>
       )}

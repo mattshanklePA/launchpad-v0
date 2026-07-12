@@ -43,14 +43,14 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
     submissions.filter((s) => getBusinessUnit(s) === unit && getStatus(s) === st).length
   const totalFor = (unit: string) => submissions.filter((s) => getBusinessUnit(s) === unit).length
   const highFor = (unit: string) =>
-    submissions.filter((s) => getBusinessUnit(s) === unit && s.formData.highImpact === "yes").length
+    submissions.filter((s) => getBusinessUnit(s) === unit && s.formData.highImpact === "high_impact").length
 
   const needsOmbReview = (s: Submission) => determineReportability(s.formData).status === "review"
   const ombReviewFor = (unit: string) =>
     submissions.filter((s) => getBusinessUnit(s) === unit && needsOmbReview(s)).length
 
   const grand = (st: string) => submissions.filter((s) => getStatus(s) === st).length
-  const grandHigh = submissions.filter((s) => s.formData.highImpact === "yes").length
+  const grandHigh = submissions.filter((s) => s.formData.highImpact === "high_impact").length
   const grandOmbReview = submissions.filter(needsOmbReview).length
 
   // A use case is a "possible duplicate" when it has a likely match (see

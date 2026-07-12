@@ -215,22 +215,61 @@ describe("showWhen", () => {
     expect(getField("coreProblem").showWhen).toBeUndefined()
   })
 
-  it("high-impact risk fields require highImpact = yes AND stageOfDevelopment = deployed", () => {
+  it("high-impact risk fields (#26-34) require highImpact = high_impact AND stageOfDevelopment = deployed", () => {
     for (const key of [
-      "aiImpactAssessment",
       "preDeploymentTesting",
-      "ongoingMonitoringPlan",
-      "humanOversightAppeal",
+      "aiImpactAssessmentCompleted",
+      "aiImpactAssessment",
       "independentReviewConducted",
+      "ongoingMonitoringPlan",
       "operatorTrainingEstablished",
       "failSafeMechanism",
+      "humanOversightAppeal",
+      "publicConsultationSteps",
     ]) {
       const predicate = getField(key).showWhen
       expect(predicate).toBeDefined()
-      expect(predicate!(fd({ highImpact: "yes", stageOfDevelopment: "deployed" }))).toBe(true)
-      expect(predicate!(fd({ highImpact: "yes", stageOfDevelopment: "pilot" }))).toBe(false)
-      expect(predicate!(fd({ highImpact: "yes", stageOfDevelopment: "pre_deployment" }))).toBe(false)
-      expect(predicate!(fd({ highImpact: "no", stageOfDevelopment: "deployed" }))).toBe(false)
+      expect(predicate!(fd({ highImpact: "high_impact", stageOfDevelopment: "deployed" }))).toBe(true)
+      expect(predicate!(fd({ highImpact: "high_impact", stageOfDevelopment: "pilot" }))).toBe(false)
+      expect(predicate!(fd({ highImpact: "high_impact", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+      expect(predicate!(fd({ highImpact: "not_high_impact", stageOfDevelopment: "deployed" }))).toBe(false)
+      expect(predicate!(fd({ highImpact: "presumed_not_high_impact", stageOfDevelopment: "deployed" }))).toBe(false)
+    }
+  })
+
+  it("highImpactJustification requires highImpact = presumed_not_high_impact", () => {
+    const predicate = getField("highImpactJustification").showWhen!
+    expect(predicate(fd({ highImpact: "presumed_not_high_impact" }))).toBe(true)
+    expect(predicate(fd({ highImpact: "high_impact" }))).toBe(false)
+    expect(predicate(fd({ highImpact: "not_high_impact" }))).toBe(false)
+    expect(predicate(fd())).toBe(false)
+  })
+
+  it("topicArea and aiClassification require a development stage of pre-deployment, pilot, or deployed", () => {
+    for (const key of ["topicArea", "aiClassification"]) {
+      const predicate = getField(key).showWhen!
+      expect(predicate(fd({ stageOfDevelopment: "pre_deployment" }))).toBe(true)
+      expect(predicate(fd({ stageOfDevelopment: "pilot" }))).toBe(true)
+      expect(predicate(fd({ stageOfDevelopment: "deployed" }))).toBe(true)
+      expect(predicate(fd({ stageOfDevelopment: "retired" }))).toBe(false)
+      expect(predicate(fd())).toBe(false)
+    }
+  })
+
+  it("operationalDate, systemSource, trainingDataDescription, hasPii, demographicFeatures, and customCode require pilot or deployed", () => {
+    for (const key of [
+      "operationalDate",
+      "systemSource",
+      "trainingDataDescription",
+      "hasPii",
+      "demographicFeatures",
+      "customCode",
+    ]) {
+      const predicate = getField(key).showWhen!
+      expect(predicate(fd({ stageOfDevelopment: "pre_deployment" }))).toBe(false)
+      expect(predicate(fd({ stageOfDevelopment: "pilot" }))).toBe(true)
+      expect(predicate(fd({ stageOfDevelopment: "deployed" }))).toBe(true)
+      expect(predicate(fd({ stageOfDevelopment: "retired" }))).toBe(false)
     }
   })
 
@@ -242,18 +281,21 @@ describe("showWhen", () => {
     expect(predicate(fd({ stageOfDevelopment: "retired" }))).toBe(false)
   })
 
-  it("atoSystemName requires hasATO = yes", () => {
+  it("atoSystemName requires hasATO = yes AND stageOfDevelopment to be pilot or deployed", () => {
     const predicate = getField("atoSystemName").showWhen!
-    expect(predicate(fd({ hasATO: "yes" }))).toBe(true)
-    expect(predicate(fd({ hasATO: "in_progress" }))).toBe(false)
-    expect(predicate(fd({ hasATO: "no" }))).toBe(false)
+    expect(predicate(fd({ hasATO: "yes", stageOfDevelopment: "pilot" }))).toBe(true)
+    expect(predicate(fd({ hasATO: "yes", stageOfDevelopment: "deployed" }))).toBe(true)
+    expect(predicate(fd({ hasATO: "yes", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+    expect(predicate(fd({ hasATO: "in_progress", stageOfDevelopment: "deployed" }))).toBe(false)
+    expect(predicate(fd({ hasATO: "no", stageOfDevelopment: "deployed" }))).toBe(false)
   })
 
-  it("systemSourceVendorName requires systemSource to be contract or vendor", () => {
+  it("systemSourceVendorName requires systemSource to be contract or vendor AND stageOfDevelopment to be pilot or deployed", () => {
     const predicate = getField("systemSourceVendorName").showWhen!
-    expect(predicate(fd({ systemSource: "contract" }))).toBe(true)
-    expect(predicate(fd({ systemSource: "vendor" }))).toBe(true)
-    expect(predicate(fd({ systemSource: "in_house" }))).toBe(false)
+    expect(predicate(fd({ systemSource: "contract", stageOfDevelopment: "pilot" }))).toBe(true)
+    expect(predicate(fd({ systemSource: "vendor", stageOfDevelopment: "deployed" }))).toBe(true)
+    expect(predicate(fd({ systemSource: "contract", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+    expect(predicate(fd({ systemSource: "in_house", stageOfDevelopment: "deployed" }))).toBe(false)
   })
 
   it("openSourceCodeLink requires customCode = yes", () => {
@@ -268,6 +310,12 @@ describe("showWhen", () => {
     expect(predicate(fd({ involvesSensitiveData: "yes" }))).toBe(true)
     expect(predicate(fd({ involvesSensitiveData: "no" }))).toBe(false)
     expect(predicate(fd())).toBe(false)
+  })
+
+  it("federalDataCatalogLink, piaLink — optional fields — have no showWhen and are never blocking", () => {
+    for (const key of ["federalDataCatalogLink", "piaLink"]) {
+      expect(getField(key).showWhen).toBeUndefined()
+    }
   })
 })
 

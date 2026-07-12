@@ -17,7 +17,7 @@ describe("mapSubmissionToOmbRow", () => {
         useCaseTitle: "Patent Triage Assistant",
         submitterOffice: "patents",
         stageOfDevelopment: "pilot",
-        highImpact: "yes",
+        highImpact: "high_impact",
         coreProblem: "Examiners spend too long triaging incoming applications.",
         businessValue: "Cuts triage time in half.",
         solutionSummary: "Ranks applications by urgency for examiner review.",
@@ -37,7 +37,7 @@ describe("mapSubmissionToOmbRow", () => {
       "USPTO",
       "Patents",
       "Pilot",
-      "Yes",
+      "High-impact",
       "Individual",
       "",
       "Examiners spend too long triaging incoming applications.",
@@ -80,7 +80,7 @@ describe("mapSubmissionToOmbRow", () => {
     const row = mapSubmissionToOmbRow(
       sub("sub-2", {
         useCaseTitle: "Inbox Assistant",
-        highImpact: "no",
+        highImpact: "not_high_impact",
         coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
       }),
       "USPTO",
@@ -112,7 +112,7 @@ describe("buildOmbCsv", () => {
       sub(id, {
         useCaseTitle: "Inbox Assistant",
         submitterOffice: office,
-        highImpact: "no",
+        highImpact: "not_high_impact",
         coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
       })
 
@@ -133,7 +133,7 @@ describe("buildOmbCsv", () => {
       [
         sub("sub-1", {
           useCaseTitle: "Inbox Assistant",
-          highImpact: "yes",
+          highImpact: "high_impact",
           coreProblem: "Staff spend hours a day manually sorting and prioritizing email in a crowded inbox.",
         }),
       ],

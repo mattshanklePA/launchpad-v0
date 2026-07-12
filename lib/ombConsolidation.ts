@@ -188,7 +188,7 @@ export function determineConsolidation(fd: ConsolidationInputs): ConsolidationRe
   const text = consolidationText(fd)
   const match = CONSOLIDATION_CATEGORIES.find((c) => c.pattern.test(text))
 
-  if (fd.highImpact === "yes") {
+  if (fd.highImpact === "high_impact") {
     return {
       status: "Individual",
       category: match?.id,
