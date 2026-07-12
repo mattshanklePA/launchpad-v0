@@ -102,6 +102,44 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("impactLevel", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Data classification / Impact Level" }, () => !formData.impactLevel)
   need("trl", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Technology Readiness Level" }, () => !formData.trl)
 
+  // ---------- OMB federal AI use case inventory (issue #61) ----------
+  // Every check below is scoped to "currently applicable" purely by calling
+  // `need()`, which gates on `isFieldVisible` — the same resolver the wizard
+  // uses for `showWhen` conditional disclosure (lib/formConfig.ts). A field
+  // whose prerequisite isn't met (e.g. `topicArea` before a development
+  // stage is chosen, or any of the 9 high-impact-only fields unless
+  // `highImpact === "high_impact"` AND `stageOfDevelopment === "deployed"`)
+  // is simply never checked — no second copy of the `showWhen` predicates
+  // lives here.
+  const omb = (field: keyof FormData, message: string, test: () => boolean) =>
+    need(field, { step: 6, stepName: "Feasibility & Security", reason: "missing", message }, test)
+
+  omb("stageOfDevelopment", "Stage of development", () => !formData.stageOfDevelopment)
+  omb("highImpact", "High-impact determination", () => !formData.highImpact)
+  omb("highImpactJustification", "High-impact justification", () => !presentString(formData.highImpactJustification))
+  omb("topicArea", "Use case topic area", () => !formData.topicArea)
+  omb("aiClassification", "AI classification", () => !formData.aiClassification)
+  omb("hasATO", "Associated ATO answer", () => !formData.hasATO)
+  omb("atoSystemName", "ATO system name", () => !presentString(formData.atoSystemName))
+  omb("systemSource", "Built in-house / under contract / purchased", () => !formData.systemSource)
+  omb("systemSourceVendorName", "Vendor name", () => !presentString(formData.systemSourceVendorName))
+  omb("operationalDate", "Operational / pilot start date", () => !presentString(formData.operationalDate))
+  omb("trainingDataDescription", "Training / evaluation data description", () => !presentString(formData.trainingDataDescription))
+  omb("hasPii", "Involves PII answer", () => !formData.hasPii)
+  omb("demographicFeatures", "Demographic variables used as model features", () => !hasArrayValue(formData.demographicFeatures))
+  omb("customCode", "Includes custom-developed code answer", () => !formData.customCode)
+  // M-25-21 minimum-practice risk-management fields (#26-34) — only reached
+  // when `isFieldVisible` says the high-impact-and-deployed gate is open.
+  omb("preDeploymentTesting", "Pre-deployment testing answer", () => !formData.preDeploymentTesting)
+  omb("aiImpactAssessmentCompleted", "AI impact assessment completed answer", () => !formData.aiImpactAssessmentCompleted)
+  omb("aiImpactAssessment", "Potential impacts description", () => !presentString(formData.aiImpactAssessment))
+  omb("independentReviewConducted", "Independent review answer", () => !formData.independentReviewConducted)
+  omb("ongoingMonitoringPlan", "Ongoing monitoring plan answer", () => !formData.ongoingMonitoringPlan)
+  omb("operatorTrainingEstablished", "Operator training answer", () => !formData.operatorTrainingEstablished)
+  omb("failSafeMechanism", "Fail-safe mechanism answer", () => !formData.failSafeMechanism)
+  omb("humanOversightAppeal", "Appeal process answer", () => !formData.humanOversightAppeal)
+  omb("publicConsultationSteps", "Public consultation steps", () => !hasArrayValue(formData.publicConsultationSteps))
+
   // ---------- Step 8: Success Metrics ----------
   need("successMetrics", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Success metrics" }, () => !presentString(formData.successMetrics))
   need("timelineForResults", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Timeline for results" }, () => !formData.timelineForResults)
@@ -147,6 +185,13 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     "relevantOkrs", "usptoFocusArea",
     "dependencies", "implementationComplexity",
     "involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview",
+    "dataReadiness", "impactLevel", "trl",
+    "stageOfDevelopment", "highImpact", "highImpactJustification", "topicArea", "aiClassification",
+    "hasATO", "atoSystemName", "systemSource", "systemSourceVendorName", "operationalDate",
+    "trainingDataDescription", "hasPii", "demographicFeatures", "customCode",
+    "preDeploymentTesting", "aiImpactAssessmentCompleted", "aiImpactAssessment", "independentReviewConducted",
+    "ongoingMonitoringPlan", "operatorTrainingEstablished", "failSafeMechanism", "humanOversightAppeal",
+    "publicConsultationSteps",
     "successMetrics", "timelineForResults",
   ]
   const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldVisible(k, formData)).length
