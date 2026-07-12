@@ -21,6 +21,28 @@ const withTenant = (id: string, run: () => void) => {
   }
 }
 
+// Guarded lookup — FIELD_REGISTRY_BY_KEY is a Record<string, FieldDefinition>,
+// but a typo'd or removed key would silently yield `undefined` at runtime, so
+// fail fast with a clear message rather than throwing a bare TypeError deep
+// inside a `.level`/`.locked` access.
+const getField = (key: string): FieldDefinition => {
+  const def = FIELD_REGISTRY_BY_KEY[key]
+  if (!def) throw new Error(`Expected FIELD_REGISTRY_BY_KEY to contain "${key}"`)
+  return def
+}
+
+// A complete FieldDefinition fixture for tests that only care about
+// `level` — avoids `as FieldDefinition` casts on partial object literals.
+const baseFieldFixture: FieldDefinition = {
+  fieldKey: "successMetrics",
+  label: "Test field",
+  description: "test fixture",
+  reasonToInclude: "test fixture",
+  phase: 4,
+  step: 7,
+  locked: false,
+}
+
 afterEach(() => {
   delete process.env.NEXT_PUBLIC_TENANT
 })
@@ -42,17 +64,17 @@ const censusOnlyField: FieldDefinition = {
 
 describe("fieldLevel", () => {
   it("defaults to 'bureau' when unset", () => {
-    expect(fieldLevel({ level: undefined } as FieldDefinition)).toBe("bureau")
+    expect(fieldLevel({ ...baseFieldFixture, level: undefined })).toBe("bureau")
   })
   it("returns the explicit level when set", () => {
-    expect(fieldLevel({ level: "omb" } as FieldDefinition)).toBe("omb")
+    expect(fieldLevel({ ...baseFieldFixture, level: "omb" })).toBe("omb")
   })
 })
 
 describe("registry cascade metadata", () => {
   it("marks the DoC-mandated AI risk fields as level: department, locked", () => {
     for (const key of ["involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview"]) {
-      const def = FIELD_REGISTRY_BY_KEY[key]
+      const def = getField(key)
       expect(def.level).toBe("department")
       expect(def.locked).toBe(true)
     }
@@ -65,7 +87,7 @@ describe("registry cascade metadata", () => {
   })
 
   it("leaves OMB inventory fields unlocked in the registry itself — the cascade enforces the mandate only for bureau-tier tenants", () => {
-    const stage = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+    const stage = getField("stageOfDevelopment")
     expect(stage.locked).toBe(false)
   })
 })
@@ -133,7 +155,7 @@ describe("isDepartmentLevelViewer", () => {
 describe("canToggleField", () => {
   it("is never togglable when locked, regardless of level or tenant", () => {
     withTenant("doc", () => {
-      const def = FIELD_REGISTRY_BY_KEY["involvesSensitiveData"]
+      const def = getField("involvesSensitiveData")
       expect(canToggleField(def, { role: "admin", businessUnit: "os" })).toBe(false)
       expect(canToggleField(def, { role: "admin" })).toBe(false)
     })
@@ -141,7 +163,7 @@ describe("canToggleField", () => {
 
   it("is never togglable for an OMB/department field on a bureau-tier tenant, even by a department admin", () => {
     withTenant("doc", () => {
-      const def = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"] // level: omb, locked: false
+      const def = getField("stageOfDevelopment") // level: omb, locked: false
       expect(canToggleField(def, { role: "admin", businessUnit: "census" })).toBe(false)
       expect(canToggleField(def, { role: "admin", businessUnit: "os" })).toBe(false)
       expect(canToggleField(def, { role: "admin" })).toBe(false)
@@ -150,11 +172,11 @@ describe("canToggleField", () => {
 
   it("treats the same OMB field as a plain optional toggle on a flat tenant (USPTO/DoW unaffected)", () => {
     withTenant("uspto", () => {
-      const def = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+      const def = getField("stageOfDevelopment")
       expect(canToggleField(def, { role: "admin", businessUnit: "patents" })).toBe(true)
     })
     withTenant("dow", () => {
-      const def = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+      const def = getField("stageOfDevelopment")
       expect(canToggleField(def, { role: "admin" })).toBe(true)
     })
   })
@@ -170,8 +192,8 @@ describe("canToggleField", () => {
 
   it("the general optional pool is togglable by any admin, unless a department admin has since marked it mandatory", () => {
     withTenant("doc", () => {
-      const def = FIELD_REGISTRY_BY_KEY["coreProblem"] // locked: true system field — swap for an unlocked one
-      const unlocked = FIELD_REGISTRY_BY_KEY["problemImpact"] // level: bureau (default), unlocked, unscoped
+      const def = getField("coreProblem") // locked: true system field — swap for an unlocked one
+      const unlocked = getField("problemImpact") // level: bureau (default), unlocked, unscoped
       expect(canToggleField(unlocked, { role: "admin", businessUnit: "census" })).toBe(true)
       expect(canToggleField(unlocked, { role: "admin", businessUnit: "nist" })).toBe(true)
       expect(canToggleField(unlocked, { role: "admin", businessUnit: "census" }, { mandatory: true })).toBe(false)
@@ -184,21 +206,21 @@ describe("canToggleField", () => {
 describe("canMarkFieldMandatory", () => {
   it("only a department-level viewer can mark an ordinary bureau field mandatory, and only on a bureau-tier tenant", () => {
     withTenant("doc", () => {
-      const unlocked = FIELD_REGISTRY_BY_KEY["problemImpact"]
+      const unlocked = getField("problemImpact")
       expect(canMarkFieldMandatory(unlocked, { role: "admin", businessUnit: "os" })).toBe(true)
       expect(canMarkFieldMandatory(unlocked, { role: "admin" })).toBe(true)
       expect(canMarkFieldMandatory(unlocked, { role: "admin", businessUnit: "census" })).toBe(false)
     })
     withTenant("uspto", () => {
-      const unlocked = FIELD_REGISTRY_BY_KEY["problemImpact"]
+      const unlocked = getField("problemImpact")
       expect(canMarkFieldMandatory(unlocked, { role: "admin" })).toBe(false)
     })
   })
 
   it("cannot mark a locked or already-mandatory (omb/department) field mandatory — already non-togglable", () => {
     withTenant("doc", () => {
-      const lockedSystemField = FIELD_REGISTRY_BY_KEY["coreProblem"]
-      const ombField = FIELD_REGISTRY_BY_KEY["stageOfDevelopment"]
+      const lockedSystemField = getField("coreProblem")
+      const ombField = getField("stageOfDevelopment")
       expect(canMarkFieldMandatory(lockedSystemField, { role: "admin" })).toBe(false)
       expect(canMarkFieldMandatory(ombField, { role: "admin" })).toBe(false)
     })
