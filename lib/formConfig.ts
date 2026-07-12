@@ -49,9 +49,10 @@ export function getFormConfig(): FormConfig {
   for (const key of Object.keys(cached.enabled || {})) {
     if (key in merged.enabled) merged.enabled[key] = Boolean(cached.enabled[key])
   }
+  const cachedMandatory = cached.mandatory ?? {}
   const mandatory: Record<string, boolean> = {}
-  for (const key of Object.keys(cached.mandatory || {})) {
-    if (key in FIELD_REGISTRY_BY_KEY && cached.mandatory[key]) mandatory[key] = true
+  for (const key of Object.keys(cachedMandatory)) {
+    if (key in FIELD_REGISTRY_BY_KEY && cachedMandatory[key]) mandatory[key] = true
   }
   return {
     enabled: merged.enabled,
