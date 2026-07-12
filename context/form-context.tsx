@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { type FormData, initialFormData, getFormSteps } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
 import { isStepEnabled } from "@/lib/formConfig"
+import { profileAutofill } from "@/lib/ombAutofill"
 
 interface FormContextType {
   formData: FormData
@@ -54,18 +55,12 @@ const arrayFields: (keyof FormData)[] = [
 
 // Returns the subset of FormData that the submitter step (Step 1) covers,
 // drawn from the active session. Used to auto-fill so the submitter doesn't
-// retype info every time. Falls back to empty values when no session.
+// retype info every time. Falls back to empty values when no session. The
+// actual session -> FormData mapping lives in lib/ombAutofill.ts's
+// `profileAutofill` (pure, unit-tested) — this just supplies the session.
 function profileFromSession(): Partial<FormData> {
   if (typeof window === "undefined") return {}
-  const s = getSession()
-  if (!s) return {}
-  return {
-    submitterName: s.name || "",
-    submitterEmail: s.email || "",
-    submitterRole: (s.jobRole as FormData["submitterRole"]) || "",
-    submitterOffice: (s.businessUnit as FormData["submitterOffice"]) || "",
-    submitterSubOffice: s.office || "",
-  }
+  return profileAutofill(getSession())
 }
 
 function isProfileComplete(d: Partial<FormData>): boolean {

@@ -175,6 +175,28 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
     omb: true,
   },
+  {
+    fieldKey: "useCaseTopicArea",
+    label: "Use Case Topic Area",
+    description: "Thematic bucket for the use case (e.g. public-facing services, law enforcement, research).",
+    reasonToInclude: "OMB inventory field; AI-proposed from the problem/solution text (lib/useCaseTopicArea.ts) — the submitter confirms or picks a different area.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+  },
+  {
+    fieldKey: "aiClassification",
+    label: "AI Classification",
+    description: "Rights-impacting / safety-impacting / both / not classified, per OMB M-25-21 Section 5.",
+    reasonToInclude: "OMB inventory field; AI-proposed from the same rights/safety criteria as the high-impact determination (lib/highImpactDetermination.ts) — the submitter confirms.",
+    phase: 4,
+    step: 6,
+    level: "omb",
+    locked: false,
+    omb: true,
+  },
   // ────── High-impact risk-management fields (only surfaced when highImpact = yes) ──────
   {
     fieldKey: "aiImpactAssessment",

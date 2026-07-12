@@ -1,4 +1,5 @@
 "use client"
+import { useEffect } from "react"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -12,7 +13,17 @@ import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { OmbBadge } from "../launchpad/omb-badge"
-import { determineHighImpact, HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
+import { HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
+import { proposeHighImpact, proposeAiClassification, proposeUseCaseTopicArea, proposeConsolidation } from "@/lib/ombAutofill"
+import { USE_CASE_TOPIC_AREAS } from "@/lib/useCaseTopicArea"
+import { AiProposedHint } from "../launchpad/ai-proposed-hint"
+
+const AI_CLASSIFICATION_LABELS: Record<string, string> = {
+  rights_impacting: "Rights-impacting",
+  safety_impacting: "Safety-impacting",
+  both: "Rights- and safety-impacting",
+  not_classified: "Not rights- or safety-impacting",
+}
 
 const highImpactFactorOptions: { value: HighImpactFactor; label: string }[] = (
   Object.keys(HIGH_IMPACT_FACTOR_LABELS) as HighImpactFactor[]
@@ -36,6 +47,37 @@ export function Step8FeasibilitySecurity() {
   const isVisible = useFieldVisibility(formData.submitterOffice)
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
   const tenant = getTenant()
+
+  // AI-proposed (Kestrel), submitter-confirmed OMB fields (issue #61) — each
+  // wraps a pure determination module so the reasoning always matches what a
+  // reviewer sees elsewhere in the app. Never fabricates: an empty
+  // `suggestion.value` means it couldn't be confidently derived, so the field
+  // stays blank and shows up in the "still needed" list instead.
+  const highImpactSuggestion = proposeHighImpact(formData)
+  const aiClassificationSuggestion = proposeAiClassification(formData)
+  const topicAreaSuggestion = proposeUseCaseTopicArea(formData)
+  const consolidation = proposeConsolidation(formData)
+
+  // Pre-fill each AI-proposed field the first time it's empty. Guarded on the
+  // field already being blank, so it never clobbers a submitter's own answer
+  // (or a previously-cleared override) — matches the auto-draft-once pattern
+  // in step-2-use-case-overview.tsx.
+  useEffect(() => {
+    setFormData((prev) => {
+      let next = prev
+      if (!prev.highImpact && highImpactSuggestion.value) {
+        next = { ...next, highImpact: highImpactSuggestion.value as typeof prev.highImpact }
+      }
+      if (!prev.aiClassification && aiClassificationSuggestion.value) {
+        next = { ...next, aiClassification: aiClassificationSuggestion.value as typeof prev.aiClassification }
+      }
+      if (!prev.useCaseTopicArea && topicAreaSuggestion.value) {
+        next = { ...next, useCaseTopicArea: topicAreaSuggestion.value }
+      }
+      return next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highImpactSuggestion.value, aiClassificationSuggestion.value, topicAreaSuggestion.value])
 
   const handleToggle = (field: "resourcesNeeded" | "accessControlRequirements" | "highImpactFactors", item: string) => {
     const currentItems = formData[field] || []
@@ -342,8 +384,86 @@ export function Step8FeasibilitySecurity() {
                 </RadioGroup>
                 <p className="text-xs text-muted-foreground">
                   High-impact use cases carry additional OMB risk-management reporting.
-                  {" "}
-                  Recommended: <strong>{determineHighImpact(formData).recommendation === "yes" ? "Yes" : "No"}</strong>, based on the factors selected above plus the risk answers already captured on this form — you make the final call.
+                </p>
+                <AiProposedHint
+                  value={formData.highImpact}
+                  suggestion={highImpactSuggestion}
+                  onOverride={() => setFormData((prev) => ({ ...prev, highImpact: "" }))}
+                  assistantName={tenant.assistantName}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="aiClassification">
+                  AI classification <OmbBadge />
+                </Label>
+                <Select
+                  value={formData.aiClassification}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, aiClassification: value as any }))}
+                >
+                  <SelectTrigger id="aiClassification">
+                    <SelectValue placeholder="Select classification..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(AI_CLASSIFICATION_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <AiProposedHint
+                  value={formData.aiClassification}
+                  suggestion={aiClassificationSuggestion}
+                  onOverride={() => setFormData((prev) => ({ ...prev, aiClassification: "" }))}
+                  assistantName={tenant.assistantName}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="useCaseTopicArea">
+                  Use case topic area <OmbBadge />
+                </Label>
+                <Select
+                  value={formData.useCaseTopicArea}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, useCaseTopicArea: value }))}
+                >
+                  <SelectTrigger id="useCaseTopicArea">
+                    <SelectValue placeholder="Select topic area..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {USE_CASE_TOPIC_AREAS.map((area) => (
+                      <SelectItem key={area.id} value={area.id}>{area.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <AiProposedHint
+                  value={formData.useCaseTopicArea}
+                  suggestion={topicAreaSuggestion}
+                  onOverride={() => setFormData((prev) => ({ ...prev, useCaseTopicArea: "" }))}
+                  assistantName={tenant.assistantName}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="consolidationOverride">
+                  OMB reporting mode <OmbBadge />
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  <strong>{consolidation.status}</strong> — {consolidation.reason}
+                </p>
+                <Select
+                  value={formData.consolidationOverride}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, consolidationOverride: value as any }))}
+                >
+                  <SelectTrigger id="consolidationOverride">
+                    <SelectValue placeholder="Trust the automatic determination" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="individual">Report individually (override)</SelectItem>
+                    <SelectItem value="consolidated">Report consolidated (override)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Only matters if this doesn&apos;t match a widely-used commercial AI category, or you disagree with the automatic call — leave blank to trust it.
                 </p>
               </div>
 

@@ -5,7 +5,7 @@
 
 import type { Submission } from "@/lib/submissions"
 import { businessUnitLabel, getBusinessUnit } from "@/lib/reviewWorkflow"
-import { determineConsolidation, CONSOLIDATION_CATEGORIES, type ConsolidationCategoryId } from "@/lib/ombConsolidation"
+import { resolveConsolidation, CONSOLIDATION_CATEGORIES, type ConsolidationCategoryId } from "@/lib/ombConsolidation"
 import { csvLine } from "@/lib/csv"
 
 // LaunchPad field -> OMB inventory column mapping:
@@ -83,7 +83,7 @@ const MODEL_SOURCING_LABELS: Record<string, string> = {
 /** Maps one submission to a CSV row (values in OMB_COLUMNS order). Pure — no I/O. */
 export function mapSubmissionToOmbRow(submission: Submission, agencyShortName: string): string[] {
   const fd = submission.formData
-  const consolidation = determineConsolidation(fd)
+  const consolidation = resolveConsolidation(fd)
   return [
     submission.id,
     fd.useCaseTitle || "",
@@ -148,7 +148,7 @@ export function buildOmbCsv(submissions: Submission[], agencyShortName: string):
   const consolidatedGroups = new Map<ConsolidationCategoryId, { label: string; matches: Submission[] }>()
 
   for (const s of submissions) {
-    const consolidation = determineConsolidation(s.formData)
+    const consolidation = resolveConsolidation(s.formData)
     if (consolidation.status === "Consolidated" && consolidation.category) {
       const group = consolidatedGroups.get(consolidation.category) ?? {
         label: consolidation.categoryLabel || consolidation.category,

@@ -42,14 +42,27 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   const missing: MissingItem[] = []
   const warnings: MissingItem[] = []
 
+  // Every field actually checked below (enabled AND currently applicable) —
+  // the denominator for completenessPercent/totalChecks. Building this list
+  // as we go (instead of a separately-maintained static array) means a check
+  // added below is automatically counted; nothing to keep in sync by hand.
+  const checkedFields: (keyof FormData)[] = []
+
   // Local helper that respects the admin Form Configuration. A disabled field
-  // is by definition not required — skip the check entirely.
+  // is by definition not required — skip the check entirely. Pass
+  // `applicable: false` for a field that's only required in some submissions
+  // (e.g. the high-impact risk-management fields, only required when
+  // `highImpact` is "yes") — an inapplicable field is skipped exactly like a
+  // disabled one, so "still needed" only ever lists what's currently required.
   const need = (
     field: keyof FormData,
     item: Omit<MissingItem, "field"> & { field?: string },
     test: () => boolean,
+    applicable: boolean = true,
   ) => {
+    if (!applicable) return
     if (!isFieldEnabled(field)) return
+    checkedFields.push(field)
     if (test()) missing.push({ ...item, field: (item.field as string) || (field as string) })
   }
 
@@ -98,6 +111,50 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("impactLevel", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Data classification / Impact Level" }, () => !formData.impactLevel)
   need("trl", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Technology Readiness Level" }, () => !formData.trl)
 
+  // ---------- Federal AI use case inventory (OMB) ----------
+  // Always-applicable OMB fields (issue #61 — AI-proposed, submitter-confirmed;
+  // see lib/ombAutofill.ts). "Currently needed" for every submission, same as
+  // the rest of Feasibility & Security.
+  need("stageOfDevelopment", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Stage of development" }, () => !formData.stageOfDevelopment)
+  need("highImpact", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "High-impact AI answer" }, () => !formData.highImpact)
+  need("hasATO", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Associated ATO answer" }, () => !formData.hasATO)
+  need("systemSource", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Built in-house/under contract/purchased" }, () => !formData.systemSource)
+  need("nationalSecuritySystem", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "National Security System / IC use answer" }, () => !formData.nationalSecuritySystem)
+  need("researchOnly", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Research-only use answer" }, () => !formData.researchOnly)
+  need("useCaseTopicArea", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Use case topic area" }, () => !formData.useCaseTopicArea)
+  need("aiClassification", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI classification" }, () => !formData.aiClassification)
+
+  // High-impact minimum-practice fields — only currently applicable when the
+  // submission is actually marked high-impact (matches the wizard, which only
+  // shows these when `highImpact === "yes"`; see step-8-feasibility-security.tsx).
+  // A "not high-impact" submission never needs these, so they're excluded from
+  // "still needed" rather than listed as a wall of always-required fields.
+  const highImpactApplies = formData.highImpact === "yes"
+  need(
+    "aiImpactAssessment",
+    { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI impact assessment" },
+    () => !presentString(formData.aiImpactAssessment),
+    highImpactApplies,
+  )
+  need(
+    "preDeploymentTesting",
+    { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Pre-deployment testing answer" },
+    () => !formData.preDeploymentTesting,
+    highImpactApplies,
+  )
+  need(
+    "ongoingMonitoringPlan",
+    { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Ongoing monitoring plan answer" },
+    () => !formData.ongoingMonitoringPlan,
+    highImpactApplies,
+  )
+  need(
+    "humanOversightAppeal",
+    { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Human oversight / appeal answer" },
+    () => !formData.humanOversightAppeal,
+    highImpactApplies,
+  )
+
   // ---------- Step 8: Success Metrics ----------
   need("successMetrics", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Success metrics" }, () => !presentString(formData.successMetrics))
   need("timelineForResults", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Timeline for results" }, () => !formData.timelineForResults)
@@ -131,22 +188,11 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     })
   }
 
-  // Count enabled-and-required fields dynamically — disabled fields don't
-  // count toward the completeness denominator, so a heavily-trimmed config
-  // doesn't show as artificially incomplete.
-  const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
-    "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
-    "useCaseTitle", "useCaseDescription", "publicIndicator",
-    "coreProblem", "severity", "affectedSystem", "targetAudience", "impactedUsersCount", "targetUserContext",
-    "proposedSolution",
-    "userValue", "userTimeSavings", "businessValue", "costSavings",
-    "relevantOkrs", "usptoFocusArea",
-    "dependencies", "implementationComplexity",
-    "involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview",
-    "successMetrics", "timelineForResults",
-  ]
-  const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldEnabled(k)).length
-  const totalChecks = enabledRequiredCount + 1 // + 1 for the AI quality gate
+  // Denominator is exactly the set of checks `need()` actually ran above —
+  // disabled fields and currently-inapplicable fields (e.g. the high-impact
+  // risk-management fields on a non-high-impact submission) never entered
+  // `checkedFields`, so neither drags completenessPercent down.
+  const totalChecks = checkedFields.length + 1 // + 1 for the AI quality gate
   const passed = Math.max(0, totalChecks - missing.length)
   const completenessPercent = Math.max(0, Math.min(100, Math.round((passed / totalChecks) * 100)))
 

@@ -138,6 +138,22 @@ const INFERRED_SIGNALS: { factor: HighImpactFactor; test: (fd: HighImpactInputs)
   },
 ]
 
+/**
+ * Union of manually-checked `highImpactFactors` and the factors this module
+ * infers from risk signals already captured elsewhere. Exposed so other
+ * advisory modules (lib/ombAutofill.ts's AI Classification proposal) can
+ * classify a submission by the same rights/safety criteria this module uses
+ * for its high-impact recommendation, without re-deriving the inference
+ * regexes themselves.
+ */
+export function allHighImpactFactors(fd: HighImpactInputs): Set<HighImpactFactor> {
+  const factors = new Set((fd.highImpactFactors || []) as HighImpactFactor[])
+  for (const s of INFERRED_SIGNALS) {
+    if (s.test(fd)) factors.add(s.factor)
+  }
+  return factors
+}
+
 /** Recommends an OMB high-impact determination for one submission's fields. Pure — no I/O. */
 export function determineHighImpact(fd: HighImpactInputs): HighImpactResult {
   const manualFactors = new Set((fd.highImpactFactors || []) as HighImpactFactor[])

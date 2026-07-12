@@ -11,6 +11,8 @@ import { useFieldVisibility } from "@/lib/formConfig"
 import { suggestIdeaOverview } from "@/app/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { getTenant } from "@/lib/tenant"
+import { proposePublicIndicator } from "@/lib/ombAutofill"
+import { AiProposedHint } from "../launchpad/ai-proposed-hint"
 
 export function Step2UseCaseOverview() {
   const { formData, setFormData } = useForm()
@@ -24,6 +26,19 @@ export function Step2UseCaseOverview() {
   // (problem, solution, value, alignment, feasibility, metrics).
   const hasContext =
     Boolean((formData.coreProblem || "").trim()) || Boolean((formData.proposedSolution || "").trim())
+
+  // AI-proposed "should this be withheld from public disclosure?" (issue #61)
+  // — defaults to Public unless a sensitive-data/restricted-classification
+  // signal is already on the form (lib/ombAutofill.ts). Advisory only.
+  const publicIndicatorSuggestion = proposePublicIndicator(formData)
+  useEffect(() => {
+    if (!formData.publicIndicator && publicIndicatorSuggestion.value) {
+      setFormData((prev) =>
+        prev.publicIndicator ? prev : { ...prev, publicIndicator: publicIndicatorSuggestion.value as typeof prev.publicIndicator },
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicIndicatorSuggestion.value])
 
   const draft = async (mode: "auto" | "manual") => {
     setDrafting(true)
@@ -145,6 +160,12 @@ export function Step2UseCaseOverview() {
               </Label>
             </div>
           </RadioGroup>
+          <AiProposedHint
+            value={formData.publicIndicator}
+            suggestion={publicIndicatorSuggestion}
+            onOverride={() => setFormData((prev) => ({ ...prev, publicIndicator: "" }))}
+            assistantName={tenant.assistantName}
+          />
         </div>
       )}
     </div>

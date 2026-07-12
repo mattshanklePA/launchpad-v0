@@ -144,6 +144,16 @@ export type FormData = {
   // use are the two OMB inventory exclusions.
   nationalSecuritySystem: "yes" | "no" | ""
   researchOnly: "yes" | "no" | ""
+  // Thematic bucket for the use case (lib/useCaseTopicArea.ts) — AI-proposed,
+  // submitter-confirmed (see lib/ombAutofill.ts's proposeUseCaseTopicArea).
+  useCaseTopicArea: string
+  // Rights-impacting / safety-impacting / both / not classified — AI-proposed
+  // from the same criteria lib/highImpactDetermination.ts uses (see
+  // lib/ombAutofill.ts's proposeAiClassification).
+  aiClassification: "rights_impacting" | "safety_impacting" | "both" | "not_classified" | ""
+  // Reviewer override of lib/ombConsolidation.ts's automatic Individual vs.
+  // Consolidated call — empty trusts the automatic determination.
+  consolidationOverride: "individual" | "consolidated" | ""
   // High-impact determination inputs (lib/highImpactDetermination.ts): which
   // OMB M-25-21 Section 5 categories the AI output could meaningfully affect.
   // Drives the `highImpact` recommendation; the reviewer keeps the final call.
@@ -245,6 +255,9 @@ export const initialFormData: FormData = {
   systemSource: "",
   nationalSecuritySystem: "",
   researchOnly: "",
+  useCaseTopicArea: "",
+  aiClassification: "",
+  consolidationOverride: "",
   highImpactFactors: [],
   aiImpactAssessment: "",
   preDeploymentTesting: "",

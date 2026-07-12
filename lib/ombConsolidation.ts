@@ -210,3 +210,39 @@ export function determineConsolidation(fd: ConsolidationInputs): ConsolidationRe
 
   return { status: "Individual", reason: NO_MATCH_REASON }
 }
+
+export type ConsolidationOverride = "individual" | "consolidated" | ""
+
+/**
+ * Resolves the final Individual vs. Consolidated call, honoring a reviewer's
+ * manual override of the automatic determination (issue #61's AI-proposed,
+ * submitter-confirmed field) — except a high-impact use case, which OMB
+ * M-25-21 Section 5 always requires be reported individually regardless of
+ * any override. An "consolidated" override is only honored when there's
+ * actually a category match to consolidate under; otherwise it's a no-op and
+ * the automatic determination stands. Pure — no I/O.
+ */
+export function resolveConsolidation(
+  fd: ConsolidationInputs & { consolidationOverride?: ConsolidationOverride },
+): ConsolidationResult {
+  const auto = determineConsolidation(fd)
+  if (fd.highImpact === "yes") return auto
+
+  if (fd.consolidationOverride === "individual" && auto.status === "Consolidated") {
+    return {
+      status: "Individual",
+      category: auto.category,
+      categoryLabel: auto.categoryLabel,
+      reason: `Manually reported individually — overrides the automatic "${auto.categoryLabel}" consolidation match.`,
+    }
+  }
+  if (fd.consolidationOverride === "consolidated" && auto.status === "Individual" && auto.category) {
+    return {
+      status: "Consolidated",
+      category: auto.category,
+      categoryLabel: auto.categoryLabel,
+      reason: `Manually consolidated under the "${auto.categoryLabel}" category match.`,
+    }
+  }
+  return auto
+}
