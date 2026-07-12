@@ -251,18 +251,36 @@ export function isStepEnabled(step: number, businessUnit?: string | null): boole
 }
 
 /**
+ * The single shared visibility resolver (issue #60): a field renders only
+ * when it's in the bureau's cascade set AND admin-enabled (`isFieldEnabled`)
+ * AND its own `showWhen(formData)` predicate passes (default: always show —
+ * most fields have no predicate). Both the wizard (`useFieldVisibility`
+ * below) and `lib/submissionReadiness.ts`'s required-at-submit check call
+ * through this one function, so a field whose prerequisite isn't met yet is
+ * never demanded at submit time — "still needed" and "currently rendered"
+ * can never drift apart.
+ */
+export function isFieldVisible(fieldKey: keyof FormData | string, formData: FormData): boolean {
+  if (!isFieldEnabled(fieldKey, formData.submitterOffice)) return false
+  const def = FIELD_REGISTRY_BY_KEY[fieldKey as string]
+  if (def?.showWhen && !def.showWhen(formData)) return false
+  return true
+}
+
+/**
  * Client hook for field visibility. Subscribes to cache changes so toggle
  * edits in the admin panel propagate to open wizard tabs without a reload.
- * Pass `businessUnit` (the submitter's bureau) so the returned checker also
- * applies the cascade's bureau-scoping via `fieldsForBureau`.
+ * Pass the wizard's live `formData` so the returned checker applies the
+ * cascade's bureau-scoping (via `formData.submitterOffice`) and each field's
+ * `showWhen` predicate (via `isFieldVisible`) together.
  */
-export function useFieldVisibility(businessUnit?: string | null): (fieldKey: keyof FormData | string) => boolean {
+export function useFieldVisibility(formData: FormData): (fieldKey: keyof FormData | string) => boolean {
   const [, force] = useState(0)
   useEffect(() => subscribeToCache(() => force((n) => n + 1)), [])
   return useCallback(
     (fieldKey: keyof FormData | string) => {
-      return isFieldEnabled(fieldKey, businessUnit)
+      return isFieldVisible(fieldKey, formData)
     },
-    [businessUnit],
+    [formData],
   )
 }

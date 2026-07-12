@@ -1,6 +1,7 @@
 "use client"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,7 +12,7 @@ import { useFieldVisibility } from "@/lib/formConfig"
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
-import { OmbBadge } from "../launchpad/omb-badge"
+import { FieldRequirementBadge } from "../launchpad/field-requirement-badge"
 import { determineHighImpact, HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
 
 const highImpactFactorOptions: { value: HighImpactFactor; label: string }[] = (
@@ -33,7 +34,7 @@ const accessOptions = [
 
 export function Step8FeasibilitySecurity() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility(formData.submitterOffice)
+  const isVisible = useFieldVisibility(formData)
   const [showOptional, setShowOptional] = usePersistentDisclosure("feasibility")
   const tenant = getTenant()
 
@@ -179,7 +180,10 @@ export function Step8FeasibilitySecurity() {
             </div>
 
             <div className="space-y-2">
-              <Label>Does this use PII or other sensitive personal data? <OmbBadge /></Label>
+              <Label>
+                Does this use PII or other sensitive personal data?{" "}
+                <FieldRequirementBadge fieldKey="involvesSensitiveData" />
+              </Label>
               <RadioGroup
                 value={formData.involvesSensitiveData}
                 onValueChange={(value) =>
@@ -200,7 +204,8 @@ export function Step8FeasibilitySecurity() {
 
             <div className="space-y-2">
               <Label>
-                Does the AI make or materially influence a decision about people (personnel, targeting, benefits)?
+                Does the AI make or materially influence a decision about people (personnel, targeting, benefits)?{" "}
+                <FieldRequirementBadge fieldKey="aiDecisionalImpact" />
               </Label>
               <RadioGroup
                 value={formData.aiDecisionalImpact}
@@ -221,7 +226,9 @@ export function Step8FeasibilitySecurity() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="aiModelSourcing">Underlying AI model sourcing</Label>
+              <Label htmlFor="aiModelSourcing">
+                Underlying AI model sourcing <FieldRequirementBadge fieldKey="aiModelSourcing" />
+              </Label>
               <Select
                 value={formData.aiModelSourcing}
                 onValueChange={(value) =>
@@ -244,7 +251,8 @@ export function Step8FeasibilitySecurity() {
             <div className="space-y-2">
               <Label>
                 Is human judgment required before the AI output drives action?
-                {tenant.humanReviewCitation ? ` (${tenant.humanReviewCitation})` : ""}
+                {tenant.humanReviewCitation ? ` (${tenant.humanReviewCitation})` : ""}{" "}
+                <FieldRequirementBadge fieldKey="aiHumanReview" />
               </Label>
               <RadioGroup
                 value={formData.aiHumanReview}
@@ -270,17 +278,17 @@ export function Step8FeasibilitySecurity() {
             <div className="pt-6 mt-6 border-t space-y-5">
               <div>
                 <h3 className="font-semibold text-lg text-uspto-gray-text">
-                  Federal AI use case inventory <OmbBadge />
+                  Federal AI use case inventory <FieldRequirementBadge fieldKey="stageOfDevelopment" />
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Fields required for the OMB AI use case inventory (M-25-21 companion guidance). Each OMB-required
-                  field is marked with an <OmbBadge /> tag.
+                  field is marked with a <em>Required (OMB)</em> tag — hover it to see why.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="stageOfDevelopment">
-                  Stage of development <OmbBadge />
+                  Stage of development <FieldRequirementBadge fieldKey="stageOfDevelopment" />
                 </Label>
                 <Select
                   value={formData.stageOfDevelopment}
@@ -301,7 +309,8 @@ export function Step8FeasibilitySecurity() {
               {isVisible("highImpactFactors") && (
                 <div className="space-y-2">
                   <Label>
-                    Could this AI&apos;s output meaningfully affect any of the following? <OmbBadge />
+                    Could this AI&apos;s output meaningfully affect any of the following?{" "}
+                    <FieldRequirementBadge fieldKey="highImpactFactors" />
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     OMB M-25-21 Section 5 high-impact criteria — select all that apply.
@@ -324,7 +333,7 @@ export function Step8FeasibilitySecurity() {
 
               <div className="space-y-2">
                 <Label>
-                  Is this a high-impact AI use case? <OmbBadge />
+                  Is this a high-impact AI use case? <FieldRequirementBadge fieldKey="highImpact" />
                 </Label>
                 <RadioGroup
                   value={formData.highImpact}
@@ -347,15 +356,15 @@ export function Step8FeasibilitySecurity() {
                 </p>
               </div>
 
-              {formData.highImpact === "yes" && isVisible("aiImpactAssessment") && (
+              {isVisible("aiImpactAssessment") && (
                 <div className="space-y-5 pl-4 border-l-2 border-blue-200">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    High-impact risk management <OmbBadge />
+                    High-impact risk management <FieldRequirementBadge fieldKey="aiImpactAssessment" />
                   </p>
 
                   <div className="space-y-2">
                     <Label htmlFor="aiImpactAssessment">
-                      AI impact assessment <OmbBadge />
+                      AI impact assessment <FieldRequirementBadge fieldKey="aiImpactAssessment" />
                     </Label>
                     <Textarea
                       id="aiImpactAssessment"
@@ -368,7 +377,8 @@ export function Step8FeasibilitySecurity() {
 
                   <div className="space-y-2">
                     <Label>
-                      Pre-deployment / real-world testing done? <OmbBadge />
+                      Pre-deployment / real-world testing done?{" "}
+                      <FieldRequirementBadge fieldKey="preDeploymentTesting" />
                     </Label>
                     <RadioGroup
                       value={formData.preDeploymentTesting}
@@ -398,7 +408,7 @@ export function Step8FeasibilitySecurity() {
 
                   <div className="space-y-2">
                     <Label>
-                      Ongoing monitoring plan? <OmbBadge />
+                      Ongoing monitoring plan? <FieldRequirementBadge fieldKey="ongoingMonitoringPlan" />
                     </Label>
                     <RadioGroup
                       value={formData.ongoingMonitoringPlan}
@@ -426,7 +436,8 @@ export function Step8FeasibilitySecurity() {
 
                   <div className="space-y-2">
                     <Label>
-                      Human oversight / appeal mechanism for affected individuals? <OmbBadge />
+                      Human oversight / appeal mechanism for affected individuals?{" "}
+                      <FieldRequirementBadge fieldKey="humanOversightAppeal" />
                     </Label>
                     <RadioGroup
                       value={formData.humanOversightAppeal}
@@ -453,36 +464,119 @@ export function Step8FeasibilitySecurity() {
                       rows={2}
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Independent review conducted? <FieldRequirementBadge fieldKey="independentReviewConducted" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.independentReviewConducted}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, independentReviewConducted: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="indreview-yes" />
+                        <Label htmlFor="indreview-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="indreview-no" />
+                        <Label htmlFor="indreview-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Periodic operator training established?{" "}
+                      <FieldRequirementBadge fieldKey="operatorTrainingEstablished" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.operatorTrainingEstablished}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, operatorTrainingEstablished: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="optraining-yes" />
+                        <Label htmlFor="optraining-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="optraining-no" />
+                        <Label htmlFor="optraining-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Appropriate fail-safe in place? <FieldRequirementBadge fieldKey="failSafeMechanism" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.failSafeMechanism}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, failSafeMechanism: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="failsafe-yes" />
+                        <Label htmlFor="failsafe-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="failsafe-no" />
+                        <Label htmlFor="failsafe-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </div>
+              )}
+
+              {isVisible("hasATO") && (
+                <div className="space-y-2">
+                  <Label>
+                    Associated Authorization to Operate (ATO)? <FieldRequirementBadge fieldKey="hasATO" />
+                  </Label>
+                  <RadioGroup
+                    value={formData.hasATO}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, hasATO: value as any }))}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="ato-yes" />
+                      <Label htmlFor="ato-yes">Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="in_progress" id="ato-prog" />
+                      <Label htmlFor="ato-prog">In progress</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="ato-no" />
+                      <Label htmlFor="ato-no">No</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
+              {isVisible("atoSystemName") && (
+                <div className="space-y-2">
+                  <Label htmlFor="atoSystemName">
+                    ATO system name <FieldRequirementBadge fieldKey="atoSystemName" />
+                  </Label>
+                  <Input
+                    id="atoSystemName"
+                    value={formData.atoSystemName}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, atoSystemName: e.target.value }))}
+                    placeholder="Name of the authorized system..."
+                  />
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label>
-                  Associated Authorization to Operate (ATO)? <OmbBadge />
-                </Label>
-                <RadioGroup
-                  value={formData.hasATO}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, hasATO: value as any }))}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="ato-yes" />
-                    <Label htmlFor="ato-yes">Yes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="in_progress" id="ato-prog" />
-                    <Label htmlFor="ato-prog">In progress</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="ato-no" />
-                    <Label htmlFor="ato-no">No</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="systemSource">
-                  Built in-house, under contract, or purchased? <OmbBadge />
+                  Built in-house, under contract, or purchased? <FieldRequirementBadge fieldKey="systemSource" />
                 </Label>
                 <Select
                   value={formData.systemSource}
@@ -499,9 +593,36 @@ export function Step8FeasibilitySecurity() {
                 </Select>
               </div>
 
+              {isVisible("systemSourceVendorName") && (
+                <div className="space-y-2">
+                  <Label htmlFor="systemSourceVendorName">
+                    Vendor name <FieldRequirementBadge fieldKey="systemSourceVendorName" />
+                  </Label>
+                  <Input
+                    id="systemSourceVendorName"
+                    value={formData.systemSourceVendorName}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, systemSourceVendorName: e.target.value }))}
+                    placeholder="Vendor or contractor name..."
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="operationalDate">
+                  Operational / pilot start date <FieldRequirementBadge fieldKey="operationalDate" />
+                </Label>
+                <Input
+                  id="operationalDate"
+                  type="date"
+                  value={formData.operationalDate}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, operationalDate: e.target.value }))}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>
-                  Is this a National Security System / Intelligence Community use? <OmbBadge />
+                  Is this a National Security System / Intelligence Community use?{" "}
+                  <FieldRequirementBadge fieldKey="nationalSecuritySystem" />
                 </Label>
                 <RadioGroup
                   value={formData.nationalSecuritySystem}
@@ -524,7 +645,8 @@ export function Step8FeasibilitySecurity() {
 
               <div className="space-y-2">
                 <Label>
-                  Is this a research-only use (not an operational mission, service, or decision)? <OmbBadge />
+                  Is this a research-only use (not an operational mission, service, or decision)?{" "}
+                  <FieldRequirementBadge fieldKey="researchOnly" />
                 </Label>
                 <RadioGroup
                   value={formData.researchOnly}
@@ -545,10 +667,85 @@ export function Step8FeasibilitySecurity() {
                   decision or outcome about individuals.
                 </p>
               </div>
+
+              <div className="pt-4 space-y-5">
+                <h4 className="text-sm font-semibold text-uspto-gray-text">Data &amp; code disclosures</h4>
+
+                <div className="space-y-2">
+                  <Label htmlFor="trainingDataDescription">
+                    Training / evaluation data <FieldRequirementBadge fieldKey="trainingDataDescription" />
+                  </Label>
+                  <Textarea
+                    id="trainingDataDescription"
+                    value={formData.trainingDataDescription}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, trainingDataDescription: e.target.value }))}
+                    placeholder="Describe the data used to train, fine-tune, and/or evaluate the model(s)..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="federalDataCatalogLink">
+                    Federal Data Catalog entry <FieldRequirementBadge fieldKey="federalDataCatalogLink" />
+                  </Label>
+                  <Input
+                    id="federalDataCatalogLink"
+                    value={formData.federalDataCatalogLink}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, federalDataCatalogLink: e.target.value }))}
+                    placeholder="Link, if the data is publicly disclosed as an open government data asset..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="piaLink">
+                    Privacy Impact Assessment (PIA) link <FieldRequirementBadge fieldKey="piaLink" />
+                  </Label>
+                  <Input
+                    id="piaLink"
+                    value={formData.piaLink}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, piaLink: e.target.value }))}
+                    placeholder="Link, if publicly available..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    Does this project include custom-developed code? <FieldRequirementBadge fieldKey="customCode" />
+                  </Label>
+                  <RadioGroup
+                    value={formData.customCode}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, customCode: value as any }))}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="customcode-yes" />
+                      <Label htmlFor="customcode-yes">Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="customcode-no" />
+                      <Label htmlFor="customcode-no">No</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {isVisible("openSourceCodeLink") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="openSourceCodeLink">
+                      Open source code link <FieldRequirementBadge fieldKey="openSourceCodeLink" />
+                    </Label>
+                    <Input
+                      id="openSourceCodeLink"
+                      value={formData.openSourceCodeLink}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, openSourceCodeLink: e.target.value }))}
+                      placeholder="Link to the publicly available source code..."
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {formData.involvesSensitiveData === "yes" && isVisible("accessControlRequirements") && (
+          {isVisible("accessControlRequirements") && (
             <div className="space-y-2">
               <Label>Access control requirements</Label>
               <div className="flex flex-wrap gap-2">

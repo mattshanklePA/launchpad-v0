@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest"
 import { setCachedFormConfig } from "@/lib/dataCache"
-import { getFormConfig, isFieldEnabled, isFieldMandatory } from "@/lib/formConfig"
+import { getFormConfig, isFieldEnabled, isFieldMandatory, isFieldVisible } from "@/lib/formConfig"
+import { initialFormData, type FormData } from "@/lib/steps"
 
 const withTenant = (id: string, run: () => void) => {
   const prev = process.env.NEXT_PUBLIC_TENANT
@@ -73,5 +74,141 @@ describe("getFormConfig", () => {
     const config = getFormConfig()
     expect(config.enabled.coreProblem).toBe(true)
     expect(config.mandatory).toEqual({})
+  })
+})
+
+// isFieldVisible — the shared conditional-disclosure resolver (issue #60):
+// cascade + admin enabled + each field's `showWhen` prerequisite, in one
+// place so the wizard and lib/submissionReadiness.ts can't drift apart.
+describe("isFieldVisible", () => {
+  const fd = (overrides: Partial<FormData> = {}): FormData => ({ ...initialFormData, ...overrides })
+
+  it("a field with no showWhen is always visible once enabled — unaffected by unrelated formData", () => {
+    expect(isFieldVisible("coreProblem", fd())).toBe(true)
+  })
+
+  it("hides an admin-disabled field even when its showWhen would otherwise pass", () => {
+    withTenant("uspto", () => {
+      setCachedFormConfig({
+        enabled: { accessControlRequirements: false },
+        mandatory: {},
+        updatedAt: new Date(0).toISOString(),
+      })
+      expect(isFieldVisible("accessControlRequirements", fd({ involvesSensitiveData: "yes" }))).toBe(false)
+    })
+  })
+
+  describe("high-impact risk fields (aiImpactAssessment, preDeploymentTesting, ongoingMonitoringPlan, humanOversightAppeal, independentReviewConducted, operatorTrainingEstablished, failSafeMechanism)", () => {
+    const riskFields: (keyof FormData)[] = [
+      "aiImpactAssessment",
+      "preDeploymentTesting",
+      "ongoingMonitoringPlan",
+      "humanOversightAppeal",
+      "independentReviewConducted",
+      "operatorTrainingEstablished",
+      "failSafeMechanism",
+    ]
+
+    it("hidden pre-deployment even when high-impact", () => {
+      for (const key of riskFields) {
+        expect(isFieldVisible(key, fd({ highImpact: "yes", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+      }
+    })
+
+    it("hidden once deployed if not high-impact", () => {
+      for (const key of riskFields) {
+        expect(isFieldVisible(key, fd({ highImpact: "no", stageOfDevelopment: "deployed" }))).toBe(false)
+      }
+    })
+
+    it("visible only once both high-impact AND deployed", () => {
+      for (const key of riskFields) {
+        expect(isFieldVisible(key, fd({ highImpact: "yes", stageOfDevelopment: "deployed" }))).toBe(true)
+      }
+    })
+  })
+
+  describe("hasATO (stage-dependent)", () => {
+    it("hidden pre-deployment", () => {
+      expect(isFieldVisible("hasATO", fd({ stageOfDevelopment: "pre_deployment" }))).toBe(false)
+    })
+    it("visible for pilot or deployed", () => {
+      expect(isFieldVisible("hasATO", fd({ stageOfDevelopment: "pilot" }))).toBe(true)
+      expect(isFieldVisible("hasATO", fd({ stageOfDevelopment: "deployed" }))).toBe(true)
+    })
+  })
+
+  describe("atoSystemName (dependent sub-field: hasATO = yes)", () => {
+    it("hidden when hasATO is no, in_progress, or unset", () => {
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "no" }))).toBe(false)
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "in_progress" }))).toBe(false)
+      expect(isFieldVisible("atoSystemName", fd())).toBe(false)
+    })
+    it("visible when hasATO is yes", () => {
+      expect(isFieldVisible("atoSystemName", fd({ hasATO: "yes" }))).toBe(true)
+    })
+  })
+
+  describe("systemSourceVendorName (dependent sub-field: systemSource is contract/vendor)", () => {
+    it("hidden when developed in-house or unset", () => {
+      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "in_house" }))).toBe(false)
+      expect(isFieldVisible("systemSourceVendorName", fd())).toBe(false)
+    })
+    it("visible when under contract or purchased", () => {
+      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "contract" }))).toBe(true)
+      expect(isFieldVisible("systemSourceVendorName", fd({ systemSource: "vendor" }))).toBe(true)
+    })
+  })
+
+  describe("openSourceCodeLink (dependent sub-field: customCode = yes)", () => {
+    it("hidden when customCode is no or unset", () => {
+      expect(isFieldVisible("openSourceCodeLink", fd({ customCode: "no" }))).toBe(false)
+      expect(isFieldVisible("openSourceCodeLink", fd())).toBe(false)
+    })
+    it("visible when customCode is yes", () => {
+      expect(isFieldVisible("openSourceCodeLink", fd({ customCode: "yes" }))).toBe(true)
+    })
+  })
+
+  describe("accessControlRequirements (dependent sub-field: PII = yes)", () => {
+    it("hidden when involvesSensitiveData is no or unset", () => {
+      expect(isFieldVisible("accessControlRequirements", fd({ involvesSensitiveData: "no" }))).toBe(false)
+      expect(isFieldVisible("accessControlRequirements", fd())).toBe(false)
+    })
+    it("visible when involvesSensitiveData is yes", () => {
+      expect(isFieldVisible("accessControlRequirements", fd({ involvesSensitiveData: "yes" }))).toBe(true)
+    })
+  })
+
+  describe("subset per submission scenario", () => {
+    const GATED_FIELDS: (keyof FormData)[] = [
+      "hasATO",
+      "aiImpactAssessment",
+      "preDeploymentTesting",
+      "ongoingMonitoringPlan",
+      "humanOversightAppeal",
+      "accessControlRequirements",
+    ]
+
+    it("pre-deployment, non-high-impact: none of the gated fields show", () => {
+      const data = fd({ stageOfDevelopment: "pre_deployment", highImpact: "no", involvesSensitiveData: "no" })
+      expect(GATED_FIELDS.filter((k) => isFieldVisible(k, data))).toEqual([])
+    })
+
+    it("deployed, non-high-impact: only the stage-dependent field (hasATO) shows", () => {
+      const data = fd({ stageOfDevelopment: "deployed", highImpact: "no", involvesSensitiveData: "no" })
+      expect(GATED_FIELDS.filter((k) => isFieldVisible(k, data))).toEqual(["hasATO"])
+    })
+
+    it("deployed and high-impact: hasATO plus all four risk fields show", () => {
+      const data = fd({ stageOfDevelopment: "deployed", highImpact: "yes", involvesSensitiveData: "no" })
+      expect(GATED_FIELDS.filter((k) => isFieldVisible(k, data))).toEqual([
+        "hasATO",
+        "aiImpactAssessment",
+        "preDeploymentTesting",
+        "ongoingMonitoringPlan",
+        "humanOversightAppeal",
+      ])
+    })
   })
 })

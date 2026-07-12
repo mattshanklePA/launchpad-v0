@@ -9,6 +9,7 @@ import {
   isDepartmentLevelViewer,
   type FieldDefinition,
 } from "@/lib/fieldRegistry"
+import { initialFormData, type FormData } from "@/lib/steps"
 
 const withTenant = (id: string, run: () => void) => {
   const prev = process.env.NEXT_PUBLIC_TENANT
@@ -200,6 +201,73 @@ describe("canToggleField", () => {
       expect(canToggleField(unlocked, { role: "admin", businessUnit: "os" }, { mandatory: true })).toBe(true)
       expect(def.locked).toBe(true) // sanity check on the fixture assumption above
     })
+  })
+})
+
+// showWhen — conditional disclosure (issue #60). Tested directly against the
+// registry's own predicates (not through isFieldEnabled/the cascade — that's
+// covered by isFieldVisible in lib/formConfig.test.ts) so a change to a
+// predicate's logic is caught right at its source.
+describe("showWhen", () => {
+  const fd = (overrides: Partial<FormData> = {}): FormData => ({ ...initialFormData, ...overrides })
+
+  it("fields with no showWhen have none set — always show once enabled", () => {
+    expect(getField("coreProblem").showWhen).toBeUndefined()
+  })
+
+  it("high-impact risk fields require highImpact = yes AND stageOfDevelopment = deployed", () => {
+    for (const key of [
+      "aiImpactAssessment",
+      "preDeploymentTesting",
+      "ongoingMonitoringPlan",
+      "humanOversightAppeal",
+      "independentReviewConducted",
+      "operatorTrainingEstablished",
+      "failSafeMechanism",
+    ]) {
+      const predicate = getField(key).showWhen
+      expect(predicate).toBeDefined()
+      expect(predicate!(fd({ highImpact: "yes", stageOfDevelopment: "deployed" }))).toBe(true)
+      expect(predicate!(fd({ highImpact: "yes", stageOfDevelopment: "pilot" }))).toBe(false)
+      expect(predicate!(fd({ highImpact: "yes", stageOfDevelopment: "pre_deployment" }))).toBe(false)
+      expect(predicate!(fd({ highImpact: "no", stageOfDevelopment: "deployed" }))).toBe(false)
+    }
+  })
+
+  it("hasATO requires stageOfDevelopment to be pilot or deployed", () => {
+    const predicate = getField("hasATO").showWhen!
+    expect(predicate(fd({ stageOfDevelopment: "pre_deployment" }))).toBe(false)
+    expect(predicate(fd({ stageOfDevelopment: "pilot" }))).toBe(true)
+    expect(predicate(fd({ stageOfDevelopment: "deployed" }))).toBe(true)
+    expect(predicate(fd({ stageOfDevelopment: "retired" }))).toBe(false)
+  })
+
+  it("atoSystemName requires hasATO = yes", () => {
+    const predicate = getField("atoSystemName").showWhen!
+    expect(predicate(fd({ hasATO: "yes" }))).toBe(true)
+    expect(predicate(fd({ hasATO: "in_progress" }))).toBe(false)
+    expect(predicate(fd({ hasATO: "no" }))).toBe(false)
+  })
+
+  it("systemSourceVendorName requires systemSource to be contract or vendor", () => {
+    const predicate = getField("systemSourceVendorName").showWhen!
+    expect(predicate(fd({ systemSource: "contract" }))).toBe(true)
+    expect(predicate(fd({ systemSource: "vendor" }))).toBe(true)
+    expect(predicate(fd({ systemSource: "in_house" }))).toBe(false)
+  })
+
+  it("openSourceCodeLink requires customCode = yes", () => {
+    const predicate = getField("openSourceCodeLink").showWhen!
+    expect(predicate(fd({ customCode: "yes" }))).toBe(true)
+    expect(predicate(fd({ customCode: "no" }))).toBe(false)
+    expect(predicate(fd())).toBe(false)
+  })
+
+  it("accessControlRequirements requires involvesSensitiveData = yes", () => {
+    const predicate = getField("accessControlRequirements").showWhen!
+    expect(predicate(fd({ involvesSensitiveData: "yes" }))).toBe(true)
+    expect(predicate(fd({ involvesSensitiveData: "no" }))).toBe(false)
+    expect(predicate(fd())).toBe(false)
   })
 })
 

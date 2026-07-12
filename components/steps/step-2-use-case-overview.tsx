@@ -14,7 +14,7 @@ import { getTenant } from "@/lib/tenant"
 
 export function Step2UseCaseOverview() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility(formData.submitterOffice)
+  const isVisible = useFieldVisibility(formData)
   const { toast } = useToast()
   const tenant = getTenant()
   const [drafting, setDrafting] = useState(false)
