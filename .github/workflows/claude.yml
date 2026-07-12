@@ -30,6 +30,21 @@ jobs:
         with:
           fetch-depth: 1
 
+      # Give Claude the same toolchain CI uses (mirrors ci.yml) so it can run
+      # pnpm typecheck / lint / test on its own work before pushing, instead of
+      # shipping unverified code and failing CI.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
@@ -40,11 +55,6 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
-
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
-
+          # Pre-approve the verification commands so Claude can self-check in a
+          # headless run (no interactive approval is possible in CI).
+          claude_args: '--allowed-tools "Bash(pnpm typecheck),Bash(pnpm lint),Bash(pnpm test),Bash(pnpm install*)"'
