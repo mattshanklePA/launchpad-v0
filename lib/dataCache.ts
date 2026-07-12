@@ -36,6 +36,9 @@ export type CachedUser = {
 
 export type CachedFormConfig = {
   enabled: Record<string, boolean>
+  // OS/department admin "mandatory for all bureaus" overrides (DoC field-
+  // config cascade, issue #57). Absent/empty for USPTO/DoW.
+  mandatory?: Record<string, boolean>
   updatedAt: string
   updatedBy?: string | null
 }

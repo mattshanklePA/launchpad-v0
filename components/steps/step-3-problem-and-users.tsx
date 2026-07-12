@@ -30,7 +30,7 @@ const problemTypeOptions = [
 
 export function Step3ProblemAndUsers() {
   const { formData, setFormData } = useForm()
-  const isVisible = useFieldVisibility()
+  const isVisible = useFieldVisibility(formData.submitterOffice)
   const tenant = getTenant()
   const [showOptional, setShowOptional] = usePersistentDisclosure("problem")
 

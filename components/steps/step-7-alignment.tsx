@@ -34,7 +34,7 @@ function groupByCategory(areas: FocusArea[]): Record<string, FocusArea[]> {
 export function Step7Alignment() {
   const { formData, setFormData } = useForm()
   const { toast } = useToast()
-  const isVisible = useFieldVisibility()
+  const isVisible = useFieldVisibility(formData.submitterOffice)
   const tenant = getTenant()
   const [suggesting, setSuggesting] = useState(false)
   const [suggestion, setSuggestion] = useState<AlignmentSuggestion | null>(null)

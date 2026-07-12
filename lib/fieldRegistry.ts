@@ -8,9 +8,22 @@
 // Otherwise it'll be invisible to the toggle UI and stuck always-on.
 
 import type { FormData } from "@/lib/steps"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantHasBureauTier } from "@/lib/rationalization"
 
 const ASSISTANT_NAME = getTenant().assistantName
+
+// Field-authority cascade (DoC field-config cascade, issue #57): OMB mandates
+// a prescriptive field set every bureau must collect, the Department (Office
+// of the Secretary) adds its own mandatory fields on top, and a bureau may
+// add its own optional fields — but a bureau can never remove what OMB or the
+// Department mandated. `level` defaults to "bureau" when omitted (see
+// `fieldLevel`), so every pre-existing entry below is unchanged unless
+// explicitly marked otherwise. Only meaningful for tenants with a bureau tier
+// (DoC) — `fieldsForBureau`/`canToggleField` no-op the cascade for USPTO/DoW
+// (see `tenantHasBureauTier` in lib/rationalization.ts), so their field set
+// and toggle behavior render exactly as today.
+export type FieldLevel = "omb" | "department" | "bureau"
 
 export type FieldDefinition = {
   // Key into FormData. Must exactly match a property name.
@@ -26,8 +39,23 @@ export type FieldDefinition = {
   phase: 1 | 2 | 3 | 4 | 5
   // Which step within the wizard renders this field.
   step: number
-  // True if the field cannot be turned off. Either core to the AI assessment
-  // or required for compliance (DoC AI risk mandate).
+  // Who mandated this field: "omb" (federal inventory mandate) or
+  // "department" (DoC/Office of the Secretary mandate) are mandatory for
+  // every bureau and can never be toggled off, regardless of `locked`. Absent
+  // (or "bureau") is the default — an ordinary field a bureau (or the
+  // department) may freely toggle. See `fieldLevel`.
+  level?: FieldLevel
+  // Restricts a `level: "bureau"` field to one bureau's business_unit (e.g.
+  // "census") — an optional field a bureau added for itself that never
+  // appears for, or is togglable by, another bureau. Absent means the field
+  // is in the general optional pool available to every bureau (today's
+  // behavior). Meaningless at "omb"/"department" level (those already apply
+  // to every bureau).
+  businessUnit?: string
+  // True if the field cannot be turned off. Either core to the AI assessment,
+  // required for compliance (DoC AI risk mandate), or — combined with
+  // `level: "omb"`/`"department"` — mandated by that authority for every
+  // bureau.
   locked: boolean
   // Human-readable reason for the lock — shown in the UI next to the lock icon.
   lockedReason?: string
@@ -36,10 +64,39 @@ export type FieldDefinition = {
   omb?: boolean
 }
 
+/** `field.level`, defaulting to "bureau" when unset — the single place that resolves the default. */
+export function fieldLevel(field: FieldDefinition): FieldLevel {
+  return field.level ?? "bureau"
+}
+
 // Single flat list. Grouping is computed at render time so admin UI changes
 // don't require reshuffling the registry.
 export const FIELD_REGISTRY: FieldDefinition[] = [
   // ────── Federal AI use case inventory (OMB) — Phase 4 / Feasibility ──────
+  //
+  // level: "omb" — OMB M-25-21's companion reporting guidance mandates these
+  // fields for every bureau's AI use case inventory entry. `locked` stays
+  // `false`: the cascade (`fieldsForBureau`/`canToggleField`/`isFieldEnabled`
+  // in lib/formConfig.ts) only treats "omb"/"department" level as
+  // non-removable for tenants with a bureau tier (DoC) — see
+  // `tenantHasBureauTier`. USPTO/DoW have no bureau tier, so these OMB
+  // inventory fields stay exactly what they were before issue #57: optional,
+  // bureau-admin-togglable fields. Hard-coding `locked: true` here would wrongly
+  // lock them for USPTO/DoW too, since this registry is shared across tenants.
+  //
+  // TODO(issue #57): this is the current, hand-curated subset of the OMB
+  // inventory field set (carried over from the pre-cascade registry, not the
+  // full prescriptive list). The authoritative current-year field names/
+  // formats live in context/Guidance-on-2025-Agency-Artificial-Intelligence-
+  // Reporting-.pdf and context/OMB AI Inventory Reporting Cheat Sheet -
+  // 12-5-25.docx — neither could be parsed in this environment (no
+  // poppler-utils/pdftotext for the PDF; docx text extraction needs a tool
+  // this sandbox doesn't have approval to run). Read those two documents and
+  // reconcile this list against them: add any missing OMB-mandated field as a
+  // new `level: "omb"` entry (config change only, per
+  // `fieldsForBureau`/`canToggleField` below — no code change needed), and
+  // fix any field here whose label/description doesn't match the current-
+  // year guidance.
   {
     fieldKey: "stageOfDevelopment",
     label: "Stage of Development",
@@ -47,6 +104,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "Required field in the OMB AI use case inventory; determines which reporting fields apply.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -57,6 +115,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "Required in the OMB inventory; high-impact use cases trigger additional risk-management reporting.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -67,6 +126,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "OMB inventory field; signals the security authorization status of the AI system.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -77,6 +137,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "OMB inventory field; also informs acquisition and the custom-code / IP posture.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -87,6 +148,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "OMB inventory field; NSS/IC uses are excluded from the public OMB AI use case inventory.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -98,6 +160,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "OMB inventory field; research-only uses are excluded unless they control or significantly influence a decision about individuals.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -108,6 +171,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "Drives the rule-based high-impact recommendation (lib/highImpactDetermination.ts) instead of relying on a bare self-reported flag.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -119,6 +183,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "M-25-21 minimum practice for high-impact AI: an impact assessment before deployment.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -129,6 +194,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "M-25-21 minimum practice for high-impact AI: pre-deployment testing.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -139,6 +205,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "M-25-21 minimum practice for high-impact AI: ongoing monitoring.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -149,6 +216,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude: "M-25-21 minimum practice for high-impact AI: human oversight and an appeal path for affected individuals.",
     phase: 4,
     step: 6,
+    level: "omb",
     locked: false,
     omb: true,
   },
@@ -528,8 +596,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Required for federal AI risk management per Department of Commerce mandate.",
     phase: 4,
     step: 6,
+    level: "department",
     locked: true,
-    lockedReason: "DoC-mandated AI risk question — required for federal compliance.",
+    lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
   },
   {
     fieldKey: "securityClassification",
@@ -558,8 +627,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Required for federal AI risk management. Decisional AI requires enhanced human-review controls per DoC mandate.",
     phase: 4,
     step: 6,
+    level: "department",
     locked: true,
-    lockedReason: "DoC-mandated AI risk question — required for federal compliance.",
+    lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
   },
   {
     fieldKey: "aiModelSourcing",
@@ -569,8 +639,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Required by the current Executive Order on federal AI — foreign sourcing requires additional review.",
     phase: 4,
     step: 6,
+    level: "department",
     locked: true,
-    lockedReason: "Required per Executive Order on federal AI sourcing.",
+    lockedReason: "Required per Executive Order on federal AI sourcing, applied Department-wide — mandatory for every bureau.",
   },
   {
     fieldKey: "aiHumanReview",
@@ -580,8 +651,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "Required for federal AI risk management. Human-in-the-loop status determines downstream control requirements.",
     phase: 4,
     step: 6,
+    level: "department",
     locked: true,
-    lockedReason: "DoC-mandated AI risk question — required for federal compliance.",
+    lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
   },
   {
     fieldKey: "feasibilitySummary",
@@ -656,4 +728,109 @@ export function fieldsForStep(step: number): FieldDefinition[] {
 // Convenience: which fields belong to a given phase.
 export function fieldsForPhase(phase: 1 | 2 | 3 | 4 | 5): FieldDefinition[] {
   return FIELD_REGISTRY.filter((f) => f.phase === phase)
+}
+
+// ─── Field-authority cascade (OMB → Department → Bureau, issue #57) ────────
+//
+// The single place that resolves "which fields apply to this bureau" — the
+// wizard (via `isFieldEnabled`/`useFieldVisibility` in lib/formConfig.ts) and
+// the admin toggle UI (`components/admin/form-config-panel.tsx`) both filter
+// through this function so they can never drift apart.
+
+/**
+ * Fields in scope for `businessUnit`: every OMB- and department-level field
+ * (mandatory for every bureau), plus the general bureau-level optional pool
+ * (no `businessUnit` restriction — today's shared toggle set), plus any
+ * field scoped specifically to `businessUnit`. Never includes another
+ * bureau's scoped field.
+ *
+ * No-op for tenants without a bureau tier (USPTO/DoW): returns the full
+ * registry unfiltered, so their field set renders exactly as today — see
+ * `tenantHasBureauTier` (lib/rationalization.ts), the same DoC-only signal
+ * the rationalization/bureau-signoff features gate on.
+ */
+export function fieldsForBureau(
+  businessUnit?: string | null,
+  tenant: TenantConfig = getTenant(),
+): FieldDefinition[] {
+  if (!tenantHasBureauTier(tenant)) return FIELD_REGISTRY
+  return FIELD_REGISTRY.filter((f) => {
+    const level = fieldLevel(f)
+    if (level === "omb" || level === "department") return true
+    if (!f.businessUnit) return true
+    return f.businessUnit === businessUnit
+  })
+}
+
+/** Shape callers pass in for cascade permission checks — a subset of `Session`/`Viewer`. */
+export type FieldViewer = { role: string; businessUnit?: string | null } | null | undefined
+
+/**
+ * True for a viewer with department-wide reach: an OS admin
+ * (`businessUnit === "os"`) or a department-level viewer with no bureau
+ * assignment — the same shape `hasDepartmentTransparency` (lib/bureauSignoff.ts)
+ * and the roll-up gate in `visibleSubmissions` (lib/reviewWorkflow.ts) use.
+ */
+export function isDepartmentLevelViewer(viewer: FieldViewer): boolean {
+  if (!viewer) return false
+  return !viewer.businessUnit || viewer.businessUnit === "os"
+}
+
+/**
+ * True when `viewer` may toggle `field` on/off. `mandatory` is the current
+ * admin-set override (`FormConfig.mandatory[field.fieldKey]`, see
+ * lib/formConfig.ts) for bureau-level fields an OS/department admin has
+ * promoted to mandatory-for-all — pass it when known so a bureau admin can't
+ * un-toggle a field the department just mandated.
+ *
+ * - `locked` fields: never togglable by anyone (unchanged from today).
+ * - No bureau tier (USPTO/DoW): `level` is ignored entirely — togglable by
+ *   any admin, exactly today's behavior.
+ * - `level: "omb"` / `"department"` (bureau-tier tenants only): never
+ *   togglable by anyone — mandatory and non-removable for every bureau, per
+ *   the cascade.
+ * - `level: "bureau"` scoped to a `businessUnit`: togglable only by that
+ *   bureau's viewer, or a department-level viewer.
+ * - `level: "bureau"` unscoped (the general optional pool): togglable by any
+ *   admin, matching today's behavior — unless a department admin has since
+ *   marked it `mandatory`, in which case only a department-level viewer can
+ *   un-mandate it.
+ */
+export function canToggleField(
+  field: FieldDefinition,
+  viewer: FieldViewer,
+  opts: { mandatory?: boolean; tenant?: TenantConfig } = {},
+): boolean {
+  if (field.locked) return false
+  const tenant = opts.tenant ?? getTenant()
+  // Level-based mandate only applies where there's a bureau tier to cascade
+  // to (DoC). USPTO/DoW have none, so an unlocked `level: "omb"` field (the
+  // existing OMB inventory fields) stays a plain optional toggle for them —
+  // exactly today's behavior — instead of becoming newly non-removable.
+  if (!tenantHasBureauTier(tenant)) return true
+  const level = fieldLevel(field)
+  if (level === "omb" || level === "department") return false
+  if (opts.mandatory) return isDepartmentLevelViewer(viewer)
+  if (field.businessUnit) return isDepartmentLevelViewer(viewer) || viewer?.businessUnit === field.businessUnit
+  return true
+}
+
+/**
+ * True when `viewer` may promote `field` to "mandatory for all bureaus"
+ * (`setFieldMandatory` in lib/formConfig.ts). Only a department-level viewer
+ * can do this, only for an ordinary bureau-level, unlocked field — an
+ * OMB/department field is already mandatory, and a locked field is already
+ * non-togglable, so promoting either would be a no-op. No-op for tenants
+ * without a bureau tier: "mandatory for all bureaus" is meaningless when
+ * there's only one flat field set (USPTO/DoW).
+ */
+export function canMarkFieldMandatory(
+  field: FieldDefinition,
+  viewer: FieldViewer,
+  tenant: TenantConfig = getTenant(),
+): boolean {
+  if (field.locked) return false
+  if (fieldLevel(field) !== "bureau") return false
+  if (!tenantHasBureauTier(tenant)) return false
+  return isDepartmentLevelViewer(viewer)
 }

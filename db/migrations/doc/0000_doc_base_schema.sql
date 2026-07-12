@@ -33,6 +33,9 @@ create table if not exists users (
 create table if not exists form_config (
   id         int         primary key default 1,
   enabled    jsonb       not null default '{}'::jsonb,
+  -- OS/department admin "mandatory for all bureaus" overrides for
+  -- level: "bureau" fields (field-config cascade, issue #57).
+  mandatory  jsonb       not null default '{}'::jsonb,
   updated_at timestamptz not null default now(),
   updated_by text,
   constraint form_config_single_row check (id = 1)

@@ -335,7 +335,7 @@ export function Step10ReviewSubmit() {
         // Filter STEP_FIELDS to only the fields currently enabled in the
         // admin Form Configuration. If a step has zero enabled fields, hide
         // its review card entirely.
-        const fields = (STEP_FIELDS[step.step] || []).filter(({ key }) => isFieldEnabled(key))
+        const fields = (STEP_FIELDS[step.step] || []).filter(({ key }) => isFieldEnabled(key, formData.submitterOffice))
         if (fields.length === 0) return null
         return (
           <Card key={step.step}>
