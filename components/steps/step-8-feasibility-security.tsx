@@ -1,6 +1,7 @@
 "use client"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -463,6 +464,73 @@ export function Step8FeasibilitySecurity() {
                       rows={2}
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Independent review conducted? <FieldRequirementBadge fieldKey="independentReviewConducted" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.independentReviewConducted}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, independentReviewConducted: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="indreview-yes" />
+                        <Label htmlFor="indreview-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="indreview-no" />
+                        <Label htmlFor="indreview-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Periodic operator training established?{" "}
+                      <FieldRequirementBadge fieldKey="operatorTrainingEstablished" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.operatorTrainingEstablished}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, operatorTrainingEstablished: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="optraining-yes" />
+                        <Label htmlFor="optraining-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="optraining-no" />
+                        <Label htmlFor="optraining-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Appropriate fail-safe in place? <FieldRequirementBadge fieldKey="failSafeMechanism" />
+                    </Label>
+                    <RadioGroup
+                      value={formData.failSafeMechanism}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, failSafeMechanism: value as any }))
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="failsafe-yes" />
+                        <Label htmlFor="failsafe-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="failsafe-no" />
+                        <Label htmlFor="failsafe-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </div>
               )}
 
@@ -492,6 +560,20 @@ export function Step8FeasibilitySecurity() {
                 </div>
               )}
 
+              {isVisible("atoSystemName") && (
+                <div className="space-y-2">
+                  <Label htmlFor="atoSystemName">
+                    ATO system name <FieldRequirementBadge fieldKey="atoSystemName" />
+                  </Label>
+                  <Input
+                    id="atoSystemName"
+                    value={formData.atoSystemName}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, atoSystemName: e.target.value }))}
+                    placeholder="Name of the authorized system..."
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="systemSource">
                   Built in-house, under contract, or purchased? <FieldRequirementBadge fieldKey="systemSource" />
@@ -509,6 +591,32 @@ export function Step8FeasibilitySecurity() {
                     <SelectItem value="vendor">Purchased from a vendor</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {isVisible("systemSourceVendorName") && (
+                <div className="space-y-2">
+                  <Label htmlFor="systemSourceVendorName">
+                    Vendor name <FieldRequirementBadge fieldKey="systemSourceVendorName" />
+                  </Label>
+                  <Input
+                    id="systemSourceVendorName"
+                    value={formData.systemSourceVendorName}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, systemSourceVendorName: e.target.value }))}
+                    placeholder="Vendor or contractor name..."
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="operationalDate">
+                  Operational / pilot start date <FieldRequirementBadge fieldKey="operationalDate" />
+                </Label>
+                <Input
+                  id="operationalDate"
+                  type="date"
+                  value={formData.operationalDate}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, operationalDate: e.target.value }))}
+                />
               </div>
 
               <div className="space-y-2">
@@ -558,6 +666,81 @@ export function Step8FeasibilitySecurity() {
                   Research-only use is excluded from the inventory — unless it controls or significantly influences a
                   decision or outcome about individuals.
                 </p>
+              </div>
+
+              <div className="pt-4 space-y-5">
+                <h4 className="text-sm font-semibold text-uspto-gray-text">Data &amp; code disclosures</h4>
+
+                <div className="space-y-2">
+                  <Label htmlFor="trainingDataDescription">
+                    Training / evaluation data <FieldRequirementBadge fieldKey="trainingDataDescription" />
+                  </Label>
+                  <Textarea
+                    id="trainingDataDescription"
+                    value={formData.trainingDataDescription}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, trainingDataDescription: e.target.value }))}
+                    placeholder="Describe the data used to train, fine-tune, and/or evaluate the model(s)..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="federalDataCatalogLink">
+                    Federal Data Catalog entry <FieldRequirementBadge fieldKey="federalDataCatalogLink" />
+                  </Label>
+                  <Input
+                    id="federalDataCatalogLink"
+                    value={formData.federalDataCatalogLink}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, federalDataCatalogLink: e.target.value }))}
+                    placeholder="Link, if the data is publicly disclosed as an open government data asset..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="piaLink">
+                    Privacy Impact Assessment (PIA) link <FieldRequirementBadge fieldKey="piaLink" />
+                  </Label>
+                  <Input
+                    id="piaLink"
+                    value={formData.piaLink}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, piaLink: e.target.value }))}
+                    placeholder="Link, if publicly available..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    Does this project include custom-developed code? <FieldRequirementBadge fieldKey="customCode" />
+                  </Label>
+                  <RadioGroup
+                    value={formData.customCode}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, customCode: value as any }))}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="customcode-yes" />
+                      <Label htmlFor="customcode-yes">Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="customcode-no" />
+                      <Label htmlFor="customcode-no">No</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {isVisible("openSourceCodeLink") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="openSourceCodeLink">
+                      Open source code link <FieldRequirementBadge fieldKey="openSourceCodeLink" />
+                    </Label>
+                    <Input
+                      id="openSourceCodeLink"
+                      value={formData.openSourceCodeLink}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, openSourceCodeLink: e.target.value }))}
+                      placeholder="Link to the publicly available source code..."
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}

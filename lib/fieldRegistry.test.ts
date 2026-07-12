@@ -216,7 +216,15 @@ describe("showWhen", () => {
   })
 
   it("high-impact risk fields require highImpact = yes AND stageOfDevelopment = deployed", () => {
-    for (const key of ["aiImpactAssessment", "preDeploymentTesting", "ongoingMonitoringPlan", "humanOversightAppeal"]) {
+    for (const key of [
+      "aiImpactAssessment",
+      "preDeploymentTesting",
+      "ongoingMonitoringPlan",
+      "humanOversightAppeal",
+      "independentReviewConducted",
+      "operatorTrainingEstablished",
+      "failSafeMechanism",
+    ]) {
       const predicate = getField(key).showWhen
       expect(predicate).toBeDefined()
       expect(predicate!(fd({ highImpact: "yes", stageOfDevelopment: "deployed" }))).toBe(true)
@@ -232,6 +240,27 @@ describe("showWhen", () => {
     expect(predicate(fd({ stageOfDevelopment: "pilot" }))).toBe(true)
     expect(predicate(fd({ stageOfDevelopment: "deployed" }))).toBe(true)
     expect(predicate(fd({ stageOfDevelopment: "retired" }))).toBe(false)
+  })
+
+  it("atoSystemName requires hasATO = yes", () => {
+    const predicate = getField("atoSystemName").showWhen!
+    expect(predicate(fd({ hasATO: "yes" }))).toBe(true)
+    expect(predicate(fd({ hasATO: "in_progress" }))).toBe(false)
+    expect(predicate(fd({ hasATO: "no" }))).toBe(false)
+  })
+
+  it("systemSourceVendorName requires systemSource to be contract or vendor", () => {
+    const predicate = getField("systemSourceVendorName").showWhen!
+    expect(predicate(fd({ systemSource: "contract" }))).toBe(true)
+    expect(predicate(fd({ systemSource: "vendor" }))).toBe(true)
+    expect(predicate(fd({ systemSource: "in_house" }))).toBe(false)
+  })
+
+  it("openSourceCodeLink requires customCode = yes", () => {
+    const predicate = getField("openSourceCodeLink").showWhen!
+    expect(predicate(fd({ customCode: "yes" }))).toBe(true)
+    expect(predicate(fd({ customCode: "no" }))).toBe(false)
+    expect(predicate(fd())).toBe(false)
   })
 
   it("accessControlRequirements requires involvesSensitiveData = yes", () => {

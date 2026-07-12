@@ -135,11 +135,20 @@ export type FormData = {
   aiDecisionalImpact: "yes" | "no" | "" // Does AI make/influence a decision affecting an applicant or employee?
   aiModelSourcing: "american_built" | "open_source_us" | "foreign" | "unknown" | "" // Trump EO compliance
   aiHumanReview: "yes" | "no" | "" // Is there mandatory human review before action?
-  // OMB federal AI use case inventory fields (M-25-21 companion guidance)
-  stageOfDevelopment: "pre_deployment" | "pilot" | "deployed" | "retired" | ""
-  highImpact: "yes" | "no" | ""
-  hasATO: "yes" | "no" | "in_progress" | ""
-  systemSource: "in_house" | "contract" | "vendor" | ""
+  // OMB federal AI use case inventory fields (M-25-21 companion guidance).
+  // Field numbers below refer to docs/omb-2025-inventory-fields.md's 32-field list.
+  stageOfDevelopment: "pre_deployment" | "pilot" | "deployed" | "retired" | "" // #7
+  highImpact: "yes" | "no" | "" // #8
+  hasATO: "yes" | "no" | "in_progress" | "" // #16
+  atoSystemName: string // #16 sub-field — system name, only meaningful once hasATO is "yes"
+  systemSource: "in_house" | "contract" | "vendor" | "" // #15
+  systemSourceVendorName: string // #15 sub-field — vendor name, only meaningful once systemSource is contract/vendor
+  operationalDate: string // #14 — date the use case became operational, or the pilot's start date
+  trainingDataDescription: string // #17 — data used to train/fine-tune/evaluate the model(s)
+  federalDataCatalogLink: string // #18 — Federal Data Catalog entry link, if publicly disclosed
+  piaLink: string // #20 — Privacy Impact Assessment link, if publicly available
+  customCode: "yes" | "no" | "" // #22 — does this project include custom-developed code?
+  openSourceCodeLink: string // #23 — public source code link, only meaningful once customCode is "yes"
   // Reportability inputs (lib/ombReportability.ts): NSS/IC use and research-only
   // use are the two OMB inventory exclusions.
   nationalSecuritySystem: "yes" | "no" | ""
@@ -159,6 +168,9 @@ export type FormData = {
   ongoingMonitoringNote: string
   humanOversightAppeal: "yes" | "no" | "" // human oversight / appeal mechanism for affected individuals
   humanOversightAppealNote: string
+  independentReviewConducted: "yes" | "no" | "" // #27 — has an independent review of the use case been conducted?
+  operatorTrainingEstablished: "yes" | "no" | "" // #29 — periodic training for operators to interpret/act on AI output?
+  failSafeMechanism: "yes" | "no" | "" // #30 — appropriate fail-safe minimizing risk of significant harm?
   // DoD responsible-AI + maturity disclosures
   impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
   dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
@@ -242,7 +254,15 @@ export const initialFormData: FormData = {
   stageOfDevelopment: "",
   highImpact: "",
   hasATO: "",
+  atoSystemName: "",
   systemSource: "",
+  systemSourceVendorName: "",
+  operationalDate: "",
+  trainingDataDescription: "",
+  federalDataCatalogLink: "",
+  piaLink: "",
+  customCode: "",
+  openSourceCodeLink: "",
   nationalSecuritySystem: "",
   researchOnly: "",
   highImpactFactors: [],
@@ -253,6 +273,9 @@ export const initialFormData: FormData = {
   ongoingMonitoringNote: "",
   humanOversightAppeal: "",
   humanOversightAppealNote: "",
+  independentReviewConducted: "",
+  operatorTrainingEstablished: "",
+  failSafeMechanism: "",
   feasibilitySummary: "",
   successMetrics: "",
   keyMetrics: [],
