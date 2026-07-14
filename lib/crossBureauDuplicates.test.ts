@@ -1,6 +1,27 @@
 import { describe, it, expect } from "vitest"
 import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
-import { hasCrossBureauMatch, crossBureauDuplicateCount, ROLLUP_DUPLICATE_THRESHOLD } from "@/lib/crossBureauDuplicates"
+import {
+  hasCrossBureauMatch,
+  crossBureauDuplicateCount,
+  isDuplicatePair,
+  ROLLUP_DUPLICATE_THRESHOLD,
+} from "@/lib/crossBureauDuplicates"
+import type { Submission } from "@/lib/submissions"
+
+function mkSub(id: string, businessUnit: string, coreProblem: string): Submission {
+  return {
+    id,
+    submittedAt: new Date(0).toISOString(),
+    businessUnit,
+    formData: {
+      useCaseTitle: "",
+      coreProblem,
+      proposedSolution: "",
+      useCaseDescription: "",
+      submitterOffice: businessUnit,
+    } as any,
+  }
+}
 
 // Pins the bureau roll-up's "Possible duplicates" column against the golden
 // seed: with the default lib/similarity.ts threshold (0.07), 8 of the 9
@@ -45,5 +66,30 @@ describe("cross-bureau duplicate detection (bureau roll-up threshold)", () => {
 
   it("is stronger than the submission-detail list's default threshold", () => {
     expect(ROLLUP_DUPLICATE_THRESHOLD).toBeGreaterThan(0.07)
+  })
+})
+
+describe("isDuplicatePair (bureau-agnostic edge rule, issue #68)", () => {
+  const a = mkSub("a", "nist", "alpha bravo charlie delta echo foxtrot golf hotel")
+  const bSameBureau = mkSub("b", "nist", "alpha bravo charlie delta echo foxtrot golf india")
+  const cOtherBureau = mkSub("c", "census", "alpha bravo charlie delta echo foxtrot golf india")
+  const dBelowThreshold = mkSub("d", "nist", "alpha india juliet kilo lima mike november oscar")
+
+  it("flags a strong match filed under the same bureau, unlike the old cross-bureau-only rule", () => {
+    expect(isDuplicatePair(a, bSameBureau)).toBe(true)
+  })
+
+  it("still flags a strong match filed under a different bureau", () => {
+    expect(isDuplicatePair(a, cOtherBureau)).toBe(true)
+  })
+
+  it("does not flag a match below the roll-up threshold, same bureau or not", () => {
+    expect(isDuplicatePair(a, dBelowThreshold)).toBe(false)
+  })
+
+  it("still excludes a pair in the same OMB consolidation category regardless of bureau", () => {
+    const trioIds = ["doc-nist-meeting-transcription", "doc-noaa-ops-meeting-recap"]
+    const [x, y] = trioIds.map((id) => docSeedSubmissions.find((s) => s.id === id)!)
+    expect(isDuplicatePair(x, y)).toBe(false)
   })
 })

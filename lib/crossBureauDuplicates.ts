@@ -36,17 +36,19 @@ export function hasCrossBureauMatch(s: Submission, all: Submission[]): boolean {
   )
 }
 
-// Pairwise version of the same roll-up-strength rule, exported for
+// Pairwise version of the roll-up-strength rule, exported for
 // lib/rationalization.ts's clustering (which needs an edge test between two
-// specific submissions rather than "does `s` have any match"). Kept in sync
-// with hasCrossBureauMatch's filters by construction — both apply the same
-// threshold, cross-bureau, and not-same-OMB-category rules.
-export function isCrossBureauDuplicatePair(a: Submission, b: Submission): boolean {
-  return (
-    getBusinessUnit(a) !== getBusinessUnit(b) &&
-    !sameConsolidationCategory(a, b) &&
-    similarity(a, b) >= ROLLUP_DUPLICATE_THRESHOLD
-  )
+// specific submissions rather than "does `s` have any match"). Unlike
+// hasCrossBureauMatch, this is NOT bureau-scoped — lib/rationalization.ts
+// clusters over whatever set of submissions the viewer can see
+// (visibleSubmissions), so the same edge rule must fire for a same-bureau
+// pair as for a cross-bureau one; scope (intra_bureau vs. cross_bureau) is
+// derived downstream from which bureaus a resulting cluster's members land
+// in, not from this edge test. Kept in sync with hasCrossBureauMatch's other
+// two filters by construction — both apply the same threshold and
+// not-same-OMB-category rules.
+export function isDuplicatePair(a: Submission, b: Submission): boolean {
+  return !sameConsolidationCategory(a, b) && similarity(a, b) >= ROLLUP_DUPLICATE_THRESHOLD
 }
 
 /** Count of `unit`'s submissions with a cross-bureau possible-duplicate match. */

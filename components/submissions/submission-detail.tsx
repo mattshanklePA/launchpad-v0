@@ -184,10 +184,11 @@ export function SubmissionDetail({ id }: { id: string }) {
   const deptTierEnabled = departmentFinalApprovalEnabled(tenant)
 
   // Unlike similarMatches above (deliberately scoped to the viewer), the
-  // rationalization gate must see the true cross-bureau cluster regardless of
-  // who's approving — a bureau-scoped reviewer approving their half of a
-  // cross-bureau duplicate still needs to be blocked even though they can't
-  // see the other bureau's submission from their own roll-down view.
+  // rationalization gate must see the true cluster (intra- or cross-bureau)
+  // regardless of who's approving — a bureau-scoped reviewer approving their
+  // half of a cross-bureau duplicate still needs to be blocked even though
+  // they can't see the other bureau's submission from their own roll-down
+  // view.
   const allSubmissions = getSubmissions()
   const clusters = clusterDuplicates(allSubmissions)
   const cluster = clusterForSubmission(sub, clusters)
@@ -336,7 +337,9 @@ export function SubmissionDetail({ id }: { id: string }) {
         <div className={`rounded-lg border p-4 space-y-2 ${blockReason ? "border-amber-300 bg-amber-50" : "border-green-300 bg-green-50"}`}>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-amber-700" />
-            <span className="font-medium text-sm">Cross-bureau rationalization</span>
+            <span className="font-medium text-sm">
+              {cluster.scope === "cross_bureau" ? "Cross-bureau rationalization" : "Intra-bureau rationalization"}
+            </span>
             <Badge
               variant="outline"
               className={blockReason ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-green-100 text-green-800 border-green-300"}
@@ -350,7 +353,9 @@ export function SubmissionDetail({ id }: { id: string }) {
           </div>
           <p className="text-sm text-muted-foreground">
             {blockReason
-              ? "This use case closely matches work filed under another bureau. A department/OS reviewer must mark this cluster consolidated or keep-separate — see the Rationalization panel on the Pipeline page — before it can be approved."
+              ? cluster.scope === "cross_bureau"
+                ? "This use case closely matches work filed under another bureau. A department/OS reviewer must mark this cluster consolidated or keep-separate — see the Rationalization panel on the Pipeline page — before it can be approved."
+                : "This use case closely matches another submission from your own bureau. A reviewer or admin for this bureau (or a department/OS reviewer) must mark this cluster consolidated or keep-separate — see the Rationalization panel on the Pipeline page — before it can be approved."
               : rationalizationDecision?.decision === "consolidated"
                 ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}.`
                 : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}` : ""}.`}

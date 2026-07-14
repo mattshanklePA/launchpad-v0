@@ -14,7 +14,7 @@ import { hasCrossBureauMatch, crossBureauDuplicateCount } from "@/lib/crossBurea
 import { determineReportability } from "@/lib/ombReportability"
 import { determineConsolidation } from "@/lib/ombConsolidation"
 import { officesForBureau } from "@/lib/officeRollup"
-import { tenantHasBureauTier } from "@/lib/rationalization"
+import { tenantHasBureauTier, clusterDuplicates, pendingIntraBureauClusterCount, isClusterPending } from "@/lib/rationalization"
 import { signoffProgress } from "@/lib/bureauSignoff"
 import { getTenant } from "@/lib/tenant"
 import { Badge } from "@/components/ui/badge"
@@ -27,10 +27,13 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const unitLabel = getTenant().unit.label
   const unitLower = unitLabel.toLowerCase()
   const configOrder = getTenant().unit.options.map((o) => o.value)
-  // Sign-off column only applies where bureau sign-off exists (DoC) — USPTO/DoW
-  // render exactly as before. See lib/bureauSignoff.ts.
+  // Sign-off and intra-bureau-duplicates columns only apply where a bureau
+  // tier exists (DoC) — USPTO/DoW render exactly as before. See
+  // lib/bureauSignoff.ts and lib/rationalization.ts.
   const showSignoff = tenantHasBureauTier()
-  const TABLE_COLS = STATUS_ORDER.length + (showSignoff ? 7 : 6) // unit + statuses + total + high-impact + OMB review + duplicates + consolidated [+ signed off]
+  const showIntraBureauDuplicates = tenantHasBureauTier()
+  // unit + statuses + total + high-impact + OMB review + duplicates + consolidated [+ intra-bureau duplicates] [+ signed off]
+  const TABLE_COLS = STATUS_ORDER.length + 6 + (showIntraBureauDuplicates ? 1 : 0) + (showSignoff ? 1 : 0)
 
   const units = Array.from(new Set(submissions.map(getBusinessUnit).filter(Boolean))).sort((a, b) => {
     const ia = configOrder.indexOf(a)
@@ -58,6 +61,18 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   // the same thing across the bureaus" problem this feature exists to surface.
   const duplicatesFor = (unit: string) => crossBureauDuplicateCount(submissions, unit)
   const grandDuplicates = submissions.filter((s) => hasCrossBureauMatch(s, submissions)).length
+
+  // Intra-bureau rationalization (issue #68): duplicate detection scoped to
+  // the viewer's visible set (`submissions`, already `visibleSubmissions`-
+  // filtered by the caller) surfaces clusters *within* a single bureau too,
+  // not just across bureaus. This counts unresolved ones per bureau — e.g.
+  // "NOAA has 3 unresolved internal duplicate clusters" — distinct from the
+  // "Possible duplicates" column above, which isn't decision-aware.
+  const intraBureauClusters = showIntraBureauDuplicates ? clusterDuplicates(submissions) : []
+  const intraDuplicatesFor = (unit: string) => pendingIntraBureauClusterCount(intraBureauClusters, submissions, unit)
+  const grandIntraDuplicates = intraBureauClusters.filter(
+    (c) => c.scope === "intra_bureau" && isClusterPending(c, submissions),
+  ).length
 
   // Cross-bureau rationalization: how many of these submissions match one of
   // OMB's widely-used commercial AI categories and can be reported once across
@@ -112,6 +127,9 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">High-impact</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">OMB review needed</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Possible duplicates</th>
+              {showIntraBureauDuplicates && (
+                <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Intra-bureau duplicates</th>
+              )}
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Consolidated (OMB)</th>
               {showSignoff && <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Signed off</th>}
             </tr>
@@ -172,6 +190,15 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
                         <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">{duplicatesFor(u)}</Badge>
                       )}
                     </td>
+                    {showIntraBureauDuplicates && (
+                      <td className="text-center px-2 py-2">
+                        {intraDuplicatesFor(u) === 0 ? (
+                          dash
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">{intraDuplicatesFor(u)}</Badge>
+                        )}
+                      </td>
+                    )}
                     <td className="text-center px-2 py-2">
                       {consolidatedFor(u) === 0 ? (
                         dash
@@ -206,6 +233,9 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               <td className="text-center px-2 py-2">{grandHigh || dash}</td>
               <td className="text-center px-2 py-2">{grandOmbReview || dash}</td>
               <td className="text-center px-2 py-2">{grandDuplicates || dash}</td>
+              {showIntraBureauDuplicates && (
+                <td className="text-center px-2 py-2">{grandIntraDuplicates || dash}</td>
+              )}
               <td className="text-center px-2 py-2">{grandConsolidated || dash}</td>
               {showSignoff && (
                 <td className="text-center px-2 py-2 whitespace-nowrap">

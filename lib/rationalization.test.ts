@@ -11,6 +11,7 @@ import {
   clusterForSubmission,
   isRationalizationPending,
   canApprove,
+  canRationalizeCluster,
   rationalizationBlockReason,
   buildRationalizationPatch,
   type RationalizationCluster,
@@ -61,6 +62,7 @@ describe("clusterDuplicates", () => {
 
     const pair = clusters.find((c) => c.memberIds.includes("doc-census-survey-assistant"))!
     expect(pair.bureaus.slice().sort()).toEqual(["census", "ita"])
+    expect(pair.scope).toBe("cross_bureau")
     expect(pair.maxSimilarity).toBeGreaterThan(0.25)
   })
 
@@ -72,7 +74,7 @@ describe("clusterDuplicates", () => {
     expect(pair.id).toBe("doc-census-survey-assistant")
   })
 
-  it("does not cluster submissions with no cross-bureau match", () => {
+  it("does not cluster submissions with no match at all", () => {
     const clusters = clusterDuplicates([target, belowThresholdMatch, unrelated], doc)
     expect(clusters).toEqual([])
   })
@@ -86,11 +88,15 @@ describe("clusterDuplicates", () => {
     const clusters = clusterDuplicates([target, crossBureauMatch, belowThresholdMatch], doc)
     expect(clusters).toHaveLength(1)
     expect(clusters[0].memberIds.slice().sort()).toEqual(["cross-match", "target"])
+    expect(clusters[0].scope).toBe("cross_bureau")
   })
 
-  it("does not cluster a strong match filed under the same bureau", () => {
+  it("clusters a strong match filed under the same bureau as intra_bureau (issue #68)", () => {
     const clusters = clusterDuplicates([target, sameBureauMatch], doc)
-    expect(clusters).toEqual([])
+    expect(clusters).toHaveLength(1)
+    expect(clusters[0].memberIds.slice().sort()).toEqual(["same-bureau", "target"])
+    expect(clusters[0].bureaus).toEqual(["nist"])
+    expect(clusters[0].scope).toBe("intra_bureau")
   })
 
   it("is a no-op for tenants without a bureau tier (USPTO/DoW), even against the DoC seed", () => {
@@ -112,6 +118,7 @@ describe("approve-gate predicate", () => {
     id: "cross-match",
     memberIds: ["cross-match", "target"],
     bureaus: ["census", "nist"],
+    scope: "cross_bureau",
     maxSimilarity: 0.78,
   }
   const clusters = [cluster]
@@ -177,6 +184,70 @@ describe("approve-gate predicate", () => {
     const s = mkSub("anything", "patents", {})
     expect(canApprove(s, [])).toBe(true)
   })
+
+  it("blocks approval of an undecided intra-bureau cluster too (issue #68)", () => {
+    const intraCluster: RationalizationCluster = {
+      id: "same-bureau",
+      memberIds: ["same-bureau", "target"],
+      bureaus: ["nist"],
+      scope: "intra_bureau",
+      maxSimilarity: 0.78,
+    }
+    const s = mkSub("target", "nist", {})
+    expect(isRationalizationPending(s, [intraCluster])).toBe(true)
+    expect(canApprove(s, [intraCluster])).toBe(false)
+
+    const decided = mkSub("target", "nist", {}, {
+      rationalization: {
+        clusterId: "same-bureau",
+        decision: "keep_separate",
+        decidedBy: "NIST Reviewer",
+        decidedAt: new Date(0).toISOString(),
+      },
+    })
+    expect(canApprove(decided, [intraCluster])).toBe(true)
+  })
+})
+
+describe("canRationalizeCluster", () => {
+  const intraCluster: RationalizationCluster = {
+    id: "same-bureau",
+    memberIds: ["same-bureau", "target"],
+    bureaus: ["nist"],
+    scope: "intra_bureau",
+    maxSimilarity: 0.78,
+  }
+  const crossCluster: RationalizationCluster = {
+    id: "cross-match",
+    memberIds: ["cross-match", "target"],
+    bureaus: ["census", "nist"],
+    scope: "cross_bureau",
+    maxSimilarity: 0.78,
+  }
+  const bureauReviewer = { role: "reviewer", businessUnit: "nist" }
+  const otherBureauReviewer = { role: "reviewer", businessUnit: "noaa" }
+  const departmentViewer = { role: "admin", businessUnit: "os" }
+
+  it("lets a bureau reviewer decide their own bureau's intra-bureau cluster", () => {
+    expect(canRationalizeCluster(intraCluster, bureauReviewer)).toBe(true)
+  })
+
+  it("blocks a bureau reviewer from deciding another bureau's intra-bureau cluster", () => {
+    expect(canRationalizeCluster(intraCluster, otherBureauReviewer)).toBe(false)
+  })
+
+  it("blocks a bureau reviewer from deciding a cross-bureau cluster, even one that includes their bureau", () => {
+    expect(canRationalizeCluster(crossCluster, bureauReviewer)).toBe(false)
+  })
+
+  it("lets a department-level viewer decide both intra-bureau and cross-bureau clusters", () => {
+    expect(canRationalizeCluster(intraCluster, departmentViewer)).toBe(true)
+    expect(canRationalizeCluster(crossCluster, departmentViewer)).toBe(true)
+  })
+
+  it("treats a viewer with no business unit as department-level too", () => {
+    expect(canRationalizeCluster(crossCluster, { role: "admin" })).toBe(true)
+  })
 })
 
 describe("getRationalization / buildRationalizationPatch", () => {
@@ -197,7 +268,13 @@ describe("getRationalization / buildRationalizationPatch", () => {
   })
 
   it("builds a consolidated patch with the chosen lead", () => {
-    const cluster: RationalizationCluster = { id: "c1", memberIds: ["a", "b"], bureaus: ["census", "ita"], maxSimilarity: 0.5 }
+    const cluster: RationalizationCluster = {
+      id: "c1",
+      memberIds: ["a", "b"],
+      bureaus: ["census", "ita"],
+      scope: "cross_bureau",
+      maxSimilarity: 0.5,
+    }
     const patch = buildRationalizationPatch(cluster, "consolidated", {
       leadSubmissionId: "a",
       decidedBy: "Jane Reviewer",
@@ -215,7 +292,13 @@ describe("getRationalization / buildRationalizationPatch", () => {
   })
 
   it("omits leadSubmissionId for a keep-separate patch even if one is passed", () => {
-    const cluster: RationalizationCluster = { id: "c1", memberIds: ["a", "b"], bureaus: ["census", "ita"], maxSimilarity: 0.5 }
+    const cluster: RationalizationCluster = {
+      id: "c1",
+      memberIds: ["a", "b"],
+      bureaus: ["census", "ita"],
+      scope: "cross_bureau",
+      maxSimilarity: 0.5,
+    }
     const patch = buildRationalizationPatch(cluster, "keep_separate", {
       leadSubmissionId: "a",
       decidedBy: "Jane Reviewer",
