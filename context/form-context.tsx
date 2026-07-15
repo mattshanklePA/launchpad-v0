@@ -78,7 +78,9 @@ const arrayFields: (keyof FormData)[] = [
 // Returns the subset of FormData that the submitter step (Step 1) covers,
 // drawn from the active session. Used to auto-fill so the submitter doesn't
 // retype info every time. Falls back to empty values when no session.
-function profileFromSession(): Partial<FormData> {
+// Exported for unit testing — the wizard itself only uses it indirectly via
+// the FormProvider initializer below.
+export function profileFromSession(): Partial<FormData> {
   if (typeof window === "undefined") return {}
   const s = getSession()
   if (!s) return {}
@@ -91,7 +93,7 @@ function profileFromSession(): Partial<FormData> {
   }
 }
 
-function isProfileComplete(d: Partial<FormData>): boolean {
+export function isProfileComplete(d: Partial<FormData>): boolean {
   return Boolean(
     d.submitterName?.trim() &&
       d.submitterEmail?.trim() &&
