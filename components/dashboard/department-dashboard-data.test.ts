@@ -12,7 +12,7 @@ import type { DashboardAction } from "@/lib/dashboard/actions"
 import type { TenantConfig } from "@/lib/tenant"
 
 const sendDashboardActionNotification = vi.hoisted(() => vi.fn())
-vi.mock("@/app/dashboard/dashboard-actions", () => ({ sendDashboardActionNotification }))
+vi.mock("@/app/dashboard-actions", () => ({ sendDashboardActionNotification }))
 
 function dashboardAction(overrides: Partial<DashboardAction>): DashboardAction {
   return {

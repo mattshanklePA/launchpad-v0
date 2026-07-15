@@ -3,7 +3,7 @@
 // (lib/dashboard/metrics.ts's scopedSubmissions) and the same domain modules
 // the pipeline/roll-up surfaces already use (lib/reviewWorkflow.ts,
 // lib/bureauSignoff.ts). No new data model, no new send path: wiring these
-// into the Notifier (lib/notifier.ts) happens in app/dashboard/dashboard-actions.ts.
+// into the Notifier (lib/notifier.ts) happens in app/dashboard-actions.ts.
 //
 // Three categories, matching what the Action Center placeholder from CC-3/CC-4
 // was standing in for: submissions in `needs_info` (waiting on the submitter),

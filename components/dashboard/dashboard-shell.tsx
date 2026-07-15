@@ -10,10 +10,12 @@ import type { ReactNode } from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Home, LayoutDashboard, LogOut, User } from "lucide-react"
+import { Database, Download, Home, LayoutDashboard, LogOut, Plus, Scale, SlidersHorizontal, User, Users } from "lucide-react"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { isLevelAllowed, type DashboardScope, type OrgHierarchy } from "@/lib/dashboard/scope"
-import { getSession, logout, type Session } from "@/lib/auth"
+import { getSession, hasAdminAccess, isAdmin, logout, type Session } from "@/lib/auth"
+import { tenantHasBureauTier } from "@/lib/rationalization"
+import { hasDepartmentTransparency } from "@/lib/bureauSignoff"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -78,6 +80,89 @@ export function DashboardShell({
           <LaunchPadLogo size="sm" monochrome className="text-sidebar-foreground" subtitleClassName="text-sidebar-foreground/60" />
         </SidebarHeader>
         <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Submit an idea">
+                  <Link href="/submit">
+                    <Plus />
+                    <span>Submit an idea</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {hasAdminAccess(session) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Decision Center">
+                    <Link href="/decisions">
+                      <Scale />
+                      <span>Decision Center</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          {isAdmin(session) && (
+            <>
+              <SidebarSeparator />
+              <SidebarGroup>
+                <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Form configuration">
+                      <Link href="/admin?tab=formconfig">
+                        <SlidersHorizontal />
+                        <span>Form configuration</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="User management">
+                      <Link href="/admin?tab=settings">
+                        <Users />
+                        <span>User management</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Demo data">
+                      <Link href="/admin?tab=settings">
+                        <Database />
+                        <span>Demo data</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Export OMB inventory (CSV)">
+                      <a href="/api/export/omb">
+                        <Download />
+                        <span>Export OMB inventory</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {tenantHasBureauTier(tenant) &&
+                    hasDepartmentTransparency(
+                      session
+                        ? { role: session.role, email: session.email, businessUnit: session.businessUnit, office: session.office }
+                        : null,
+                    ) && (
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Export approval report (CSV)">
+                          <a href="/api/export/approval">
+                            <Download />
+                            <span>Export approval report</span>
+                          </a>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )}
+                </SidebarMenu>
+              </SidebarGroup>
+            </>
+          )}
+
+          <SidebarSeparator />
           <SidebarGroup>
             <SidebarGroupLabel>Organization</SidebarGroupLabel>
             <EntityTree hierarchy={hierarchy} selected={selection} onSelect={onSelect} tenant={tenant} />

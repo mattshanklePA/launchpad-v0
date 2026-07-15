@@ -3,11 +3,10 @@
 // Bureau/Office Dashboard (CC-7) — the reviewer- and bureau/office-scoped
 // landing view a bureau (or office-) scoped viewer sees, assembled from the
 // same CC-STYLE shell and CC-2 metrics the Department Dashboard (CC-4) uses,
-// just computed for a narrower `DashboardScope`. Mounted at the same
-// admin-gated preview route (app/dashboard/page.tsx), which now also allows
-// reviewers and dispatches to this component whenever `getDashboardScope`
-// resolves to "bureau" or "office" rather than "department" — this does not
-// repoint /home (CC-6).
+// just computed for a narrower `DashboardScope`. Mounted at `/home`
+// (app/home/page.tsx, CC-6), which dispatches to this component whenever
+// `getDashboardScope` resolves to "bureau" or "office" rather than
+// "department".
 //
 // Guardrail: every card here is built on `getDashboardMetrics`/
 // `getDashboardActions`/`scopedSubmissions` (lib/dashboard/*), which already
@@ -37,8 +36,11 @@ import { ActionCenter } from "@/components/dashboard/action-center"
 import { PipelineStatusChart } from "@/components/dashboard/charts/pipeline-status-chart"
 import { ReadinessDistributionChart } from "@/components/dashboard/charts/readiness-distribution-chart"
 import { OfficeRollup } from "@/components/admin/office-rollup"
+import { RationalizationPanel } from "@/components/admin/rationalization-panel"
+import { ApprovalTransparency } from "@/components/admin/approval-transparency"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { QueueBoard } from "@/components/dashboard/queue-board"
+import { DecisionCenterLink, AdminToolsSection } from "@/components/dashboard/dashboard-workspace-links"
 import { scopeLabel, buildKpiCards, buildActionItems, computeHealthScore } from "./department-dashboard-data"
 import { bureauHierarchy, resolveBureauDrillScope } from "./bureau-dashboard-data"
 
@@ -52,7 +54,8 @@ export function BureauDashboard() {
   }, [loaded])
 
   const tenant = getTenant()
-  const baseScope = getDashboardScope(getSession())
+  const session = getSession()
+  const baseScope = getDashboardScope(session)
   const scope = resolveBureauDrillScope(baseScope, selection)
   const hierarchy = bureauHierarchy(baseScope, tenant)
   const bureauTier = tenantHasBureauTier(tenant)
@@ -77,6 +80,10 @@ export function BureauDashboard() {
 
       <KpiCardGrid cards={kpiCards} />
 
+      <DecisionCenterLink />
+
+      <AdminToolsSection session={session} />
+
       <Tabs defaultValue="queue">
         <TabsList>
           <TabsTrigger value="queue">Queue</TabsTrigger>
@@ -97,6 +104,10 @@ export function BureauDashboard() {
               </CardContent>
             </Card>
           )}
+
+          <ApprovalTransparency submissions={submissions} />
+
+          <RationalizationPanel submissions={queue} />
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">

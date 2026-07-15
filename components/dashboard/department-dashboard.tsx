@@ -6,7 +6,7 @@
 // insight + navigation: the Executive Action Center (CC-5) now derives real,
 // scoped action items (lib/dashboard/actions.ts) and wires two of them —
 // sign-off nudge, request info — to the existing Notifier
-// (app/dashboard/dashboard-actions.ts -> lib/notifier.ts); everything else on
+// (app/dashboard-actions.ts -> lib/notifier.ts); everything else on
 // this screen stays read-only.
 //
 // Entity-tree selection is local state; drilling into a bureau (then an
@@ -33,7 +33,10 @@ import { ActionCenter } from "@/components/dashboard/action-center"
 import { PipelineStatusChart } from "@/components/dashboard/charts/pipeline-status-chart"
 import { ReadinessDistributionChart } from "@/components/dashboard/charts/readiness-distribution-chart"
 import { BureauRollup } from "@/components/admin/bureau-rollup"
+import { RationalizationPanel } from "@/components/admin/rationalization-panel"
+import { ApprovalTransparency } from "@/components/admin/approval-transparency"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { DecisionCenterLink, AdminToolsSection } from "@/components/dashboard/dashboard-workspace-links"
 import { resolveDrillScope, scopeLabel, buildKpiCards, buildActionItems, computeHealthScore } from "./department-dashboard-data"
 
 export function DepartmentDashboard() {
@@ -46,7 +49,8 @@ export function DepartmentDashboard() {
   }, [loaded])
 
   const tenant = getTenant()
-  const baseScope = getDashboardScope(getSession())
+  const session = getSession()
+  const baseScope = getDashboardScope(session)
   const scope = resolveDrillScope(baseScope, selection)
   const hierarchy = getHierarchy(tenant)
   const bureauTier = tenantHasBureauTier(tenant)
@@ -69,6 +73,10 @@ export function DepartmentDashboard() {
       </div>
 
       <KpiCardGrid cards={kpiCards} />
+
+      <DecisionCenterLink />
+
+      <AdminToolsSection session={session} />
 
       <Tabs defaultValue="overview">
         <TabsList>
@@ -111,8 +119,10 @@ export function DepartmentDashboard() {
           <ActionCenter items={actionItems} />
         </TabsContent>
 
-        <TabsContent value="rollup">
+        <TabsContent value="rollup" className="space-y-4">
           <BureauRollup submissions={rollupSubmissions} />
+          <ApprovalTransparency submissions={submissions} />
+          <RationalizationPanel submissions={rollupSubmissions} />
         </TabsContent>
       </Tabs>
     </DashboardShell>

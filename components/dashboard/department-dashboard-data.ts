@@ -9,7 +9,7 @@ import type { DashboardScope } from "@/lib/dashboard/scope"
 import { isLevelAllowed } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
 import type { DashboardAction } from "@/lib/dashboard/actions"
-import { sendDashboardActionNotification } from "@/app/dashboard/dashboard-actions"
+import { sendDashboardActionNotification } from "@/app/dashboard-actions"
 import type { KpiCardData } from "./kpi-card-data"
 import type { ActionItem, ActionOutcome } from "./action-center-data"
 import type { EntitySelection } from "./entity-tree-data"
@@ -112,7 +112,7 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean): K
 
 /**
  * Sends (or, per the guard, drafts) a batch of same-kind dashboard actions
- * through the one Notifier wiring (app/dashboard/dashboard-actions.ts ->
+ * through the one Notifier wiring (app/dashboard-actions.ts ->
  * lib/notifier.ts) and turns the result into the toast copy ActionCenter
  * shows. Both wired buttons (sign-off nudge, request info) call this same
  * function — the guard that decides whether anything actually sends lives in
