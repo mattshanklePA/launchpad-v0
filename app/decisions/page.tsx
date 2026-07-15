@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { RequireAuth } from "@/components/auth/require-auth"
-import { Header } from "@/components/layout/header"
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { DecisionCenter } from "@/components/admin/decision-center"
 import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { visibleSubmissions } from "@/lib/reviewWorkflow"
 import { getSession } from "@/lib/auth"
+import { getDashboardScope } from "@/lib/dashboard/scope"
 
 function DecisionsPageInner() {
   const { loaded } = useDataProvider()
@@ -22,12 +23,15 @@ function DecisionsPageInner() {
   }, [loaded])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="container py-8">
-        <DecisionCenter submissions={submissions} />
-      </div>
-    </div>
+    <DashboardShell
+      baseScope={getDashboardScope(getSession())}
+      hierarchy={{ bureaus: [] }}
+      selection={null}
+      onSelect={() => {}}
+      breadcrumb="Decision Center"
+    >
+      <DecisionCenter submissions={submissions} headingLevel="h1" />
+    </DashboardShell>
   )
 }
 
