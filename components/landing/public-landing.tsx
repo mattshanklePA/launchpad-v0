@@ -5,8 +5,25 @@ import { useEffect, useState } from "react"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
 import { getSession, type Session } from "@/lib/auth"
-import { ArrowRight, FileText, Rocket, Lock } from "lucide-react"
+import {
+  ArrowRight,
+  FileText,
+  Rocket,
+  Lock,
+  ScanSearch,
+  Landmark,
+  Bot,
+  ClipboardList,
+  Copy,
+  Download,
+  Users,
+  ShieldCheck,
+  Award,
+  Building2,
+  Quote,
+} from "lucide-react"
 import { getTenant } from "@/lib/tenant"
+import { tenantHasBureauTier } from "@/lib/rationalization"
 
 function ObjectiveList({ items }: { items: { title: string; description: string }[] }) {
   return (
@@ -26,25 +43,152 @@ function ObjectiveList({ items }: { items: { title: string; description: string 
   )
 }
 
+function StepCard({
+  step,
+  icon: Icon,
+  title,
+  description,
+}: {
+  step: number
+  icon: typeof FileText
+  title: string
+  description: string
+}) {
+  return (
+    <div className="rounded-xl border bg-white p-6">
+      <div className="flex items-center gap-3">
+        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-uspto-blue-primary/10 text-uspto-blue-primary flex items-center justify-center text-sm font-semibold">
+          {step}
+        </div>
+        <Icon className="w-5 h-5 text-uspto-blue-primary" />
+      </div>
+      <div className="mt-4 font-heading font-semibold text-lg text-uspto-gray-text">{title}</div>
+      <p className="text-sm text-muted-foreground mt-1.5">{description}</p>
+    </div>
+  )
+}
+
+function FeatureCard({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof FileText
+  title: string
+  description: string
+}) {
+  return (
+    <div className="rounded-xl border bg-white p-6">
+      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-uspto-blue-primary/10 text-uspto-blue-primary flex items-center justify-center">
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="mt-4 font-heading font-semibold text-uspto-gray-text">{title}</div>
+      <p className="text-sm text-muted-foreground mt-1.5">{description}</p>
+    </div>
+  )
+}
+
+function ProofCard({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof FileText
+  title: string
+  description: string
+}) {
+  return (
+    <div className="rounded-xl border bg-white p-6 text-center">
+      <div className="mx-auto flex-shrink-0 w-9 h-9 rounded-full bg-uspto-blue-primary/10 text-uspto-blue-primary flex items-center justify-center">
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="mt-3 font-heading font-semibold text-uspto-gray-text">{title}</div>
+      <p className="text-sm text-muted-foreground mt-1.5">{description}</p>
+    </div>
+  )
+}
+
 export function PublicLanding() {
   const t = getTenant()
+  const bureauTier = tenantHasBureauTier(t)
   const [session, setSession] = useState<Session | null>(null)
   const [hydrated, setHydrated] = useState(false)
-  const [metrics, setMetrics] = useState<{ submitted: number; deployed: number }>({ submitted: 0, deployed: 0 })
 
   useEffect(() => {
     setSession(getSession())
     setHydrated(true)
-    fetch(`/api/submissions?_=${Date.now()}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        const subs: any[] = j?.submissions || []
-        const submitted = subs.length
-        const deployed = subs.filter((s) => (s.status || s.formData?.reviewStatus) === "approved").length
-        setMetrics({ submitted, deployed })
-      })
-      .catch(() => setMetrics({ submitted: 0, deployed: 0 }))
   }, [])
+
+  const steps = [
+    {
+      icon: FileText,
+      title: "Submit",
+      description: `A guided intake, not a blank form — ${t.assistantName} proposes field values as you write, so a complete use case takes minutes.`,
+    },
+    {
+      icon: ScanSearch,
+      title: "Vet & de-dupe",
+      description:
+        "Reviewers get a readiness score and every near-duplicate or overlapping effort already in the pipeline, flagged automatically before anyone signs off.",
+    },
+    {
+      icon: Landmark,
+      title: "Fund & report",
+      description:
+        "Leadership rolls decisions up to the view their role needs, funds the strongest use cases, and exports the federal OMB inventory in one click.",
+    },
+  ]
+
+  const features = [
+    {
+      icon: Bot,
+      title: `AI-guided intake (${t.assistantName})`,
+      description: `${t.assistantName} proposes field values as you write — problem, users, solution, value, alignment, risk — so a use case arrives complete, not half-empty.`,
+    },
+    {
+      icon: ClipboardList,
+      title: "Built-in federal OMB inventory",
+      description:
+        "All 34 fields of the 2025 OMB AI use case inventory (M-25-21 companion guidance) are wired into the wizard itself, most pre-filled or proposed from your answers.",
+    },
+    {
+      icon: Copy,
+      title: bureauTier ? "Cross-bureau duplicate detection" : "Duplicate & overlap detection",
+      description: bureauTier
+        ? "Flags near-duplicate use cases being pursued in more than one bureau, before the Department funds the same idea twice."
+        : "Flags near-duplicate and overlapping use cases already in the pipeline, before you fund the same idea twice.",
+    },
+    {
+      icon: Download,
+      title: "One-click OMB export",
+      description:
+        "Every submission already maps to the OMB inventory's exact fields and formats — export the full CSV in a single click.",
+    },
+    {
+      icon: Users,
+      title: "Role-based roll-up",
+      description:
+        "Dashboards roll every submission up automatically — from an individual reviewer's queue to the full leadership view — with no separate reporting step.",
+    },
+  ]
+
+  const proofPoints = [
+    {
+      icon: ShieldCheck,
+      title: "Built to the 2025 OMB inventory spec",
+      description: "All 34 required and conditional fields, wired into the intake itself rather than bolted on afterward.",
+    },
+    {
+      icon: Award,
+      title: "SBA-certified HUBZone small business",
+      description: "Packaged Agile is HUBZone-certified, opening a sole-source path for a first pilot (FAR 19.1306).",
+    },
+    {
+      icon: Building2,
+      title: "Built with USPTO and Commerce reviewers",
+      description: "Developed alongside USPTO and Commerce-bureau staff who review AI use cases today, not designed in the abstract.",
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -109,31 +253,97 @@ export function PublicLanding() {
           </div>
         </section>
 
-        <section className="bg-dow-ocean border-b border-white/10">
-          <div className="container py-10">
-            <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-                <div className="text-4xl font-bold text-white">{metrics.submitted}</div>
-                <div className="text-sm text-dow-steel mt-1">Use cases submitted</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-                <div className="text-4xl font-bold text-white">{metrics.deployed}</div>
-                <div className="text-sm text-dow-steel mt-1">Use cases deployed</div>
-              </div>
+        <section className="bg-white py-14 border-b">
+          <div className="container">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">How it works</h2>
+              <p className="text-sm text-muted-foreground mt-2">From a rough idea to a funded, reportable use case, in three steps.</p>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {steps.map((s, i) => (
+                <StepCard key={s.title} step={i + 1} icon={s.icon} title={s.title} description={s.description} />
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="bg-gray-50 py-14">
+        <section className="bg-gray-50 py-14 border-b">
           <div className="container">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">
+                What {t.productName} actually does
+              </h2>
+              <p className="text-sm text-muted-foreground mt-2">
+                Not another intake form — the governance layer that gets an idea from submission to a funded, OMB-ready use case.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {features.map((f) => (
+                <FeatureCard key={f.title} icon={f.icon} title={f.title} description={f.description} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white py-14 border-b">
+          <div className="container">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">
+                Built for federal AI governance
+              </h2>
+              <p className="text-sm text-muted-foreground mt-2">Not a demo — a product built to the government's own spec.</p>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {proofPoints.map((p) => (
+                <ProofCard key={p.title} icon={p.icon} title={p.title} description={p.description} />
+              ))}
+            </div>
+            <blockquote className="mt-10 max-w-2xl mx-auto rounded-xl border bg-gray-50 p-6 text-center">
+              <Quote className="w-5 h-5 text-uspto-blue-primary mx-auto" />
+              <p className="italic text-uspto-gray-text mt-3">
+                "[Pilot quote placeholder — a reviewer or CIO on what changed once duplicate effort and readiness were visible before funding.]"
+              </p>
+              <footer className="mt-3 text-sm text-muted-foreground">— Name, Title, Bureau (placeholder)</footer>
+            </blockquote>
+          </div>
+        </section>
+
+        <section className="bg-gray-50 py-14 border-b">
+          <div className="container">
+            <div className="max-w-2xl mx-auto mb-8">
+              <h2 className="font-heading text-lg font-semibold tracking-tight text-uspto-gray-text">
+                {t.orgName}'s strategic mandate
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t.productName} is built to serve every priority below — for reference, not as the pitch.
+              </p>
+            </div>
             <div className="grid lg:grid-cols-2 gap-10">
               {t.landingObjectives.map((group) => (
                 <div key={group.title}>
-                  <h2 className="font-heading text-xl font-semibold tracking-tight text-dow-space mb-1">{group.title}</h2>
+                  <h3 className="font-heading text-base font-semibold tracking-tight text-dow-space mb-1">{group.title}</h3>
                   <p className="text-sm text-muted-foreground mb-4">{group.subtitle}</p>
                   <ObjectiveList items={group.items} />
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="relative" style={{ backgroundColor: t.theme.primary }}>
+          <div className="relative container py-16 text-center">
+            <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-white drop-shadow-md">
+              Ready to see it on your own use cases?
+            </h2>
+            <p className="mt-3 text-white/85 max-w-xl mx-auto drop-shadow">
+              Request a walkthrough of {t.productName} with your bureau's real submissions, duplicates, and OMB fields.
+            </p>
+            <div className="mt-8 flex items-center justify-center">
+              <Button size="lg" asChild>
+                <a href={`mailto:matt.shankle@packagedagile.com?subject=${encodeURIComponent(`Request a walkthrough — ${t.productName}`)}`}>
+                  Request a walkthrough <ArrowRight className="w-4 h-4 ml-2" />
+                </a>
+              </Button>
             </div>
           </div>
         </section>
