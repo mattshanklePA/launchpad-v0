@@ -5,6 +5,13 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { type FormData, initialFormData, getFormSteps } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
 import { isStepEnabled } from "@/lib/formConfig"
+import {
+  DRAFT_FORM_KEY_BASE,
+  DRAFT_STEP_KEY_BASE,
+  DRAFT_SESSION_KEY_BASE,
+  scopedDraftKey,
+  migrateLegacyDraftKeys,
+} from "@/lib/draftStorage"
 
 interface FormContextType {
   formData: FormData
@@ -22,13 +29,29 @@ interface FormContextType {
   startNewForm: () => void
 }
 
-const STORAGE_KEY_FORM = "aid-form-data"
-const STORAGE_KEY_STEP = "aid-current-step"
+// Draft storage is namespaced per signed-in user (see lib/draftStorage.ts) so
+// switching accounts in the same browser never surfaces another user's
+// draft. Each key is resolved fresh from the active session rather than
+// cached in a module-level constant.
+function currentUserId(): string | undefined {
+  return getSession()?.userId
+}
+
+function storageKeyForm(): string {
+  return scopedDraftKey(DRAFT_FORM_KEY_BASE, currentUserId())
+}
+
+function storageKeyStep(): string {
+  return scopedDraftKey(DRAFT_STEP_KEY_BASE, currentUserId())
+}
+
 // Per-tab flag: set once the submitter is actively working in this session.
 // Lives in sessionStorage so it clears when the tab closes — a brand-new
 // session starts fresh and offers the draft via the resume prompt instead
 // of silently dropping the user back into the middle of the form.
-const SESSION_KEY = "aid-session-active"
+function sessionKey(): string {
+  return scopedDraftKey(DRAFT_SESSION_KEY_BASE, currentUserId())
+}
 
 const FormContext = createContext<FormContextType | undefined>(undefined)
 
@@ -85,16 +108,17 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [formData, setFormData] = useState<FormData>(() => {
     if (typeof window === "undefined") return initialFormData
     try {
-      const savedStep = localStorage.getItem(STORAGE_KEY_STEP)
+      migrateLegacyDraftKeys(currentUserId())
+      const savedStep = localStorage.getItem(storageKeyStep())
       const profile = profileFromSession()
       if (savedStep === "10") {
-        localStorage.removeItem(STORAGE_KEY_FORM)
-        localStorage.removeItem(STORAGE_KEY_STEP)
+        localStorage.removeItem(storageKeyForm())
+        localStorage.removeItem(storageKeyStep())
         // Fresh start after submission — still auto-fill profile so the next
         // submission doesn't make the user retype Step 1.
         return { ...initialFormData, ...profile }
       }
-      const saved = localStorage.getItem(STORAGE_KEY_FORM)
+      const saved = localStorage.getItem(storageKeyForm())
       if (!saved) {
         // Fresh draft — start with profile pre-filled.
         return { ...initialFormData, ...profile }
@@ -139,13 +163,13 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       const freshStart = isProfileComplete(profile) ? 2 : 1
       const params = new URLSearchParams(window.location.search)
       const forceResume = params.get("resume") === "1"
-      const sessionActive = sessionStorage.getItem(SESSION_KEY) === "1"
+      const sessionActive = sessionStorage.getItem(sessionKey()) === "1"
       // Only drop the submitter back into a saved step when they explicitly
       // asked to resume (Resume button → ?resume=1) or they're already mid-session
       // in this tab (so a refresh doesn't lose their place). A brand-new session
       // starts fresh; the draft is offered via the resume prompt instead.
       if (forceResume || sessionActive) {
-        const saved = localStorage.getItem(STORAGE_KEY_STEP)
+        const saved = localStorage.getItem(storageKeyStep())
         if (saved && saved !== "10") {
           const parsed = parseInt(saved, 10)
           if (Number.isFinite(parsed) && parsed >= 1) return parsed
@@ -166,7 +190,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData))
+        localStorage.setItem(storageKeyForm(), JSON.stringify(formData))
       } catch (error) {
         console.error("Failed to persist form data:", error)
       }
@@ -179,11 +203,11 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
       // Don't persist (or clobber) the saved step until the user has committed
       // to a session — otherwise the fresh-start step would overwrite the saved
       // resume target before they pick "Continue draft".
-      if (sessionStorage.getItem(SESSION_KEY) !== "1") return
+      if (sessionStorage.getItem(sessionKey()) !== "1") return
       if (currentStep > 1) {
-        localStorage.setItem(STORAGE_KEY_STEP, currentStep.toString())
+        localStorage.setItem(storageKeyStep(), currentStep.toString())
       } else {
-        localStorage.removeItem(STORAGE_KEY_STEP)
+        localStorage.removeItem(storageKeyStep())
       }
     } catch (error) {
       console.error("Failed to persist current step:", error)
@@ -198,11 +222,11 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     try {
       const params = new URLSearchParams(window.location.search)
       if (params.get("resume") === "1") {
-        sessionStorage.setItem(SESSION_KEY, "1")
+        sessionStorage.setItem(sessionKey(), "1")
         return
       }
-      if (sessionStorage.getItem(SESSION_KEY) === "1") return
-      const saved = localStorage.getItem(STORAGE_KEY_FORM)
+      if (sessionStorage.getItem(sessionKey()) === "1") return
+      const saved = localStorage.getItem(storageKeyForm())
       let hasContent = false
       let step = 1
       if (saved) {
@@ -212,7 +236,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
             (parsed.useCaseDescription || "").trim() ||
             (parsed.coreProblem || "").trim(),
         )
-        const ss = localStorage.getItem(STORAGE_KEY_STEP)
+        const ss = localStorage.getItem(storageKeyStep())
         const n = ss ? parseInt(ss, 10) : NaN
         if (Number.isFinite(n) && n >= 1 && ss !== "10") step = n
       }
@@ -220,11 +244,11 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         setPendingResumeStep(step)
         setShowResumePrompt(true)
       } else {
-        sessionStorage.setItem(SESSION_KEY, "1")
+        sessionStorage.setItem(sessionKey(), "1")
       }
     } catch {
       try {
-        sessionStorage.setItem(SESSION_KEY, "1")
+        sessionStorage.setItem(sessionKey(), "1")
       } catch {
         /* ignore */
       }
@@ -240,8 +264,8 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     setCurrentStep(isProfileComplete(profile) ? 2 : 1)
     if (typeof window !== "undefined") {
       try {
-        localStorage.removeItem(STORAGE_KEY_FORM)
-        localStorage.removeItem(STORAGE_KEY_STEP)
+        localStorage.removeItem(storageKeyForm())
+        localStorage.removeItem(storageKeyStep())
       } catch (error) {
         console.error("Failed to clear form storage:", error)
       }
@@ -252,7 +276,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const continueDraft = () => {
     if (typeof window !== "undefined") {
       try {
-        sessionStorage.setItem(SESSION_KEY, "1")
+        sessionStorage.setItem(sessionKey(), "1")
       } catch {
         /* ignore */
       }
@@ -265,7 +289,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const startNewForm = () => {
     if (typeof window !== "undefined") {
       try {
-        sessionStorage.setItem(SESSION_KEY, "1")
+        sessionStorage.setItem(sessionKey(), "1")
       } catch {
         /* ignore */
       }

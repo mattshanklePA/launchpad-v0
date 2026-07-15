@@ -9,6 +9,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { FileEdit, Info, FileText, CheckCircle, Sparkles, ArrowRight } from "lucide-react"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { getPhaseForStep, formPhases, type FormData } from "@/lib/steps"
+import { getSession } from "@/lib/auth"
+import {
+  DRAFT_FORM_KEY_BASE,
+  DRAFT_STEP_KEY_BASE,
+  scopedDraftKey,
+  migrateLegacyDraftKeys,
+} from "@/lib/draftStorage"
 
 // Friendly phase-based progress label for an in-progress draft, instead of a
 // raw "step N of 11" that no longer matches the merged step model.
@@ -27,8 +34,10 @@ type InProgressDraft = {
 function readInProgressDraft(): InProgressDraft | null {
   if (typeof window === "undefined") return null
   try {
-    const stepRaw = localStorage.getItem("aid-current-step")
-    const formRaw = localStorage.getItem("aid-form-data")
+    const userId = getSession()?.userId
+    migrateLegacyDraftKeys(userId)
+    const stepRaw = localStorage.getItem(scopedDraftKey(DRAFT_STEP_KEY_BASE, userId))
+    const formRaw = localStorage.getItem(scopedDraftKey(DRAFT_FORM_KEY_BASE, userId))
     if (!formRaw) return null
     const parsed: Partial<FormData> = JSON.parse(formRaw)
     // Treat as a meaningful in-progress draft if the submitter has typed
