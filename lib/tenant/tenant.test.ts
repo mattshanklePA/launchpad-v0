@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest"
 import { doc } from "@/lib/tenant/doc"
 import { dow } from "@/lib/tenant/dow"
 import { uspto } from "@/lib/tenant/uspto"
-import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit, tenantHasBureauTier } from "@/lib/tenant"
 import { getFormSteps } from "@/lib/steps"
 
 describe("DoC tenant", () => {
@@ -45,6 +45,29 @@ describe("admin dashboard OKRs label", () => {
 describe("getTenant", () => {
   it("defaults to uspto when NEXT_PUBLIC_TENANT is unset", () => {
     expect(getTenant().id).toBe("uspto")
+  })
+})
+
+describe("tenantHasBureauTier", () => {
+  const withTenant = (id: string, run: () => void) => {
+    const prev = process.env.NEXT_PUBLIC_TENANT
+    process.env.NEXT_PUBLIC_TENANT = id
+    try {
+      run()
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+      else process.env.NEXT_PUBLIC_TENANT = prev
+    }
+  }
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_TENANT
+  })
+
+  it("is true only for doc, whose bureaus declare their own focus areas", () => {
+    withTenant("doc", () => expect(tenantHasBureauTier()).toBe(true))
+    withTenant("uspto", () => expect(tenantHasBureauTier()).toBe(false))
+    withTenant("dow", () => expect(tenantHasBureauTier()).toBe(false))
   })
 })
 

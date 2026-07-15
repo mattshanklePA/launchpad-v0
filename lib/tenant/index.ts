@@ -27,4 +27,14 @@ export function getOrgNameForUnit(businessUnit?: string | null): string {
   return unit?.focusAreas?.length ? unit.label : tenant.orgName
 }
 
+// Whether the active tenant has a bureau tier below the department (DoC:
+// Department -> Bureau -> Office, see doc.ts). Gated on `focusAreas` — the
+// same signal getOrgNameForUnit uses — since USPTO/DoW's `unit.options` are
+// business units/commands, not a bureau tier, and never declare `focusAreas`
+// on the option itself. Used to gate bureau-specific landing-page copy (e.g.
+// "cross-bureau duplicate detection") so it never leaks into USPTO/DoW.
+export function tenantHasBureauTier(): boolean {
+  return getTenant().unit.options.some((o) => !!o.focusAreas?.length)
+}
+
 export type { TenantConfig } from "./types"
