@@ -1,41 +1,45 @@
 "use client"
 
-// Temporary admin-gated preview route for the Department Dashboard (CC-4).
-// Not linked from any nav and does NOT repoint /home — that cutover is CC-6.
-// Gated to admin viewers whose dashboard scope resolves to "department"
-// (lib/dashboard/scope.ts's getDashboardScope): the Office of the Secretary
-// or a department-level admin with no bureau assignment. A bureau/office-
-// scoped admin or any non-admin is redirected to /home rather than seeing a
-// partial or wrong-scope department view.
+// Temporary preview route for the Command Center dashboards. Not linked from
+// any nav and does NOT repoint /home — that cutover is CC-6. Renders the
+// Department Dashboard (CC-4) for a department-scoped viewer (the Office of
+// the Secretary, or a department-level admin/reviewer with no bureau
+// assignment) and the Bureau/Office Dashboard (CC-7) for a bureau- or
+// office-scoped reviewer or admin, per `getDashboardScope`
+// (lib/dashboard/scope.ts) — the same roll-down rule `visibleSubmissions`
+// applies, so a viewer here only ever sees their own scope. A submitter
+// (personal scope) is redirected to /home; no personal dashboard exists yet.
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { RequireAuth } from "@/components/auth/require-auth"
 import { getSession } from "@/lib/auth"
-import { getDashboardScope } from "@/lib/dashboard/scope"
+import { getDashboardScope, type DashboardScope } from "@/lib/dashboard/scope"
 import { DepartmentDashboard } from "@/components/dashboard/department-dashboard"
+import { BureauDashboard } from "@/components/dashboard/bureau-dashboard"
 
 function DashboardPreviewInner() {
   const router = useRouter()
-  const [allowed, setAllowed] = useState(false)
+  const [scope, setScope] = useState<DashboardScope | null>(null)
 
   useEffect(() => {
     const session = getSession()
-    if (getDashboardScope(session).level !== "department") {
+    const resolved = getDashboardScope(session)
+    if (resolved.level === "personal") {
       router.replace("/home")
       return
     }
-    setAllowed(true)
+    setScope(resolved)
   }, [router])
 
-  if (!allowed) return <div className="min-h-svh bg-background" />
+  if (!scope) return <div className="min-h-svh bg-background" />
 
-  return <DepartmentDashboard />
+  return scope.level === "department" ? <DepartmentDashboard /> : <BureauDashboard />
 }
 
 export default function DashboardPreviewPage() {
   return (
-    <RequireAuth requireRole={["admin"]}>
+    <RequireAuth requireRole={["admin", "reviewer"]}>
       <DashboardPreviewInner />
     </RequireAuth>
   )
