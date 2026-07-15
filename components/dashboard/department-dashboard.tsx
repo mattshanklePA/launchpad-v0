@@ -24,13 +24,16 @@ import { getDashboardScope, getHierarchy } from "@/lib/dashboard/scope"
 import { getDashboardMetrics, scopedSubmissions } from "@/lib/dashboard/metrics"
 import { getDashboardActions } from "@/lib/dashboard/actions"
 import { tenantHasBureauTier } from "@/lib/rationalization"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { KpiCardGrid } from "@/components/dashboard/kpi-card"
 import { HealthGauge } from "@/components/dashboard/health-gauge"
-import { EntityTree, type EntitySelection } from "@/components/dashboard/entity-tree"
+import type { EntitySelection } from "@/components/dashboard/entity-tree"
 import { ActionCenter } from "@/components/dashboard/action-center"
 import { PipelineStatusChart } from "@/components/dashboard/charts/pipeline-status-chart"
 import { ReadinessDistributionChart } from "@/components/dashboard/charts/readiness-distribution-chart"
 import { BureauRollup } from "@/components/admin/bureau-rollup"
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { resolveDrillScope, scopeLabel, buildKpiCards, buildActionItems, computeHealthScore } from "./department-dashboard-data"
 
 export function DepartmentDashboard() {
@@ -54,42 +57,64 @@ export function DepartmentDashboard() {
   const actionItems = buildActionItems(metrics, bureauTier, dashboardActions)
   const healthScore = computeHealthScore(metrics)
   const rollupSubmissions = scopedSubmissions(scope, submissions)
+  const currentScopeLabel = scopeLabel(scope, tenant)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-uspto-gray-text">Department Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">{scopeLabel(scope, tenant)}</p>
+    <DashboardShell baseScope={baseScope} hierarchy={hierarchy} selection={selection} onSelect={setSelection} breadcrumb={currentScopeLabel}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Department Dashboard</h1>
+          <p className="text-sm text-muted-foreground">{currentScopeLabel}</p>
+        </div>
       </div>
 
       <KpiCardGrid cards={kpiCards} />
 
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-        <div className="h-fit rounded-lg border bg-white p-3">
-          <EntityTree hierarchy={hierarchy} selected={selection} onSelect={setSelection} tenant={tenant} />
-        </div>
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="actions">Action Center</TabsTrigger>
+          <TabsTrigger value="rollup">{tenant.unit.label} roll-up</TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-6">
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="rounded-lg border bg-white p-4">
-              <h2 className="mb-2 text-sm font-semibold text-uspto-gray-text">Pipeline by status</h2>
-              <PipelineStatusChart card={metrics.pipelineStatus} />
-            </div>
-            <div className="rounded-lg border bg-white p-4">
-              <h2 className="mb-2 text-sm font-semibold text-uspto-gray-text">Readiness distribution</h2>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="shadow-none lg:col-span-2">
+              <CardHeader className="border-b px-4 py-3">
+                <CardTitle className="text-sm font-semibold">Pipeline by status</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3">
+                <PipelineStatusChart card={metrics.pipelineStatus} />
+              </CardContent>
+            </Card>
+            <Card className="flex flex-col shadow-none">
+              <CardHeader className="border-b px-4 py-3">
+                <CardTitle className="text-sm font-semibold">Pipeline health</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-1 items-center justify-center p-3">
+                <HealthGauge score={healthScore} />
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="shadow-none">
+            <CardHeader className="border-b px-4 py-3">
+              <CardTitle className="text-sm font-semibold">Readiness distribution</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
               <ReadinessDistributionChart card={metrics.readiness} />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <div className="flex justify-center rounded-lg border bg-white p-4">
-            <HealthGauge score={healthScore} label="Pipeline health" />
-          </div>
-
+        <TabsContent value="actions">
           <ActionCenter items={actionItems} />
+        </TabsContent>
 
+        <TabsContent value="rollup">
           <BureauRollup submissions={rollupSubmissions} />
-        </div>
-      </div>
-    </div>
+        </TabsContent>
+      </Tabs>
+    </DashboardShell>
   )
 }

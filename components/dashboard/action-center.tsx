@@ -60,24 +60,24 @@ export function ActionCenter({ items, title = "Action Center" }: { items: Action
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+    <Card className="shadow-none">
+      <CardHeader className="border-b px-4 py-3">
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {sorted.length === 0 && <p className="text-sm text-muted-foreground">Nothing needs attention right now.</p>}
+      <CardContent className="space-y-1.5 p-3">
+        {sorted.length === 0 && <p className="px-1 py-2 text-sm text-muted-foreground">Nothing needs attention right now.</p>}
         {sorted.map((item) => {
           const severity = item.severity || "info"
           const SeverityIcon = SEVERITY_ICON[severity]
           const pending = pendingId === item.id
           return (
-            <div key={item.id} className="flex items-start justify-between gap-3 rounded-md border p-3">
+            <div key={item.id} className="flex items-start justify-between gap-3 rounded-md border p-2.5">
               <div className="flex items-start gap-2">
                 <SeverityIcon className={cn("mt-0.5 h-4 w-4 shrink-0", SEVERITY_ICON_CLASS[severity])} />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    <Badge variant="outline" className={SEVERITY_BADGE_CLASS[severity]}>
+                    <Badge variant="outline" className={cn("text-[10px]", SEVERITY_BADGE_CLASS[severity])}>
                       {severity}
                     </Badge>
                   </div>

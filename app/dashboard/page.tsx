@@ -11,7 +11,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { RequireAuth } from "@/components/auth/require-auth"
-import { Header } from "@/components/layout/header"
 import { getSession } from "@/lib/auth"
 import { getDashboardScope } from "@/lib/dashboard/scope"
 import { DepartmentDashboard } from "@/components/dashboard/department-dashboard"
@@ -29,16 +28,9 @@ function DashboardPreviewInner() {
     setAllowed(true)
   }, [router])
 
-  if (!allowed) return <div className="min-h-screen bg-gray-50" />
+  if (!allowed) return <div className="min-h-svh bg-background" />
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="container py-8">
-        <DepartmentDashboard />
-      </div>
-    </div>
-  )
+  return <DepartmentDashboard />
 }
 
 export default function DashboardPreviewPage() {

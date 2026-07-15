@@ -16,13 +16,13 @@ const TREND_ICON: Record<KpiTrendDirection, LucideIcon> = {
 export function KpiCard({ label, value, delta, status = "neutral" }: KpiCardData) {
   const TrendIcon = delta ? TREND_ICON[delta.direction] : null
   return (
-    <Card className={cn("border-l-4", kpiStatusAccentClass(status))}>
-      <CardContent className="space-y-1 p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className="text-2xl font-semibold text-foreground">{value}</p>
+    <Card className={cn("border-l-[3px] shadow-none", kpiStatusAccentClass(status))}>
+      <CardContent className="space-y-0.5 p-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="text-xl font-semibold leading-tight text-foreground">{value}</p>
         {delta && TrendIcon && (
-          <p className={cn("flex items-center gap-1 text-xs font-medium", kpiTrendTextClass(delta.direction))}>
-            <TrendIcon className="h-3.5 w-3.5" />
+          <p className={cn("flex items-center gap-1 text-[11px] font-medium", kpiTrendTextClass(delta.direction))}>
+            <TrendIcon className="h-3 w-3" />
             {delta.value}
           </p>
         )}
@@ -34,7 +34,7 @@ export function KpiCard({ label, value, delta, status = "neutral" }: KpiCardData
 export function KpiCardGrid({ cards }: { cards: KpiCardData[] }) {
   if (cards.length === 0) return null
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
       {cards.map((card) => (
         <KpiCard key={card.id} {...card} />
       ))}
