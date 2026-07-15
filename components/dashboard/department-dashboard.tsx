@@ -70,13 +70,12 @@ export function DepartmentDashboard() {
           <h1 className="text-xl font-semibold text-foreground">Department Dashboard</h1>
           <p className="text-sm text-muted-foreground">{currentScopeLabel}</p>
         </div>
+        <AdminToolsSection session={session} />
       </div>
 
       <KpiCardGrid cards={kpiCards} />
 
       <DecisionCenterLink />
-
-      <AdminToolsSection session={session} />
 
       <Tabs defaultValue="actions">
         <TabsList>
