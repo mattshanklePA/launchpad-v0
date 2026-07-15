@@ -8,8 +8,10 @@ import type { TenantConfig } from "@/lib/tenant"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { isLevelAllowed } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
+import type { DashboardAction } from "@/lib/dashboard/actions"
+import { sendDashboardActionNotification } from "@/app/dashboard/dashboard-actions"
 import type { KpiCardData } from "./kpi-card-data"
-import type { ActionItem } from "./action-center-data"
+import type { ActionItem, ActionOutcome } from "./action-center-data"
 import type { EntitySelection } from "./entity-tree-data"
 
 /**
@@ -109,12 +111,34 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean): K
 }
 
 /**
- * Executive Action Center items surfaced from the same metrics — inert this
- * story (no `onAction`, see ActionItem/ActionCenter): CC-5 wires real
- * handlers in. Duplicate-cluster and sign-off items only surface for
- * bureau-tier tenants, matching the KPI cards above.
+ * Sends (or, per the guard, drafts) a batch of same-kind dashboard actions
+ * through the one Notifier wiring (app/dashboard/dashboard-actions.ts ->
+ * lib/notifier.ts) and turns the result into the toast copy ActionCenter
+ * shows. Both wired buttons (sign-off nudge, request info) call this same
+ * function — the guard that decides whether anything actually sends lives in
+ * lib/dashboard/actions.ts's `canAutoSend`, not here.
  */
-export function buildActionItems(metrics: DashboardMetrics, bureauTier: boolean): ActionItem[] {
+async function notifyDashboardActions(actions: DashboardAction[], draftReason: string): Promise<ActionOutcome> {
+  const result = await sendDashboardActionNotification(actions)
+  return result.sent
+    ? { status: "sent", description: `Notified ${result.count} reviewer${result.count === 1 ? "" : "s"} via Slack.` }
+    : { status: "drafted", description: draftReason }
+}
+
+/**
+ * Executive Action Center items — the KPI-card-driven summaries (duplicates,
+ * OMB review) stay informational, unchanged from CC-4. `dashboardActions`
+ * (lib/dashboard/actions.ts, CC-5) adds the two wired items — sign-off nudge
+ * and request info — plus an informational unassigned-submissions item; all
+ * three are `[]`/absent when there's nothing of that kind in scope. Passing
+ * no `dashboardActions` (the CC-4 callers, and every existing test) reproduces
+ * the prior inert-item behavior exactly.
+ */
+export function buildActionItems(
+  metrics: DashboardMetrics,
+  bureauTier: boolean,
+  dashboardActions: DashboardAction[] = [],
+): ActionItem[] {
   const items: ActionItem[] = []
 
   if (bureauTier && metrics.crossBureauDuplicates.pendingCount > 0) {
@@ -129,11 +153,46 @@ export function buildActionItems(metrics: DashboardMetrics, bureauTier: boolean)
 
   if (bureauTier && metrics.awaitingSignoff.count > 0) {
     const n = metrics.awaitingSignoff.count
+    const signoffActions = dashboardActions.filter((a) => a.kind === "signoff_nudge")
     items.push({
       id: "signoff",
       title: `${n} approved use case${n === 1 ? "" : "s"} awaiting bureau sign-off`,
       severity: "warning",
-      actionLabel: "Review",
+      actionLabel: "Nudge sign-off",
+      onAction:
+        signoffActions.length > 0
+          ? () =>
+              notifyDashboardActions(
+                signoffActions,
+                "No reviewer is on file for these bureaus yet — assign one from Pipeline before nudging.",
+              )
+          : undefined,
+    })
+  }
+
+  const needsInfoActions = dashboardActions.filter((a) => a.kind === "needs_info")
+  if (needsInfoActions.length > 0) {
+    const n = needsInfoActions.length
+    items.push({
+      id: "needs-info",
+      title: `${n} submission${n === 1 ? "" : "s"} waiting on submitter follow-up`,
+      severity: "warning",
+      actionLabel: "Request info",
+      onAction: () =>
+        notifyDashboardActions(
+          needsInfoActions,
+          "Reminders to a submitter aren't sent over Slack — open the submission and use Request info to message them directly.",
+        ),
+    })
+  }
+
+  const unassignedActions = dashboardActions.filter((a) => a.kind === "unassigned")
+  if (unassignedActions.length > 0) {
+    const n = unassignedActions.length
+    items.push({
+      id: "unassigned",
+      title: `${n} submission${n === 1 ? "" : "s"} with no reviewer assigned`,
+      severity: "warning",
     })
   }
 
