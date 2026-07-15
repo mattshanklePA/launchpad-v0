@@ -4,9 +4,9 @@ import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import {
-  CheckCircle2,
-  Circle,
   Scale,
   Gavel,
   CheckCircle,
@@ -113,11 +113,14 @@ function dateLabel(iso: string): string {
 type DecisionCardProps = {
   submission: Submission
   selected: boolean
+  selectionLimitReached: boolean
   onToggleSelect: (id: string) => void
 }
 
-function DecisionCard({ submission, selected, onToggleSelect }: DecisionCardProps) {
+function DecisionCard({ submission, selected, selectionLimitReached, onToggleSelect }: DecisionCardProps) {
   const d = submission.formData
+  const checkboxId = `compare-${submission.id}`
+  const disabled = !selected && selectionLimitReached
 
   return (
     <Card className={`transition-colors ${selected ? "border-2 border-primary bg-primary/5" : ""}`}>
@@ -133,7 +136,7 @@ function DecisionCard({ submission, selected, onToggleSelect }: DecisionCardProp
               <span>Submitted {dateLabel(submission.submittedAt)}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
             {(() => {
               const risk = computeRiskProfile(d)
               return (
@@ -147,14 +150,25 @@ function DecisionCard({ submission, selected, onToggleSelect }: DecisionCardProp
               )
             })()}
             {readinessBadge(d.readinessScore)}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onToggleSelect(submission.id)}
-              title={selected ? "Remove from comparison" : "Select for comparison"}
+            <div
+              className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${
+                selected ? "border-primary bg-primary/10" : "border-input"
+              }`}
+              title={disabled ? "Maximum of 4 candidates selected" : selected ? "Remove from comparison" : "Select for comparison"}
             >
-              {selected ? <CheckCircle2 className="w-5 h-5 text-primary" /> : <Circle className="w-5 h-5" />}
-            </Button>
+              <Checkbox
+                id={checkboxId}
+                checked={selected}
+                disabled={disabled}
+                onCheckedChange={() => onToggleSelect(submission.id)}
+              />
+              <Label
+                htmlFor={checkboxId}
+                className={`text-sm ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                Compare
+              </Label>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -296,21 +310,34 @@ export function DecisionCenter({
         </Badge>
       </div>
 
-      {/* Selection bar */}
-      {selectedForCompare.size > 0 && !showComparison && (
-        <div className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/40 bg-primary/5">
+      {/* Persistent compare control — always visible so the primary action is never hidden */}
+      {readyForDecision.length > 0 && !showComparison && (
+        <div
+          className={`flex items-center justify-between p-3 rounded-lg border-2 ${
+            selectedForCompare.size > 0 ? "border-primary/40 bg-primary/5" : "border-dashed border-input"
+          }`}
+        >
           <p className="text-sm">
-            <span className="font-semibold">{selectedForCompare.size}</span> selected for comparison
-            {selectedForCompare.size === 1 && ", pick 1 more to compare"}
-            {selectedForCompare.size >= 4 && " (max 4)"}
+            {selectedForCompare.size === 0 && (
+              <>Check <span className="font-semibold">Compare</span> on 2–4 candidates below to compare them side-by-side.</>
+            )}
+            {selectedForCompare.size > 0 && (
+              <>
+                <span className="font-semibold">{selectedForCompare.size}</span> selected for comparison
+                {selectedForCompare.size === 1 && ", pick 1 more to compare"}
+                {selectedForCompare.size >= 4 && " (max 4)"}
+              </>
+            )}
           </p>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={clearSelect}>
-              Clear
-            </Button>
+            {selectedForCompare.size > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearSelect}>
+                Clear
+              </Button>
+            )}
             <Button size="sm" onClick={() => setShowComparison(true)} disabled={selectedForCompare.size < 2}>
               <Scale className="w-4 h-4 mr-2" />
-              Compare {selectedForCompare.size}
+              Compare{selectedForCompare.size > 0 ? ` ${selectedForCompare.size}` : ""}
             </Button>
           </div>
         </div>
@@ -343,6 +370,7 @@ export function DecisionCenter({
               key={s.id}
               submission={s}
               selected={selectedForCompare.has(s.id)}
+              selectionLimitReached={selectedForCompare.size >= 4}
               onToggleSelect={toggleSelect}
             />
           ))}
