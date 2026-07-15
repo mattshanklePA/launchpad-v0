@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import {
   resolveDrillScope,
   scopeLabel,
@@ -8,7 +8,26 @@ import {
 } from "./department-dashboard-data"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
+import type { DashboardAction } from "@/lib/dashboard/actions"
 import type { TenantConfig } from "@/lib/tenant"
+
+const sendDashboardActionNotification = vi.hoisted(() => vi.fn())
+vi.mock("@/app/dashboard/dashboard-actions", () => ({ sendDashboardActionNotification }))
+
+function dashboardAction(overrides: Partial<DashboardAction>): DashboardAction {
+  return {
+    id: "a",
+    kind: "signoff_nudge",
+    submissionId: "s",
+    submissionTitle: "Idea",
+    bureau: "noaa",
+    bureauLabel: "NOAA",
+    severity: "critical",
+    message: "message",
+    canAutoSend: true,
+    ...overrides,
+  }
+}
 
 const doc = {
   id: "doc",
@@ -186,6 +205,63 @@ describe("buildActionItems", () => {
       "1 approved use case awaiting bureau sign-off",
       "1 submission needs an OMB reportability review",
     ])
+  })
+
+  it("adds a wired sign-off nudge item once dashboardActions has a signoff_nudge entry", () => {
+    const metrics = baseMetrics({ awaitingSignoff: { count: 1, total: 5 } })
+    const items = buildActionItems(metrics, true, [dashboardAction({ kind: "signoff_nudge" })])
+    const signoff = items.find((i) => i.id === "signoff")!
+    expect(signoff.actionLabel).toBe("Nudge sign-off")
+    expect(signoff.onAction).toBeTypeOf("function")
+  })
+
+  it("leaves the sign-off item's button disabled when no dashboardActions were passed", () => {
+    const metrics = baseMetrics({ awaitingSignoff: { count: 1, total: 5 } })
+    const signoff = buildActionItems(metrics, true).find((i) => i.id === "signoff")!
+    expect(signoff.onAction).toBeUndefined()
+  })
+
+  it("adds a needs-info item wired to notify, only when dashboardActions has one", () => {
+    expect(buildActionItems(baseMetrics(), true)).not.toContainEqual(expect.objectContaining({ id: "needs-info" }))
+    const items = buildActionItems(baseMetrics(), true, [dashboardAction({ kind: "needs_info", canAutoSend: false })])
+    const needsInfo = items.find((i) => i.id === "needs-info")!
+    expect(needsInfo).toMatchObject({ title: "1 submission waiting on submitter follow-up", actionLabel: "Request info" })
+    expect(needsInfo.onAction).toBeTypeOf("function")
+  })
+
+  it("adds an informational unassigned item with no wired button", () => {
+    const items = buildActionItems(baseMetrics(), true, [
+      dashboardAction({ id: "u1", kind: "unassigned", canAutoSend: false }),
+      dashboardAction({ id: "u2", kind: "unassigned", canAutoSend: false }),
+    ])
+    const unassigned = items.find((i) => i.id === "unassigned")!
+    expect(unassigned.title).toBe("2 submissions with no reviewer assigned")
+    expect(unassigned.onAction).toBeUndefined()
+  })
+
+  it("resolves the sign-off nudge action to a 'sent' outcome when the notifier reports a send", async () => {
+    sendDashboardActionNotification.mockResolvedValueOnce({ sent: true, count: 2 })
+    const metrics = baseMetrics({ awaitingSignoff: { count: 2, total: 5 } })
+    const items = buildActionItems(metrics, true, [dashboardAction({ kind: "signoff_nudge" })])
+    const outcome = await items.find((i) => i.id === "signoff")!.onAction!()
+    expect(outcome).toEqual({ status: "sent", description: "Notified 2 reviewers via Slack." })
+  })
+
+  it("resolves the sign-off nudge action to a 'drafted' outcome when the notifier reports nothing sendable", async () => {
+    sendDashboardActionNotification.mockResolvedValueOnce({ sent: false, count: 0 })
+    const metrics = baseMetrics({ awaitingSignoff: { count: 1, total: 5 } })
+    const items = buildActionItems(metrics, true, [dashboardAction({ kind: "signoff_nudge", canAutoSend: false })])
+    const outcome = await items.find((i) => i.id === "signoff")!.onAction!()
+    expect(outcome.status).toBe("drafted")
+    expect(outcome.description).toMatch(/assign one from Pipeline/)
+  })
+
+  it("resolves the request-info action to a 'drafted' outcome — never auto-sent", async () => {
+    sendDashboardActionNotification.mockResolvedValueOnce({ sent: false, count: 0 })
+    const items = buildActionItems(baseMetrics(), true, [dashboardAction({ kind: "needs_info", canAutoSend: false })])
+    const outcome = await items.find((i) => i.id === "needs-info")!.onAction!()
+    expect(outcome.status).toBe("drafted")
+    expect(outcome.description).toMatch(/aren't sent over Slack/)
   })
 })
 

@@ -2,9 +2,12 @@
 
 // Department Dashboard (CC-4) — the first assembled Command Center screen.
 // Assembles the CC-3 shell (components/dashboard/*) against CC-2 metrics
-// (lib/dashboard/*) at department scope for an admin. Read-only insight +
-// navigation only: the Executive Action Center renders but its buttons stay
-// inert (see action-center.tsx) until CC-5 wires real handlers in.
+// (lib/dashboard/*) at department scope for an admin. Mostly read-only
+// insight + navigation: the Executive Action Center (CC-5) now derives real,
+// scoped action items (lib/dashboard/actions.ts) and wires two of them —
+// sign-off nudge, request info — to the existing Notifier
+// (app/dashboard/dashboard-actions.ts -> lib/notifier.ts); everything else on
+// this screen stays read-only.
 //
 // Entity-tree selection is local state; drilling into a bureau (then an
 // office where the tenant has one) recomputes every card by feeding a
@@ -19,6 +22,7 @@ import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
 import { getDashboardScope, getHierarchy } from "@/lib/dashboard/scope"
 import { getDashboardMetrics, scopedSubmissions } from "@/lib/dashboard/metrics"
+import { getDashboardActions } from "@/lib/dashboard/actions"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { KpiCardGrid } from "@/components/dashboard/kpi-card"
 import { HealthGauge } from "@/components/dashboard/health-gauge"
@@ -46,7 +50,8 @@ export function DepartmentDashboard() {
 
   const metrics = getDashboardMetrics(scope, submissions, tenant)
   const kpiCards = buildKpiCards(metrics, bureauTier)
-  const actionItems = buildActionItems(metrics, bureauTier)
+  const dashboardActions = getDashboardActions(scope, submissions, tenant)
+  const actionItems = buildActionItems(metrics, bureauTier, dashboardActions)
   const healthScore = computeHealthScore(metrics)
   const rollupSubmissions = scopedSubmissions(scope, submissions)
 
