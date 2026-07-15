@@ -1,0 +1,31 @@
+name: Auto-merge Claude PRs
+
+# Turns on GitHub's native auto-merge for every PR the @claude loop opens
+# against `doc`. The PR then merges itself the moment the required CI check
+# passes — a red build never merges. Enabling auto-merge with a fine-grained
+# PAT (QUEUE_TOKEN) rather than the default GITHUB_TOKEN is deliberate: the
+# eventual merge commit is attributed to the token owner, so the push to `doc`
+# actually triggers CI again — which is what lets queue.yml start the next
+# story. GITHUB_TOKEN would silently break that chain.
+#
+# Requires (one-time, see AUTOMATION-SETUP): repo setting "Allow auto-merge"
+# ON, and branch protection on `doc` requiring the CI check.
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  enable-auto-merge:
+    # Only the loop's PRs into doc.
+    if: >
+      github.event.pull_request.base.ref == 'doc' &&
+      startsWith(github.event.pull_request.head.ref, 'claude/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.QUEUE_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR" --repo "$REPO" --auto --squash

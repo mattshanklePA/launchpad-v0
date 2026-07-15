@@ -1,0 +1,48 @@
+name: Queue Orchestrator
+
+# The chain. After a PR auto-merges to `doc`, CI runs on the `doc` push; when
+# that CI run finishes successfully, this workflow finds the next queued story
+# and kicks its build by posting an "@claude" comment. That comment is posted
+# with a fine-grained PAT (QUEUE_TOKEN), NOT the default GITHUB_TOKEN — an
+# event created by GITHUB_TOKEN will not trigger another workflow (GitHub's
+# recursion guard), so claude.yml would never fire and the chain would stall.
+#
+# Queue convention: each story issue carries the label `cc-queue` and NO
+# "@claude" in its body (so opening it doesn't fire the loop out of order).
+# This workflow promotes the lowest-numbered `cc-queue` issue: it swaps the
+# label to `cc-building` and comments @claude to start it. When that build's
+# PR merges, CI runs on doc again and the next one is picked up.
+#
+# NOTE: workflow_run only fires from the file on the default branch (`doc`),
+# so this must be committed to `doc`.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+jobs:
+  trigger-next:
+    # Only after a *successful* CI run on the doc branch (i.e. a merge landed).
+    # CI also runs on PR branches; those are filtered out by head_branch.
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'doc'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find and start the next queued story
+        env:
+          GH_TOKEN: ${{ secrets.QUEUE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          NEXT=$(gh issue list --repo "$REPO" --label cc-queue --state open \
+            --json number --jq 'sort_by(.number) | .[0].number // empty')
+          if [ -z "$NEXT" ]; then
+            echo "Queue empty — nothing to start."
+            exit 0
+          fi
+          echo "Starting next queued story: #$NEXT"
+          gh issue edit "$NEXT" --repo "$REPO" \
+            --remove-label cc-queue --add-label cc-building
+          gh issue comment "$NEXT" --repo "$REPO" \
+            --body "@claude Please build this and open a PR against \`doc\`."
