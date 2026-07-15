@@ -3,8 +3,8 @@
 // Command Center dashboard shell (CC-STYLE) — the persistent left sidebar +
 // top header + main content frame every dashboard view mounts into, mirroring
 // the original Command Center layout. Presentation only: scope, hierarchy,
-// and selection all come from the caller (department-dashboard.tsx today;
-// a future bureau/office/personal dashboard would reuse this same shell).
+// and selection all come from the caller (department-dashboard.tsx,
+// bureau-dashboard.tsx, and personal-dashboard.tsx all reuse this same shell).
 
 import type { ReactNode } from "react"
 import { useEffect, useState } from "react"
@@ -83,7 +83,7 @@ export function DashboardShell({
             <EntityTree hierarchy={hierarchy} selected={selection} onSelect={onSelect} tenant={tenant} />
           </SidebarGroup>
 
-          {isLevelAllowed(baseScope, "personal") && (
+          {isLevelAllowed(baseScope, "personal") && baseScope.level !== "personal" && (
             <>
               <SidebarSeparator />
               <SidebarGroup>
