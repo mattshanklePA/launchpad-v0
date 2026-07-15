@@ -1,42 +1,82 @@
 name: Open PR for Claude branches
 
-# The missing link in the hands-off chain. The @claude loop (claude.yml) builds
-# a change and pushes a `claude/issue-<n>-<ts>` branch, but it does NOT open a
-# PR - it only leaves a "Create PR" link. Without a PR, automerge.yml never
-# fires and queue.yml never advances.
+# Opens a PR against `doc` for any claude/issue-<n>-* branch the @claude loop
+# pushed but did not open a PR for (the action only leaves a "Create PR" link).
+# Without a PR, automerge.yml never fires and queue.yml never advances.
 #
-# This runs when the "Claude Code" workflow completes and opens a PR against
-# `doc` for any claude/* branch that has never had one. It uses the QUEUE_TOKEN
-# PAT (not GITHUB_TOKEN) so the resulting `pull_request: opened` event actually
-# triggers automerge.yml.
+# Hardened after the first version missed 2 of 3 stories:
+#  - Uses explicit --title/--body instead of `gh pr create --fill`. The old
+#    version had no `actions/checkout`, so --fill's git call failed and every
+#    PR-open silently errored ("could not compute title or body defaults").
+#  - Runs on a schedule (and manual dispatch) as well as workflow_run, so a
+#    missed/delayed workflow_run event is still caught within ~5 minutes.
+#  - Opens only the NEWEST branch per issue, so a double-triggered issue with
+#    two branches doesn't jam.
 #
-# Must live on the default branch (`doc`) for workflow_run to fire.
+# Uses the QUEUE_TOKEN PAT (not GITHUB_TOKEN) so the resulting
+# `pull_request: opened` event actually triggers automerge.yml. Must live on the
+# default branch (`doc`).
 
 on:
   workflow_run:
     workflows: ["Claude Code"]
     types: [completed]
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   open-prs:
-    if: github.event.workflow_run.conclusion == 'success'
+    # workflow_run: only after a successful Claude run. schedule/dispatch: always.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Open PRs for claude branches missing one
+      - name: Open PRs for claude branches that need one
         env:
           GH_TOKEN: ${{ secrets.QUEUE_TOKEN }}
           REPO: ${{ github.repository }}
+        shell: bash
         run: |
-          BRANCHES=$(gh api "repos/$REPO/branches?per_page=100" \
-            --jq '.[].name | select(startswith("claude/"))')
-          for BRANCH in $BRANCHES; do
-            # Skip if a PR (open OR already merged/closed) ever existed for it.
-            EXISTING=$(gh pr list --repo "$REPO" --head "$BRANCH" --state all --json number --jq 'length')
-            if [ "$EXISTING" = "0" ]; then
-              echo "Opening PR for $BRANCH"
-              gh pr create --repo "$REPO" --base doc --head "$BRANCH" --fill \
-                || echo "Could not open PR for $BRANCH (no diff or already exists) - skipping"
-            else
-              echo "$BRANCH already has a PR - skipping"
+          set -uo pipefail
+
+          # Every remote claude/issue-<n>-* branch (paginated — old ones accumulate).
+          BRANCHES=$(gh api "repos/$REPO/branches?per_page=100" --paginate \
+            --jq '.[].name | select(startswith("claude/issue-"))' | sort)
+
+          # Keep only the newest branch per issue number. The trailing timestamp
+          # makes later branches sort lexically greater.
+          declare -A LATEST
+          for B in $BRANCHES; do
+            N=$(printf '%s' "$B" | sed -E 's#^claude/issue-([0-9]+)-.*#\1#')
+            case "$N" in ''|*[!0-9]*) continue ;; esac
+            if [ -z "${LATEST[$N]:-}" ] || [[ "$B" > "${LATEST[$N]}" ]]; then
+              LATEST[$N]="$B"
             fi
+          done
+
+          for N in "${!LATEST[@]}"; do
+            B="${LATEST[$N]}"
+
+            # Skip if the issue is already closed (merged via another branch).
+            ISTATE=$(gh issue view "$N" --repo "$REPO" --json state --jq '.state' 2>/dev/null || echo "")
+            if [ "$ISTATE" = "CLOSED" ]; then
+              echo "Issue #$N closed — skipping $B."
+              continue
+            fi
+
+            # Skip if this branch already has a PR (open, merged, or closed).
+            EXISTING=$(gh pr list --repo "$REPO" --head "$B" --state all --json number --jq 'length' 2>/dev/null || echo "0")
+            if [ "$EXISTING" != "0" ]; then
+              echo "Branch $B already has a PR — skipping."
+              continue
+            fi
+
+            TITLE=$(gh issue view "$N" --repo "$REPO" --json title --jq '.title' 2>/dev/null || echo "Command Center story #$N")
+            echo "Opening PR for issue #$N from $B"
+            gh pr create --repo "$REPO" --base doc --head "$B" \
+              --title "$TITLE" --body "Closes #$N" \
+              || echo "Could not open PR for $B (maybe no diff vs doc) — skipping."
           done
