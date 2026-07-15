@@ -78,12 +78,16 @@ export function DepartmentDashboard() {
 
       <AdminToolsSection session={session} />
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="actions">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="actions">Action Center</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="rollup">{tenant.unit.label} roll-up</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="actions">
+          <ActionCenter items={actionItems} />
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-3">
@@ -113,10 +117,6 @@ export function DepartmentDashboard() {
               <ReadinessDistributionChart card={metrics.readiness} />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="actions">
-          <ActionCenter items={actionItems} />
         </TabsContent>
 
         <TabsContent value="rollup" className="space-y-4">
