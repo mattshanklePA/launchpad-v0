@@ -16,6 +16,7 @@ import { EntityTree, type EntitySelection } from "@/components/dashboard/entity-
 import { ActionCenter, type ActionItem } from "@/components/dashboard/action-center"
 import { PipelineStatusChart } from "@/components/dashboard/charts/pipeline-status-chart"
 import { ReadinessDistributionChart } from "@/components/dashboard/charts/readiness-distribution-chart"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { getHierarchy } from "@/lib/dashboard/scope"
 import type { PipelineStatusCard, ReadinessDistributionCard } from "@/lib/dashboard/metrics"
 import { getTenant } from "@/lib/tenant"
@@ -69,7 +70,9 @@ export default function CommandCenterPreviewPage() {
 
           <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
             <div className="rounded-lg border bg-card p-3">
-              <EntityTree hierarchy={hierarchy} selected={selection} onSelect={setSelection} tenant={tenant} />
+              <SidebarProvider className="block min-h-0 w-auto bg-transparent">
+                <EntityTree hierarchy={hierarchy} selected={selection} onSelect={setSelection} tenant={tenant} />
+              </SidebarProvider>
             </div>
 
             <div className="space-y-6">

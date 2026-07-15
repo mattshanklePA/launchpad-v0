@@ -11,7 +11,7 @@ import { pipelineStatusChartData } from "./pipeline-status-chart-data"
 export function PipelineStatusChart({ card }: { card: PipelineStatusCard }) {
   const data = pipelineStatusChartData(card)
   return (
-    <ResponsiveContainer width="100%" height={220}>
+    <ResponsiveContainer width="100%" height={190}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
         <XAxis dataKey="label" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />

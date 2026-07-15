@@ -23,9 +23,9 @@ export function ReadinessDistributionChart({ card }: { card: ReadinessDistributi
 
   return (
     <div>
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={190}>
         <PieChart>
-          <Pie data={data} dataKey="count" nameKey="label" innerRadius={50} outerRadius={80} paddingAngle={2}>
+          <Pie data={data} dataKey="count" nameKey="label" innerRadius={42} outerRadius={70} paddingAngle={2}>
             {data.map((d) => (
               <Cell key={d.bucket} fill={BUCKET_COLOR[d.bucket]} />
             ))}
