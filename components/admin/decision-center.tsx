@@ -230,7 +230,18 @@ function DecisionCard({ submission, selected, onToggleSelect }: DecisionCardProp
 // `submissions` must already be scoped to the viewer (see lib/reviewWorkflow's
 // visibleSubmissions) — this component does not re-scope, so passing the
 // unfiltered list here would leak other bureaus' submissions.
-export function DecisionCenter({ submissions }: { submissions: Submission[] }) {
+//
+// `headingLevel` lets the standalone /decisions page promote this title to the
+// page's sole <h1> without affecting the embedded use inside /admin's tab,
+// where "Administration Dashboard" is already the page's <h1>.
+export function DecisionCenter({
+  submissions,
+  headingLevel = "h2",
+}: {
+  submissions: Submission[]
+  headingLevel?: "h1" | "h2"
+}) {
+  const Heading = headingLevel
   const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set())
   const [showComparison, setShowComparison] = useState(false)
 
@@ -272,10 +283,10 @@ export function DecisionCenter({ submissions }: { submissions: Submission[] }) {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Heading className="text-2xl font-bold flex items-center gap-2">
             <Gavel className="w-6 h-6" />
             Decision Center
-          </h2>
+          </Heading>
           <p className="text-sm text-muted-foreground mt-1">
             Submissions awaiting executive review for funding decisions. Select 2–4 candidates to compare side-by-side.
           </p>

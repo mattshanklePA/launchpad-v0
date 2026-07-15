@@ -5,7 +5,7 @@ import { getFormSteps } from "@/lib/steps"
 import { getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card"
 
 export function StepWrapper({ children }: { children: React.ReactNode }) {
   const { currentStep, goToNextStep, goToPreviousStep, isFirstStep, isLastStep, formData } = useForm()
@@ -21,7 +21,7 @@ export function StepWrapper({ children }: { children: React.ReactNode }) {
     return (
       <Card className="max-w-7xl mx-auto">
         <CardHeader>
-          <CardTitle>Error: Invalid Step</CardTitle>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">Error: Invalid Step</h1>
           <CardDescription>The requested step does not exist.</CardDescription>
         </CardHeader>
       </Card>
@@ -31,7 +31,7 @@ export function StepWrapper({ children }: { children: React.ReactNode }) {
   return (
     <Card className="max-w-7xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-uspto-gray-text">{stepInfo.title}</CardTitle>
+        <h1 className="text-2xl font-bold leading-none tracking-tight text-uspto-gray-text">{stepInfo.title}</h1>
         <CardDescription className="text-base">{stepInfo.prompt}</CardDescription>
       </CardHeader>
       <CardContent>{children}</CardContent>

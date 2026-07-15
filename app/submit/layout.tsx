@@ -2,8 +2,10 @@
 
 import type React from "react"
 import { FormProvider } from "@/context/form-context"
-import { FormHeader } from "@/components/layout/form-header"
 import { RequireAuth } from "@/components/auth/require-auth"
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { getSession } from "@/lib/auth"
+import { getDashboardScope } from "@/lib/dashboard/scope"
 
 export default function SubmitLayout({
   children,
@@ -13,11 +15,16 @@ export default function SubmitLayout({
   return (
     <RequireAuth>
       <FormProvider>
-        <div className="relative flex min-h-screen flex-col">
-          <FormHeader />
-          <main className="flex-1">{children}</main>
-        </div>
+        <DashboardShell
+          baseScope={getDashboardScope(getSession())}
+          hierarchy={{ bureaus: [] }}
+          selection={null}
+          onSelect={() => {}}
+          breadcrumb="Submit an idea"
+        >
+          {children}
+        </DashboardShell>
       </FormProvider>
     </RequireAuth>
-    )
+  )
 }
