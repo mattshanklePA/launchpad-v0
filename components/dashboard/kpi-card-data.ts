@@ -28,7 +28,9 @@ export function kpiStatusAccentClass(status: KpiStatus = "neutral"): string {
 }
 
 const TREND_TEXT_CLASS: Record<KpiTrendDirection, string> = {
-  up: "text-emerald-600 dark:text-emerald-400",
+  // emerald-600 on white is 3.76:1 at this text size (fails WCAG 2.1 AA
+  // 4.5:1); emerald-700 clears it while staying visually "green".
+  up: "text-emerald-700 dark:text-emerald-400",
   down: "text-red-600 dark:text-red-400",
   flat: "text-muted-foreground",
 }
