@@ -21,25 +21,35 @@ export function ReadinessDistributionChart({ card }: { card: ReadinessDistributi
     return <p className="py-8 text-center text-sm text-muted-foreground">No readiness data yet</p>
   }
 
+  const summary = `Readiness distribution: ${data.map((d) => `${d.label} ${d.count}`).join(", ")}`
+
   return (
     <div>
-      <ResponsiveContainer width="100%" height={190}>
-        <PieChart>
-          <Pie data={data} dataKey="count" nameKey="label" innerRadius={42} outerRadius={70} paddingAngle={2}>
-            {data.map((d) => (
-              <Cell key={d.bucket} fill={BUCKET_COLOR[d.bucket]} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              background: "hsl(var(--popover))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+      {/* recharts renders each pie slice as its own `<path role="img">` with
+          no accessible name; hide the decorative SVG from the accessibility
+          tree and expose one real summary on the container instead. The
+          legend below already restates the same values as visible text. */}
+      <div role="img" aria-label={summary}>
+        <div aria-hidden="true">
+          <ResponsiveContainer width="100%" height={190}>
+            <PieChart>
+              <Pie data={data} dataKey="count" nameKey="label" innerRadius={42} outerRadius={70} paddingAngle={2}>
+                {data.map((d) => (
+                  <Cell key={d.bucket} fill={BUCKET_COLOR[d.bucket]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--popover))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
       <ul className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         {data.map((d) => (
           <li key={d.bucket} className="flex items-center gap-1.5">
