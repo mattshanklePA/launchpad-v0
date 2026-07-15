@@ -27,14 +27,17 @@ function ObjectiveList({ items }: { items: { title: string; description: string 
   )
 }
 
-// Illustrative queue rows for the hero's Command Center preview — representative
-// of the app's real queue-by-status board (components/dashboard/queue-board.tsx),
-// not a claim about any tenant's actual submissions.
+// Illustrative queue rows and KPI counts for the hero's Command Center preview
+// — representative of the app's real queue-by-status board and metrics
+// (components/dashboard/queue-board.tsx), not a claim about any tenant's
+// actual submissions. The real, live counts appear in the "explore" section
+// just below the hero.
 const PREVIEW_QUEUE: { title: string; status: string; tone: "amber" | "green" | "gray" }[] = [
   { title: "Duplicate detection assistant", status: "Needs work", tone: "amber" },
   { title: "Grant application triage", status: "Ready", tone: "green" },
   { title: "Correspondence summarizer", status: "Early", tone: "gray" },
 ]
+const PREVIEW_METRICS = { submitted: 14, deployed: 5 }
 
 const PREVIEW_TONE_CLASS: Record<(typeof PREVIEW_QUEUE)[number]["tone"], string> = {
   amber: "bg-amber-100 text-amber-700",
@@ -44,8 +47,10 @@ const PREVIEW_TONE_CLASS: Record<(typeof PREVIEW_QUEUE)[number]["tone"], string>
 
 // Decorative Command Center dashboard preview for the hero. Built from the
 // app's own visual language (KPI tiles, status-pill queue rows) rather than a
-// static screenshot, so it never goes stale and needs no binary asset.
-function DashboardPreview({ productName, metrics }: { productName: string; metrics: { submitted: number; deployed: number } }) {
+// static screenshot, so it never goes stale and needs no binary asset. Renders
+// immediately with illustrative data instead of waiting on the live metrics
+// fetch, so evaluators never see a flash of "0" before the page hydrates.
+function DashboardPreview({ productName }: { productName: string }) {
   return (
     <div
       role="img"
@@ -62,11 +67,11 @@ function DashboardPreview({ productName, metrics }: { productName: string; metri
         <div className="grid grid-cols-2 gap-2.5">
           <div className="rounded-lg border border-l-4 border-l-uspto-blue-primary bg-white p-2.5">
             <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Use cases submitted</div>
-            <div className="text-xl font-bold text-uspto-gray-text">{metrics.submitted}</div>
+            <div className="text-xl font-bold text-uspto-gray-text">{PREVIEW_METRICS.submitted}</div>
           </div>
           <div className="rounded-lg border border-l-4 border-l-green-500 bg-white p-2.5">
             <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Use cases deployed</div>
-            <div className="text-xl font-bold text-uspto-gray-text">{metrics.deployed}</div>
+            <div className="text-xl font-bold text-uspto-gray-text">{PREVIEW_METRICS.deployed}</div>
           </div>
         </div>
         <div className="space-y-1.5">
@@ -165,7 +170,7 @@ export function PublicLanding() {
                         style={{ color: t.theme.primary }}
                         asChild
                       >
-                        <a href="#explore">See it in 2 minutes <ArrowRight className="w-4 h-4 ml-2" /></a>
+                        <a href="#explore">See how it works <ArrowRight className="w-4 h-4 ml-2" /></a>
                       </Button>
                       <Button
                         size="lg"
@@ -181,7 +186,7 @@ export function PublicLanding() {
               </div>
               <div className="flex justify-center lg:justify-end">
                 <div className="lg:w-[110%] lg:-mr-10 xl:-mr-24">
-                  <DashboardPreview productName={t.productName} metrics={metrics} />
+                  <DashboardPreview productName={t.productName} />
                 </div>
               </div>
             </div>
