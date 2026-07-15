@@ -5,8 +5,20 @@ import { useEffect, useState } from "react"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
 import { getSession, type Session } from "@/lib/auth"
-import { ArrowRight, FileText, Lock } from "lucide-react"
-import { getTenant } from "@/lib/tenant"
+import {
+  ArrowRight,
+  Award,
+  ClipboardList,
+  Download,
+  FileText,
+  GitMerge,
+  Landmark,
+  LayoutDashboard,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react"
+import { getTenant, tenantHasBureauTier, type TenantConfig } from "@/lib/tenant"
 import { cn } from "@/lib/utils"
 
 function ObjectiveList({ items }: { items: { title: string; description: string }[] }) {
@@ -84,8 +96,173 @@ function DashboardPreview({ productName, metrics }: { productName: string; metri
   )
 }
 
+function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: boolean }) {
+  const steps = [
+    {
+      title: "Submit",
+      description: `${tenant.assistantName} guides every submitter through the full 34-field OMB intake, so nothing is missing on day one.`,
+    },
+    {
+      title: "Vet & de-dupe",
+      description: bureauTier
+        ? "Every use case is checked against what's already in flight across bureaus, so duplicate effort gets flagged before it's funded twice."
+        : "Every use case is checked against what's already in flight, so duplicate effort gets flagged before it's funded twice.",
+    },
+    {
+      title: "Fund & report",
+      description: "Leadership reviews a role-based roll-up of the portfolio and exports the current OMB inventory in one click.",
+    },
+  ]
+
+  return (
+    <section id="explore" className="scroll-mt-8 bg-white py-16">
+      <div className="container">
+        <div className="max-w-2xl">
+          <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">How it works</h2>
+          <p className="mt-2 text-muted-foreground">From a submitted idea to a funded, reportable use case, in three steps.</p>
+        </div>
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          {steps.map((step, i) => (
+            <div key={step.title} className="rounded-xl border bg-gray-50 p-6">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white"
+                style={{ backgroundColor: tenant.theme.primary }}
+              >
+                {i + 1}
+              </div>
+              <h3 className="mt-4 font-heading text-lg font-semibold text-uspto-gray-text">{step.title}</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">{step.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Features({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: boolean }) {
+  const items = [
+    {
+      icon: Sparkles,
+      title: "AI-guided intake",
+      description: `${tenant.assistantName} walks every submitter through intake, asking the follow-up questions a reviewer would, so use cases arrive complete.`,
+    },
+    {
+      icon: ClipboardList,
+      title: "Built-in OMB inventory",
+      description: "Captures all 34 fields of the 2025 OMB AI use case inventory from day one, no end-of-year scramble to backfill.",
+    },
+    {
+      icon: GitMerge,
+      title: bureauTier ? "Cross-bureau duplicate detection" : "Duplicate detection",
+      description: bureauTier
+        ? "Flags overlapping or duplicate efforts across bureaus before they're funded twice."
+        : "Flags overlapping or duplicate efforts before they're funded twice.",
+    },
+    {
+      icon: Download,
+      title: "One-click OMB export",
+      description: "Generates the OMB-ready inventory export in the exact format reviewers require, no manual reformatting.",
+    },
+    {
+      icon: LayoutDashboard,
+      title: "Role-based roll-up",
+      description: "Submitters, reviewers, and leadership each get a dashboard scoped to what they're responsible for.",
+    },
+  ]
+
+  return (
+    <section className="border-y bg-gray-50 py-16">
+      <div className="container">
+        <div className="max-w-2xl">
+          <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">
+            What {tenant.productName} does
+          </h2>
+          <p className="mt-2 text-muted-foreground">Purpose-built for the AI use case pipeline federal governance actually requires.</p>
+        </div>
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <div key={item.title} className="rounded-xl border bg-white p-6">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-uspto-blue-primary/10 text-uspto-blue-primary">
+                <item.icon className="h-5 w-5" />
+              </div>
+              <h3 className="mt-4 font-medium text-uspto-gray-text">{item.title}</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const PROOF_SIGNALS = [
+  {
+    icon: ShieldCheck,
+    title: "Built to the 2025 OMB inventory spec",
+    description: "All 34 fields, mapped field-for-field to the current OMB AI use case inventory guidance.",
+  },
+  {
+    icon: Award,
+    title: "HUBZone-certified small business",
+    description: "Built and supported by an SBA-certified HUBZone small business.",
+  },
+  {
+    icon: Landmark,
+    title: "USPTO & Commerce provenance",
+    description: "Built with reviewers from USPTO and the Department of Commerce AI governance community.",
+  },
+]
+
+function Proof() {
+  return (
+    <section className="bg-white py-16">
+      <div className="container">
+        <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">Why agencies trust it</h2>
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          {PROOF_SIGNALS.map((signal) => (
+            <div key={signal.title} className="rounded-xl border p-6">
+              <signal.icon className="h-6 w-6 text-uspto-blue-primary" />
+              <h3 className="mt-3 font-medium text-uspto-gray-text">{signal.title}</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">{signal.description}</p>
+            </div>
+          ))}
+        </div>
+        <blockquote className="mt-10 rounded-xl border bg-gray-50 p-6 text-uspto-gray-text">
+          <p className="italic">&ldquo;[Placeholder: pilot bureau quote on time-to-inventory or duplicate-catch impact.]&rdquo;</p>
+          <footer className="mt-3 text-sm not-italic text-muted-foreground">&mdash; [Placeholder name, title], [Placeholder bureau]</footer>
+        </blockquote>
+      </div>
+    </section>
+  )
+}
+
+function ClosingCTA({ tenant }: { tenant: TenantConfig }) {
+  const subject = encodeURIComponent(`${tenant.productName} walkthrough request`)
+  return (
+    <section className="py-16" style={{ backgroundColor: tenant.theme.primary }}>
+      <div className="container text-center">
+        <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+          Ready to see {tenant.productName} on your own use cases?
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-white/85">
+          Request a walkthrough and we&apos;ll show you the intake, de-dupe, and OMB export end to end.
+        </p>
+        <div className="mt-8">
+          <Button size="lg" className="bg-white hover:bg-white/90" style={{ color: tenant.theme.primary }} asChild>
+            <a href={`mailto:matt.shankle@packagedagile.com?subject=${subject}`}>
+              Request a walkthrough <ArrowRight className="w-4 h-4 ml-2" />
+            </a>
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function PublicLanding() {
   const t = getTenant()
+  const bureauTier = tenantHasBureauTier()
   const [session, setSession] = useState<Session | null>(null)
   const [hydrated, setHydrated] = useState(false)
   const [metrics, setMetrics] = useState<{ submitted: number; deployed: number }>({ submitted: 0, deployed: 0 })
@@ -188,23 +365,15 @@ export function PublicLanding() {
           </div>
         </section>
 
-        <section id="explore" className="bg-dow-ocean border-b border-white/10 scroll-mt-8">
-          <div className="container py-10">
-            <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-                <div className="text-4xl font-bold text-white">{metrics.submitted}</div>
-                <div className="text-sm text-dow-steel mt-1">Use cases submitted</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-                <div className="text-4xl font-bold text-white">{metrics.deployed}</div>
-                <div className="text-sm text-dow-steel mt-1">Use cases deployed</div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <HowItWorks tenant={t} bureauTier={bureauTier} />
+        <Features tenant={t} bureauTier={bureauTier} />
+        <Proof />
 
-        <section className="bg-gray-50 py-14">
+        <section className="border-t bg-gray-50 py-14">
           <div className="container">
+            <p className="mb-6 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t.orgName}&rsquo;s strategic priorities, for reference
+            </p>
             <div className="grid lg:grid-cols-2 gap-10">
               {t.landingObjectives.map((group) => (
                 <div key={group.title}>
@@ -216,6 +385,8 @@ export function PublicLanding() {
             </div>
           </div>
         </section>
+
+        <ClosingCTA tenant={t} />
       </main>
 
       <footer className="border-t bg-[#141414]">
