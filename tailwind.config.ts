@@ -76,6 +76,11 @@ const config: Config = {
         sans: ["var(--font-lato)", "system-ui", "sans-serif"],
         heading: ["var(--font-oswald)", "var(--font-lato)", "sans-serif"],
         wordmark: ["var(--font-crimson)", "Georgia", "serif"],
+        // Public landing typography system (docs/landing-page-conversion-audit-2026-07-15.md).
+        // Scoped to components/landing/public-landing.tsx — not used elsewhere in the app,
+        // so the app-wide DOW brand tokens above (sans/heading/wordmark) are unaffected.
+        display: ["var(--font-fraunces)", "Georgia", "serif"],
+        body: ["var(--font-public-sans)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

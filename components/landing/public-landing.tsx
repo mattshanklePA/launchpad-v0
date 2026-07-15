@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { Fraunces, Public_Sans } from "next/font/google"
 import { useEffect, useState } from "react"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,23 @@ import {
 } from "lucide-react"
 import { getTenant, tenantHasBureauTier, type TenantConfig } from "@/lib/tenant"
 import { cn } from "@/lib/utils"
+
+// Public landing typography system (docs/landing-page-conversion-audit-2026-07-15.md):
+// Fraunces (display, headlines) paired with Public Sans (the official U.S. federal
+// typeface, body). Self-hosted via next/font — no runtime font CDN — and scoped to
+// this component only, so the app-wide DOW brand fonts (app/layout.tsx) are unaffected.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-fraunces",
+  display: "swap",
+})
+const publicSans = Public_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-public-sans",
+  display: "swap",
+})
 
 function ObjectiveList({ items }: { items: { title: string; description: string }[] }) {
   return (
@@ -118,7 +136,7 @@ function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: 
     <section id="explore" className="scroll-mt-8 bg-white py-16">
       <div className="container">
         <div className="max-w-2xl">
-          <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">How it works</h2>
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">How it works</h2>
           <p className="mt-2 text-muted-foreground">From a submitted idea to a funded, reportable use case, in three steps.</p>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -130,7 +148,7 @@ function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: 
               >
                 {i + 1}
               </div>
-              <h3 className="mt-4 font-heading text-lg font-semibold text-uspto-gray-text">{step.title}</h3>
+              <h3 className="mt-4 font-display text-lg font-semibold text-uspto-gray-text">{step.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{step.description}</p>
             </div>
           ))}
@@ -175,7 +193,7 @@ function Features({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: bo
     <section className="border-y bg-gray-50 py-16">
       <div className="container">
         <div className="max-w-2xl">
-          <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">
+          <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">
             What {tenant.productName} does
           </h2>
           <p className="mt-2 text-muted-foreground">Purpose-built for the AI use case pipeline federal governance actually requires.</p>
@@ -218,7 +236,7 @@ function Proof() {
   return (
     <section className="bg-white py-16">
       <div className="container">
-        <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">Why agencies trust it</h2>
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">Why agencies trust it</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
           {PROOF_SIGNALS.map((signal) => (
             <div key={signal.title} className="rounded-xl border p-6">
@@ -242,7 +260,7 @@ function ClosingCTA({ tenant }: { tenant: TenantConfig }) {
   return (
     <section className="py-16" style={{ backgroundColor: tenant.theme.primary }}>
       <div className="container text-center">
-        <h2 className="font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-white">
           Ready to see {tenant.productName} on your own use cases?
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-white/85">
@@ -282,7 +300,7 @@ export function PublicLanding() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className={cn(fraunces.variable, publicSans.variable, "min-h-screen bg-white flex flex-col font-body")}>
       <header className="border-b border-white/10 bg-[#141414]">
         <div className="container flex h-20 items-center justify-between">
           <LaunchPadLogo size="md" monochrome className="text-white" subtitleClassName="text-dow-steel" />
@@ -323,7 +341,7 @@ export function PublicLanding() {
           <div className="relative container py-16 sm:py-24 lg:py-28">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div className="max-w-xl">
-                <h1 className="font-heading text-3xl sm:text-5xl font-semibold tracking-tight text-white drop-shadow-md">
+                <h1 className="font-display text-3xl sm:text-5xl font-semibold tracking-tight text-white drop-shadow-md">
                   {t.heroHeadline}
                 </h1>
                 <p className="mt-4 text-lg text-white/85 drop-shadow">
@@ -377,7 +395,7 @@ export function PublicLanding() {
             <div className="grid lg:grid-cols-2 gap-10">
               {t.landingObjectives.map((group) => (
                 <div key={group.title}>
-                  <h2 className="font-heading text-xl font-semibold tracking-tight text-dow-space mb-1">{group.title}</h2>
+                  <h2 className="font-display text-xl font-semibold tracking-tight text-dow-space mb-1">{group.title}</h2>
                   <p className="text-sm text-muted-foreground mb-4">{group.subtitle}</p>
                   <ObjectiveList items={group.items} />
                 </div>
