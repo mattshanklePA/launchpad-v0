@@ -23,3 +23,14 @@ export function getHealthBand(
   if (clamped >= thresholds.watch) return "watch"
   return "critical"
 }
+
+const BAND_LABEL: Record<HealthBand, string> = {
+  healthy: "Healthy",
+  watch: "Needs attention",
+  critical: "At risk",
+}
+
+/** Human-readable interpretation of a health band, used as the gauge's default label. */
+export function healthBandLabel(band: HealthBand): string {
+  return BAND_LABEL[band]
+}

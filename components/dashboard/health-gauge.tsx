@@ -3,7 +3,14 @@
 // thresholds are props (health-gauge-data.ts); nothing here computes a score.
 
 import { cn } from "@/lib/utils"
-import { clampHealthScore, getHealthBand, DEFAULT_HEALTH_THRESHOLDS, type HealthBand, type HealthBandThresholds } from "./health-gauge-data"
+import {
+  clampHealthScore,
+  getHealthBand,
+  healthBandLabel,
+  DEFAULT_HEALTH_THRESHOLDS,
+  type HealthBand,
+  type HealthBandThresholds,
+} from "./health-gauge-data"
 
 const BAND_STROKE_CLASS: Record<HealthBand, string> = {
   healthy: "stroke-emerald-500",
@@ -32,14 +39,15 @@ export function HealthGauge({ score, label, thresholds = DEFAULT_HEALTH_THRESHOL
   const clamped = clampHealthScore(score)
   const band = getHealthBand(clamped, thresholds)
   const offset = ARC_LENGTH * (1 - clamped / 100)
+  const interpretation = label ?? healthBandLabel(band)
 
   return (
     <div className="flex flex-col items-center gap-1">
       <svg
-        viewBox="0 0 100 55"
+        viewBox="0 0 100 60"
         className="w-full max-w-[180px]"
         role="img"
-        aria-label={`${label ? label + ": " : ""}${Math.round(clamped)} out of 100`}
+        aria-label={`Pipeline health: ${Math.round(clamped)} out of 100, ${interpretation}`}
       >
         <path d="M 8 50 A 42 42 0 0 1 92 50" fill="none" strokeWidth="8" strokeLinecap="round" className="stroke-muted" />
         <path
@@ -51,11 +59,14 @@ export function HealthGauge({ score, label, thresholds = DEFAULT_HEALTH_THRESHOL
           strokeDashoffset={offset}
           className={cn("transition-[stroke-dashoffset] duration-500", BAND_STROKE_CLASS[band])}
         />
-        <text x="50" y="46" textAnchor="middle" className="fill-foreground text-[22px] font-semibold">
+        <text x="9" y="59" textAnchor="middle" className="fill-muted-foreground text-[6px]">0</text>
+        <text x="91" y="59" textAnchor="middle" className="fill-muted-foreground text-[6px]">100</text>
+        <text x="50" y="44" textAnchor="middle" className="fill-foreground text-[20px] font-semibold">
           {Math.round(clamped)}
         </text>
+        <text x="50" y="52" textAnchor="middle" className="fill-muted-foreground text-[7px]">out of 100</text>
       </svg>
-      {label && <p className={cn("text-xs font-medium", BAND_TEXT_CLASS[band])}>{label}</p>}
+      <p className={cn("text-xs font-medium", BAND_TEXT_CLASS[band])}>{interpretation}</p>
     </div>
   )
 }

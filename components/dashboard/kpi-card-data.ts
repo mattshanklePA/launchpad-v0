@@ -27,6 +27,30 @@ export function kpiStatusAccentClass(status: KpiStatus = "neutral"): string {
   return STATUS_ACCENT_CLASS[status]
 }
 
+const STATUS_SURFACE_CLASS: Record<KpiStatus, string> = {
+  neutral: "",
+  good: "",
+  warning: "bg-amber-50/70 dark:bg-amber-950/20",
+  critical: "bg-red-50/70 dark:bg-red-950/20",
+}
+
+/** Background tint for a KPI card's status — only actionable (warning/critical) statuses get one. */
+export function kpiStatusSurfaceClass(status: KpiStatus = "neutral"): string {
+  return STATUS_SURFACE_CLASS[status]
+}
+
+/** Whether a KPI's status represents something that needs attention, for sort order and emphasis. */
+export function kpiIsActionable(status: KpiStatus = "neutral"): boolean {
+  return status === "warning" || status === "critical"
+}
+
+const STATUS_SORT_RANK: Record<KpiStatus, number> = { critical: 0, warning: 1, good: 2, neutral: 3 }
+
+/** Sorts KPI cards so actionable/at-risk cards lead and neutral counts trail. Stable within a status. */
+export function sortKpiCardsByPriority(cards: KpiCardData[]): KpiCardData[] {
+  return [...cards].sort((a, b) => STATUS_SORT_RANK[a.status ?? "neutral"] - STATUS_SORT_RANK[b.status ?? "neutral"])
+}
+
 const TREND_TEXT_CLASS: Record<KpiTrendDirection, string> = {
   // emerald-600 on white is 3.76:1 at this text size (fails WCAG 2.1 AA
   // 4.5:1); emerald-700 clears it while staying visually "green".
