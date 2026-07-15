@@ -19,9 +19,9 @@ export const doc: TenantConfig = {
   productName: "Warder",
   assistantName: "Kestrel",
   logoSubtitle: "Commerce AI Use Case Platform",
-  heroHeadline: "The governable front door for AI across Commerce",
+  heroHeadline: "Turn scattered AI ideas into an OMB-ready inventory — without the annual scramble.",
   heroSubtitle:
-    "One place for every bureau to turn AI ideas into vetted, decision-ready, OMB-ready use cases, so the Department can govern, fund, and report across the enterprise.",
+    "Warder is where every Commerce bureau submits AI use cases, catches duplicates before they're funded, and produces the report in the exact format OMB reviewers require. Governance built in, not bolted on.",
   loginEmailPlaceholder: "you@doc.gov",
 
   strategicContext: `
