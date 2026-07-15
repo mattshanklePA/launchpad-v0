@@ -84,12 +84,16 @@ export function BureauDashboard() {
 
       <AdminToolsSection session={session} />
 
-      <Tabs defaultValue="queue">
+      <Tabs defaultValue="actions">
         <TabsList>
+          <TabsTrigger value="actions">Action Center</TabsTrigger>
           <TabsTrigger value="queue">Queue</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="actions">Action Center</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="actions">
+          <ActionCenter items={actionItems} />
+        </TabsContent>
 
         <TabsContent value="queue" className="space-y-4">
           <QueueBoard submissions={queue} />
@@ -138,10 +142,6 @@ export function BureauDashboard() {
               <ReadinessDistributionChart card={metrics.readiness} />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="actions">
-          <ActionCenter items={actionItems} />
         </TabsContent>
       </Tabs>
     </DashboardShell>
