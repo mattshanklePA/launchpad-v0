@@ -48,6 +48,16 @@ jobs:
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
+        env:
+          # Dummy build-time envs (mirrors ci.yml) so the agent can run
+          # `pnpm build` to self-check, catching build-only breaks BEFORE the PR
+          # instead of failing CI (e.g. a component missing "use client").
+          # ANTHROPIC_API_KEY is deliberately omitted so it can't shadow the
+          # action's OAuth auth (claude_code_oauth_token below).
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: dummy-service-key
+          NEXT_PUBLIC_TENANT: uspto
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
@@ -56,5 +66,7 @@ jobs:
             actions: read
 
           # Pre-approve the verification commands so Claude can self-check in a
-          # headless run (no interactive approval is possible in CI).
-          claude_args: '--allowed-tools "Bash(pnpm typecheck),Bash(pnpm lint),Bash(pnpm test),Bash(pnpm install*)"'
+          # headless run (no interactive approval is possible in CI). Includes
+          # `pnpm build` so the agent verifies the production build, not just
+          # typecheck/lint/test — the gap that let CC-STYLE fail CI.
+          claude_args: '--allowed-tools "Bash(pnpm typecheck),Bash(pnpm lint),Bash(pnpm test),Bash(pnpm build),Bash(pnpm install*)"'

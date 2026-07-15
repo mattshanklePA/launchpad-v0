@@ -1,0 +1,42 @@
+name: Open PR for Claude branches
+
+# The missing link in the hands-off chain. The @claude loop (claude.yml) builds
+# a change and pushes a `claude/issue-<n>-<ts>` branch, but it does NOT open a
+# PR - it only leaves a "Create PR" link. Without a PR, automerge.yml never
+# fires and queue.yml never advances.
+#
+# This runs when the "Claude Code" workflow completes and opens a PR against
+# `doc` for any claude/* branch that has never had one. It uses the QUEUE_TOKEN
+# PAT (not GITHUB_TOKEN) so the resulting `pull_request: opened` event actually
+# triggers automerge.yml.
+#
+# Must live on the default branch (`doc`) for workflow_run to fire.
+
+on:
+  workflow_run:
+    workflows: ["Claude Code"]
+    types: [completed]
+
+jobs:
+  open-prs:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open PRs for claude branches missing one
+        env:
+          GH_TOKEN: ${{ secrets.QUEUE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          BRANCHES=$(gh api "repos/$REPO/branches?per_page=100" \
+            --jq '.[].name | select(startswith("claude/"))')
+          for BRANCH in $BRANCHES; do
+            # Skip if a PR (open OR already merged/closed) ever existed for it.
+            EXISTING=$(gh pr list --repo "$REPO" --head "$BRANCH" --state all --json number --jq 'length')
+            if [ "$EXISTING" = "0" ]; then
+              echo "Opening PR for $BRANCH"
+              gh pr create --repo "$REPO" --base doc --head "$BRANCH" --fill \
+                || echo "Could not open PR for $BRANCH (no diff or already exists) - skipping"
+            else
+              echo "$BRANCH already has a PR - skipping"
+            fi
+          done
