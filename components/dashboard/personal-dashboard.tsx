@@ -21,6 +21,7 @@ import Link from "next/link"
 import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { getSession } from "@/lib/auth"
+import { DRAFT_FORM_KEY_BASE, scopedDraftKey, migrateLegacyDraftKeys } from "@/lib/draftStorage"
 import { getTenant } from "@/lib/tenant"
 import { getDashboardScope } from "@/lib/dashboard/scope"
 import { scopedSubmissions } from "@/lib/dashboard/metrics"
@@ -31,12 +32,12 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, ArrowRight, MessageSquare, FileText } from "lucide-react"
 
-const STORAGE_KEY_FORM = "aid-form-data"
-
 function detectDraft(): { title: string } | null {
   if (typeof window === "undefined") return null
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_FORM)
+    const userId = getSession()?.userId
+    migrateLegacyDraftKeys(userId)
+    const raw = localStorage.getItem(scopedDraftKey(DRAFT_FORM_KEY_BASE, userId))
     if (!raw) return null
     const fd = JSON.parse(raw) as Record<string, string>
     const meaningful = (fd.coreProblem || fd.useCaseTitle || fd.useCaseDescription || "").trim()

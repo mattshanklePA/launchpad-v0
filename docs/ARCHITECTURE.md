@@ -209,7 +209,7 @@ Before this ([issue #57](https://github.com/mattshanklePA/launchpad-v0/issues/57
 
 `BureauDashboard` (`bureau-dashboard.tsx`) is the reviewer/bureau analog, computed for a `bureau`/`office` scope instead of `department`: it calls the identical `getDashboardMetrics`/`getDashboardActions`/`scopedSubmissions` and the identical `buildKpiCards`/`buildActionItems`/`computeHealthScore` `DepartmentDashboard` uses (already scope-agnostic), plus its own Queue tab (`QueueBoard`, a per-status Kanban worklist, and an "Office breakdown" panel — `OfficeRollup` — when the bureau declares offices). Because `EntityTree`'s underlying hierarchy and `resolveDrillScope` only check whether a selection's *level* is broad enough (`isLevelAllowed`), not whether it matches the viewer's own bureau, `bureau-dashboard-data.ts` adds bureau-safe replacements: `bureauHierarchy(scope, tenant)` restricts the sidebar tree to just the viewer's own bureau (and its offices), and `resolveBureauDrillScope(base, selection)` re-checks `selection.businessUnit === base.businessUnit`, so a bureau/office-scoped viewer can never drill into another bureau's data.
 
-`PersonalDashboard` (`personal-dashboard.tsx`) is the submitter-scoped view: client-side draft detection (`detectDraft()`, reading `localStorage`'s `aid-form-data` key), a prominent "Start a new idea" action (`/submit`), and an "Action needed" section listing the submitter's own `needs_info` submissions with the latest reviewer comment inline, sourced via `scopedSubmissions(scope, submissions)` so this list can never disagree with what `getDashboardScope`/`visibleSubmissions` resolve for the same viewer elsewhere in the app. It passes `hierarchy={{ bureaus: [] }}` to `DashboardShell` (no org tree to browse) and skips the KPI grid/Action Center entirely — those cards are reviewer/admin-facing concepts a submitter has no use for.
+`PersonalDashboard` (`personal-dashboard.tsx`) is the submitter-scoped view: client-side draft detection (`detectDraft()`, reading the signed-in user's scoped `aid-form-data:<userId>` key via `lib/draftStorage.ts`), a prominent "Start a new idea" action (`/submit`), and an "Action needed" section listing the submitter's own `needs_info` submissions with the latest reviewer comment inline, sourced via `scopedSubmissions(scope, submissions)` so this list can never disagree with what `getDashboardScope`/`visibleSubmissions` resolve for the same viewer elsewhere in the app. It passes `hierarchy={{ bureaus: [] }}` to `DashboardShell` (no org tree to browse) and skips the KPI grid/Action Center entirely — those cards are reviewer/admin-facing concepts a submitter has no use for.
 
 Across all three views, `components/dashboard/dashboard-workspace-links.tsx` (`DecisionCenterLink`, `AdminToolsSection`) renders the Decision Center link and the admin-only tools grid (form configuration, user management, demo data, OMB/approval CSV exports) inside `DepartmentDashboard` and `BureauDashboard` (not `PersonalDashboard` — reviewer/admin-only concepts).
 
@@ -232,9 +232,9 @@ Across all three views, `components/dashboard/dashboard-workspace-links.tsx` (`D
 ## 7. The submission wizard
 
 - Multi-step guided flow under `app/submit`, orchestrated by a form container that switches on the current step. Rough step map: 1 submitter info, 2 problem, 3 solution, 4 value, 5 alignment, 6 feasibility, 7 success metrics, 8 idea overview, 9 review/submit, 10 confirmation.
-- Wizard state lives in `context/form-context.tsx` and is persisted to the browser:
-  - localStorage: `aid-form-data`, `aid-current-step`, `aid-editing-id`
-  - sessionStorage: `aid-session-active`
+- Wizard state lives in `context/form-context.tsx` and is persisted to the browser, namespaced per signed-in user (`lib/draftStorage.ts`'s `scopedDraftKey`, e.g. `aid-form-data:<userId>`) so switching accounts in the same browser never surfaces another user's draft:
+  - localStorage: `aid-form-data:<userId>`, `aid-current-step:<userId>`
+  - sessionStorage: `aid-session-active:<userId>`
 - Resume logic restores in-progress drafts; resume is clamped to editable steps.
 
 ---
