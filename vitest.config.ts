@@ -11,7 +11,14 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    include: ["lib/**/*.test.ts", "lib/**/*.test.tsx", "components/**/*.test.ts", "components/**/*.test.tsx"],
+    include: [
+      "lib/**/*.test.ts",
+      "lib/**/*.test.tsx",
+      "components/**/*.test.ts",
+      "components/**/*.test.tsx",
+      "context/**/*.test.ts",
+      "context/**/*.test.tsx",
+    ],
   },
   resolve: {
     alias: { "@": rootDir },
