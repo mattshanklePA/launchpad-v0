@@ -3,13 +3,13 @@
 // Personal Dashboard (CC-8) — the submitter-scoped Command Center landing
 // view, assembled from the same CC-STYLE shell every other dashboard screen
 // uses (components/dashboard/dashboard-shell.tsx), computed for a
-// "personal" DashboardScope instead of department/bureau/office. Re-skins
-// the prior ad hoc submitter home (components/home/submitter-home.tsx, still
-// mounted at /home until the CC-6 cutover) rather than replacing its
-// behavior: draft detection (localStorage) and the start-a-new-idea action
-// are unchanged, and "my ideas" is still scoped by owner email — now via
-// `scopedSubmissions` (lib/dashboard/metrics.ts) so it can never disagree
-// with what `getDashboardScope` resolves for this viewer.
+// "personal" DashboardScope instead of department/bureau/office. Mounted at
+// `/home` (app/home/page.tsx, CC-6). Re-skinned the prior ad hoc submitter
+// home (retired) rather than replacing its behavior: draft detection
+// (localStorage) and the start-a-new-idea action are unchanged, and "my
+// ideas" is still scoped by owner email — now via `scopedSubmissions`
+// (lib/dashboard/metrics.ts) so it can never disagree with what
+// `getDashboardScope` resolves for this viewer.
 //
 // Guardrail: a submitter sees ONLY their own submissions and drafts. No
 // entity-tree drilling is offered here — hierarchy is always `{ bureaus: [] }`

@@ -9,6 +9,7 @@
 // or SSR cookie persistence.
 
 import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
 import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -190,13 +191,15 @@ export function SidebarMenuButton({
   className,
   isActive = false,
   tooltip,
+  asChild = false,
   children,
   ...props
-}: React.ComponentProps<"button"> & { isActive?: boolean; tooltip?: string }) {
+}: React.ComponentProps<"button"> & { isActive?: boolean; tooltip?: string; asChild?: boolean }) {
   const { state, isMobile } = useSidebar()
+  const Comp = asChild ? Slot : "button"
   return (
-    <button
-      type="button"
+    <Comp
+      type={asChild ? undefined : "button"}
       data-active={isActive}
       title={state === "collapsed" && !isMobile ? tooltip : undefined}
       className={cn(
@@ -211,7 +214,7 @@ export function SidebarMenuButton({
       {...props}
     >
       {children}
-    </button>
+    </Comp>
   )
 }
 
