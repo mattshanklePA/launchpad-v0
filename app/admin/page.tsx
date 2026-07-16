@@ -172,7 +172,7 @@ const mockDrafts = [
     status: "in_progress",
     completionRate: 85,
     step: 8,
-    publicIndicator: "excluded",
+    isWithheld: "other",
     readinessScore: "ready" as const,
   },
   {
@@ -184,7 +184,7 @@ const mockDrafts = [
     status: "needs_review",
     completionRate: 100,
     step: 10,
-    publicIndicator: "public",
+    isWithheld: "no",
     readinessScore: "ready" as const,
   },
   {
@@ -196,7 +196,7 @@ const mockDrafts = [
     status: "stalled",
     completionRate: 45,
     step: 5,
-    publicIndicator: "public",
+    isWithheld: "no",
     readinessScore: "early_stage" as const,
   },
 ]
@@ -448,7 +448,7 @@ function AdminPageInner() {
     status: "needs_review" as const,
     completionRate: 100,
     step: 11,
-    publicIndicator: s.formData.publicIndicator || "",
+    isWithheld: s.formData.isWithheld || "",
     readinessScore: (s.formData.readinessScore || "needs_work") as
       | "ready"
       | "needs_work"
@@ -612,18 +612,30 @@ function AdminPageInner() {
     }
   }
 
-  const getPublicIndicatorBadge = (indicator: string) => {
-    switch (indicator) {
-      case "public":
+  const getWithholdBadge = (isWithheld: string) => {
+    switch (isWithheld) {
+      case "no":
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
             Public
           </Badge>
         )
-      case "excluded":
+      case "yes_risk_to_disclosure":
         return (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            Excluded
+            Withheld - risk to disclosure
+          </Badge>
+        )
+      case "yes_disclosure_prohibited":
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+            Withheld - prohibited by law
+          </Badge>
+        )
+      case "other":
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+            Withheld - other
           </Badge>
         )
       default:
@@ -1002,7 +1014,7 @@ function AdminPageInner() {
                             <span>Last Updated: {draft.lastUpdated}</span>
                             <div className="flex items-center gap-1">
                               <span>Classification:</span>
-                              {getPublicIndicatorBadge(draft.publicIndicator)}
+                              {getWithholdBadge(draft.isWithheld)}
                             </div>
                           </div>
                           <div className="mt-3">
@@ -1084,7 +1096,7 @@ function AdminPageInner() {
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{draft.lastUpdated}</TableCell>
-                          <TableCell>{getPublicIndicatorBadge(draft.publicIndicator)}</TableCell>
+                          <TableCell>{getWithholdBadge(draft.isWithheld)}</TableCell>
                           <TableCell>{getReadinessBadge(draft.readinessScore)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">

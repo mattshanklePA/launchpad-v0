@@ -107,7 +107,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
   // data dictionary, 34 fields (25 base + 9 high-impact-only). `id`,
   // `use_case_name`, `agency_bureau`, `contact_email`, and `is_withheld`
   // (#1-5) already have stand-ins collected elsewhere in the wizard
-  // (`useCaseTitle`, `submitterOffice`, `submitterEmail`, `publicIndicator`)
+  // (`useCaseTitle`, `submitterOffice`, `submitterEmail`, `isWithheld`)
   // and aren't re-declared here. `#N` comments below refer to that doc's row
   // numbers.
   {
@@ -534,11 +534,12 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     lockedReason: `Required — ${ASSISTANT_NAME} uses this as the seed context for every step's coaching.`,
   },
   {
-    fieldKey: "publicIndicator",
-    label: "Public / Excluded Classification",
-    description: "Whether the idea is publicly discussable or contains excluded information.",
+    fieldKey: "isWithheld",
+    label: "Withhold from Public Reporting?",
+    description:
+      "OMB's four-way is_withheld reason: No / Yes - risk to disclosure (FOIA-protected interest) / Yes - disclosure prohibited by law / Other.",
     reasonToInclude:
-      "Flags submissions that need restricted handling and prevents them from appearing in public-facing exports.",
+      "Flags submissions that need restricted handling, prevents them from appearing in public-facing exports, and captures the reason the OMB inventory export requires.",
     phase: 5,
     step: 8,
     locked: false,

@@ -73,6 +73,7 @@ Everything below is OMB's exact wording: field name, data type, **valid selectio
 - `has_pii` (OMB) and `involvesSensitiveData` (DoC) overlap in subject but are separate mandates; keep both.
 - **Public-reporting handling:** OMB permits removing only the `id` column and substituting a public-inquiry address for `contact_email` in the public CSV — relevant to `lib/ombExport.ts`, not to intake.
 - Department (`os`) and bureau tiers layer on top; neither can remove an OMB field.
+- **`is_withheld` (field #5, issue #116):** captured directly as `isWithheld` (`lib/steps.ts`/`lib/fieldRegistry.ts`) with all four of OMB's exact values — `no` / `yes_risk_to_disclosure` / `yes_disclosure_prohibited` / `other` — instead of the earlier two-way `publicIndicator` public/excluded flag. Existing submissions migrate at read time (`lib/formDataMigrations.ts`): legacy `"public"` -> `"no"`, legacy `"excluded"` -> `"other"` (the old flag never recorded *why*, so "Other" is the only faithful mapping).
 
 ## Context worth knowing
 

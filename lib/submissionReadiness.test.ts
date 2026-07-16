@@ -14,7 +14,7 @@ function baseComplete(overrides: Partial<FormData> = {}): FormData {
     submitterOffice: "census",
     useCaseTitle: "AI Assisted Triage",
     useCaseDescription: "Helps staff triage incoming requests faster.",
-    publicIndicator: "public",
+    isWithheld: "no",
     coreProblem: "Staff spend too long manually triaging requests.",
     severity: "medium",
     affectedSystem: "cross_functional",

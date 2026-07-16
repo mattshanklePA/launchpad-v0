@@ -11,7 +11,7 @@ import { useFieldVisibility } from "@/lib/formConfig"
 import { suggestIdeaOverview } from "@/app/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { getTenant } from "@/lib/tenant"
-import { proposePublicIndicator } from "@/lib/ombAutofill"
+import { proposeIsWithheld } from "@/lib/ombAutofill"
 import { useAiPropose } from "@/hooks/use-ai-propose"
 import { AiProposedHint } from "@/components/launchpad/ai-proposed-hint"
 
@@ -23,11 +23,12 @@ export function Step2UseCaseOverview() {
   const [drafting, setDrafting] = useState(false)
   const autoTried = useRef(false)
 
-  // AI-proposed, submitter-confirmed: OMB's "should this be withheld from
-  // public reporting?" (field #5) — defaults to public/"No" unless a
-  // security signal already on the form says otherwise (issue #61).
-  const publicIndicatorProposal = proposePublicIndicator(formData)
-  useAiPropose("publicIndicator", formData.publicIndicator, setFormData, publicIndicatorProposal)
+  // AI-proposed, submitter-confirmed: OMB's four-way "should this be withheld
+  // from public reporting?" (field #5) — defaults to "No" unless a security
+  // signal already on the form says otherwise (issue #61; four-way values
+  // added in issue #116).
+  const isWithheldProposal = proposeIsWithheld(formData)
+  useAiPropose("isWithheld", formData.isWithheld, setFormData, isWithheldProposal)
 
   // Scout can synthesize a title + description from everything captured earlier
   // (problem, solution, value, alignment, feasibility, metrics).
@@ -133,28 +134,40 @@ export function Step2UseCaseOverview() {
         />
       </div>
 
-      {isVisible("publicIndicator") && (
+      {isVisible("isWithheld") && (
         <div className="space-y-3">
-          <Label>Information Classification</Label>
+          <Label>Should this AI use case be withheld from public reporting?</Label>
           <RadioGroup
-            value={formData.publicIndicator}
-            onValueChange={(value) => setFormData((prev) => ({ ...prev, publicIndicator: value as any }))}
+            value={formData.isWithheld}
+            onValueChange={(value) => setFormData((prev) => ({ ...prev, isWithheld: value as any }))}
             className="flex flex-col space-y-2"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="public" id="public" />
-              <Label htmlFor="public" className="font-normal">
-                <span className="font-medium">Public</span> - This information can be released publicly
+              <RadioGroupItem value="no" id="is-withheld-no" />
+              <Label htmlFor="is-withheld-no" className="font-normal">
+                <span className="font-medium">No</span> - This information can be released publicly
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="excluded" id="excluded" />
-              <Label htmlFor="excluded" className="font-normal">
-                <span className="font-medium">Excluded</span> - This information must stay internal to the {tenant.orgName}
+              <RadioGroupItem value="yes_risk_to_disclosure" id="is-withheld-risk" />
+              <Label htmlFor="is-withheld-risk" className="font-normal">
+                <span className="font-medium">Yes - risk to disclosure</span> (FOIA-protected interest)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="yes_disclosure_prohibited" id="is-withheld-prohibited" />
+              <Label htmlFor="is-withheld-prohibited" className="font-normal">
+                <span className="font-medium">Yes - disclosure prohibited by law</span>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="other" id="is-withheld-other" />
+              <Label htmlFor="is-withheld-other" className="font-normal">
+                <span className="font-medium">Other</span> - Must stay internal to the {tenant.orgName} for another reason
               </Label>
             </div>
           </RadioGroup>
-          <AiProposedHint proposal={publicIndicatorProposal} />
+          <AiProposedHint proposal={isWithheldProposal} />
         </div>
       )}
     </div>

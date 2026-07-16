@@ -38,7 +38,7 @@ export const seedSubmissions: Submission[] = [
       useCaseTitle: "AI-Assisted Prior Art Retrieval for Patent Examiners",
       useCaseDescription:
         "An AI search agent that takes an examiner's claim language and returns a ranked list of the most relevant prior art across U.S. patents, foreign patents, and non-patent literature — with citation snippets and a confidence score for each result. The examiner reviews and confirms; the AI never makes the allowance/rejection decision.",
-      publicIndicator: "public",
+      isWithheld: "no",
 
       targetAudience: "patent_examiner",
       impactedUsersCount: "gt_500",
@@ -140,7 +140,7 @@ export const seedSubmissions: Submission[] = [
       useCaseTitle: "Likelihood-of-Confusion Pre-Screen for Trademark Applications",
       useCaseDescription:
         "An AI tool that compares a new trademark application against the existing TM register and flags potential likelihood-of-confusion issues before an examiner picks up the file. Aims to surface obvious conflicts faster.",
-      publicIndicator: "public",
+      isWithheld: "no",
 
       targetAudience: "trademark_examiner",
       impactedUsersCount: "50_500",
@@ -223,7 +223,7 @@ export const seedSubmissions: Submission[] = [
       useCaseTitle: "AI Onboarding Assistant for New USPTO Employees",
       useCaseDescription:
         "A conversational AI assistant that answers new-hire questions during the 90-day onboarding window — benefits, training schedules, telework policy, IT access, badge/parking, expense system, leave types. Replaces a lot of one-off HR ticket volume.",
-      publicIndicator: "public",
+      isWithheld: "no",
 
       targetAudience: "other",
       impactedUsersCount: "10_50",
@@ -310,7 +310,7 @@ export const seedSubmissions: Submission[] = [
       useCaseTitle: "Automated IT Service Ticket Triage and Routing",
       useCaseDescription:
         "An AI classifier that reads inbound IT service tickets, identifies category (network, account, hardware, application-specific), assigns priority, and routes to the right tier-2 team. Reduces queue dwell time and improves first-touch resolution rate.",
-      publicIndicator: "public",
+      isWithheld: "no",
 
       targetAudience: "other",
       impactedUsersCount: "gt_500",
@@ -403,7 +403,7 @@ export const seedSubmissions: Submission[] = [
       useCaseTitle: "AI for FOIA Request Processing",
       useCaseDescription:
         "We get lots of FOIA requests and they take a long time. Maybe AI can help.",
-      publicIndicator: "public",
+      isWithheld: "no",
 
       targetAudience: "other",
       impactedUsersCount: "lt_10",
@@ -472,7 +472,7 @@ export const seedSubmissions: Submission[] = [
       "submitterRole": "manager",
       "submitterOffice": "ocfo",
       "useCaseTitle": "Invoice Anomaly Detection for Financial Operations",
-      "publicIndicator": "public",
+      "isWithheld": "no",
       "useCaseDescription": "An ML model that flags anomalous vendor invoices (duplicate, out-of-pattern amounts, mismatched POs) for analyst review before payment.",
       "coreProblem": "OCFO analysts manually spot-check a fraction of invoices; anomalies slip through and are caught late in reconciliation.",
       "problemImpact": "~40,000 invoices/year, only ~10% reviewed in depth. Late catches drive rework and occasional improper payments.",
@@ -507,7 +507,7 @@ export const seedSubmissions: Submission[] = [
       "submitterRole": "manager",
       "submitterOffice": "patents",
       "useCaseTitle": "Examiner Onboarding Knowledge Assistant",
-      "publicIndicator": "public",
+      "isWithheld": "no",
       "useCaseDescription": "A cited-source assistant that answers new examiners' procedure questions (MPEP, art-unit practice, PE2E how-tos) during their first year.",
       "coreProblem": "New examiners ramp slowly and lean heavily on SPEs for repetitive procedural questions.",
       "problemImpact": "Each cohort of new examiners generates heavy SPE mentoring load on repeatable MPEP/procedure questions.",
@@ -542,7 +542,7 @@ export const seedSubmissions: Submission[] = [
       "submitterRole": "other",
       "submitterOffice": "opia",
       "useCaseTitle": "Public Inquiry Auto-Responder (Draft Suggestions)",
-      "publicIndicator": "public",
+      "isWithheld": "no",
       "useCaseDescription": "Suggests draft replies to common public/press inquiries for a comms specialist to edit and approve. Never auto-sends.",
       "coreProblem": "OPIA fields repetitive public inquiries; drafting from scratch each time is slow.",
       "problemImpact": "High volume of repeat questions; response SLAs slip during peak periods.",
@@ -576,7 +576,7 @@ export const seedSubmissions: Submission[] = [
       "submitterRole": "trademark_examiner",
       "submitterOffice": "trademarks",
       "useCaseTitle": "Specimen Acceptability Pre-Check",
-      "publicIndicator": "public",
+      "isWithheld": "no",
       "useCaseDescription": "Flags likely-unacceptable trademark specimens (mockups, digitally altered images) for examiner attention.",
       "coreProblem": "Examiners manually assess specimen acceptability; questionable specimens are easy to miss at volume.",
       "problemImpact": "Specimen review is a known time sink and a source of inconsistent outcomes across examiners.",
@@ -619,7 +619,7 @@ export const seedSubmissions: Submission[] = [
       "submitterRole": "it_staff",
       "submitterOffice": "ocio",
       "useCaseTitle": "Network Outage Predictive Alerts",
-      "publicIndicator": "public",
+      "isWithheld": "no",
       "useCaseDescription": "Predicts likely network/service degradations from telemetry so ops can act before users are impacted.",
       "coreProblem": "Outages are detected reactively after users are already affected.",
       "problemImpact": "Reactive detection means lost productivity agency-wide during incidents.",
@@ -663,7 +663,7 @@ export const seedSubmissions: Submission[] = [
       "submitterRole": "other",
       "submitterOffice": "patents",
       "useCaseTitle": "Auto-Draft Office Action Rejections",
-      "publicIndicator": "public",
+      "isWithheld": "no",
       "useCaseDescription": "AI that drafts and issues 102/103 rejections automatically based on retrieved prior art.",
       "coreProblem": "Writing office actions takes examiner time.",
       "problemImpact": "Office-action drafting is a large share of examiner workload.",
@@ -697,7 +697,7 @@ export const seedSubmissions: Submission[] = [
       "submitterRole": "manager",
       "submitterOffice": "hr",
       "useCaseTitle": "Resume Screening AI for Hiring",
-      "publicIndicator": "public",
+      "isWithheld": "no",
       "useCaseDescription": "AI that scores and ranks applicants and auto-rejects the bottom tier to reduce HR screening load.",
       "coreProblem": "HR spends significant time screening high applicant volumes.",
       "problemImpact": "High-volume postings generate large screening workloads.",

@@ -66,7 +66,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   // ---------- Step 2: Use Case Overview ----------
   need("useCaseTitle", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
   need("useCaseDescription", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
-  need("publicIndicator", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Public / excluded classification" }, () => !formData.publicIndicator)
+  need("isWithheld", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Withhold-from-public-reporting reason" }, () => !formData.isWithheld)
 
   // ---------- Step 3: Problem & Target Users (merged) ----------
   need("coreProblem", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
@@ -178,7 +178,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   // doesn't show as artificially incomplete.
   const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
     "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
-    "useCaseTitle", "useCaseDescription", "publicIndicator",
+    "useCaseTitle", "useCaseDescription", "isWithheld",
     "coreProblem", "severity", "affectedSystem", "targetAudience", "impactedUsersCount", "targetUserContext",
     "proposedSolution",
     "userValue", "userTimeSavings", "businessValue", "costSavings",

@@ -47,7 +47,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Plain-Language Survey Help Assistant",
       useCaseDescription:
         "A public-facing assistant that answers respondents' questions about Census surveys in plain language, citing official guidance, in multiple languages, and hands off to a person for anything sensitive. Informational only.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "applicant",
       impactedUsersCount: "gt_500",
       painPoints:
@@ -119,7 +119,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Exporter Assistance Plain-Language Assistant",
       useCaseDescription:
         "A public-facing assistant that helps U.S. businesses navigate export programs and answers common trade questions in plain language, citing official ITA resources, with handoff to a trade specialist.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "applicant",
       impactedUsersCount: "gt_500",
       painPoints:
@@ -187,7 +187,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Customer-Service Response Copilot (Agent Assist)",
       useCaseDescription:
         "An internal copilot that drafts suggested replies for Commerce contact-center representatives to review, edit, and send, pulling from approved knowledge with citations. Never auto-sends; not public-facing.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "other",
       impactedUsersCount: "50_500",
       painPoints: "Representatives across bureaus draft the same routine answers by hand; quality varies and SLAs slip at peak.",
@@ -270,7 +270,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Standards & Publications Knowledge Assistant",
       useCaseDescription:
         "An internal cited-source assistant that helps NIST staff find and summarize relevant standards, publications, and internal guidance, with links to the source documents.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "other",
       impactedUsersCount: "50_500",
       painPoints: "Staff spend significant time locating the right standard or publication across a large, fragmented corpus.",
@@ -337,7 +337,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Trademark Conflict Search Advisory Assistant",
       useCaseDescription:
         "An advisory assistant that surfaces the most likely conflicting prior trademarks for an examining attorney, with the basis for each match. The attorney decides the refusal; the AI never issues it.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "other",
       impactedUsersCount: "gt_500",
       painPoints: "Conflict search is manual and varies by attorney; similar marks get missed, driving pendency and inconsistent refusals.",
@@ -418,7 +418,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Plain-Language Severe-Weather Alert Summaries",
       useCaseDescription:
         "Generates plain-language, accessible summaries of official severe-weather alerts for the public, with the official alert always shown alongside. A forecaster reviews before anything publishes.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "applicant",
       impactedUsersCount: "gt_500",
       painPoints: "Official alerts are technical; the public, including limited-English and low-vision users, can struggle to act quickly.",
@@ -496,7 +496,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Export License Application Triage Assistant",
       useCaseDescription:
         "Classifies and routes incoming export license applications and flags likely-incomplete ones for a licensing officer, who makes every determination. Advisory only; never approves or denies.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "other",
       impactedUsersCount: "50_500",
       painPoints: "Applications queue for manual triage and routing; incomplete ones surface late, adding cycle time.",
@@ -588,7 +588,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Automated Loan & Grant Eligibility Matcher",
       useCaseDescription:
         "An AI system that automatically scores minority business enterprise applicants against federal loan and grant program criteria and issues an eligibility determination without officer review.",
-      publicIndicator: "public",
+      isWithheld: "no",
       targetAudience: "applicant",
       impactedUsersCount: "50_500",
       painPoints: "Eligibility screening is manual and slow, and application volume is outpacing reviewer capacity.",
@@ -686,7 +686,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Standards Committee Meeting Transcription & Action-Item Assistant",
       useCaseDescription:
         "An internal tool that transcribes NIST standards working-group and committee meetings and drafts a list of decisions and action items for the meeting lead to review before it's circulated to attendees.",
-      publicIndicator: "excluded",
+      isWithheld: "other",
       targetAudience: "other",
       impactedUsersCount: "50_500",
       painPoints:
@@ -759,7 +759,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Operations Briefing Meeting Summary & Transcript Tool",
       useCaseDescription:
         "An internal tool that summarizes daily satellite-operations briefing meetings into a short recap of decisions and open items, alongside the full transcript, for staff who couldn't attend.",
-      publicIndicator: "excluded",
+      isWithheld: "other",
       targetAudience: "other",
       impactedUsersCount: "50_500",
       painPoints: "Staff who miss the daily operations briefing have no fast way to catch up beyond asking a colleague to recap it.",
@@ -835,7 +835,7 @@ export const docSeedSubmissions: Submission[] = [
       useCaseTitle: "Trade Mission Debrief Meeting Transcription Assistant",
       useCaseDescription:
         "An internal tool that transcribes trade-mission debrief meetings and drafts a structured recap of findings and follow-ups for the analyst team, replacing manual note-taking.",
-      publicIndicator: "excluded",
+      isWithheld: "other",
       targetAudience: "other",
       impactedUsersCount: "10_50",
       painPoints:
