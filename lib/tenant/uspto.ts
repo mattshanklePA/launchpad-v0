@@ -11,6 +11,7 @@ export const uspto: TenantConfig = {
   heroSubtitle:
     "One place to turn AI ideas into vetted, decision-ready use cases, so leadership can fund the strong ones and catch risky ones early.",
   loginEmailPlaceholder: "you@uspto.gov",
+  publicInquiryEmail: "AI.Inventory@uspto.gov",
 
   strategicContext: `
 USPTO operates under two published strategic frameworks. Every AI idea pursued by USPTO should clearly advance at least one priority from these:

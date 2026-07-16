@@ -36,6 +36,12 @@ export type TenantConfig = {
   // "you@uspto.gov"), so no tenant ever shows another tenant's domain.
   loginEmailPlaceholder: string
 
+  // Public-inquiry address substituted for individual submitters' emails in
+  // the public OMB AI use case inventory CSV (docs/omb-2025-inventory-fields.md's
+  // contact_email redaction rule; see lib/ombExport.ts). Never a real person's
+  // address — a monitored inbox for public inquiries about the inventory.
+  publicInquiryEmail: string
+
   // AI / prompts
   strategicContext: string   // injected into every Scout prompt
   leadershipPriorities: string // exec-briefing framing (e.g. pendency/quality/cost)

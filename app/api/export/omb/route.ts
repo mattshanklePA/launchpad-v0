@@ -10,6 +10,7 @@ import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
 import { buildOmbCsv } from "@/lib/ombExport"
+import { migrateFormData } from "@/lib/formDataMigrations"
 import { getTenant } from "@/lib/tenant"
 import type { Submission } from "@/lib/submissions"
 
@@ -21,7 +22,7 @@ function fromRow(row: DbSubmissionRow): Submission {
   return {
     id: row.id,
     submittedAt: row.submitted_at,
-    formData: row.form_data as Submission["formData"],
+    formData: migrateFormData(row.form_data) as Submission["formData"],
     status: row.status ?? undefined,
     ownerEmail: row.owner_email ?? undefined,
     businessUnit: row.business_unit ?? undefined,
@@ -38,7 +39,8 @@ export async function GET() {
     if (error) throw error
 
     const submissions = (data || []).map((row) => fromRow(row as DbSubmissionRow))
-    const csv = buildOmbCsv(submissions, getTenant().shortName)
+    const tenant = getTenant()
+    const csv = buildOmbCsv(submissions, { shortName: tenant.shortName, publicInquiryEmail: tenant.publicInquiryEmail })
 
     return new NextResponse(csv, {
       headers: {
