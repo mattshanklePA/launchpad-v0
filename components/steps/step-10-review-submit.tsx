@@ -81,6 +81,8 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Access Control Requirements", key: "accessControlRequirements" },
     { label: "AI Decisional Impact", key: "aiDecisionalImpact" },
     { label: "AI Model Sourcing", key: "aiModelSourcing" },
+    { label: "Disseminates Info to the Public", key: "disseminatesToPublic" },
+    { label: "Scalable Beyond Current Deployment", key: "scalable" },
     { label: "Mandatory Human Review", key: "aiHumanReview" },
     { label: "Data Classification / Impact Level", key: "impactLevel" },
     { label: "Data Readiness", key: "dataReadiness" },

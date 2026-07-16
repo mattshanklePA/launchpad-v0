@@ -23,9 +23,9 @@ import {
 import type { Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { computeRiskProfile, riskBadgeClass } from "@/lib/riskProfile"
-import { computeRmfProfile, rmfBadgeClass, RMF_OVERALL_LABELS } from "@/lib/nistRmf"
+import { rmfBadgeClass, RMF_OVERALL_LABELS } from "@/lib/nistRmf"
+import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant } from "@/lib/tenant"
-import { getBureauSignoff, getDepartmentApproval } from "@/lib/bureauSignoff"
 
 // Higher rank sorts first in the Decision Center list; unassessed drafts (rank 0)
 // always trail the fully-assessed candidates. Mirrors the ranking used for the
@@ -154,18 +154,16 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
               )
             })()}
             {rmfEnabled && (() => {
-              const rmf = computeRmfProfile({
-                ...d,
-                bureauSignoff: getBureauSignoff(submission),
-                departmentApproval: getDepartmentApproval(submission),
-              })
+              const resolved = resolveRmfProfile(submission)
+              const rmf = resolved.profile
               return (
                 <Badge
-                  className={rmfBadgeClass(rmf.overall)}
-                  title={`${rmf.rationale}${rmf.flags.length > 0 ? ` — ${rmf.flags.join(", ")}` : ""}`}
+                  className={rmfBadgeClass(resolved.effectiveOverall)}
+                  title={`${resolved.isProposal ? "Proposed — awaiting reviewer confirmation. " : ""}${rmf.rationale}${rmf.flags.length > 0 ? ` — ${rmf.flags.join(", ")}` : ""}`}
                 >
                   <Scale className="w-3 h-3 mr-1" />
-                  {RMF_OVERALL_LABELS[rmf.overall]}
+                  {RMF_OVERALL_LABELS[resolved.effectiveOverall]}
+                  {resolved.isProposal ? " (proposed)" : ""}
                 </Badge>
               )
             })()}

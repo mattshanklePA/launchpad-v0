@@ -10,6 +10,8 @@ import { getCachedSubmissions } from "@/lib/dataCache"
 import type { SubmissionComment, SubmissionStatus } from "@/lib/reviewWorkflow"
 import { assigneeForBusinessUnit } from "@/lib/reviewWorkflow"
 import { migrateFormData } from "@/lib/formDataMigrations"
+import { getTenant } from "@/lib/tenant"
+import { buildRmfProfileSnapshotPatch } from "@/lib/rmfProfileReview"
 
 const MAX_SUBMISSIONS = 50 // server caps at 50 in the GET handler too
 
@@ -40,10 +42,21 @@ async function saveSubmission(formData: FormData): Promise<Submission> {
   const withAssignee: FormData = reviewer
     ? { ...formData, assignedReviewerName: reviewer.name, assignedReviewerEmail: reviewer.email }
     : formData
+
+  // NIST AI RMF profile propose-then-confirm (lib/rmfProfileReview.ts,
+  // Roadmap #22 story 4) — computed once here, at submission, and shown to
+  // reviewers as a proposal they confirm or override; never recomputed
+  // silently afterward. Tenant-gated so non-RMF tenants (USPTO/DoW) never
+  // carry this extra data.
+  const tenant = getTenant()
+  const withRmf: FormData = tenant.features.rmf
+    ? ({ ...withAssignee, ...buildRmfProfileSnapshotPatch(withAssignee, tenant) } as FormData)
+    : withAssignee
+
   const submission: Submission = {
     id: generateId(),
     submittedAt: new Date().toISOString(),
-    formData: withAssignee,
+    formData: withRmf,
   }
   try {
     const res = await fetch("/api/submissions", {

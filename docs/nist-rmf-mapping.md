@@ -83,8 +83,8 @@ Status column uses `docs/omb-field-mapping.md`'s legend (**kept** / **renamed** 
 | AI Classification | `aiClassification` (OMB #10) | kept |
 | Problem / expected benefits / outputs | `coreProblem`, `businessValue`, `solutionSummary` (OMB #11-13) | kept |
 | Is-high-impact + justification | `highImpact`, `highImpactJustification` (OMB #7-8) + `lib/highImpactDetermination.ts`'s `determineHighImpact` (advisory recommendation + reasons, reviewer makes the final call) | kept |
-| Disseminates info to the public? | *(none)* | **gap — see §7** |
-| Scalable? | *(none)* | **gap — see §7** |
+| Disseminates info to the public? | `disseminatesToPublic` (Roadmap #22 story 4) | added |
+| Scalable? | `scalable` (Roadmap #22 story 4) | added |
 | AI data readiness | `trainingDataDescription` (OMB #19) | partial — describes the training/eval data, but isn't a readiness/quality rating; see §7 |
 | Base platforms/models | `aiModelSourcing` (Department/EO field: american_built / open_source_us / foreign / unknown) | partial — captures sourcing *category* for EO compliance, not the specific platform/model name; see §7 |
 
@@ -224,23 +224,33 @@ deterministic mapping. Two genuine gaps, both under Map, with no existing `FormD
 1. **Disseminates information to the public?** — distinct from `isWithheld` (which governs
    whether the *use case record itself* is withheld from the public inventory), this asks
    whether the AI *system's output* is disseminated to the public as part of its function.
-   No existing field captures this.
+   No existing field captures this. **Added** in Roadmap #22 story 4 as `disseminatesToPublic`
+   (`lib/fieldRegistry.ts`, `level: "department"`, shown once a stage is set and the tenant's
+   `rmf` feature is on) — captured for the record; not yet folded into `computeRmfProfile`'s
+   Map rubric (see note below).
 2. **Scalable?** — a forward-looking assessment of whether the use case is intended to scale
-   beyond its current deployment. No existing field captures this.
+   beyond its current deployment. No existing field captures this. **Added** the same way, as
+   `scalable`.
 
-Two further tracker fields have a *partial* stand-in today (§4) and are listed here only as
-candidates for a future dedicated field, not as blocking gaps:
+Two further tracker fields have a *partial* stand-in today (§4) and remain candidates for a
+future dedicated field, not blocking gaps:
 
 3. **AI data readiness** (a readiness/quality rating, distinct from `trainingDataDescription`'s
    free-text description of what data is used).
 4. **Base platform/model name** (the specific platform/model, distinct from
    `aiModelSourcing`'s sourcing-category answer).
 
-None of these four are added in this PR — this is a docs-only spec, and per the issue's
-guardrails, new intake should only be added once a genuine RMF gap requires it. If a later
-story adds any of them, it should follow `docs/omb-field-mapping.md`'s **added** pattern
-(`lib/fieldRegistry.ts` entry, `level: "department"` since these are LaunchPad/RMF-specific,
-not part of OMB's 34).
+Fields 3-4 aren't added in this PR — new intake should only be added once a genuine RMF gap
+requires it, and neither has a settled shape yet. If a later story adds either, it should
+follow `docs/omb-field-mapping.md`'s **added** pattern (`lib/fieldRegistry.ts` entry,
+`level: "department"` since these are LaunchPad/RMF-specific, not part of OMB's 34) — the same
+pattern fields 1-2 now follow.
+
+**On folding 1-2 into the Map rubric:** story 4 stops at capturing the two fields — `mapStatus`
+in `lib/nistRmf.ts` still evaluates only the fields §5 already specifies, so
+`disseminatesToPublic`/`scalable` don't yet change a submission's Map status. Wiring them in
+would touch the rubric's own tests and the DoC seed fixtures (`lib/seedSubmissionsDoc.ts`) that
+assert a `covered` Map today; left as a deliberate follow-up rather than folded in silently.
 
 ## See also
 

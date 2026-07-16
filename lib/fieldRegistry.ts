@@ -169,6 +169,38 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     omb: true,
     showWhen: stageAtOrPastPreDeployment,
   },
+  // ────── NIST AI RMF gap fields (docs/nist-rmf-mapping.md §8, Roadmap #22
+  // story 4) — the DoC AI Use Case Tracker has no existing signal for these
+  // two Map-function checks, unlike every OMB field above. `level:
+  // "department"` (not "omb") since they're a LaunchPad/RMF addition, not one
+  // of OMB's 34 — mandatory once shown, mirroring the DoC AI-risk-management
+  // fields below. Gated on the tenant's `rmf` feature flag in `showWhen` so
+  // USPTO/DoW (no RMF framing) never see them, on top of the same
+  // stage-is-set gate `topicArea`/`aiClassification` use. ──────
+  {
+    fieldKey: "disseminatesToPublic",
+    label: "Disseminates information to the public?",
+    description: "Whether the AI system's output is disseminated to the public as part of its function.",
+    reasonToInclude: "Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — the DoC tracker has no other signal for this.",
+    phase: 4,
+    step: 6,
+    level: "department",
+    locked: true,
+    lockedReason: "NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every bureau.",
+    showWhen: (fd) => stageAtOrPastPreDeployment(fd) && !!getTenant().features.rmf,
+  },
+  {
+    fieldKey: "scalable",
+    label: "Scalable beyond current deployment?",
+    description: "Whether this use case is intended to scale beyond its current pilot/deployment footprint.",
+    reasonToInclude: "Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — the DoC tracker has no other signal for this.",
+    phase: 4,
+    step: 6,
+    level: "department",
+    locked: true,
+    lockedReason: "NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every bureau.",
+    showWhen: (fd) => stageAtOrPastPreDeployment(fd) && !!getTenant().features.rmf,
+  },
   {
     fieldKey: "hasATO",
     label: "Associated ATO?",
