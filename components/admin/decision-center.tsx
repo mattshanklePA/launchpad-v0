@@ -23,6 +23,9 @@ import {
 import type { Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { computeRiskProfile, riskBadgeClass } from "@/lib/riskProfile"
+import { computeRmfProfile, rmfBadgeClass, RMF_OVERALL_LABELS } from "@/lib/nistRmf"
+import { getTenant } from "@/lib/tenant"
+import { getBureauSignoff, getDepartmentApproval } from "@/lib/bureauSignoff"
 
 // Higher rank sorts first in the Decision Center list; unassessed drafts (rank 0)
 // always trail the fully-assessed candidates. Mirrors the ranking used for the
@@ -121,6 +124,7 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
   const d = submission.formData
   const checkboxId = `compare-${submission.id}`
   const disabled = !selected && selectionLimitReached
+  const rmfEnabled = !!getTenant().features.rmf
 
   return (
     <Card className={`transition-colors ${selected ? "border-2 border-primary bg-primary/5" : ""}`}>
@@ -146,6 +150,22 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
                 >
                   <Shield className="w-3 h-3 mr-1" />
                   {risk.label}
+                </Badge>
+              )
+            })()}
+            {rmfEnabled && (() => {
+              const rmf = computeRmfProfile({
+                ...d,
+                bureauSignoff: getBureauSignoff(submission),
+                departmentApproval: getDepartmentApproval(submission),
+              })
+              return (
+                <Badge
+                  className={rmfBadgeClass(rmf.overall)}
+                  title={`${rmf.rationale}${rmf.flags.length > 0 ? ` — ${rmf.flags.join(", ")}` : ""}`}
+                >
+                  <Scale className="w-3 h-3 mr-1" />
+                  {RMF_OVERALL_LABELS[rmf.overall]}
                 </Badge>
               )
             })()}
