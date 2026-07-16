@@ -57,6 +57,7 @@ describe("kpiDrilldownEntriesFor", () => {
     "omb-reportable": [],
     signoff: [],
     duplicates: [cluster("d1", ["d1", "d2"])],
+    rmf: [],
   }
 
   it("returns [] when no drilldown has loaded yet", () => {
