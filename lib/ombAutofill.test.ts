@@ -3,7 +3,7 @@ import {
   proposeHighImpact,
   proposeTopicArea,
   proposeAiClassification,
-  proposePublicIndicator,
+  proposeIsWithheld,
   proposeHasPii,
 } from "@/lib/ombAutofill"
 
@@ -51,21 +51,21 @@ describe("proposeAiClassification", () => {
   })
 })
 
-describe("proposePublicIndicator", () => {
-  it("defaults to public (OMB's 'No') when no security signal is present", () => {
-    const proposal = proposePublicIndicator({ nationalSecuritySystem: "no", securityClassification: "" })
-    expect(proposal.value).toBe("public")
+describe("proposeIsWithheld", () => {
+  it("defaults to 'no' (OMB's 'No') when no security signal is present", () => {
+    const proposal = proposeIsWithheld({ nationalSecuritySystem: "no", securityClassification: "" })
+    expect(proposal.value).toBe("no")
   })
 
-  it("proposes excluded for a flagged National Security System use", () => {
-    const proposal = proposePublicIndicator({ nationalSecuritySystem: "yes", securityClassification: "" })
-    expect(proposal.value).toBe("excluded")
+  it("proposes disclosure-prohibited-by-law for a flagged National Security System use", () => {
+    const proposal = proposeIsWithheld({ nationalSecuritySystem: "yes", securityClassification: "" })
+    expect(proposal.value).toBe("yes_disclosure_prohibited")
     expect(proposal.rationale).toMatch(/national security/i)
   })
 
-  it("proposes excluded for Controlled classification", () => {
-    const proposal = proposePublicIndicator({ nationalSecuritySystem: "no", securityClassification: "controlled" })
-    expect(proposal.value).toBe("excluded")
+  it("proposes risk-to-disclosure for Controlled classification", () => {
+    const proposal = proposeIsWithheld({ nationalSecuritySystem: "no", securityClassification: "controlled" })
+    expect(proposal.value).toBe("yes_risk_to_disclosure")
   })
 })
 

@@ -75,7 +75,11 @@ export type FormData = {
   // Step 2 - Use Case Overview
   useCaseTitle: string
   useCaseDescription: string
-  publicIndicator: "public" | "excluded" | ""
+  // OMB's four-way `is_withheld` field (docs/omb-2025-inventory-fields.md #5:
+  // "Should this AI use case be withheld from public reporting?"). Replaces
+  // the earlier two-way public/excluded flag (issue #116) — the export
+  // needs the *reason* an entry is withheld, not just a bare yes/no.
+  isWithheld: "no" | "yes_risk_to_disclosure" | "yes_disclosure_prohibited" | "other" | ""
 
   // Step 3
   targetAudience:
@@ -251,7 +255,7 @@ export const initialFormData: FormData = {
   submitterSubOffice: "",
   useCaseTitle: "",
   useCaseDescription: "",
-  publicIndicator: "",
+  isWithheld: "",
   targetAudience: "",
   impactedUsersCount: "",
   painPoints: "",

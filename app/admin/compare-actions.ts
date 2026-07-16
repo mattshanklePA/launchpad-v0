@@ -112,7 +112,7 @@ Readiness summary: ${fmt(d.readinessSummary)}
 Executive summary: ${fmt(d.executiveSummary)}
 
 Description: ${fmt(d.useCaseDescription)}
-Public/Excluded: ${fmt(d.publicIndicator)}
+Withheld from public reporting: ${fmt(d.isWithheld)}
 
 Target users:
   - Audience: ${fmt(d.targetAudience)}

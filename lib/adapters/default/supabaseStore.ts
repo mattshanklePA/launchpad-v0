@@ -9,6 +9,7 @@ import type { SubmissionStore } from "@/lib/ports/store"
 import { getCachedSubmissions } from "@/lib/dataCache"
 import type { SubmissionComment, SubmissionStatus } from "@/lib/reviewWorkflow"
 import { assigneeForBusinessUnit } from "@/lib/reviewWorkflow"
+import { migrateFormData } from "@/lib/formDataMigrations"
 
 const MAX_SUBMISSIONS = 50 // server caps at 50 in the GET handler too
 
@@ -24,7 +25,7 @@ function getSubmissions(): Submission[] {
   return getCachedSubmissions().slice(0, MAX_SUBMISSIONS).map((s) => ({
     id: s.id,
     submittedAt: s.submittedAt,
-    formData: s.formData as FormData,
+    formData: migrateFormData(s.formData) as FormData,
     status: s.status,
     ownerEmail: s.ownerEmail,
     businessUnit: s.businessUnit,

@@ -51,7 +51,7 @@
   localStorage.setItem('aid-form-data', JSON.stringify({
     useCaseDescription: "Proactively tell customers, in plain language, when their application status changes — so they stop having to call or email just to ask 'where is my application?'",
     coreProblem: "Customers are left in the dark between status changes, so they generate avoidable call and email volume asking for updates — and when they do see a status, it's in language they can't understand.",
-    targetAudience: "applicant", impactedUsersCount: "gt_500", publicIndicator: "public"
+    targetAudience: "applicant", impactedUsersCount: "gt_500", isWithheld: "no"
   })); localStorage.setItem('aid-current-step','3'); location.reload();
   ```
 - **Pre-generate one Decision Center briefing** (it's the slow call, ~10–20s) on a parked admin tab.
@@ -281,7 +281,7 @@ sessionStorage.removeItem('aid-session-active');
 localStorage.setItem('aid-form-data', JSON.stringify({
   useCaseDescription: "Proactively tell customers, in plain language, when their application status changes — so they stop having to call or email just to ask 'where is my application?'",
   coreProblem: "Customers are left in the dark between status changes, so they generate avoidable call and email volume asking for updates — and when they do see a status, it's in language they can't understand.",
-  targetAudience: "applicant", impactedUsersCount: "gt_500", publicIndicator: "public"
+  targetAudience: "applicant", impactedUsersCount: "gt_500", isWithheld: "no"
 }));
 localStorage.setItem('aid-current-step','3');
 location.reload();
@@ -297,7 +297,7 @@ location.reload();
   localStorage.setItem('aid-form-data', JSON.stringify({
     useCaseDescription: "Proactively tell customers, in plain language, when their application status changes — so they stop having to call or email just to ask 'where is my application?'",
     coreProblem: "Customers are left in the dark between status changes, so they generate avoidable call and email volume asking for updates — and when they do see a status, it's in language they can't understand.",
-    targetAudience: "applicant", impactedUsersCount: "gt_500", publicIndicator: "public"
+    targetAudience: "applicant", impactedUsersCount: "gt_500", isWithheld: "no"
   }));
   localStorage.setItem('aid-current-step','3');
   location.reload();

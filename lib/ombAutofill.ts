@@ -70,25 +70,25 @@ export function proposeAiClassification(
   return { value: result.value, rationale: result.reason }
 }
 
-/** Proposes `publicIndicator` (OMB's "should this be withheld?" field #5) — defaults to public/"No" unless a security signal already on the form suggests otherwise. Always returns a proposal; the default itself is the safe answer, not a guess. */
-export function proposePublicIndicator(
+/** Proposes `isWithheld` (OMB's four-way "should this be withheld?" field #5) — defaults to "No" unless a security signal already on the form suggests a withholding reason. Always returns a proposal; the default itself is the safe answer, not a guess. */
+export function proposeIsWithheld(
   fd: Pick<FormData, "nationalSecuritySystem" | "securityClassification">,
-): AutofillProposal<FormData["publicIndicator"]> {
+): AutofillProposal<FormData["isWithheld"]> {
   if (fd.nationalSecuritySystem === "yes") {
     return {
-      value: "excluded",
-      rationale: "Flagged as a National Security System / Intelligence Community use — defaults to excluded from public reporting.",
+      value: "yes_disclosure_prohibited",
+      rationale: "Flagged as a National Security System / Intelligence Community use — defaults to \"disclosure prohibited by law.\"",
     }
   }
   if (fd.securityClassification === "controlled") {
     return {
-      value: "excluded",
-      rationale: "Marked Controlled information — defaults to excluded from public reporting.",
+      value: "yes_risk_to_disclosure",
+      rationale: "Marked Controlled information — defaults to \"risk to disclosure (FOIA-protected interest).\"",
     }
   }
   return {
-    value: "public",
-    rationale: "No FOIA-protected interest, legal restriction, or security classification identified yet — defaults to public reporting (OMB's \"No\").",
+    value: "no",
+    rationale: "No FOIA-protected interest, legal restriction, or security classification identified yet — defaults to OMB's \"No.\"",
   }
 }
 

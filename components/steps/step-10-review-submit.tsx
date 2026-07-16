@@ -36,7 +36,7 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
   2: [
     { label: "Idea Title", key: "useCaseTitle" },
     { label: "Idea Description", key: "useCaseDescription" },
-    { label: "Public / Excluded", key: "publicIndicator" },
+    { label: "Withhold from Public Reporting?", key: "isWithheld" },
   ],
   // Step 3: merged Problem & Target Users
   3: [
@@ -205,8 +205,8 @@ export function Step10ReviewSubmit() {
     internal: "Internal",
     external: "External",
     controlled: "Controlled",
-    public: "Public",
-    excluded: "Excluded",
+    yes_risk_to_disclosure: "Yes - risk to disclosure (FOIA-protected interest)",
+    yes_disclosure_prohibited: "Yes - disclosure prohibited by law",
     american_built: "American-built",
     open_source_us: "Open-source (U.S.)",
     foreign: "Foreign-built",
