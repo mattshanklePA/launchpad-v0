@@ -22,6 +22,7 @@ import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
 import { getDashboardScope, getHierarchy } from "@/lib/dashboard/scope"
 import { getDashboardMetrics, scopedSubmissions } from "@/lib/dashboard/metrics"
+import { getKpiDrilldown } from "@/lib/dashboard/drilldown"
 import { getDashboardActions } from "@/lib/dashboard/actions"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -57,6 +58,7 @@ export function DepartmentDashboard() {
 
   const metrics = getDashboardMetrics(scope, submissions, tenant)
   const kpiCards = buildKpiCards(metrics, bureauTier)
+  const kpiDrilldown = getKpiDrilldown(scope, submissions, tenant)
   const dashboardActions = getDashboardActions(scope, submissions, tenant)
   const actionItems = buildActionItems(metrics, bureauTier, dashboardActions)
   const healthScore = computeHealthScore(metrics)
@@ -73,7 +75,7 @@ export function DepartmentDashboard() {
         <AdminToolsSection session={session} />
       </div>
 
-      <KpiCardGrid cards={kpiCards} />
+      <KpiCardGrid cards={kpiCards} drilldown={kpiDrilldown} />
 
       <DecisionCenterLink />
 

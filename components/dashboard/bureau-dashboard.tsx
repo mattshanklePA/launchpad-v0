@@ -25,6 +25,7 @@ import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
 import { getDashboardScope } from "@/lib/dashboard/scope"
 import { getDashboardMetrics, scopedSubmissions, officeRollupRowsForScope } from "@/lib/dashboard/metrics"
+import { getKpiDrilldown } from "@/lib/dashboard/drilldown"
 import { getDashboardActions } from "@/lib/dashboard/actions"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,6 +63,7 @@ export function BureauDashboard() {
 
   const metrics = getDashboardMetrics(scope, submissions, tenant)
   const kpiCards = buildKpiCards(metrics, bureauTier)
+  const kpiDrilldown = getKpiDrilldown(scope, submissions, tenant)
   const dashboardActions = getDashboardActions(scope, submissions, tenant)
   const actionItems = buildActionItems(metrics, bureauTier, dashboardActions)
   const healthScore = computeHealthScore(metrics)
@@ -79,7 +81,7 @@ export function BureauDashboard() {
         <AdminToolsSection session={session} />
       </div>
 
-      <KpiCardGrid cards={kpiCards} />
+      <KpiCardGrid cards={kpiCards} drilldown={kpiDrilldown} />
 
       <DecisionCenterLink />
 
