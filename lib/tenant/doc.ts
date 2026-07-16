@@ -23,6 +23,7 @@ export const doc: TenantConfig = {
   heroSubtitle:
     "Warder is where every Commerce bureau submits AI use cases, catches duplicates before they're funded, and produces the report in the exact format OMB reviewers require. Governance built in, not bolted on.",
   loginEmailPlaceholder: "you@doc.gov",
+  publicInquiryEmail: "AI.Inventory@doc.gov",
 
   strategicContext: `
 The Department of Commerce governs AI across its operating units (bureaus) under the federal AI framework. Every AI idea should clearly advance the Department's mission while meeting federal governance and reporting requirements.
