@@ -2,6 +2,8 @@
 // they're unit-testable without rendering React (same split as
 // lib/officeRollup.ts / components/admin/office-rollup.tsx).
 
+import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
+
 export type KpiTrendDirection = "up" | "down" | "flat"
 export type KpiStatus = "neutral" | "good" | "warning" | "critical"
 
@@ -62,4 +64,49 @@ const TREND_TEXT_CLASS: Record<KpiTrendDirection, string> = {
 /** Text color class for a delta's trend direction. */
 export function kpiTrendTextClass(direction: KpiTrendDirection): string {
   return TREND_TEXT_CLASS[direction]
+}
+
+/** One underlying item behind a KPI card — a plain submission or (for `duplicates`) a cluster. */
+export type KpiDrilldownEntry = KpiDrilldownItem | DuplicateClusterDrilldownItem
+
+/** How many baseball cards the hover preview shows before falling back to "+N more". */
+export const KPI_HOVER_PREVIEW_LIMIT = 4
+
+/**
+ * True when a drill-down entry is a cross-bureau duplicate cluster rather
+ * than a single submission — clusters carry `memberIds` (lib/dashboard/drilldown.ts),
+ * plain items never do.
+ */
+export function isDuplicateClusterEntry(item: KpiDrilldownEntry): item is DuplicateClusterDrilldownItem {
+  return "memberIds" in item
+}
+
+/** The `getKpiDrilldown` list for one KPI card id, `[]` if the card has no drill-down (or none loaded yet). */
+export function kpiDrilldownEntriesFor(id: string, drilldown?: KpiDrilldown): KpiDrilldownEntry[] {
+  if (!drilldown) return []
+  return (drilldown as unknown as Record<string, KpiDrilldownEntry[]>)[id] ?? []
+}
+
+/** The first `limit` entries for the hover-card preview; the dialog always lists every entry. */
+export function previewKpiDrilldownEntries(
+  items: KpiDrilldownEntry[],
+  limit: number = KPI_HOVER_PREVIEW_LIMIT,
+): KpiDrilldownEntry[] {
+  return items.slice(0, limit)
+}
+
+/** How many entries the hover-card preview truncates — 0 once every entry fits, driving the "+N more" affordance. */
+export function kpiDrilldownOverflowCount(items: KpiDrilldownEntry[], limit: number = KPI_HOVER_PREVIEW_LIMIT): number {
+  return Math.max(0, items.length - limit)
+}
+
+/**
+ * Read-only detail route a drill-down entry's "Open" link should point at.
+ * A duplicate cluster's `id` is already its lead submission's id (`toItem(lead, ...)`
+ * in lib/dashboard/drilldown.ts), and that submission's own detail page renders
+ * the cross-bureau rationalization section for the whole cluster — so every
+ * entry, cluster or not, resolves to the same `/submissions/{id}` shape.
+ */
+export function kpiDrilldownEntryHref(item: KpiDrilldownEntry): string {
+  return `/submissions/${item.id}`
 }
