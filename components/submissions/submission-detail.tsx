@@ -45,14 +45,15 @@ import { assistReviewer } from "@/app/actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 import { getTenant } from "@/lib/tenant"
 import {
-  computeRmfProfile,
   rmfBadgeClass,
   rmfFunctionStatusBadgeClass,
   RMF_FUNCTION_LABELS,
   RMF_FUNCTION_ORDER,
   RMF_FUNCTION_STATUS_LABELS,
   RMF_OVERALL_LABELS,
+  type RmfRiskLevel,
 } from "@/lib/nistRmf"
+import { resolveRmfProfile, buildRmfProfileReviewPatch } from "@/lib/rmfProfileReview"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
@@ -111,6 +112,8 @@ export function SubmissionDetail({ id }: { id: string }) {
   const [assisting, setAssisting] = useState(false)
   const [comment, setComment] = useState("")
   const [busy, setBusy] = useState(false)
+  const [rmfOverrideNote, setRmfOverrideNote] = useState("")
+  const [rmfOverriding, setRmfOverriding] = useState(false)
   const ranRef = useRef(false)
 
   const session = typeof window !== "undefined" ? getSession() : null
@@ -193,10 +196,12 @@ export function SubmissionDetail({ id }: { id: string }) {
   const isDeptViewer = hasDepartmentTransparency(viewer)
   const deptTierEnabled = departmentFinalApprovalEnabled(tenant)
 
-  // NIST AI RMF profile (lib/nistRmf.ts) — read-only lens, gated on the
-  // tenant's `rmf` feature flag so non-RMF tenants (USPTO/DoW) are unaffected.
+  // NIST AI RMF profile (lib/nistRmf.ts + lib/rmfProfileReview.ts) — computed
+  // at submission and shown to reviewers as a proposal they confirm or
+  // override, gated on the tenant's `rmf` feature flag so non-RMF tenants
+  // (USPTO/DoW) are unaffected.
   const rmfEnabled = !!tenant.features.rmf
-  const rmfProfile = rmfEnabled ? computeRmfProfile({ ...fd, bureauSignoff, departmentApproval }, tenant) : null
+  const resolvedRmf = rmfEnabled ? resolveRmfProfile(sub, tenant) : null
 
   // Unlike similarMatches above (deliberately scoped to the viewer), the
   // rationalization gate must see the true cross-bureau cluster regardless of
@@ -283,6 +288,41 @@ export function SubmissionDetail({ id }: { id: string }) {
   const setHighImpact = async (next: "high_impact" | "presumed_not_high_impact" | "not_high_impact") => {
     setBusy(true)
     await patchSubmissionFormData(sub.id, { highImpact: next })
+    await reload()
+    setBusy(false)
+  }
+
+  const confirmRmfProfile = async () => {
+    if (!resolvedRmf) return
+    setBusy(true)
+    await patchSubmissionFormData(
+      sub.id,
+      buildRmfProfileReviewPatch("confirmed", resolvedRmf.profile, {
+        byName: session?.name || session?.email || "Reviewer",
+        byEmail: session?.email || "",
+        at: new Date().toISOString(),
+      }),
+    )
+    setRmfOverriding(false)
+    await reload()
+    setBusy(false)
+  }
+
+  const overrideRmfProfile = async (overriddenOverall: RmfRiskLevel) => {
+    if (!resolvedRmf) return
+    setBusy(true)
+    await patchSubmissionFormData(
+      sub.id,
+      buildRmfProfileReviewPatch("overridden", resolvedRmf.profile, {
+        byName: session?.name || session?.email || "Reviewer",
+        byEmail: session?.email || "",
+        at: new Date().toISOString(),
+        overriddenOverall,
+        notes: rmfOverrideNote.trim() || undefined,
+      }),
+    )
+    setRmfOverriding(false)
+    setRmfOverrideNote("")
     await reload()
     setBusy(false)
   }
@@ -569,17 +609,22 @@ export function SubmissionDetail({ id }: { id: string }) {
         </div>
       </div>
 
-      {rmfProfile && (
-        <div className="rounded-lg border bg-white p-4 space-y-2">
+      {resolvedRmf && (
+        <div className="rounded-lg border bg-white p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">NIST AI RMF</div>
-            <Badge variant="outline" className={rmfBadgeClass(rmfProfile.overall)} title={rmfProfile.rationale}>
-              {RMF_OVERALL_LABELS[rmfProfile.overall]}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {resolvedRmf.isProposal && (
+                <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">proposed · awaiting reviewer</Badge>
+              )}
+              <Badge variant="outline" className={rmfBadgeClass(resolvedRmf.effectiveOverall)} title={resolvedRmf.profile.rationale}>
+                {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
+              </Badge>
+            </div>
           </div>
           <div className="space-y-2">
             {RMF_FUNCTION_ORDER.map((key) => {
-              const result = rmfProfile.functions[key]
+              const result = resolvedRmf.profile.functions[key]
               return (
                 <div key={key} className="flex flex-wrap items-start gap-2">
                   <Badge variant="outline" className={rmfFunctionStatusBadgeClass(result.status)}>
@@ -594,6 +639,59 @@ export function SubmissionDetail({ id }: { id: string }) {
               )
             })}
           </div>
+          {resolvedRmf.review ? (
+            <p className="text-xs text-muted-foreground pt-2 border-t flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {resolvedRmf.review.decision === "overridden"
+                ? `Overridden to "${RMF_OVERALL_LABELS[resolvedRmf.review.overriddenOverall || resolvedRmf.review.proposedOverall]}" (proposed "${RMF_OVERALL_LABELS[resolvedRmf.review.proposedOverall]}")`
+                : "Confirmed as proposed"}
+              {" "}by {resolvedRmf.review.byName}, {new Date(resolvedRmf.review.at).toLocaleDateString()}
+              {resolvedRmf.review.notes ? ` — "${resolvedRmf.review.notes}"` : ""}
+            </p>
+          ) : null}
+          {isReviewer && (
+            <div className="pt-2 border-t space-y-2">
+              {!rmfOverriding ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    {resolvedRmf.review ? "Reviewer decision:" : "Proposed — confirm or override:"}
+                  </span>
+                  <Button size="sm" disabled={busy} onClick={confirmRmfProfile}>
+                    <Check className="w-3.5 h-3.5 mr-1.5" />Confirm
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => setRmfOverriding(true)}>
+                    Override
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">Set the overall RMF level:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {(Object.keys(RMF_OVERALL_LABELS) as RmfRiskLevel[]).map((level) => (
+                      <Button
+                        key={level}
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => overrideRmfProfile(level)}
+                      >
+                        {RMF_OVERALL_LABELS[level]}
+                      </Button>
+                    ))}
+                  </div>
+                  <Textarea
+                    value={rmfOverrideNote}
+                    onChange={(e) => setRmfOverrideNote(e.target.value)}
+                    placeholder="Reason for override (optional)..."
+                    rows={2}
+                  />
+                  <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRmfOverriding(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

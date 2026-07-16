@@ -500,6 +500,52 @@ export function Step8FeasibilitySecurity() {
                 </div>
               )}
 
+              {isVisible("disseminatesToPublic") && (
+                <div className="space-y-2">
+                  <Label>
+                    Does the AI system&apos;s output get disseminated to the public?{" "}
+                    <FieldRequirementBadge fieldKey="disseminatesToPublic" />
+                  </Label>
+                  <RadioGroup
+                    value={formData.disseminatesToPublic}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, disseminatesToPublic: value as any }))}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="disseminates-yes" />
+                      <Label htmlFor="disseminates-yes">Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="disseminates-no" />
+                      <Label htmlFor="disseminates-no">No</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
+              {isVisible("scalable") && (
+                <div className="space-y-2">
+                  <Label>
+                    Is this use case intended to scale beyond its current deployment?{" "}
+                    <FieldRequirementBadge fieldKey="scalable" />
+                  </Label>
+                  <RadioGroup
+                    value={formData.scalable}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, scalable: value as any }))}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="scalable-yes" />
+                      <Label htmlFor="scalable-yes">Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="scalable-no" />
+                      <Label htmlFor="scalable-no">No</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
               {isVisible("aiImpactAssessment") && (
                 <div className="space-y-5 pl-4 border-l-2 border-blue-200">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">

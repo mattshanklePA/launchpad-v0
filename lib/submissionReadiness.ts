@@ -119,6 +119,8 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   omb("highImpactJustification", "High-impact justification", () => !presentString(formData.highImpactJustification))
   omb("topicArea", "Use case topic area", () => !formData.topicArea)
   omb("aiClassification", "AI classification", () => !formData.aiClassification)
+  omb("disseminatesToPublic", "Disseminates information to the public answer", () => !formData.disseminatesToPublic)
+  omb("scalable", "Scalable-beyond-deployment answer", () => !formData.scalable)
   omb("hasATO", "Associated ATO answer", () => !formData.hasATO)
   omb("atoSystemName", "ATO system name", () => !presentString(formData.atoSystemName))
   omb("systemSource", "Built in-house / under contract / purchased", () => !formData.systemSource)
@@ -187,6 +189,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     "involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview",
     "dataReadiness", "impactLevel", "trl",
     "stageOfDevelopment", "highImpact", "highImpactJustification", "topicArea", "aiClassification",
+    "disseminatesToPublic", "scalable",
     "hasATO", "atoSystemName", "systemSource", "systemSourceVendorName", "operationalDate",
     "trainingDataDescription", "hasPii", "demographicFeatures", "customCode",
     "preDeploymentTesting", "aiImpactAssessmentCompleted", "aiImpactAssessment", "independentReviewConducted",

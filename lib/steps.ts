@@ -170,6 +170,12 @@ export type FormData = {
     | "nlp"
     | "reinforcement_learning"
     | "" // #10
+  // NIST AI RMF gap fields (docs/nist-rmf-mapping.md §8) — the DoC AI Use
+  // Case Tracker has no existing signal for these two, unlike every other
+  // Map-function field above. RMF/LaunchPad-specific, not one of OMB's 34 —
+  // see lib/fieldRegistry.ts's `level: "department"` entry for both.
+  disseminatesToPublic: "yes" | "no" | "" // does the AI system's output get disseminated to the public?
+  scalable: "yes" | "no" | "" // is this use case intended to scale beyond its current deployment?
   hasATO: "yes" | "no" | "in_progress" | "" // #17 (kept an extra "in_progress" beyond OMB's Yes/No for in-flight status)
   atoSystemName: string // #18 sub-field — system name, only meaningful once hasATO is "yes"
   systemSource: "in_house" | "contract" | "vendor" | "" // #15
@@ -298,6 +304,8 @@ export const initialFormData: FormData = {
   highImpactJustification: "",
   topicArea: "",
   aiClassification: "",
+  disseminatesToPublic: "",
+  scalable: "",
   hasATO: "",
   atoSystemName: "",
   systemSource: "",
