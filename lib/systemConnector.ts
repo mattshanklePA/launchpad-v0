@@ -5,15 +5,19 @@
 
 import type { SystemConnector } from "@/lib/ports/connector"
 import { rallyConnector } from "@/lib/adapters/default/rallyConnector"
+import { aiHubConnector } from "@/lib/adapters/aiHub/aiHubConnector"
+import { getTenant } from "@/lib/tenant"
 
 /**
  * Resolve the active SystemConnector.
  *
- * Today this returns the default Rally example. To sync submissions to an
- * agency's system of record or AI use-case inventory (ServiceNow, the AI Hub,
- * Jira), branch here on config/env and return a different SystemConnector.
- * See docs/BOUNDARY.md.
+ * Defaults to the Rally example. A tenant with the `aiHubExport` feature flag
+ * set (DoC today) gets the AI Hub adapter instead, which reuses the OMB field
+ * mapping. To sync submissions to a different agency system of record or AI
+ * use-case inventory (ServiceNow, Jira), branch here on config/env and return
+ * another SystemConnector. See docs/BOUNDARY.md.
  */
 export function getSystemConnector(): SystemConnector {
+  if (getTenant().features.aiHubExport) return aiHubConnector()
   return rallyConnector()
 }

@@ -269,6 +269,7 @@ Required env vars:
 | `LAUNCHPAD_MODEL_ID` | Optional. Overrides the model id; defaults to `claude-sonnet-4-5-20250929`. |
 | `SLACK_WEBHOOK_URL` | Optional. Slack notifications. |
 | `RALLY_API_KEY` | Optional. Rally integration. |
+| `AI_HUB_ENDPOINT_URL` | Optional. AI Hub inventory endpoint (`lib/adapters/aiHub/aiHubConnector.ts`); unset means the adapter no-ops (log + succeed) instead of pushing. |
 | `NEXT_PUBLIC_TENANT` | Multi-tenant builds only. Selects tenant config; defaults to `uspto`. DoW build uses `dow`. |
 
 **Multi-tenant:** a `getTenant()` resolver keyed off `NEXT_PUBLIC_TENANT` selects branding/config per deployment. Each tenant = separate Vercel project + Supabase instance + git branch (e.g., `USPTO-launchpad`, `dow`). The admin dashboard (`app/admin/page.tsx`) reads its header, subtitle, tab label, and seed OKR/priorities list from `getTenant().okrsLabel` and `getTenant().focusAreas` — no org-specific copy is hardcoded there, so a wrong tenant's strategic-priority term or content never leaks into another org's dashboard.
@@ -278,7 +279,7 @@ Required env vars:
 ## 11. External integrations (existing adapter examples)
 
 - **Notifications** go through the `Notifier` port. Core calls `getNotifier().send(...)` from `lib/notifier.ts`; the default adapter (`lib/adapters/default/slackNotifier.ts`) wraps `lib/slackWebhook.ts`. Swap for Teams/email in `lib/notifier.ts`.
-- **System-of-record sync** goes through the `SystemConnector` port. Core calls `getSystemConnector().pushSubmission(...)` from `lib/systemConnector.ts`; the default adapter (`lib/adapters/default/rallyConnector.ts`) wraps `lib/rallyClient.ts`. Swap for ServiceNow / the AI Hub inventory in `lib/systemConnector.ts`.
+- **System-of-record sync** goes through the `SystemConnector` port. Core calls `getSystemConnector().pushSubmission(...)` from `lib/systemConnector.ts`; the default adapter (`lib/adapters/default/rallyConnector.ts`) wraps `lib/rallyClient.ts`. `lib/systemConnector.ts` branches to `lib/adapters/aiHub/aiHubConnector.ts` when the active tenant's `aiHubExport` feature flag is set (DoC today) — that adapter maps a submission to the OMB schema by reusing `mapSubmissionToOmbRow` (`lib/ombExport.ts`, the same mapping the OMB CSV export uses) so the field mapping is never duplicated, then POSTs the mapped payload to `AI_HUB_ENDPOINT_URL`. There is no live AI Hub endpoint yet, so an unset `AI_HUB_ENDPOINT_URL` makes the adapter no-op safely (log + succeed) — demo tenants and tenants without the flag are unaffected. The Decision Center's Approve action (`components/submissions/submission-detail.tsx`) calls the server action `app/systemConnector-actions.ts`'s `pushApprovedSubmission(...)` — which just calls `getSystemConnector().pushSubmission(...)` — once a submission's status flips to `approved`, so an approved use case is always pushed through whichever connector the tenant resolves to.
 - `slackWebhook.ts` and `rallyClient.ts` are placeholders today. The ports mean that when they are wired into the submit/decision flow, core code depends on the interface, not the concrete service.
 
 ---
