@@ -67,7 +67,8 @@ export function pipelineStatusCounts(scope: DashboardScope, submissions: Submiss
 export type ReadinessBucket = "ready" | "needs_work" | "early_stage" | "not_assessed"
 export type ReadinessDistributionCard = Record<ReadinessBucket, number> & { total: number }
 
-function readinessBucket(s: Submission): ReadinessBucket {
+/** Buckets one submission's `formData.readinessScore` — the single source of truth `lib/dashboard/drilldown.ts` reuses so its readiness list never diverges from this count. */
+export function readinessBucket(s: Submission): ReadinessBucket {
   const v = (s.formData as Record<string, unknown> | undefined)?.readinessScore
   return v === "ready" || v === "needs_work" || v === "early_stage" ? v : "not_assessed"
 }
