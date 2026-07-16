@@ -44,6 +44,15 @@ import {
 import { assistReviewer } from "@/app/actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 import { getTenant } from "@/lib/tenant"
+import {
+  computeRmfProfile,
+  rmfBadgeClass,
+  rmfFunctionStatusBadgeClass,
+  RMF_FUNCTION_LABELS,
+  RMF_FUNCTION_ORDER,
+  RMF_FUNCTION_STATUS_LABELS,
+  RMF_OVERALL_LABELS,
+} from "@/lib/nistRmf"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
@@ -183,6 +192,11 @@ export function SubmissionDetail({ id }: { id: string }) {
   const departmentApproval = getDepartmentApproval(sub)
   const isDeptViewer = hasDepartmentTransparency(viewer)
   const deptTierEnabled = departmentFinalApprovalEnabled(tenant)
+
+  // NIST AI RMF profile (lib/nistRmf.ts) — read-only lens, gated on the
+  // tenant's `rmf` feature flag so non-RMF tenants (USPTO/DoW) are unaffected.
+  const rmfEnabled = !!tenant.features.rmf
+  const rmfProfile = rmfEnabled ? computeRmfProfile({ ...fd, bureauSignoff, departmentApproval }, tenant) : null
 
   // Unlike similarMatches above (deliberately scoped to the viewer), the
   // rationalization gate must see the true cross-bureau cluster regardless of
@@ -554,6 +568,34 @@ export function SubmissionDetail({ id }: { id: string }) {
           <RiskRow ok={fd.aiDecisionalImpact !== "yes"} label={fd.aiDecisionalImpact === "yes" ? "Decisional AI" : "Non-decisional"} />
         </div>
       </div>
+
+      {rmfProfile && (
+        <div className="rounded-lg border bg-white p-4 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">NIST AI RMF</div>
+            <Badge variant="outline" className={rmfBadgeClass(rmfProfile.overall)} title={rmfProfile.rationale}>
+              {RMF_OVERALL_LABELS[rmfProfile.overall]}
+            </Badge>
+          </div>
+          <div className="space-y-2">
+            {RMF_FUNCTION_ORDER.map((key) => {
+              const result = rmfProfile.functions[key]
+              return (
+                <div key={key} className="flex flex-wrap items-start gap-2">
+                  <Badge variant="outline" className={rmfFunctionStatusBadgeClass(result.status)}>
+                    {RMF_FUNCTION_LABELS[key]}: {RMF_FUNCTION_STATUS_LABELS[result.status]}
+                  </Badge>
+                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-0.5">
+                    {result.reasons.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-lg border bg-white p-4 space-y-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Submission</div>
