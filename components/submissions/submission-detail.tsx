@@ -42,6 +42,7 @@ import {
   type SignoffDecision,
 } from "@/lib/bureauSignoff"
 import { assistReviewer } from "@/app/actions"
+import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 import { getTenant } from "@/lib/tenant"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -240,6 +241,12 @@ export function SubmissionDetail({ id }: { id: string }) {
       })
     } else {
       await setSubmissionStatus(sub.id, next)
+    }
+    // Sync an approved use case out to the agency system of record / AI use
+    // case inventory (lib/systemConnector.ts) — a no-op on tenants/deployments
+    // with no connector configured, see lib/adapters/aiHub/aiHubConnector.ts.
+    if (next === "approved") {
+      await pushApprovedSubmission(sub)
     }
     await reload()
     setBusy(false)
