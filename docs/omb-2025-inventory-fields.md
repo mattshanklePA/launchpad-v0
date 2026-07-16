@@ -65,6 +65,10 @@ Everything below is OMB's exact wording: field name, data type, **valid selectio
 - **Pre-deployment onward:** `topic_area`, `classification`, `problem_solved`, `benefits`, `system_outputs`.
 - **Optional (never blocking):** `link_to_data`, `pia_url`, `code_url`.
 
+## Consolidated field mapping
+
+**`docs/omb-field-mapping.md`** is the single table of all 34 fields above → the LaunchPad `FormData` field that supplies each one → kept / renamed / added / stand-in status, including the risk-question mapping and the `has_pii` / `involvesSensitiveData` overlap. This file stays the authoritative data dictionary (names, types, valid selections, `showWhen`); that one is the consolidated cross-reference.
+
 ## Mapping notes for the field cascade (868kam0x3)
 
 - **All 34 fields = `level: "omb"`** in `lib/fieldRegistry.ts` — mandatory-when-applicable, non-removable by any bureau.
