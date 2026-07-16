@@ -7,6 +7,7 @@ import {
   previewKpiDrilldownEntries,
   kpiDrilldownOverflowCount,
   kpiDrilldownEntryHref,
+  presentCardField,
 } from "./kpi-card-data"
 import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 
@@ -83,6 +84,43 @@ describe("previewKpiDrilldownEntries / kpiDrilldownOverflowCount", () => {
   it("has no overflow once every entry fits within the limit", () => {
     expect(previewKpiDrilldownEntries(items, 10)).toEqual(items)
     expect(kpiDrilldownOverflowCount(items, 10)).toBe(0)
+  })
+})
+
+describe("presentCardField", () => {
+  it("splits a trailing parenthetical (omb-reportable's reason + consolidation status) into badge + descriptor", () => {
+    expect(
+      presentCardField({ ...item("1"), cardField: "Supports mission delivery, included at any stage. (Individual)" }),
+    ).toEqual({ badge: "Individual", descriptor: "Supports mission delivery, included at any stage." })
+    expect(presentCardField({ ...item("2"), cardField: "Matches a prior submission. (Consolidated)" })).toEqual({
+      badge: "Consolidated",
+      descriptor: "Matches a prior submission.",
+    })
+  })
+
+  it("treats a short categorical value as badge-only", () => {
+    expect(presentCardField({ ...item("1"), cardField: "Ready" })).toEqual({ badge: "Ready", descriptor: null })
+    expect(presentCardField({ ...item("1"), cardField: "Pending rationalization" })).toEqual({
+      badge: "Pending rationalization",
+      descriptor: null,
+    })
+  })
+
+  it("drops the badge when cardField just repeats stage (pipeline)", () => {
+    expect(presentCardField({ ...item("1"), stage: "Approved", cardField: "Approved" })).toEqual({
+      badge: null,
+      descriptor: null,
+    })
+    expect(presentCardField({ ...item("1"), stage: "approved", cardField: "Approved" })).toEqual({
+      badge: null,
+      descriptor: null,
+    })
+  })
+
+  it("keeps a long rationale (high-impact) as a bare descriptor", () => {
+    const cardField =
+      "AI output could meaningfully affect the safety of individuals (OMB M-25-21 Section 5). AI output could meaningfully affect an enforcement action (OMB M-25-21 Section 5)."
+    expect(presentCardField({ ...item("1"), cardField })).toEqual({ badge: null, descriptor: cardField })
   })
 })
 

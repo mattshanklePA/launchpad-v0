@@ -100,6 +100,36 @@ export function kpiDrilldownOverflowCount(items: KpiDrilldownEntry[], limit: num
   return Math.max(0, items.length - limit)
 }
 
+export type CardFieldPresentation = { badge: string | null; descriptor: string | null }
+
+/** Above this word count, `cardField` reads as prose (e.g. high-impact rationale) rather than a short tag. */
+const MAX_BADGE_WORDS = 3
+
+/**
+ * Splits a drill-down entry's free-form `cardField` (`lib/dashboard/drilldown.ts`)
+ * into a short classification for a compact `Badge` and, when there's more to
+ * say, a one-line descriptor — so a long repeated sentence never has to carry
+ * both. `omb-reportable`'s `"<reason> (<Individual|Consolidated>)"` shape yields
+ * both a badge and a descriptor; short categorical values (`"Ready"`, `"Decided"`,
+ * `"Pending rationalization"`) become badge-only; long rationale text (`high-impact`)
+ * stays a bare descriptor. A badge that would just repeat `item.stage` (pipeline's
+ * `cardField` is literally its `STATUS_LABEL`, already shown next to it) is dropped
+ * as redundant.
+ */
+export function presentCardField(item: KpiDrilldownEntry): CardFieldPresentation {
+  const cardField = item.cardField.trim()
+  const trailingParen = cardField.match(/^(.*\S)\s*\(([^()]+)\)$/)
+  if (trailingParen) {
+    return { badge: trailingParen[2], descriptor: trailingParen[1] }
+  }
+  if (cardField.length > 0 && cardField.split(/\s+/).length <= MAX_BADGE_WORDS) {
+    return cardField.toLowerCase() === item.stage.trim().toLowerCase()
+      ? { badge: null, descriptor: null }
+      : { badge: cardField, descriptor: null }
+  }
+  return { badge: null, descriptor: cardField || null }
+}
+
 /**
  * Read-only detail route a drill-down entry's "Open" link should point at.
  * A duplicate cluster's `id` is already its lead submission's id (`toItem(lead, ...)`
