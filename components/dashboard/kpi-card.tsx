@@ -35,6 +35,7 @@ import {
   kpiDrilldownOverflowCount,
   kpiDrilldownEntryHref,
   kpiDrilldownEntriesFor,
+  presentCardField,
   type KpiCardData,
   type KpiTrendDirection,
   type KpiDrilldownEntry,
@@ -56,8 +57,10 @@ function memberCountLabel(item: KpiDrilldownEntry): string | null {
 function BaseballCard({ item }: { item: KpiDrilldownEntry }) {
   const memberCount = memberCountLabel(item)
   return (
-    <div className="rounded-md border bg-card p-2 text-card-foreground">
-      <p className="line-clamp-1 text-xs font-medium">{item.title}</p>
+    <div className="min-w-0 rounded-md border bg-card p-2 text-card-foreground">
+      <p className="line-clamp-1 text-xs font-medium" title={item.title}>
+        {item.title}
+      </p>
       <div className="mt-1 flex flex-wrap items-center gap-1">
         <Badge variant="outline" className="rounded px-1.5 py-0 text-[10px] font-normal">
           {item.bureauLabel}
@@ -80,11 +83,14 @@ function BaseballCard({ item }: { item: KpiDrilldownEntry }) {
 function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
   const cluster = isDuplicateClusterEntry(item)
   const memberCount = memberCountLabel(item)
+  const { badge, descriptor } = presentCardField(item)
   return (
-    <li className="rounded-md border p-2.5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{item.title}</p>
+    <li className="min-w-0 rounded-md border p-2.5">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+        <div className="min-w-0 flex-1 basis-64">
+          <p className="truncate text-sm font-medium" title={item.title}>
+            {item.title}
+          </p>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <span>{item.bureauLabel}</span>
             <span aria-hidden="true">·</span>
@@ -95,8 +101,13 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
                 <span>{memberCount}</span>
               </>
             )}
+            {badge && (
+              <Badge variant="outline" className="rounded px-1.5 py-0 text-[10px] font-normal">
+                {badge}
+              </Badge>
+            )}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">{item.cardField}</p>
+          {descriptor && <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{descriptor}</p>}
         </div>
         <Link
           href={kpiDrilldownEntryHref(item)}
@@ -191,7 +202,7 @@ export function KpiCard({ label, value, delta, status = "neutral", items }: KpiC
         )}
       </HoverCard>
 
-      <DialogContent className="max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{label}</DialogTitle>
           <DialogDescription>
@@ -201,7 +212,7 @@ export function KpiCard({ label, value, delta, status = "neutral", items }: KpiC
         {items.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Nothing here right now.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="min-w-0 space-y-2">
             {items.map((item) => (
               <DrilldownRow key={item.id} item={item} />
             ))}
