@@ -9,10 +9,12 @@ import {
   crossBureauDuplicatesSummary,
   bureauRollupRows,
   officeRollupRowsForScope,
+  rmfRollupSummary,
   getDashboardMetrics,
 } from "@/lib/dashboard/metrics"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { visibleSubmissions } from "@/lib/reviewWorkflow"
+import { initialFormData } from "@/lib/steps"
 import { doc } from "@/lib/tenant/doc"
 import { uspto } from "@/lib/tenant/uspto"
 import type { Submission } from "@/lib/submissions"
@@ -239,6 +241,42 @@ describe("officeRollupRowsForScope", () => {
   })
 })
 
+function rmfSub(id: string, businessUnit: string, formData: Record<string, unknown>): Submission {
+  return { id, submittedAt: new Date(0).toISOString(), status: "approved", businessUnit, formData: formData as any }
+}
+
+const rmfOnTrack = rmfSub("rmf-ok", "noaa", {
+  ...initialFormData,
+  stageOfDevelopment: "deployed",
+  reviewStatus: "approved",
+  bureauSignoff: { bureau: "noaa", decision: "approved", signedOffByName: "x", signedOffByEmail: "x@noaa.gov", signedOffAt: "2026-01-01" },
+  departmentApproval: { decision: "approved", byName: "d", byEmail: "d@doc.gov", at: "2026-01-01" },
+  hasATO: "yes",
+  atoSystemName: "System X",
+  isWithheld: "no",
+  topicArea: "cybersecurity",
+  aiClassification: "generative_ai",
+  coreProblem: "p",
+  businessValue: "v",
+  solutionSummary: "s",
+  highImpact: "not_high_impact",
+})
+const rmfAtRisk = rmfSub("rmf-gap", "noaa", { ...initialFormData, stageOfDevelopment: "deployed" })
+const rmfUnknown = rmfSub("rmf-unknown", "noaa", { ...initialFormData, stageOfDevelopment: "" })
+const rmfSubmissions = [rmfOnTrack, rmfAtRisk, rmfUnknown]
+
+describe("rmfRollupSummary", () => {
+  it("counts by resolveRmfProfile's effective overall level, scoped", () => {
+    const card = rmfRollupSummary({ level: "bureau", businessUnit: "noaa" }, rmfSubmissions, doc)
+    expect(card).toEqual({ on_track: 1, attention: 0, at_risk: 1, unknown: 1, total: 3 })
+  })
+
+  it("never counts a row outside the scope's bureau", () => {
+    const card = rmfRollupSummary({ level: "bureau", businessUnit: "census" }, rmfSubmissions, doc)
+    expect(card.total).toBe(0)
+  })
+})
+
 describe("getDashboardMetrics", () => {
   it("bundles every card for a scope in one call", () => {
     const metrics = getDashboardMetrics(NOAA, submissions, doc)
@@ -247,6 +285,11 @@ describe("getDashboardMetrics", () => {
     expect(metrics.readiness.total).toBe(3)
     expect(metrics.bureauRollup.map((r) => r.value)).toEqual(["noaa"])
     expect(metrics.officeRollup.length).toBeGreaterThan(0)
+  })
+
+  it("includes the RMF rollup card", () => {
+    const metrics = getDashboardMetrics({ level: "bureau", businessUnit: "noaa" }, rmfSubmissions, doc)
+    expect(metrics.rmfRollup).toEqual({ on_track: 1, attention: 0, at_risk: 1, unknown: 1, total: 3 })
   })
 
   it("never lets a bureau scope's metrics reflect another bureau's submissions", () => {

@@ -26,6 +26,8 @@ import { determineReportability } from "@/lib/ombReportability"
 import { determineConsolidation } from "@/lib/ombConsolidation"
 import { clusterDuplicates, isRationalizationPending, tenantHasBureauTier } from "@/lib/rationalization"
 import { officeRollupRows, type OfficeRollupRow } from "@/lib/officeRollup"
+import { resolveRmfProfile } from "@/lib/rmfProfileReview"
+import type { RmfRiskLevel } from "@/lib/nistRmf"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 
@@ -168,6 +170,28 @@ export function crossBureauDuplicatesSummary(
   return { clusterCount: relevant.length, pendingCount }
 }
 
+export type RmfRollupCard = Record<RmfRiskLevel, number> & { total: number }
+
+/**
+ * NIST AI RMF overall-level rollup, scoped — built on `resolveRmfProfile`
+ * (lib/rmfProfileReview.ts) rather than a bare `computeRmfProfile` call, so a
+ * reviewer's confirmed/overridden level counts here exactly as Decision
+ * Center and the submission detail page badge it. Always computed regardless
+ * of `features.rmf` — like every other card here, gating on the flag is the
+ * caller's job (`buildKpiCards`'s `rmfEnabled` param decides whether the KPI
+ * card itself renders).
+ */
+export function rmfRollupSummary(
+  scope: DashboardScope,
+  submissions: Submission[],
+  tenant: TenantConfig = getTenant(),
+): RmfRollupCard {
+  const rows = scopedSubmissions(scope, submissions)
+  const card: RmfRollupCard = { on_track: 0, attention: 0, at_risk: 0, unknown: 0, total: rows.length }
+  for (const s of rows) card[resolveRmfProfile(s, tenant).effectiveOverall]++
+  return card
+}
+
 export type BureauRollupRow = OfficeRollupRow
 
 /**
@@ -231,6 +255,7 @@ export type DashboardMetrics = {
   crossBureauDuplicates: CrossBureauDuplicatesCard
   bureauRollup: BureauRollupRow[]
   officeRollup: OfficeRollupRow[]
+  rmfRollup: RmfRollupCard
 }
 
 /** Computes every Command Center card for one scope in a single pass. */
@@ -249,5 +274,6 @@ export function getDashboardMetrics(
     crossBureauDuplicates: crossBureauDuplicatesSummary(scope, submissions, tenant),
     bureauRollup: bureauRollupRows(scope, submissions, tenant),
     officeRollup: officeRollupRowsForScope(scope, submissions, tenant),
+    rmfRollup: rmfRollupSummary(scope, submissions, tenant),
   }
 }

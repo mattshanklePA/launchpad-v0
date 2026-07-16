@@ -62,6 +62,7 @@ function baseMetrics(overrides: Partial<DashboardMetrics> = {}): DashboardMetric
     crossBureauDuplicates: { clusterCount: 0, pendingCount: 0 },
     bureauRollup: [],
     officeRollup: [],
+    rmfRollup: { on_track: 5, attention: 3, at_risk: 0, unknown: 2, total: 10 },
     ...overrides,
   }
 }
@@ -164,6 +165,24 @@ describe("buildKpiCards", () => {
       true,
     )
     expect(cards.find((c) => c.id === "duplicates")?.status).toBe("critical")
+  })
+
+  it("omits the RMF card when rmfEnabled is false, regardless of bureau tier", () => {
+    expect(buildKpiCards(baseMetrics(), true).map((c) => c.id)).not.toContain("rmf")
+    expect(buildKpiCards(baseMetrics(), true, false).map((c) => c.id)).not.toContain("rmf")
+  })
+
+  it("appends the RMF card when rmfEnabled is true", () => {
+    const cards = buildKpiCards(baseMetrics(), false, true)
+    expect(cards.map((c) => c.id)).toEqual(["pipeline", "readiness", "high-impact", "omb-reportable", "rmf"])
+    const rmf = cards.find((c) => c.id === "rmf")!
+    expect(rmf.value).toBe(0)
+    expect(rmf.delta?.value).toBe("3 need attention")
+  })
+
+  it("flags the RMF card critical when at_risk > 0", () => {
+    const cards = buildKpiCards(baseMetrics({ rmfRollup: { on_track: 0, attention: 0, at_risk: 2, unknown: 0, total: 2 } }), false, true)
+    expect(cards.find((c) => c.id === "rmf")?.status).toBe("critical")
   })
 })
 

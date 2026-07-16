@@ -15,6 +15,7 @@ import { getBureauSignoff } from "@/lib/bureauSignoff"
 import { determineReportability } from "@/lib/ombReportability"
 import { determineConsolidation } from "@/lib/ombConsolidation"
 import { clusterDuplicates, isRationalizationPending, tenantHasBureauTier } from "@/lib/rationalization"
+import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { scopedSubmissions, readinessBucket } from "@/lib/dashboard/metrics"
@@ -42,6 +43,7 @@ export type KpiDrilldown = {
   "omb-reportable": KpiDrilldownItem[]
   signoff: KpiDrilldownItem[]
   duplicates: DuplicateClusterDrilldownItem[]
+  rmf: KpiDrilldownItem[]
 }
 
 function toItem(s: Submission, cardField: string): KpiDrilldownItem {
@@ -66,6 +68,7 @@ function toItem(s: Submission, cardField: string): KpiDrilldownItem {
  *   - `omb-reportable` <-> `ombReportabilitySummary(...).reportable`
  *   - `signoff` <-> `awaitingSignoff(...).count`
  *   - `duplicates` <-> `crossBureauDuplicatesSummary(...).clusterCount`
+ *   - `rmf` <-> `rmfRollupSummary(...).at_risk`
  * `duplicates` mirrors that summary's own scoping rule: clustering runs over
  * the full, unscoped submission set (a bureau's half of a cross-bureau
  * duplicate must still resolve even though the bureau can't see the other
@@ -114,6 +117,11 @@ export function getKpiDrilldown(
       }
     })
 
+  const rmf = rows
+    .map((s) => ({ s, resolved: resolveRmfProfile(s, tenant) }))
+    .filter(({ resolved }) => resolved.effectiveOverall === "at_risk")
+    .map(({ s, resolved }) => toItem(s, resolved.profile.rationale))
+
   return {
     pipeline,
     readiness,
@@ -121,5 +129,6 @@ export function getKpiDrilldown(
     "omb-reportable": ombReportable,
     signoff,
     duplicates,
+    rmf,
   }
 }

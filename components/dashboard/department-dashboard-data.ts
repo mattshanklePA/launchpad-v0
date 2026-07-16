@@ -53,10 +53,13 @@ export function scopeLabel(scope: DashboardScope, tenant: TenantConfig): string 
  * OMB reportability (with its consolidated/individual split) always render;
  * bureau sign-off and cross-bureau duplicate cards only for tenants with a
  * bureau tier (DoC) — always-zero/meaningless otherwise (see
- * lib/dashboard/metrics.ts's awaitingSignoff/crossBureauDuplicatesSummary).
+ * lib/dashboard/metrics.ts's awaitingSignoff/crossBureauDuplicatesSummary);
+ * the RMF rollup card only for tenants with `features.rmf` on (DoC) — same
+ * gate `submission-detail.tsx`/`decision-center.tsx` use for their own RMF
+ * surfaces.
  */
-export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean): KpiCardData[] {
-  const { pipelineStatus, readiness, highImpact, ombReportability, crossBureauDuplicates, awaitingSignoff } = metrics
+export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rmfEnabled: boolean = false): KpiCardData[] {
+  const { pipelineStatus, readiness, highImpact, ombReportability, crossBureauDuplicates, awaitingSignoff, rmfRollup } = metrics
 
   const cards: KpiCardData[] = [
     { id: "pipeline", label: "In pipeline", value: pipelineStatus.total, status: "neutral" },
@@ -104,6 +107,16 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean): K
             }
           : undefined,
       status: crossBureauDuplicates.pendingCount > 0 ? "critical" : "neutral",
+    })
+  }
+
+  if (rmfEnabled) {
+    cards.push({
+      id: "rmf",
+      label: "RMF at risk",
+      value: rmfRollup.at_risk,
+      delta: rmfRollup.attention > 0 ? { value: `${rmfRollup.attention} need attention`, direction: "down" } : undefined,
+      status: rmfRollup.at_risk > 0 ? "critical" : rmfRollup.attention > 0 ? "warning" : "neutral",
     })
   }
 
