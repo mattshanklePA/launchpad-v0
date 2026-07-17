@@ -18,6 +18,12 @@ import { GlossaryTerm } from "../launchpad/glossary-term"
 import { HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
 import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
 import { useAiPropose } from "@/hooks/use-ai-propose"
+import {
+  TOPIC_AREA_OPTIONS as topicAreaOptions,
+  AI_CLASSIFICATION_OPTIONS as aiClassificationOptions,
+  DEMOGRAPHIC_FEATURE_OPTIONS as demographicFeatureOptions,
+  PUBLIC_CONSULTATION_OPTIONS as publicConsultationOptions,
+} from "@/lib/governanceFieldOptions"
 
 const highImpactFactorOptions: { value: HighImpactFactor; label: string }[] = (
   Object.keys(HIGH_IMPACT_FACTOR_LABELS) as HighImpactFactor[]
@@ -34,61 +40,6 @@ const accessOptions = [
   { value: "mfa", label: "MFA / CAC" },
   { value: "il_boundary", label: "Runs inside accredited boundary (IL4/5)" },
   { value: "other", label: "Other" },
-]
-
-// OMB topic-area options (docs/omb-2025-inventory-fields.md field #9).
-const topicAreaOptions = [
-  { value: "administrative_functions", label: "Administrative Functions" },
-  { value: "cybersecurity", label: "Cybersecurity" },
-  { value: "emergency_management", label: "Emergency Management" },
-  { value: "energy_environment", label: "Energy and the Environment" },
-  { value: "government_benefits_processing", label: "Government Benefits Processing" },
-  { value: "health_medical", label: "Health and Medical" },
-  { value: "human_resources", label: "Human Resources" },
-  { value: "information_technology", label: "Information Technology" },
-  { value: "international_affairs", label: "International Affairs" },
-  { value: "law_enforcement", label: "Law Enforcement" },
-  { value: "procurement_financial_management", label: "Procurement and Financial Management" },
-  { value: "science", label: "Science" },
-  { value: "service_delivery", label: "Service Delivery" },
-  { value: "transportation", label: "Transportation" },
-  { value: "other", label: "Other" },
-]
-
-// OMB AI classification options (field #10).
-const aiClassificationOptions = [
-  { value: "agentic_ai", label: "Agentic AI" },
-  { value: "classical_predictive_ml", label: "Classical/Predictive Machine Learning" },
-  { value: "computer_vision", label: "Computer Vision" },
-  { value: "generative_ai", label: "Generative AI" },
-  { value: "nlp", label: "Natural Language Processing" },
-  { value: "reinforcement_learning", label: "Reinforcement Learning" },
-]
-
-// OMB demographic-features options (field #23, select multiple).
-const demographicFeatureOptions = [
-  { value: "race_ethnicity", label: "Race/Ethnicity" },
-  { value: "sex", label: "Sex" },
-  { value: "age", label: "Age" },
-  { value: "religious_affiliation", label: "Religious Affiliation" },
-  { value: "socioeconomic_status", label: "Socioeconomic Status" },
-  { value: "ability_status", label: "Ability Status" },
-  { value: "residency_status", label: "Residency Status" },
-  { value: "marital_status", label: "Marital Status" },
-  { value: "income", label: "Income" },
-  { value: "employment_status", label: "Employment Status" },
-  { value: "none", label: "None of the above" },
-  { value: "other", label: "Other" },
-]
-
-// OMB public-consultation steps options (field #34, select multiple).
-const publicConsultationOptions = [
-  { value: "direct_usability_testing", label: "Direct usability testing" },
-  { value: "general_solicitation", label: "General solicitations of public feedback/comments" },
-  { value: "public_hearings", label: "Public hearings or meetings" },
-  { value: "other", label: "Other" },
-  { value: "in_progress", label: "In-progress" },
-  { value: "waived", label: "Agency CAIO has waived this minimum practice" },
 ]
 
 export function Step8FeasibilitySecurity() {

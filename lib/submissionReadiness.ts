@@ -24,6 +24,38 @@
 import type { FormData } from "@/lib/steps"
 import { isFieldVisible } from "@/lib/formConfig"
 
+// The governance fields tracked in `governanceMissing` below — exported so
+// lib/governanceCapture.ts (issue #161's reviewer-side "complete the use
+// case" capture) can drive the same field list without hand-duplicating it.
+// Order matches the `omb(...)` calls in `getSubmissionReadiness`.
+export const GOVERNANCE_FIELD_KEYS: (keyof FormData)[] = [
+  "stageOfDevelopment",
+  "highImpact",
+  "highImpactJustification",
+  "topicArea",
+  "aiClassification",
+  "disseminatesToPublic",
+  "scalable",
+  "hasATO",
+  "atoSystemName",
+  "systemSource",
+  "systemSourceVendorName",
+  "operationalDate",
+  "trainingDataDescription",
+  "hasPii",
+  "demographicFeatures",
+  "customCode",
+  "preDeploymentTesting",
+  "aiImpactAssessmentCompleted",
+  "aiImpactAssessment",
+  "independentReviewConducted",
+  "ongoingMonitoringPlan",
+  "operatorTrainingEstablished",
+  "failSafeMechanism",
+  "humanOversightAppeal",
+  "publicConsultationSteps",
+]
+
 export type MissingReason = "missing" | "not_assessed" | "low_quality"
 
 export type MissingItem = {
