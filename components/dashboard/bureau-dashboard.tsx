@@ -151,7 +151,7 @@ export function BureauDashboard() {
       <DecisionCenterLink />
 
       <div className="space-y-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Key metrics</h2>
+        <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Key metrics</h2>
         <KpiCardGrid cards={kpiCards} drilldown={kpiDrilldown} />
       </div>
     </DashboardShell>

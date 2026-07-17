@@ -4,6 +4,7 @@
 
 import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { GlossaryTermKey } from "@/lib/glossary"
+import { STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
 
 export type KpiTrendDirection = "up" | "down" | "flat"
 export type KpiStatus = "neutral" | "good" | "warning" | "critical"
@@ -22,28 +23,22 @@ export type KpiCardData = {
   subtitle?: string
 }
 
-const STATUS_ACCENT_CLASS: Record<KpiStatus, string> = {
-  neutral: "border-l-border",
-  good: "border-l-emerald-500",
-  warning: "border-l-amber-500",
-  critical: "border-l-red-500",
+/** Maps the KPI grid's own status vocabulary onto the DS's four-state healthy/attention/alert/neutral vocabulary (lib/statusTokens.ts), so cards render the exact same colors and StatusPill as the rest of the app. */
+const STATUS_KEYSTONE: Record<KpiStatus, KeystoneStatus> = {
+  neutral: "neutral",
+  good: "healthy",
+  warning: "attention",
+  critical: "alert",
 }
 
-/** Left-border accent class for a KPI card's status. */
+/** The DS status a KPI card's status maps to — feeds `<StatusPill>`. */
+export function kpiStatusKeystone(status: KpiStatus = "neutral"): KeystoneStatus {
+  return STATUS_KEYSTONE[status]
+}
+
+/** Left-border accent class for a KPI card's status. Status is carried by this accent + a StatusPill only — amber (or any status color) never fills the card as a background wash. */
 export function kpiStatusAccentClass(status: KpiStatus = "neutral"): string {
-  return STATUS_ACCENT_CLASS[status]
-}
-
-const STATUS_SURFACE_CLASS: Record<KpiStatus, string> = {
-  neutral: "",
-  good: "",
-  warning: "bg-amber-50/70 dark:bg-amber-950/20",
-  critical: "bg-red-50/70 dark:bg-red-950/20",
-}
-
-/** Background tint for a KPI card's status — only actionable (warning/critical) statuses get one. */
-export function kpiStatusSurfaceClass(status: KpiStatus = "neutral"): string {
-  return STATUS_SURFACE_CLASS[status]
+  return STATUS_BORDER_L_CLASS[STATUS_KEYSTONE[status]]
 }
 
 /** Whether a KPI's status represents something that needs attention, for sort order and emphasis. */

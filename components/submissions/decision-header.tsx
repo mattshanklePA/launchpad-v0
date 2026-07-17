@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
+import { STATUS_BADGE_CLASS, STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
 import type { assistReviewer } from "@/app/actions"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
@@ -25,10 +26,13 @@ const DISPOSITION_LABEL: Record<Assist["suggestedDisposition"], string> = {
   reject: "Reject",
 }
 
-const DISPOSITION_CLASS: Record<Assist["suggestedDisposition"], string> = {
-  approve: "bg-green-100 text-green-800 border-green-300",
-  request_info: "bg-amber-100 text-amber-800 border-amber-300",
-  reject: "bg-red-100 text-red-800 border-red-300",
+// Keystone status colors (lib/statusTokens.ts): approve reads healthy, a
+// request for more info reads attention (amber, badge-only — never a page
+// background wash), reject reads alert.
+const DISPOSITION_KEYSTONE: Record<Assist["suggestedDisposition"], KeystoneStatus> = {
+  approve: "healthy",
+  request_info: "attention",
+  reject: "alert",
 }
 
 export function DecisionHeader({
@@ -73,7 +77,7 @@ export function DecisionHeader({
 
       {!assisting && assist && (
         <div className="flex flex-wrap items-start gap-2">
-          <Badge variant="outline" className={DISPOSITION_CLASS[assist.suggestedDisposition]}>
+          <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS[DISPOSITION_KEYSTONE[assist.suggestedDisposition]])}>
             {DISPOSITION_LABEL[assist.suggestedDisposition]}
           </Badge>
           <p className="text-sm leading-relaxed">{assist.verdict}</p>
@@ -82,14 +86,14 @@ export function DecisionHeader({
 
       <div
         className={cn(
-          "flex items-start gap-2 rounded-md border p-3 text-sm",
-          blockingText ? "border-amber-300 bg-amber-50 text-amber-900" : "border-green-300 bg-green-50 text-green-900",
+          "flex items-start gap-2 rounded-md border border-l-4 bg-card p-3 text-sm text-foreground",
+          STATUS_BORDER_L_CLASS[blockingText ? "attention" : "healthy"],
         )}
       >
         {blockingText ? (
-          <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-attention-foreground" aria-hidden="true" />
         ) : (
-          <ShieldCheck className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+          <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-healthy-foreground" aria-hidden="true" />
         )}
         <span>{blockingText ?? "Nothing is blocking approval right now."}</span>
       </div>
@@ -117,7 +121,7 @@ export function DecisionHeader({
       {hasAnalysis && showAnalysis && assist && (
         <div id="assistant-analysis" className="grid gap-4 border-t pt-3 sm:grid-cols-2">
           <div>
-            <div className="mb-1 text-xs font-medium text-green-700">Strengths</div>
+            <div className="mb-1 text-xs font-medium text-healthy-foreground">Strengths</div>
             <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
               {assist.strengths.map((x, i) => (
                 <li key={i}>{x}</li>
@@ -125,7 +129,7 @@ export function DecisionHeader({
             </ul>
           </div>
           <div>
-            <div className="mb-1 text-xs font-medium text-red-700">Gaps to probe</div>
+            <div className="mb-1 text-xs font-medium text-alert">Gaps to probe</div>
             <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
               {assist.gaps.map((x, i) => (
                 <li key={i}>{x}</li>

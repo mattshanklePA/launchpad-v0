@@ -46,10 +46,10 @@ export const RMF_FUNCTION_LABELS: Record<RmfFunctionKey, string> = {
 }
 
 export const RMF_OVERALL_LABELS: Record<RmfRiskLevel, string> = {
-  on_track: "On Track",
-  attention: "Needs Attention",
-  at_risk: "At Risk",
-  unknown: "RMF Unassessed",
+  on_track: "On track",
+  attention: "Needs attention",
+  at_risk: "At risk",
+  unknown: "RMF unassessed",
 }
 
 export const RMF_FUNCTION_STATUS_LABELS: Record<RmfFunctionStatus, string> = {

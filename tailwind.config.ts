@@ -70,6 +70,28 @@ const config: Config = {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
+        // The shadcn Sidebar primitive's (components/ui/sidebar.tsx) own color
+        // slot — `bg-sidebar`/`border-sidebar-border`/`bg-sidebar-accent` etc.
+        // — was never registered here, so those utility classes silently
+        // generated no CSS and the console's left rail fell back to
+        // unstyled/inherited colors instead of the fixed basalt rail Shell.jsx
+        // (.claude/skills/ui_kits/keystone-app/) specifies. The CSS custom
+        // properties themselves (app/globals.css) are repointed at the
+        // Keystone basalt/chalk/active-blue tokens; this just wires them up.
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: {
+            DEFAULT: "hsl(var(--sidebar-primary))",
+            foreground: "hsl(var(--sidebar-primary-foreground))",
+          },
+          accent: {
+            DEFAULT: "hsl(var(--sidebar-accent))",
+            foreground: "hsl(var(--sidebar-accent-foreground))",
+          },
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
