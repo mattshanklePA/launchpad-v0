@@ -98,7 +98,7 @@ export function Step10ReviewSubmit() {
     try {
       // Persist to Supabase via the API. Every visitor will see this on
       // their next page load (or on refetch).
-      await saveSubmission(formData)
+      await saveSubmission({ ...formData, intakeMode: "form" })
       toast({
         title: "Submitted for vetting",
         description: "Your idea has been saved and routed for review.",

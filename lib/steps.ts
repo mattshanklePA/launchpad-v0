@@ -279,6 +279,14 @@ export type FormData = {
   }[]
   assignedReviewerName?: string
   assignedReviewerEmail?: string
+
+  // Which intake experience produced this submission — "guided" (the
+  // conversational thread, issue #169) or "form" (the step wizard). Set once,
+  // at submit time, by whichever surface the submitter was on when they
+  // clicked submit (issue #170); absent on drafts and on submissions saved
+  // before this field existed. Lightweight instrumentation only — lets
+  // reporting compare completion by mode without a separate event log.
+  intakeMode?: "guided" | "form"
 }
 
 export const initialFormData: FormData = {

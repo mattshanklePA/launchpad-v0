@@ -234,7 +234,7 @@ export function ConversationalIntake() {
     setIsSubmitting(true)
     try {
       const readiness = await assessReadiness(formData, getFormConfig().enabled)
-      const finalData: FormData = { ...formData, ...readiness }
+      const finalData: FormData = { ...formData, ...readiness, intakeMode: "guided" }
       const saved = await saveSubmission(finalData)
       setSubmitted(true)
       resetForm()
