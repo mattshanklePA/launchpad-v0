@@ -44,7 +44,7 @@ describe("DecisionHeader", () => {
     const onApprove = vi.fn()
     const el = render(
       <DecisionHeader
-        assistantName="Kestrel"
+        assistantName="Plumb"
         assisting
         assist={null}
         blockingText={null}
@@ -63,7 +63,7 @@ describe("DecisionHeader", () => {
     const onResolveBlocker = vi.fn()
     const el = render(
       <DecisionHeader
-        assistantName="Kestrel"
+        assistantName="Plumb"
         assisting={false}
         assist={approveAssist}
         blockingText={null}
@@ -84,7 +84,7 @@ describe("DecisionHeader", () => {
     const onResolveBlocker = vi.fn()
     const el = render(
       <DecisionHeader
-        assistantName="Kestrel"
+        assistantName="Plumb"
         assisting={false}
         assist={reviewAssist}
         blockingText="Rationalization pending — this cross-bureau duplicate cluster must be decided before approval."
@@ -103,7 +103,7 @@ describe("DecisionHeader", () => {
   it("keeps the assistant's strengths/gaps analysis collapsed until the reviewer opens it", () => {
     const el = render(
       <DecisionHeader
-        assistantName="Kestrel"
+        assistantName="Plumb"
         assisting={false}
         assist={reviewAssist}
         blockingText={null}

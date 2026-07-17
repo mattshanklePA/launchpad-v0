@@ -1,20 +1,27 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Chivo, Hanken_Grotesk } from "next/font/google"
+import { Chivo, Hanken_Grotesk, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { getTenant } from "@/lib/tenant"
 
 // Keystone base brand type system (brand/keystone/README.md): Hanken Grotesk
-// (body/UI), Chivo (headings/wordmark). Self-hosted via next/font — no
-// runtime font CDN, consistent with the public-landing font work
-// (components/landing/public-landing.tsx) — and applied app-wide as the base;
-// tenants can still override per-surface via className.
+// (body/UI), Chivo (headings/wordmark), JetBrains Mono (mono/labels). Self-
+// hosted via next/font — no runtime font CDN, consistent with the
+// public-landing font work (components/landing/public-landing.tsx) — and
+// applied app-wide as the base; tenants can still override per-surface via
+// className.
 const chivo = Chivo({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-chivo", display: "swap" })
 const hankenGrotesk = Hanken_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   variable: "--font-hanken",
+  display: "swap",
+})
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 })
 
@@ -35,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${chivo.variable} ${hankenGrotesk.variable}`}>
+    <html lang="en" className={`${chivo.variable} ${hankenGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className={hankenGrotesk.className}>
         <div className="min-h-screen bg-background font-sans antialiased">{children}</div>
         <Toaster />

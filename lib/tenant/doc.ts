@@ -16,12 +16,12 @@ export const doc: TenantConfig = {
   id: "doc",
   shortName: "DOC",
   orgName: "Department of Commerce",
-  productName: "Warder",
-  assistantName: "Kestrel",
+  productName: "Keystone",
+  assistantName: "Plumb",
   logoSubtitle: "Commerce AI Use Case Platform",
   heroHeadline: "Turn scattered AI ideas into an OMB-ready inventory — without the annual scramble.",
   heroSubtitle:
-    "Warder is where every Commerce bureau submits AI use cases, catches duplicates before they're funded, and produces the report in the exact format OMB reviewers require. Governance built in, not bolted on.",
+    "Keystone is where every Commerce bureau submits AI use cases, catches duplicates before they're funded, and produces the report in the exact format OMB reviewers require. Governance built in, not bolted on.",
   loginEmailPlaceholder: "you@doc.gov",
   publicInquiryEmail: "AI.Inventory@doc.gov",
 

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
-import { Wand2, Bot, User, Info, Send, ClipboardCheck, Sparkles, Pencil } from "lucide-react"
+import { Wand2, User, Info, Send, ClipboardCheck, Sparkles, Pencil } from "lucide-react"
 import { validateAndRefineInput, type ScoutResponse } from "@/app/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,6 +12,7 @@ import type { FormData } from "@/lib/steps"
 import { useForm } from "@/context/form-context"
 import { getFormConfig } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
+import { PlumbMark } from "@/components/branding/plumb-mark"
 
 // Message format for the API (legacy shape kept for backward compatibility)
 type ApiMessage = {
@@ -200,7 +201,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
         <div className="flex flex-col rounded-lg border bg-white shadow-sm h-full">
           <div className="flex items-center justify-between p-3 border-b flex-shrink-0">
             <h3 className="font-semibold text-lg flex items-center gap-2">
-              <Bot className="h-6 w-6 text-uspto-blue-primary" />
+              <PlumbMark className="h-6 w-6" />
               {tenant.productName} {tenant.assistantName}
             </h3>
             <Tooltip>
@@ -239,7 +240,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                 if (msg.response.mode === "question") {
                   return (
                     <div key={index} className="flex items-start gap-3">
-                      <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
+                      <PlumbMark className="h-5 w-5 flex-shrink-0 mt-1" />
                       <div className="rounded-lg p-3 bg-gray-100 text-sm w-full">
                         <p className="font-medium mb-1">{msg.response.questionText}</p>
                         {msg.response.rationale && (
@@ -289,7 +290,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                 // Assistant — scaffold
                 return (
                   <div key={index} className="flex items-start gap-3">
-                    <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
+                    <PlumbMark className="h-5 w-5 flex-shrink-0 mt-1" />
                     <div className="rounded-lg p-3 bg-gray-100 text-sm w-full">
                       {msg.response.summary && (
                         <p className="mb-3 whitespace-pre-wrap">{msg.response.summary}</p>
@@ -324,7 +325,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
 
               {isLoading && (
                 <div className="flex items-start gap-3">
-                  <Bot className="h-5 w-5 text-uspto-blue-primary flex-shrink-0 mt-1" />
+                  <PlumbMark className="h-5 w-5 flex-shrink-0 mt-1" />
                   <div className="rounded-lg p-3 bg-gray-100 text-sm">
                     <Sparkles className="h-4 w-4 inline animate-pulse mr-1" />
                     {tenant.assistantName} is thinking...

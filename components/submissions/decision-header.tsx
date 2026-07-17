@@ -9,10 +9,11 @@
 // computed from the same lib/* logic the rest of the page uses.
 
 import { useState } from "react"
-import { ChevronDown, Loader2, Sparkles, ShieldCheck, AlertTriangle } from "lucide-react"
+import { ChevronDown, Loader2, ShieldCheck, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
+import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
 import type { assistReviewer } from "@/app/actions"
 
@@ -54,7 +55,7 @@ export function DecisionHeader({
   return (
     <section aria-labelledby="decision-heading" className="space-y-3 rounded-lg border bg-card p-4 text-card-foreground">
       <div className="flex flex-wrap items-center gap-2">
-        <Sparkles className="h-4 w-4 text-secondary" aria-hidden="true" />
+        <PlumbMark className="h-4 w-4" />
         <h2 id="decision-heading" className="text-sm font-semibold">
           {assistantName}&apos;s recommendation
         </h2>

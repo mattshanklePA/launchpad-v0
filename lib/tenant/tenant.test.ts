@@ -15,9 +15,9 @@ describe("DoC tenant", () => {
     expect(values).toContain("uspto")
   })
 
-  it("renames the product to Warder and the assistant to Kestrel", () => {
-    expect(doc.productName).toBe("Warder")
-    expect(doc.assistantName).toBe("Kestrel")
+  it("renames the product to Keystone and the assistant to Plumb", () => {
+    expect(doc.productName).toBe("Keystone")
+    expect(doc.assistantName).toBe("Plumb")
   })
 
   it("anchors focus areas to the federal AI framework (OMB)", () => {
@@ -126,7 +126,7 @@ describe("tenantHasBureauTier", () => {
   })
 })
 
-describe("product/assistant naming (issue #31 — Warder/Kestrel for DoC only)", () => {
+describe("product/assistant naming (issue #148 — Keystone/Plumb for DoC only)", () => {
   it("keeps USPTO and DoW on LaunchPad + Scout, unaffected by the DoC rename", () => {
     expect(uspto.productName).toBe("LaunchPad")
     expect(uspto.assistantName).toBe("Scout")

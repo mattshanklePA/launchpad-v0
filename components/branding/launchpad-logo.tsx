@@ -49,7 +49,7 @@ function KeystoneMark({ className, monochrome }: { className?: string; monochrom
  * - Icon variant: Keystone mark only with sr-only text
  * - The mark is the shared Keystone base brand asset; the product name and
  *   subtitle text still come from the active tenant (see lib/tenant), so
- *   USPTO/DoW's "LaunchPad" and DoC's "Warder" keep rendering as before.
+ *   USPTO/DoW's "LaunchPad" and DoC's "Keystone" keep rendering as before.
  */
 export function LaunchPadLogo({
   size = "md",

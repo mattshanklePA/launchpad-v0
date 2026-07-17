@@ -46,7 +46,7 @@ describe("GLOSSARY", () => {
   })
 
   it("is tenant-neutral (no hardcoded tenant/org names)", () => {
-    const tenantNames = ["USPTO", "DoW", "DoC", "Commerce", "Warder", "LaunchPad"]
+    const tenantNames = ["USPTO", "DoW", "DoC", "Commerce", "Keystone", "LaunchPad"]
     for (const key of GLOSSARY_TERM_KEYS) {
       const entry = GLOSSARY[key]
       for (const name of tenantNames) {

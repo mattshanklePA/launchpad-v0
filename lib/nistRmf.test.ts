@@ -57,7 +57,7 @@ describe("computeRmfProfile — Govern", () => {
         reviewStatus: "approved",
         bureauSignoff: { bureau: "nist", decision: "approved", signedOffByName: "x", signedOffByEmail: "x@nist.gov", signedOffAt: "2026-01-01" },
         hasATO: "yes",
-        atoSystemName: "Kestrel Prod",
+        atoSystemName: "Plumb Prod",
         isWithheld: "no",
       }),
       noDeptTier,
