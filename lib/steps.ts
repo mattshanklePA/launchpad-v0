@@ -87,6 +87,12 @@ export type FormData = {
   // bureau declares `offices` (see lib/tenant/types.ts). Empty when the
   // bureau has no offices or the tenant doesn't use the concept.
   submitterSubOffice: string
+  // Client sponsor (issue #163) — who's sponsoring this idea, when that's
+  // someone other than the submitter. Optional free text; left blank when
+  // the submitter is their own sponsor.
+  sponsorName: string
+  sponsorRole: string
+  sponsorEmail: string
 
   // Step 2 - Use Case Overview
   useCaseTitle: string
@@ -109,9 +115,13 @@ export type FormData = {
   // Step 4
   coreProblem: string
   problemImpact: string
-  // Tenant-defined system/process/group (`TenantConfig.affectedSystems`).
-  // Free string, same pattern as `submitterOffice`.
-  affectedSystem: string
+  // Affected business units (issue #163) — multi-select, sourced from the
+  // tenant's `affectedSystems` list (`TenantConfig.affectedSystems`), same
+  // free-string-per-option pattern as `submitterOffice`. Replaces the
+  // earlier single-value `affectedSystem`; legacy single values are wrapped
+  // into a one-element array at the read boundary
+  // (`lib/formDataMigrations.ts`'s `migrateAffectedBusinessUnits`).
+  affectedBusinessUnits: string[]
   problemType: string[]
   severity: "low" | "medium" | "high" | ""
   problemDefinition: string
@@ -120,6 +130,9 @@ export type FormData = {
   proposedSolution: string
   keyFunctionality: string[]
   solutionSummary: string
+  // Internal vs external (issue #163) — whether the solution is built for
+  // internal staff use or is customer/public-facing.
+  deliveryAudience: "internal" | "external" | ""
 
   // Step 6
   userValue: string
@@ -274,6 +287,9 @@ export const initialFormData: FormData = {
   submitterRole: "",
   submitterOffice: "",
   submitterSubOffice: "",
+  sponsorName: "",
+  sponsorRole: "",
+  sponsorEmail: "",
   useCaseTitle: "",
   useCaseDescription: "",
   isWithheld: "",
@@ -284,13 +300,14 @@ export const initialFormData: FormData = {
   targetUserSummary: "",
   coreProblem: "",
   problemImpact: "",
-  affectedSystem: "",
+  affectedBusinessUnits: [],
   problemType: [],
   severity: "",
   problemDefinition: "",
   proposedSolution: "",
   keyFunctionality: [],
   solutionSummary: "",
+  deliveryAudience: "",
   userValue: "",
   userTimeSavings: "",
   otherUserImprovements: [],

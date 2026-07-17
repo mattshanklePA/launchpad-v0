@@ -878,6 +878,17 @@ export function SubmissionDetail({ id }: { id: string }) {
       <div className="rounded-lg border bg-card p-4 space-y-3">
         <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>
         {([
+          [
+            "Affected business units",
+            (fd.affectedBusinessUnits || [])
+              .map((v) => tenant.affectedSystems.find((o) => o.value === v)?.label || v)
+              .join(", "),
+          ],
+          [
+            "Client sponsor",
+            fd.sponsorName ? `${fd.sponsorName}${fd.sponsorRole ? ` (${fd.sponsorRole})` : ""}` : "",
+          ],
+          ["Internal or external", fd.deliveryAudience === "internal" ? "Internal" : fd.deliveryAudience === "external" ? "External" : ""],
           ["Problem", fd.problemDefinition || fd.coreProblem],
           ["Proposed solution", fd.solutionSummary || fd.proposedSolution],
           ["Business value", fd.businessValueSummary || fd.businessValue],

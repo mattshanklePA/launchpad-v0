@@ -135,7 +135,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
 
   // ---------- Step 2: Business Problem & Opportunity ----------
   need("coreProblem", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
-  need("affectedSystem", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Affected system" }, () => !formData.affectedSystem)
+  need("affectedBusinessUnits", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Affected business units" }, () => !hasArrayValue(formData.affectedBusinessUnits))
   need("targetAudience", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Target audience" }, () => !formData.targetAudience)
   need("impactedUsersCount", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Estimated users impacted" }, () => !formData.impactedUsersCount)
   need("targetUserContext", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
@@ -235,7 +235,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   // completeness percentage anymore.
   const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
     "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
-    "coreProblem", "affectedSystem", "targetAudience", "impactedUsersCount", "targetUserContext",
+    "coreProblem", "affectedBusinessUnits", "targetAudience", "impactedUsersCount", "targetUserContext",
     "proposedSolution", "userValue", "businessValue",
     "useCaseTitle", "useCaseDescription", "isWithheld",
   ]

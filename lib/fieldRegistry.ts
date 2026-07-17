@@ -544,6 +544,33 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
   },
   {
+    fieldKey: "sponsorName",
+    label: "Client Sponsor Name",
+    description: "Name of the idea's sponsor, when that's someone other than the submitter.",
+    reasonToInclude: "Identifies who's championing the idea for reviewers to loop in, when it isn't the submitter.",
+    phase: 1,
+    step: 1,
+    locked: false,
+  },
+  {
+    fieldKey: "sponsorRole",
+    label: "Client Sponsor Role",
+    description: "Job role or title of the idea's sponsor.",
+    reasonToInclude: "Gives reviewers context on the sponsor's authority and stake in the idea.",
+    phase: 1,
+    step: 1,
+    locked: false,
+  },
+  {
+    fieldKey: "sponsorEmail",
+    label: "Client Sponsor Email",
+    description: "Email address for the idea's sponsor.",
+    reasonToInclude: "Lets reviewers loop the sponsor into review conversations directly.",
+    phase: 1,
+    step: 1,
+    locked: false,
+  },
+  {
     fieldKey: "useCaseTitle",
     label: "Idea Title",
     description: "Short name for the AI use case.",
@@ -600,9 +627,9 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: false,
   },
   {
-    fieldKey: "affectedSystem",
-    label: "Affected System",
-    description: "Which process, system, or group the problem affects.",
+    fieldKey: "affectedBusinessUnits",
+    label: "Affected Business Units",
+    description: "Which business units, processes, or groups the problem affects (multi-select).",
     reasonToInclude: "Identifies the operational surface area for impact analysis and reviewer routing.",
     phase: 2,
     step: 2,
@@ -713,6 +740,15 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     locked: true,
     lockedReason:
       `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
+  },
+  {
+    fieldKey: "deliveryAudience",
+    label: "Internal or External?",
+    description: "Whether the solution is built for internal staff use or is customer/public-facing.",
+    reasonToInclude: "Flags customer-facing solutions for extra scrutiny (UX, accessibility, public communications).",
+    phase: 3,
+    step: 3,
+    locked: false,
   },
 
   // Step 5: Value (merged user + business)

@@ -106,6 +106,7 @@ function summarizeSubmission(s: Submission, idx: number): string {
   return `
 === CANDIDATE ${idx + 1}: ${d.useCaseTitle || "Untitled"} (id: ${s.id}) ===
 Submitted by: ${fmt(d.submitterName)} (${fmt(d.submitterRole)} in ${fmt(d.submitterOffice)})
+Client sponsor: ${fmt(d.sponsorName)} (${fmt(d.sponsorRole)})
 Submitted: ${s.submittedAt}
 Readiness verdict: ${fmt(d.readinessScore)}
 Readiness summary: ${fmt(d.readinessSummary)}
@@ -124,7 +125,7 @@ Target users:
 Problem:
   - Core: ${fmt(d.coreProblem)}
   - Impact: ${fmt(d.problemImpact)}
-  - System affected: ${fmt(d.affectedSystem)}
+  - Business units affected: ${fmt(d.affectedBusinessUnits)}
   - Type tags: ${fmt(d.problemType)}
   - Severity: ${fmt(d.severity)}
   - Definition: ${fmt(d.problemDefinition)}
@@ -133,6 +134,7 @@ Solution:
   - Proposed: ${fmt(d.proposedSolution)}
   - Key functionality: ${fmt(d.keyFunctionality)}
   - Summary: ${fmt(d.solutionSummary)}
+  - Internal or external: ${fmt(d.deliveryAudience)}
 
 User value:
   - Statement: ${fmt(d.userValue)}
