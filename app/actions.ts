@@ -11,6 +11,8 @@ import {
   type AlignmentSuggestion,
 } from "@/lib/strategicFocusAreas"
 import { getTenant } from "@/lib/tenant"
+import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
+import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
 
 type Message = {
   role: "user" | "assistant"
@@ -914,4 +916,157 @@ You are ADVISORY ONLY. The human reviewer makes the decision; never imply you ar
         "Thanks for the submission. Could you add a measurable baseline for your success metric and confirm the AI model sourcing before we score this?",
     }
   }
+}
+
+// ============================================================
+// Governance-field draft — Scout's propose-then-confirm capture for the
+// vetting-stage "complete the use case" surface (issue #161,
+// components/submissions/governance-capture-panel.tsx). Drafts a proposed
+// value + one-line rationale for each OMB 34-field inventory / M-25-21
+// minimum-practice / RMF-input field from the idea's problem, solution,
+// expected benefits, and constraints — the reviewer confirms or overrides
+// each one (lib/governanceCapture.ts records which).
+//
+// Split into two tiers, same as lib/ombAutofill.ts's own guardrail (never a
+// second rubric):
+//   1. Fields with an existing deterministic determination
+//      (highImpact/topicArea/aiClassification/hasPii) reuse that module
+//      directly instead of re-deriving via the model.
+//   2. Fields that are genuinely a judgment call on free text
+//      (disseminatesToPublic, scalable, customCode, trainingDataDescription,
+//      aiImpactAssessment, demographicFeatures) go to Scout. The M-25-21
+//      minimum-practice status fields and the facts Scout can't know from
+//      idea text (hasATO, stageOfDevelopment) get a conservative, defensible
+//      default instead of a model call — an idea still in vetting hasn't
+//      done pre-deployment testing, gotten an ATO, or moved past
+//      pre-deployment, so "not started yet" is the honest default, not a
+//      guess.
+// ============================================================
+const DEMOGRAPHIC_FEATURE_VALUES = [
+  "race_ethnicity",
+  "sex",
+  "age",
+  "religious_affiliation",
+  "socioeconomic_status",
+  "ability_status",
+  "residency_status",
+  "marital_status",
+  "income",
+  "employment_status",
+  "none",
+  "other",
+] as const
+
+function minPracticeNotStarted(practice: string): { value: "in_progress"; rationale: string } {
+  return {
+    value: "in_progress",
+    rationale: `M-25-21 minimum practice — ${practice} hasn't started yet for a use case still moving through vetting.`,
+  }
+}
+
+export async function draftGovernanceFields(formData: FormData): Promise<GovernanceFieldDraft> {
+  const draft: GovernanceFieldDraft = {}
+
+  // Tier 1 — reuse the existing deterministic determinations.
+  draft.stageOfDevelopment = {
+    value: "pre_deployment",
+    rationale: "Still moving through vetting — hasn't reached pilot or deployment yet.",
+  }
+  const hi = proposeHighImpact(formData)
+  draft.highImpact = { value: hi.value, rationale: hi.rationale }
+  const topic = proposeTopicArea(formData)
+  if (topic) draft.topicArea = topic
+  const classification = proposeAiClassification(formData)
+  if (classification) draft.aiClassification = classification
+  const pii = proposeHasPii(formData)
+  if (pii) draft.hasPii = pii
+  draft.hasATO = { value: "no", rationale: "No deployment yet, so no Authorization to Operate exists." }
+
+  // M-25-21 minimum-practice status fields — only meaningful once high-impact
+  // and deployed (lib/fieldRegistry.ts's `highImpactAndDeployed`), but
+  // drafting them unconditionally is harmless: the capture panel only shows
+  // a field once `isFieldVisible` says it applies.
+  draft.preDeploymentTesting = minPracticeNotStarted("pre-deployment testing")
+  draft.aiImpactAssessmentCompleted = minPracticeNotStarted("the AI impact assessment")
+  draft.independentReviewConducted = minPracticeNotStarted("independent review")
+  draft.ongoingMonitoringPlan = minPracticeNotStarted("the ongoing monitoring plan")
+  draft.operatorTrainingEstablished = minPracticeNotStarted("periodic operator training")
+  draft.failSafeMechanism = minPracticeNotStarted("the fail-safe mechanism")
+  draft.humanOversightAppeal = minPracticeNotStarted("the appeal process")
+  draft.publicConsultationSteps = {
+    value: ["in_progress"],
+    rationale: "M-25-21 minimum practice — public consultation hasn't started yet for a use case still moving through vetting.",
+  }
+
+  // Tier 2 — Scout drafts the fields that are a real judgment call on the
+  // idea's own text.
+  const context = [
+    formData.useCaseTitle && `Title: ${formData.useCaseTitle}`,
+    (formData.problemDefinition || formData.coreProblem) && `Problem: ${formData.problemDefinition || formData.coreProblem}`,
+    (formData.solutionSummary || formData.proposedSolution) && `Proposed solution: ${formData.solutionSummary || formData.proposedSolution}`,
+    (formData.businessValueSummary || formData.businessValue) && `Expected benefits: ${formData.businessValueSummary || formData.businessValue}`,
+    formData.dependencies && `Constraints / dependencies: ${formData.dependencies}`,
+  ]
+    .filter(Boolean)
+    .join("\n")
+
+  try {
+    const { object } = await generateObject({
+      model: getModel(),
+      schema: z.object({
+        disseminatesToPublic: z.enum(["yes", "no"]).describe("Does the AI system's output get disseminated to the public?"),
+        disseminatesToPublicRationale: z.string().describe("1 sentence citing what in the idea text supports this"),
+        scalable: z.enum(["yes", "no"]).describe("Is this use case intended to scale beyond its current deployment?"),
+        scalableRationale: z.string().describe("1 sentence citing what in the idea text supports this"),
+        customCode: z.enum(["yes", "no"]).describe("Does this project include custom-developed code (vs. off-the-shelf/no-code configuration)?"),
+        customCodeRationale: z.string().describe("1 sentence citing what in the idea text supports this"),
+        trainingDataDescription: z
+          .string()
+          .describe("1-2 sentences describing the data likely used to train/fine-tune/evaluate the model(s), based on the proposed solution. Empty string if nothing can be inferred."),
+        aiImpactAssessment: z
+          .string()
+          .describe("2-3 sentences: the AI system's intended purpose, expected benefits, and potential risks — drafted from the problem/solution/benefits text (M-25-21 impact-assessment content)."),
+        demographicFeatures: z
+          .array(z.enum(DEMOGRAPHIC_FEATURE_VALUES))
+          .describe("Demographic variables the model likely uses as features, based on the idea text. ['none'] if nothing suggests demographic features are used."),
+      }),
+      system: `You are ${TENANT.assistantName}, drafting the OMB federal AI use case inventory and M-25-21 minimum-practice fields for a ${TENANT.shortName} reviewer completing vetting on an AI idea. You draft PROPOSALS ONLY — a human reviewer confirms or overrides every field. Base every answer strictly on the idea text given; never invent specifics (data sources, user groups, systems) it doesn't contain. When the idea text doesn't clearly support an answer, default to the conservative/lower-risk option (disseminatesToPublic: "no", scalable: "no", customCode: "no", demographicFeatures: ["none"]) and say so in the rationale.
+
+${HUMANIZATION_GUIDELINES}`,
+      prompt: `${context || "(No idea text provided yet.)"}\n\nDraft the governance fields for this idea.`,
+    })
+
+    draft.disseminatesToPublic = { value: object.disseminatesToPublic, rationale: object.disseminatesToPublicRationale }
+    draft.scalable = { value: object.scalable, rationale: object.scalableRationale }
+    draft.customCode = { value: object.customCode, rationale: object.customCodeRationale }
+    draft.trainingDataDescription = {
+      value: object.trainingDataDescription,
+      rationale: "Drafted from the proposed solution — confirm against the actual data source.",
+    }
+    draft.aiImpactAssessment = {
+      value: object.aiImpactAssessment,
+      rationale: "Drafted from the idea's problem, solution, and expected benefits.",
+    }
+    draft.demographicFeatures = {
+      value: object.demographicFeatures,
+      rationale:
+        object.demographicFeatures.length && object.demographicFeatures[0] !== "none"
+          ? "Inferred from the idea text — confirm against the actual model features."
+          : "No demographic-feature signal found in the idea text.",
+    }
+  } catch (error) {
+    console.error("draftGovernanceFields: AI Gateway error, falling back to deterministic defaults:", error)
+    const unavailable = `${TENANT.assistantName} was unavailable — defaulted conservatively; confirm manually.`
+    draft.disseminatesToPublic = { value: "no", rationale: unavailable }
+    draft.scalable = { value: "no", rationale: unavailable }
+    draft.customCode = { value: "no", rationale: unavailable }
+    draft.trainingDataDescription = { value: "", rationale: `${TENANT.assistantName} was unavailable — describe the training/evaluation data manually.` }
+    draft.aiImpactAssessment = {
+      value: [formData.coreProblem, formData.proposedSolution, formData.businessValue].filter(Boolean).join(" "),
+      rationale: `${TENANT.assistantName} was unavailable — assembled directly from the problem/solution/business-value text; edit as needed.`,
+    }
+    draft.demographicFeatures = { value: ["none"], rationale: unavailable }
+  }
+
+  return draft
 }

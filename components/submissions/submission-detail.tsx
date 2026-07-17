@@ -54,6 +54,8 @@ import {
   type RmfRiskLevel,
 } from "@/lib/nistRmf"
 import { resolveRmfProfile, buildRmfProfileReviewPatch } from "@/lib/rmfProfileReview"
+import { applicableGovernanceFields } from "@/lib/governanceCapture"
+import { GovernanceCapturePanel } from "@/components/submissions/governance-capture-panel"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
@@ -252,9 +254,28 @@ export function SubmissionDetail({ id }: { id: string }) {
       ? `${tenant.assistantName} flagged gaps to probe before approving — see the decision checklist below.`
       : null
 
+  // Governance-field capture (issue #161) — the OMB 34-field inventory,
+  // M-25-21 minimum-practice block, and RMF inputs that issue #160 moved out
+  // of idea intake into a vetting-stage checklist item here.
+  const governanceApplicable = applicableGovernanceFields(fd)
+  const governanceAnswered = governanceApplicable.filter((k) => {
+    const v = fd[k] as string | string[] | undefined
+    return Array.isArray(v) ? v.length > 0 : !!v
+  }).length
+  const governanceComplete = governanceApplicable.length > 0 && governanceAnswered === governanceApplicable.length
+  const governanceStatusLabel = governanceApplicable.length === 0
+    ? "Nothing applicable yet"
+    : governanceComplete
+      ? "Complete"
+      : `${governanceAnswered}/${governanceApplicable.length} fields answered`
+  const governanceStatusClass = governanceApplicable.length === 0 || governanceComplete
+    ? STATUS_BADGE_CLASS.healthy
+    : STATUS_BADGE_CLASS.attention
+
   let checklistIndex = 0
   const disposeIndex = ++checklistIndex
   const highImpactIndex = ++checklistIndex
+  const governanceIndex = ++checklistIndex
   const rmfIndex = resolvedRmf ? ++checklistIndex : null
   const rationalizationIndex = cluster ? ++checklistIndex : null
 
@@ -541,6 +562,23 @@ export function SubmissionDetail({ id }: { id: string }) {
                   Not high-impact
                 </Button>
               </div>
+            </ChecklistItem>
+
+            <ChecklistItem
+              index={governanceIndex}
+              title="Complete the use case"
+              statusLabel={governanceStatusLabel}
+              statusClassName={governanceStatusClass}
+            >
+              <GovernanceCapturePanel
+                submission={sub}
+                assistantName={tenant.assistantName}
+                byName={session?.name || session?.email || "Reviewer"}
+                byEmail={session?.email || ""}
+                busy={busy}
+                setBusy={setBusy}
+                onSaved={reload}
+              />
             </ChecklistItem>
 
             {resolvedRmf && rmfIndex && (
