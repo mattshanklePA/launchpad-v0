@@ -57,22 +57,28 @@ import { resolveRmfProfile, buildRmfProfileReviewPatch } from "@/lib/rmfProfileR
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { GlossaryTerm } from "@/components/launchpad/glossary-term"
+import { RationalizationPanel } from "@/components/admin/rationalization-panel"
+import { DecisionHeader } from "@/components/submissions/decision-header"
+import { ChecklistItem } from "@/components/submissions/checklist-item"
+import { cn } from "@/lib/utils"
 import {
-  ArrowLeft, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Loader2, Copy, Users,
+  ArrowLeft, ArrowRight, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
-
-const DISPOSITION_LABEL: Record<Assist["suggestedDisposition"], string> = {
-  approve: "Approve",
-  request_info: "Request info",
-  reject: "Reject",
-}
 
 const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
   high_impact: "High-impact",
   presumed_not_high_impact: "Presumed, but not high-impact",
   not_high_impact: "Not high-impact",
+}
+
+const HIGH_IMPACT_BADGE_CLASS: Record<string, string> = {
+  high_impact: "bg-red-100 text-red-800 border-red-300",
+  presumed_not_high_impact: "bg-amber-100 text-amber-800 border-amber-300",
+  not_high_impact: "bg-gray-100 text-gray-600 border-gray-300",
 }
 
 function newCommentId() {
@@ -114,7 +120,11 @@ export function SubmissionDetail({ id }: { id: string }) {
   const [busy, setBusy] = useState(false)
   const [rmfOverrideNote, setRmfOverrideNote] = useState("")
   const [rmfOverriding, setRmfOverriding] = useState(false)
+  const [complianceOpen, setComplianceOpen] = useState(false)
+  const [highlightedItem, setHighlightedItem] = useState<"dispose" | "rationalization" | null>(null)
   const ranRef = useRef(false)
+  const disposeRef = useRef<HTMLLIElement>(null)
+  const rationalizationRef = useRef<HTMLLIElement>(null)
 
   const session = typeof window !== "undefined" ? getSession() : null
   const role = session?.role || "submitter"
@@ -218,9 +228,41 @@ export function SubmissionDetail({ id }: { id: string }) {
         .map((cid) => allSubmissions.find((s) => s.id === cid))
         .filter((s): s is Submission => !!s && s.id !== sub.id)
     : []
+  const clusterSubmissionsForPanel = cluster
+    ? cluster.memberIds.map((cid) => allSubmissions.find((s) => s.id === cid)).filter((s): s is Submission => !!s)
+    : []
   const leadSubmission = rationalizationDecision?.leadSubmissionId
     ? allSubmissions.find((s) => s.id === rationalizationDecision.leadSubmissionId)
     : undefined
+
+  // Zone 1 (Decision header): "what's blocking approval" is either the hard
+  // rationalization gate (the only thing that actually disables Approve
+  // below), or — when nothing hard-blocks it — the assistant not recommending
+  // approval, which routes the reviewer to the checklist instead of a
+  // one-click approve. Advisory only: neither branch changes any
+  // determination, it only decides which existing action is primary.
+  const aiWantsReview = !!assist && assist.suggestedDisposition !== "approve"
+  const blockingText = blockReason
+    ? blockReason
+    : aiWantsReview
+      ? `${tenant.assistantName} flagged gaps to probe before approving — see the decision checklist below.`
+      : null
+
+  let checklistIndex = 0
+  const disposeIndex = ++checklistIndex
+  const highImpactIndex = ++checklistIndex
+  const rmfIndex = resolvedRmf ? ++checklistIndex : null
+  const rationalizationIndex = cluster ? ++checklistIndex : null
+
+  const focusChecklistItem = (key: "dispose" | "rationalization") => {
+    const target = key === "dispose" ? disposeRef.current : rationalizationRef.current
+    target?.scrollIntoView({ behavior: "smooth", block: "center" })
+    target?.focus()
+    setHighlightedItem(key)
+    window.setTimeout(() => {
+      setHighlightedItem((cur) => (cur === key ? null : cur))
+    }, 2000)
+  }
 
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
@@ -327,13 +369,35 @@ export function SubmissionDetail({ id }: { id: string }) {
     setBusy(false)
   }
 
+  const rmfStatusLabel = resolvedRmf
+    ? resolvedRmf.review
+      ? resolvedRmf.review.decision === "overridden"
+        ? "Overridden"
+        : "Confirmed"
+      : "Proposed — awaiting reviewer"
+    : ""
+  const rmfStatusClass = resolvedRmf
+    ? resolvedRmf.review
+      ? "bg-green-100 text-green-800 border-green-300"
+      : "bg-amber-100 text-amber-800 border-amber-300"
+    : ""
+
+  const rationalizationStatusLabel = blockReason
+    ? "Rationalization pending"
+    : rationalizationDecision?.decision === "consolidated"
+      ? "Consolidated"
+      : "Keep separate"
+  const rationalizationStatusClass = blockReason
+    ? "bg-amber-100 text-amber-800 border-amber-300"
+    : "bg-green-100 text-green-800 border-green-300"
+
   return (
     <div className="space-y-5 max-w-3xl">
       <Link href="/home" className="text-sm text-uspto-blue-primary hover:underline"><ArrowLeft className="w-4 h-4 inline mr-1" />Back</Link>
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-uspto-gray-text">{fd.useCaseTitle || "Untitled idea"}</h1>
+          <h1 className="text-xl font-bold text-foreground">{fd.useCaseTitle || "Untitled idea"}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {businessUnitLabel(getBusinessUnit(sub))} · {fd.submitterName || "Anonymous"} · submitted {new Date(sub.submittedAt).toLocaleDateString()}
             {getAssigneeName(sub) ? ` · assigned to ${getAssigneeName(sub)}` : ""}
@@ -349,21 +413,20 @@ export function SubmissionDetail({ id }: { id: string }) {
         </p>
       )}
 
+      {/* Zone 1: Kestrel's rolled-up recommendation, what's blocking approval, one primary action. */}
       {isReviewer && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => setStatus("approved")} disabled={busy || !!blockReason} title={blockReason}>
-            <Check className="w-4 h-4 mr-1.5" />Approve
-          </Button>
-          <Button variant="outline" onClick={() => document.getElementById("comment-box")?.focus()} disabled={busy}><MessageSquare className="w-4 h-4 mr-1.5" />Request info</Button>
-          <Button variant="outline" onClick={() => setStatus("rejected")} disabled={busy}><X className="w-4 h-4 mr-1.5" />Reject</Button>
-          {blockReason && (
-            <span className="text-xs text-amber-700 flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5" />Rationalization pending
-            </span>
-          )}
-        </div>
+        <DecisionHeader
+          assistantName={tenant.assistantName}
+          assisting={assisting}
+          assist={assist}
+          blockingText={blockingText}
+          busy={busy}
+          onApprove={() => setStatus("approved")}
+          onResolveBlocker={() => focusChecklistItem(blockReason ? "rationalization" : "dispose")}
+        />
       )}
 
+      {/* OS/department final-approval confirmation — a distinct persona's decision, kept as-is (follow-up UX work tracked separately). */}
       {showBureauTier && deptTierEnabled && isDeptViewer && bureauSignoff && (
         <div className={`rounded-lg border p-4 space-y-2 ${departmentApproval ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"}`}>
           <div className="flex items-center gap-2">
@@ -393,309 +456,403 @@ export function SubmissionDetail({ id }: { id: string }) {
         </div>
       )}
 
-      {isReviewer && cluster && (
-        <div className={`rounded-lg border p-4 space-y-2 ${blockReason ? "border-amber-300 bg-amber-50" : "border-green-300 bg-green-50"}`}>
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-amber-700" />
-            <span className="font-medium text-sm">Cross-bureau rationalization</span>
-            <Badge
-              variant="outline"
-              className={blockReason ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-green-100 text-green-800 border-green-300"}
-            >
-              {blockReason
-                ? "Rationalization pending"
-                : rationalizationDecision?.decision === "consolidated"
-                  ? "Consolidated"
-                  : "Keep separate"}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {blockReason
-              ? "This use case closely matches work filed under another bureau. A department/OS reviewer must mark this cluster consolidated or keep-separate — see the Rationalization panel on the Pipeline page — before it can be approved."
-              : rationalizationDecision?.decision === "consolidated"
-                ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}.`
-                : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}` : ""}.`}
-          </p>
-          <ul className="space-y-1.5">
-            {clusterMembers.map((m) => (
-              <li key={m.id} className="text-sm flex items-center justify-between gap-3">
-                <Link href={`/submissions/${m.id}`} className="text-uspto-blue-primary hover:underline truncate">
-                  {m.formData.useCaseTitle || "Untitled idea"}
-                </Link>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">{businessUnitLabel(getBusinessUnit(m))}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
+      {/* Zone 2: guided decision checklist — only the items that need the reviewer, in order. */}
       {isReviewer && (
-        <div className="rounded-lg border border-uspto-blue-primary/40 bg-white p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-uspto-blue-primary" />
-            <span className="font-medium text-sm">{tenant.assistantName}&apos;s read</span>
-            <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">advisory · you decide</Badge>
-          </div>
-          {assisting && <div className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Reading the submission…</div>}
-          {assist && (
-            <>
-              <p className="text-sm leading-relaxed">{assist.verdict}</p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs font-medium text-green-700 mb-1">Strengths</div>
-                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">{assist.strengths.map((x, i) => <li key={i}>{x}</li>)}</ul>
-                </div>
-                <div>
-                  <div className="text-xs font-medium text-red-700 mb-1">Gaps to probe</div>
-                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">{assist.gaps.map((x, i) => <li key={i}>{x}</li>)}</ul>
-                </div>
+        <section aria-labelledby="checklist-heading" className="space-y-3">
+          <h2 id="checklist-heading" className="text-sm font-semibold text-foreground">
+            Decision checklist
+          </h2>
+          <ol className="space-y-3">
+            <ChecklistItem
+              ref={disposeRef}
+              index={disposeIndex}
+              title="Disposition"
+              statusLabel={STATUS_LABEL[status]}
+              statusClassName={statusBadgeClasses(status)}
+              highlighted={highlightedItem === "dispose"}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Button onClick={() => setStatus("approved")} disabled={busy || !!blockReason} title={blockReason}>
+                  <Check className="w-4 h-4 mr-1.5" />Approve
+                </Button>
+                <Button variant="outline" onClick={() => document.getElementById("comment-box")?.focus()} disabled={busy}>
+                  <MessageSquare className="w-4 h-4 mr-1.5" />Request info
+                </Button>
+                <Button variant="outline" onClick={() => setStatus("rejected")} disabled={busy}>
+                  <X className="w-4 h-4 mr-1.5" />Reject
+                </Button>
               </div>
-              <div className="flex items-center gap-2 pt-2 border-t text-sm">
-                <span className="text-muted-foreground">Suggested:</span>
-                <Badge variant="outline" className={assist.suggestedDisposition === "approve" ? "bg-green-100 text-green-800 border-green-300" : assist.suggestedDisposition === "reject" ? "bg-gray-100 text-gray-600 border-gray-300" : "bg-red-100 text-red-800 border-red-300"}>{DISPOSITION_LABEL[assist.suggestedDisposition]}</Badge>
-              </div>
-            </>
-          )}
-        </div>
-      )}
+              {blockReason && (
+                <p className="flex items-center gap-1.5 text-xs text-amber-700">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-none" />
+                  {blockReason}
+                </p>
+              )}
+            </ChecklistItem>
 
-      {isReviewer && similarMatches.length > 0 && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <Copy className="w-4 h-4 text-amber-700" />
-            <span className="font-medium text-sm">Similar use cases</span>
-            <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">token-overlap match · confirm before assuming duplicate</Badge>
-          </div>
-          <ul className="space-y-1.5">
-            {similarMatches.map((m) => (
-              <li key={m.submission.id} className="text-sm flex items-center justify-between gap-3">
-                <Link
-                  href={`/submissions/${m.submission.id}`}
-                  className="text-uspto-blue-primary hover:underline truncate"
+            <ChecklistItem
+              index={highImpactIndex}
+              title={<GlossaryTerm term="highImpactDetermination">High-impact determination</GlossaryTerm>}
+              statusLabel={fd.highImpact ? HIGH_IMPACT_BADGE_LABELS[fd.highImpact] || "Not yet set" : "Not yet set"}
+              statusClassName={fd.highImpact ? HIGH_IMPACT_BADGE_CLASS[fd.highImpact] : "bg-amber-100 text-amber-800 border-amber-300"}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Recommended:</span>
+                <Badge
+                  variant="outline"
+                  className={
+                    highImpactRec.recommendation === "yes"
+                      ? "bg-red-100 text-red-800 border-red-300"
+                      : "bg-gray-100 text-gray-600 border-gray-300"
+                  }
                 >
-                  {m.submission.formData.useCaseTitle || "Untitled idea"}
-                </Link>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {businessUnitLabel(m.bureau)} · {Math.round(m.score * 100)}% match
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                  {highImpactRec.recommendation === "yes" ? "High-impact" : "Not high-impact"}
+                </Badge>
+              </div>
+              <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
+                {highImpactRec.reasons.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+                <span className="text-sm text-muted-foreground">Reviewer determination:</span>
+                <Button
+                  size="sm"
+                  variant={fd.highImpact === "high_impact" ? "default" : "outline"}
+                  disabled={busy}
+                  onClick={() => setHighImpact("high_impact")}
+                >
+                  High-impact
+                </Button>
+                <Button
+                  size="sm"
+                  variant={fd.highImpact === "presumed_not_high_impact" ? "default" : "outline"}
+                  disabled={busy}
+                  onClick={() => setHighImpact("presumed_not_high_impact")}
+                >
+                  Presumed, but not high-impact
+                </Button>
+                <Button
+                  size="sm"
+                  variant={fd.highImpact === "not_high_impact" ? "default" : "outline"}
+                  disabled={busy}
+                  onClick={() => setHighImpact("not_high_impact")}
+                >
+                  Not high-impact
+                </Button>
+              </div>
+            </ChecklistItem>
 
-      <div className="rounded-lg border bg-white p-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-          OMB reportability
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className={REPORTABILITY_CLASSES[reportability.status]}>
-            {REPORTABILITY_LABEL[reportability.status]}
-          </Badge>
-          <span className="text-sm text-muted-foreground">{reportability.reason}</span>
-        </div>
-      </div>
-
-      <div className="rounded-lg border bg-white p-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-          OMB reporting mode
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge
-            variant="outline"
-            className={
-              consolidation.status === "Consolidated"
-                ? "bg-purple-100 text-purple-800 border-purple-300"
-                : "bg-gray-100 text-gray-600 border-gray-300"
-            }
-          >
-            {consolidation.status}
-          </Badge>
-          {consolidation.categoryLabel && (
-            <Badge variant="outline" className="bg-muted text-muted-foreground">
-              {consolidation.categoryLabel}
-            </Badge>
-          )}
-          <span className="text-sm text-muted-foreground">{consolidation.reason}</span>
-        </div>
-      </div>
-
-      <div className="rounded-lg border bg-white p-4 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            High-impact determination
-          </div>
-          <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">advisory · you decide</Badge>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Recommended:</span>
-          <Badge
-            variant="outline"
-            className={
-              highImpactRec.recommendation === "yes"
-                ? "bg-red-100 text-red-800 border-red-300"
-                : "bg-gray-100 text-gray-600 border-gray-300"
-            }
-          >
-            {highImpactRec.recommendation === "yes" ? "High-impact" : "Not high-impact"}
-          </Badge>
-        </div>
-        <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-          {highImpactRec.reasons.map((r, i) => (
-            <li key={i}>{r}</li>
-          ))}
-        </ul>
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-          <span className="text-sm text-muted-foreground">Reviewer determination:</span>
-          {isReviewer ? (
-            <>
-              <Button
-                size="sm"
-                variant={fd.highImpact === "high_impact" ? "default" : "outline"}
-                disabled={busy}
-                onClick={() => setHighImpact("high_impact")}
+            {resolvedRmf && rmfIndex && (
+              <ChecklistItem
+                index={rmfIndex}
+                title={<GlossaryTerm term="nistAiRmf">NIST AI RMF</GlossaryTerm>}
+                statusLabel={rmfStatusLabel}
+                statusClassName={rmfStatusClass}
               >
-                High-impact
-              </Button>
-              <Button
-                size="sm"
-                variant={fd.highImpact === "presumed_not_high_impact" ? "default" : "outline"}
-                disabled={busy}
-                onClick={() => setHighImpact("presumed_not_high_impact")}
-              >
-                Presumed, but not high-impact
-              </Button>
-              <Button
-                size="sm"
-                variant={fd.highImpact === "not_high_impact" ? "default" : "outline"}
-                disabled={busy}
-                onClick={() => setHighImpact("not_high_impact")}
-              >
-                Not high-impact
-              </Button>
-            </>
-          ) : (
-            <Badge variant="outline">{HIGH_IMPACT_BADGE_LABELS[fd.highImpact] || "Not yet set"}</Badge>
-          )}
-        </div>
-      </div>
-
-      {fd.highImpact === "high_impact" && (
-        <div className="rounded-lg border bg-white p-4 space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            High-impact risk management
-          </div>
-          {fd.aiImpactAssessment && (
-            <div>
-              <div className="text-sm font-medium">AI impact assessment</div>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{fd.aiImpactAssessment}</p>
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2 pt-1">
-            <RiskRow ok={fd.preDeploymentTesting === "yes"} label={`Pre-deployment testing: ${fd.preDeploymentTesting || "not set"}`} />
-            <RiskRow ok={fd.ongoingMonitoringPlan === "yes"} label={`Ongoing monitoring: ${fd.ongoingMonitoringPlan || "not set"}`} />
-            <RiskRow ok={fd.humanOversightAppeal === "yes"} label={`Appeal process: ${fd.humanOversightAppeal || "not set"}`} />
-          </div>
-        </div>
-      )}
-
-      <div className="rounded-lg border bg-white p-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Risk profile</div>
-        <div className="flex flex-wrap gap-2">
-          <RiskRow ok={fd.involvesSensitiveData !== "yes"} label={fd.involvesSensitiveData === "yes" ? "Uses PII" : "No PII"} />
-          <RiskRow ok={fd.aiModelSourcing === "american_built" || fd.aiModelSourcing === "open_source_us"} label={fd.aiModelSourcing === "foreign" ? "Foreign model" : fd.aiModelSourcing === "unknown" || !fd.aiModelSourcing ? "Sourcing unknown" : "American-built"} />
-          <RiskRow ok={fd.aiHumanReview === "yes"} label={fd.aiHumanReview === "yes" ? "Human review: yes" : "No human review"} />
-          <RiskRow ok={fd.aiDecisionalImpact !== "yes"} label={fd.aiDecisionalImpact === "yes" ? "Decisional AI" : "Non-decisional"} />
-        </div>
-      </div>
-
-      {resolvedRmf && (
-        <div className="rounded-lg border bg-white p-4 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">NIST AI RMF</div>
-            <div className="flex items-center gap-2">
-              {resolvedRmf.isProposal && (
-                <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">proposed · awaiting reviewer</Badge>
-              )}
-              <Badge variant="outline" className={rmfBadgeClass(resolvedRmf.effectiveOverall)} title={resolvedRmf.profile.rationale}>
-                {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
-              </Badge>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {RMF_FUNCTION_ORDER.map((key) => {
-              const result = resolvedRmf.profile.functions[key]
-              return (
-                <div key={key} className="flex flex-wrap items-start gap-2">
-                  <Badge variant="outline" className={rmfFunctionStatusBadgeClass(result.status)}>
-                    {RMF_FUNCTION_LABELS[key]}: {RMF_FUNCTION_STATUS_LABELS[result.status]}
-                  </Badge>
-                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-0.5">
-                    {result.reasons.map((r, i) => (
-                      <li key={i}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            })}
-          </div>
-          {resolvedRmf.review ? (
-            <p className="text-xs text-muted-foreground pt-2 border-t flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {resolvedRmf.review.decision === "overridden"
-                ? `Overridden to "${RMF_OVERALL_LABELS[resolvedRmf.review.overriddenOverall || resolvedRmf.review.proposedOverall]}" (proposed "${RMF_OVERALL_LABELS[resolvedRmf.review.proposedOverall]}")`
-                : "Confirmed as proposed"}
-              {" "}by {resolvedRmf.review.byName}, {new Date(resolvedRmf.review.at).toLocaleDateString()}
-              {resolvedRmf.review.notes ? ` — "${resolvedRmf.review.notes}"` : ""}
-            </p>
-          ) : null}
-          {isReviewer && (
-            <div className="pt-2 border-t space-y-2">
-              {!rmfOverriding ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    {resolvedRmf.review ? "Reviewer decision:" : "Proposed — confirm or override:"}
-                  </span>
-                  <Button size="sm" disabled={busy} onClick={confirmRmfProfile}>
-                    <Check className="w-3.5 h-3.5 mr-1.5" />Confirm
-                  </Button>
-                  <Button size="sm" variant="outline" disabled={busy} onClick={() => setRmfOverriding(true)}>
-                    Override
-                  </Button>
+                  <Badge variant="outline" className={rmfBadgeClass(resolvedRmf.effectiveOverall)} title={resolvedRmf.profile.rationale}>
+                    {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
+                  </Badge>
+                  {resolvedRmf.isProposal && (
+                    <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">proposed · awaiting reviewer</Badge>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">Set the overall RMF level:</span>
-                  <div className="flex flex-wrap gap-2">
-                    {(Object.keys(RMF_OVERALL_LABELS) as RmfRiskLevel[]).map((level) => (
-                      <Button
-                        key={level}
-                        size="sm"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() => overrideRmfProfile(level)}
-                      >
-                        {RMF_OVERALL_LABELS[level]}
-                      </Button>
-                    ))}
+                {resolvedRmf.review && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    {resolvedRmf.review.decision === "overridden"
+                      ? `Overridden to "${RMF_OVERALL_LABELS[resolvedRmf.review.overriddenOverall || resolvedRmf.review.proposedOverall]}" (proposed "${RMF_OVERALL_LABELS[resolvedRmf.review.proposedOverall]}")`
+                      : "Confirmed as proposed"}
+                    {" "}by {resolvedRmf.review.byName}, {new Date(resolvedRmf.review.at).toLocaleDateString()}
+                    {resolvedRmf.review.notes ? ` — "${resolvedRmf.review.notes}"` : ""}
+                  </p>
+                )}
+                {!rmfOverriding ? (
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+                    <span className="text-sm text-muted-foreground">
+                      {resolvedRmf.review ? "Reviewer decision:" : "Proposed — confirm or override:"}
+                    </span>
+                    <Button size="sm" disabled={busy} onClick={confirmRmfProfile}>
+                      <Check className="w-3.5 h-3.5 mr-1.5" />Confirm
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={busy} onClick={() => setRmfOverriding(true)}>
+                      Override
+                    </Button>
                   </div>
-                  <Textarea
-                    value={rmfOverrideNote}
-                    onChange={(e) => setRmfOverrideNote(e.target.value)}
-                    placeholder="Reason for override (optional)..."
-                    rows={2}
-                  />
-                  <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRmfOverriding(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                ) : (
+                  <div className="space-y-2 pt-2 border-t">
+                    <span className="text-sm text-muted-foreground">Set the overall RMF level:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {(Object.keys(RMF_OVERALL_LABELS) as RmfRiskLevel[]).map((level) => (
+                        <Button
+                          key={level}
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => overrideRmfProfile(level)}
+                        >
+                          {RMF_OVERALL_LABELS[level]}
+                        </Button>
+                      ))}
+                    </div>
+                    <Textarea
+                      value={rmfOverrideNote}
+                      onChange={(e) => setRmfOverrideNote(e.target.value)}
+                      placeholder="Reason for override (optional)..."
+                      rows={2}
+                    />
+                    <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRmfOverriding(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </ChecklistItem>
+            )}
+
+            {cluster && rationalizationIndex && (
+              <ChecklistItem
+                ref={rationalizationRef}
+                index={rationalizationIndex}
+                title={<GlossaryTerm term="crossBureauRationalization">Cross-bureau rationalization</GlossaryTerm>}
+                statusLabel={rationalizationStatusLabel}
+                statusClassName={rationalizationStatusClass}
+                highlighted={highlightedItem === "rationalization"}
+              >
+                <p className="text-sm text-muted-foreground">
+                  {blockReason
+                    ? "This use case closely matches work filed under another bureau."
+                    : rationalizationDecision?.decision === "consolidated"
+                      ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}.`
+                      : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}` : ""}.`}
+                </p>
+                <ul className="space-y-1.5">
+                  {clusterMembers.map((m) => (
+                    <li key={m.id} className="text-sm flex items-center justify-between gap-3">
+                      <Link href={`/submissions/${m.id}`} className="text-uspto-blue-primary hover:underline truncate">
+                        {m.formData.useCaseTitle || "Untitled idea"}
+                      </Link>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{businessUnitLabel(getBusinessUnit(m))}</span>
+                    </li>
+                  ))}
+                </ul>
+                {blockReason && (
+                  isDeptViewer ? (
+                    <div className="pt-2 border-t">
+                      <RationalizationPanel submissions={clusterSubmissionsForPanel} />
+                    </div>
+                  ) : (
+                    <Link
+                      href="/home"
+                      className="inline-flex items-center gap-1 pt-1 text-sm font-medium text-uspto-blue-primary hover:underline"
+                    >
+                      Resolve in the Rationalization panel
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  )
+                )}
+              </ChecklistItem>
+            )}
+          </ol>
+        </section>
       )}
 
-      <div className="rounded-lg border bg-white p-4 space-y-3">
+      {/* Zone 3: compliance details, collapsed — verdict badges visible, reasoning on expand. */}
+      <Collapsible open={complianceOpen} onOpenChange={setComplianceOpen} className="rounded-lg border bg-card text-card-foreground">
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full flex-wrap items-center justify-between gap-2 p-4 text-left"
+            aria-expanded={complianceOpen}
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold">
+              <ChevronDown className={cn("h-4 w-4 transition-transform", complianceOpen && "rotate-180")} aria-hidden="true" />
+              Compliance details
+            </span>
+            <span className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="outline" className={REPORTABILITY_CLASSES[reportability.status]}>
+                {REPORTABILITY_LABEL[reportability.status]}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={
+                  consolidation.status === "Consolidated"
+                    ? "bg-purple-100 text-purple-800 border-purple-300"
+                    : "bg-gray-100 text-gray-600 border-gray-300"
+                }
+              >
+                {consolidation.status}
+              </Badge>
+              {resolvedRmf && (
+                <Badge variant="outline" className={rmfBadgeClass(resolvedRmf.effectiveOverall)}>
+                  {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
+                </Badge>
+              )}
+              {isReviewer && similarMatches.length > 0 && (
+                <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                  {similarMatches.length} similar
+                </Badge>
+              )}
+            </span>
+          </button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="space-y-4 border-t p-4">
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <GlossaryTerm term="ombReportability">OMB reportability</GlossaryTerm>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className={REPORTABILITY_CLASSES[reportability.status]}>
+                {REPORTABILITY_LABEL[reportability.status]}
+              </Badge>
+              <span className="text-sm text-muted-foreground">{reportability.reason}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2 border-t pt-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <GlossaryTerm term="consolidatedIndividualReporting">OMB reporting mode</GlossaryTerm>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="outline"
+                className={
+                  consolidation.status === "Consolidated"
+                    ? "bg-purple-100 text-purple-800 border-purple-300"
+                    : "bg-gray-100 text-gray-600 border-gray-300"
+                }
+              >
+                {consolidation.status}
+              </Badge>
+              {consolidation.categoryLabel && (
+                <Badge variant="outline" className="bg-muted text-muted-foreground">
+                  {consolidation.categoryLabel}
+                </Badge>
+              )}
+              <span className="text-sm text-muted-foreground">{consolidation.reason}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2 border-t pt-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Risk profile</div>
+            <div className="flex flex-wrap gap-2">
+              <RiskRow ok={fd.involvesSensitiveData !== "yes"} label={fd.involvesSensitiveData === "yes" ? "Uses PII" : "No PII"} />
+              <RiskRow ok={fd.aiModelSourcing === "american_built" || fd.aiModelSourcing === "open_source_us"} label={fd.aiModelSourcing === "foreign" ? "Foreign model" : fd.aiModelSourcing === "unknown" || !fd.aiModelSourcing ? "Sourcing unknown" : "American-built"} />
+              <RiskRow ok={fd.aiHumanReview === "yes"} label={fd.aiHumanReview === "yes" ? "Human review: yes" : "No human review"} />
+              <RiskRow ok={fd.aiDecisionalImpact !== "yes"} label={fd.aiDecisionalImpact === "yes" ? "Decisional AI" : "Non-decisional"} />
+            </div>
+          </div>
+
+          {fd.highImpact === "high_impact" && (
+            <div className="space-y-2 border-t pt-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                High-impact risk management
+              </div>
+              {fd.aiImpactAssessment && (
+                <div>
+                  <div className="text-sm font-medium">AI impact assessment</div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{fd.aiImpactAssessment}</p>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <RiskRow ok={fd.preDeploymentTesting === "yes"} label={`Pre-deployment testing: ${fd.preDeploymentTesting || "not set"}`} />
+                <RiskRow ok={fd.ongoingMonitoringPlan === "yes"} label={`Ongoing monitoring: ${fd.ongoingMonitoringPlan || "not set"}`} />
+                <RiskRow ok={fd.humanOversightAppeal === "yes"} label={`Appeal process: ${fd.humanOversightAppeal || "not set"}`} />
+              </div>
+            </div>
+          )}
+
+          {!isReviewer && (
+            <div className="space-y-2 border-t pt-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <GlossaryTerm term="highImpactDetermination">High-impact determination</GlossaryTerm>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Recommended:</span>
+                <Badge
+                  variant="outline"
+                  className={
+                    highImpactRec.recommendation === "yes"
+                      ? "bg-red-100 text-red-800 border-red-300"
+                      : "bg-gray-100 text-gray-600 border-gray-300"
+                  }
+                >
+                  {highImpactRec.recommendation === "yes" ? "High-impact" : "Not high-impact"}
+                </Badge>
+              </div>
+              <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
+                {highImpactRec.reasons.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+                <span className="text-sm text-muted-foreground">Reviewer determination:</span>
+                <Badge variant="outline">{HIGH_IMPACT_BADGE_LABELS[fd.highImpact] || "Not yet set"}</Badge>
+              </div>
+            </div>
+          )}
+
+          {resolvedRmf && (
+            <div className="space-y-2 border-t pt-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <GlossaryTerm term="nistAiRmf">NIST AI RMF</GlossaryTerm> breakdown
+                </div>
+                <GlossaryTerm term="coveredPartialGap" className="text-[11px] text-muted-foreground">
+                  covered / partial / gap
+                </GlossaryTerm>
+              </div>
+              <div className="space-y-2">
+                {RMF_FUNCTION_ORDER.map((key) => {
+                  const result = resolvedRmf.profile.functions[key]
+                  return (
+                    <div key={key} className="flex flex-wrap items-start gap-2">
+                      <Badge variant="outline" className={rmfFunctionStatusBadgeClass(result.status)}>
+                        {RMF_FUNCTION_LABELS[key]}: {RMF_FUNCTION_STATUS_LABELS[result.status]}
+                      </Badge>
+                      <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-0.5">
+                        {result.reasons.map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {isReviewer && similarMatches.length > 0 && (
+            <div className="space-y-2 border-t pt-4">
+              <div className="flex items-center gap-2">
+                <Copy className="w-4 h-4 text-amber-700" />
+                <span className="font-medium text-sm">Similar use cases</span>
+                <GlossaryTerm term="tokenOverlapMatch" className="text-[10px] text-muted-foreground">
+                  token-overlap match
+                </GlossaryTerm>
+              </div>
+              <ul className="space-y-1.5">
+                {similarMatches.map((m) => (
+                  <li key={m.submission.id} className="text-sm flex items-center justify-between gap-3">
+                    <Link
+                      href={`/submissions/${m.submission.id}`}
+                      className="text-uspto-blue-primary hover:underline truncate"
+                    >
+                      {m.submission.formData.useCaseTitle || "Untitled idea"}
+                    </Link>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {businessUnitLabel(m.bureau)} · {Math.round(m.score * 100)}% match
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="rounded-lg border bg-card p-4 space-y-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Submission</div>
         {([
           ["Problem", fd.problemDefinition || fd.coreProblem],
@@ -712,7 +869,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         ))}
       </div>
 
-      <div className="rounded-lg border bg-white p-4 space-y-3">
+      <div className="rounded-lg border bg-card p-4 space-y-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Conversation with submitter</div>
         {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
         {comments.map((c) => (

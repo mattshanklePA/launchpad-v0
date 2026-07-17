@@ -12,9 +12,9 @@ export default function SubmissionDetailPage() {
     <RequireAuth>
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container py-8">
+        <main className="container py-8">
           <SubmissionDetail id={id} />
-        </div>
+        </main>
       </div>
     </RequireAuth>
   )
