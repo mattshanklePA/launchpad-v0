@@ -243,6 +243,12 @@ Across all three views, `components/dashboard/dashboard-workspace-links.tsx` (`D
 
 **Guardrails** — every card and nav item routes through the same `getDashboardScope`/`scopedSubmissions`/`visibleSubmissions` roll-down described above, so who-sees-what is identical to the rest of the app; the sign-off, cross-bureau-duplicate, and office-breakdown surfaces are gated on `tenantHasBureauTier()` so USPTO/DoW render the same dashboard shell with those DoC-only cards absent; every label comes from `getTenant()`. Verified tenant-neutral against both USPTO (no office tier) and DoC (full three-level org tree).
 
+#### Shared compliance glossary & tooltip layer
+
+UX simplification decision: a compliance term (OMB reportability, cross-bureau rationalization, high-impact determination, NIST AI RMF, etc.) always stays on screen in its formal form — nothing gets renamed — but can carry a plain-language explanation in place, instead of leaving that explanation to only one screen. Before this, the only inline explanation anywhere was the wizard's `FieldRequirementBadge` tooltip (issue #60); the reviewer detail view and the Command Center dashboard had none.
+
+`lib/glossary.ts` is the single term -> definition map (`GLOSSARY: Record<GlossaryTermKey, { term, definition }>`), seeded with the starter set: cross-bureau rationalization, OMB reportability, consolidated/individual reporting, high-impact determination, NIST AI RMF (Govern/Map/Measure/Manage), covered/partial/gap, token-overlap match, awaiting bureau sign-off, and advisory. Definitions are written tenant-neutral (no org names) so the same entry reads correctly for USPTO, DoW, and DoC. `components/launchpad/glossary-term.tsx`'s `GlossaryTerm` component is the one reusable renderer: it looks up a `GlossaryTermKey` and wraps its label (the formal term by default, or `children` when a caller wants different visible text) in a Radix `Tooltip` (`components/ui/tooltip.tsx`, the same primitive `FieldRequirementBadge` already uses) with a small "?" (`HelpCircle`) affordance — focusable and keyboard-accessible (opens on focus, dismissible with Esc) since it reuses Radix's own trigger/content behavior rather than a custom hover-only implementation. This issue only introduces the module and component plus one demo usage (the "high-impact" label on the wizard's Feasibility & Security step, `components/steps/step-8-feasibility-security.tsx`); wiring it into the reviewer detail view and the Command Center dashboard is separate follow-on work.
+
 ---
 
 ## 6. AI integration

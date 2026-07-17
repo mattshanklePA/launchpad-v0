@@ -23,4 +23,7 @@ export default defineConfig({
   resolve: {
     alias: { "@": rootDir },
   },
+  esbuild: {
+    jsx: "automatic",
+  },
 })
