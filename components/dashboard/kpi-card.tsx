@@ -7,15 +7,25 @@
 // never fires it on touch, so it's never the sole way to reach anything),
 // and clicking it opens a Dialog listing every underlying item, each linking
 // to its read-only `/submissions/{id}` detail view. The Dialog is the
-// accessible primary path: the whole card renders as a real `<button>`, so
-// Enter/Space and touch both reach the full list without ever hovering.
-// `duplicates` is cluster-shaped (lib/dashboard/drilldown.ts) — its rows
-// link to the cluster's lead submission, whose detail page already renders
-// the cross-bureau rationalization section for the whole cluster.
+// accessible primary path: the card's value area renders as a real
+// `<button>`, so Enter/Space and touch both reach the full list without ever
+// hovering. `duplicates` is cluster-shaped (lib/dashboard/drilldown.ts) — its
+// rows link to the cluster's lead submission, whose detail page already
+// renders the cross-bureau rationalization section for the whole cluster.
 //
 // Presentation only: `items` (a card's `getKpiDrilldown` list) is an
 // optional prop so existing callers/tests that only pass label/value/delta/
 // status keep rendering the plain, non-interactive card exactly as before.
+//
+// UX #4: a jargon label can carry a `glossary` key (lib/glossary.ts), which
+// wraps just the label text in the shared `GlossaryTerm` "?" tooltip, plus a
+// short always-visible `subtitle` under the value for anyone who won't
+// hover/tap the tooltip. The label row sits above, and outside, the card's
+// click-through button — `GlossaryTerm` renders its own `<button>`, and HTML
+// doesn't allow nesting one interactive control inside another, so the label
+// can never move inside the value button without breaking that rule (and
+// silently making the whole card's click target ambiguous between "show
+// definition" and "open drill-down").
 
 import Link from "next/link"
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, ArrowRight, type LucideIcon } from "lucide-react"
@@ -23,6 +33,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card"
+import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { cn } from "@/lib/utils"
 import {
   kpiStatusAccentClass,
@@ -121,20 +132,38 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
   )
 }
 
-function KpiCardBody({ label, value, delta, status }: Omit<KpiCardData, "id">) {
+/**
+ * The label row, deliberately kept outside the card's clickable button below —
+ * its glossary "?" (`GlossaryTerm`) renders its own `<button>`, and a `<button>`
+ * can't validly nest another interactive control, so it can't live inside the
+ * drill-down button an interactive card wraps everything else in.
+ */
+function KpiCardLabel({ label, status, glossary }: Pick<KpiCardData, "label" | "status" | "glossary">) {
+  const actionable = kpiIsActionable(status)
+  return (
+    <p
+      className={cn(
+        "flex items-center gap-1 px-3 pt-3 text-[11px] font-medium uppercase tracking-wide",
+        actionable ? "text-foreground/70" : "text-muted-foreground",
+      )}
+    >
+      {status === "critical" && <AlertTriangle className="h-3 w-3 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />}
+      {glossary ? (
+        <GlossaryTerm term={glossary} className="normal-case tracking-normal">
+          {label}
+        </GlossaryTerm>
+      ) : (
+        label
+      )}
+    </p>
+  )
+}
+
+function KpiCardBody({ value, delta, status, subtitle }: Pick<KpiCardData, "value" | "delta" | "status" | "subtitle">) {
   const TrendIcon = delta ? TREND_ICON[delta.direction] : null
   const actionable = kpiIsActionable(status)
   return (
-    <CardContent className="space-y-0.5 p-3">
-      <p
-        className={cn(
-          "flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide",
-          actionable ? "text-foreground/70" : "text-muted-foreground",
-        )}
-      >
-        {status === "critical" && <AlertTriangle className="h-3 w-3 text-red-600 dark:text-red-400" />}
-        {label}
-      </p>
+    <CardContent className="space-y-0.5 px-3 pb-3 pt-0.5">
       <p
         className={cn(
           "leading-tight",
@@ -143,6 +172,7 @@ function KpiCardBody({ label, value, delta, status }: Omit<KpiCardData, "id">) {
       >
         {value}
       </p>
+      {subtitle && <p className="text-[10px] leading-snug text-muted-foreground">{subtitle}</p>}
       {delta && TrendIcon && (
         <p className={cn("flex items-center gap-1 text-[11px] font-medium", kpiTrendTextClass(delta.direction))}>
           <TrendIcon className="h-3 w-3" />
@@ -153,18 +183,28 @@ function KpiCardBody({ label, value, delta, status }: Omit<KpiCardData, "id">) {
   )
 }
 
-export function KpiCard({ label, value, delta, status = "neutral", items }: KpiCardData & { items?: KpiDrilldownEntry[] }) {
+export function KpiCard({
+  label,
+  value,
+  delta,
+  status = "neutral",
+  glossary,
+  subtitle,
+  items,
+}: KpiCardData & { items?: KpiDrilldownEntry[] }) {
   const cardClassName = cn(
     "shadow-none",
     kpiIsActionable(status) ? "border-l-4" : "border-l-[3px]",
     kpiStatusAccentClass(status),
     kpiStatusSurfaceClass(status),
+    items && "transition-colors hover:border-primary/50",
   )
 
   if (!items) {
     return (
       <Card className={cardClassName}>
-        <KpiCardBody label={label} value={value} delta={delta} status={status} />
+        <KpiCardLabel label={label} status={status} glossary={glossary} />
+        <KpiCardBody value={value} delta={delta} status={status} subtitle={subtitle} />
       </Card>
     )
   }
@@ -173,53 +213,54 @@ export function KpiCard({ label, value, delta, status = "neutral", items }: KpiC
   const overflow = kpiDrilldownOverflowCount(items)
 
   return (
-    <Dialog>
-      <HoverCard openDelay={200}>
-        <HoverCardTrigger asChild>
-          <DialogTrigger asChild>
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              className={cn(
-                "w-full rounded-lg border bg-card text-left text-card-foreground transition-colors hover:border-primary/50",
-                cardClassName,
-              )}
-            >
-              <KpiCardBody label={label} value={value} delta={delta} status={status} />
-            </button>
-          </DialogTrigger>
-        </HoverCardTrigger>
-        {preview.length > 0 && (
-          <HoverCardContent className="w-80">
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">{label}</p>
-              {preview.map((item) => (
-                <BaseballCard key={item.id} item={item} />
-              ))}
-              {overflow > 0 && <p className="text-xs text-muted-foreground">+{overflow} more — click to see all</p>}
-            </div>
-          </HoverCardContent>
-        )}
-      </HoverCard>
+    <Card className={cardClassName}>
+      <KpiCardLabel label={label} status={status} glossary={glossary} />
+      <Dialog>
+        <HoverCard openDelay={200}>
+          <HoverCardTrigger asChild>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                aria-label={`${label} — view details`}
+                className="w-full rounded-b-lg text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+              >
+                <KpiCardBody value={value} delta={delta} status={status} subtitle={subtitle} />
+              </button>
+            </DialogTrigger>
+          </HoverCardTrigger>
+          {preview.length > 0 && (
+            <HoverCardContent className="w-80">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">{label}</p>
+                {preview.map((item) => (
+                  <BaseballCard key={item.id} item={item} />
+                ))}
+                {overflow > 0 && <p className="text-xs text-muted-foreground">+{overflow} more — click to see all</p>}
+              </div>
+            </HoverCardContent>
+          )}
+        </HoverCard>
 
-      <DialogContent className="max-h-[80vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{label}</DialogTitle>
-          <DialogDescription>
-            {items.length} item{items.length === 1 ? "" : "s"}
-          </DialogDescription>
-        </DialogHeader>
-        {items.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Nothing here right now.</p>
-        ) : (
-          <ul className="min-w-0 space-y-2">
-            {items.map((item) => (
-              <DrilldownRow key={item.id} item={item} />
-            ))}
-          </ul>
-        )}
-      </DialogContent>
-    </Dialog>
+        <DialogContent className="max-h-[80vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{label}</DialogTitle>
+            <DialogDescription>
+              {items.length} item{items.length === 1 ? "" : "s"}
+            </DialogDescription>
+          </DialogHeader>
+          {items.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Nothing here right now.</p>
+          ) : (
+            <ul className="min-w-0 space-y-2">
+              {items.map((item) => (
+                <DrilldownRow key={item.id} item={item} />
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
+    </Card>
   )
 }
 

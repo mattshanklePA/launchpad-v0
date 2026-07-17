@@ -5,11 +5,14 @@ import {
   buildKpiCards,
   buildActionItems,
   computeHealthScore,
+  worklistSummaryLabel,
 } from "./department-dashboard-data"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
 import type { DashboardAction } from "@/lib/dashboard/actions"
+import type { ActionItem } from "./action-center-data"
 import type { TenantConfig } from "@/lib/tenant"
+import { GLOSSARY_TERM_KEYS } from "@/lib/glossary"
 
 const sendDashboardActionNotification = vi.hoisted(() => vi.fn())
 vi.mock("@/app/dashboard-actions", () => ({ sendDashboardActionNotification }))
@@ -183,6 +186,40 @@ describe("buildKpiCards", () => {
   it("flags the RMF card critical when at_risk > 0", () => {
     const cards = buildKpiCards(baseMetrics({ rmfRollup: { on_track: 0, attention: 0, at_risk: 2, unknown: 0, total: 2 } }), false, true)
     expect(cards.find((c) => c.id === "rmf")?.status).toBe("critical")
+  })
+
+  it("attaches a glossary tooltip + short subtitle to every jargon KPI label (UX #4)", () => {
+    const cards = buildKpiCards(baseMetrics(), true, true)
+    const byId = Object.fromEntries(cards.map((c) => [c.id, c]))
+
+    for (const id of ["pipeline", "readiness", "omb-reportable", "signoff", "duplicates", "rmf"]) {
+      expect(byId[id].glossary, `${id}.glossary`).toBeTruthy()
+      expect(byId[id].subtitle?.trim().length, `${id}.subtitle`).toBeGreaterThan(0)
+      expect(GLOSSARY_TERM_KEYS, `${id}.glossary is a real glossary key`).toContain(byId[id].glossary)
+    }
+  })
+
+  it("leaves the non-jargon high-impact card without a glossary tooltip", () => {
+    const cards = buildKpiCards(baseMetrics(), true, true)
+    expect(cards.find((c) => c.id === "high-impact")?.glossary).toBeUndefined()
+  })
+})
+
+describe("worklistSummaryLabel", () => {
+  function item(id: string): ActionItem {
+    return { id, title: "Idea", severity: "info" }
+  }
+
+  it("reads as an all-clear when nothing needs attention", () => {
+    expect(worklistSummaryLabel([])).toBe("Today: nothing needs you right now.")
+  })
+
+  it("singularizes a single item", () => {
+    expect(worklistSummaryLabel([item("a")])).toBe("Today: 1 item needs you.")
+  })
+
+  it("pluralizes multiple items", () => {
+    expect(worklistSummaryLabel([item("a"), item("b"), item("c")])).toBe("Today: 3 items need you.")
   })
 })
 

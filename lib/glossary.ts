@@ -17,6 +17,9 @@ export type GlossaryTermKey =
   | "tokenOverlapMatch"
   | "awaitingBureauSignOff"
   | "advisory"
+  | "inPipeline"
+  | "readinessReady"
+  | "rmfAtRisk"
 
 export type GlossaryEntry = {
   /** The formal term as it appears on screen. Never rewritten by the tooltip. */
@@ -70,6 +73,21 @@ export const GLOSSARY: Record<GlossaryTermKey, GlossaryEntry> = {
     term: "Advisory",
     definition:
       "This is a recommendation for a human reviewer to confirm or override — it never sets the final answer by itself.",
+  },
+  inPipeline: {
+    term: "In pipeline",
+    definition:
+      "The total number of AI use cases currently moving through review in this scope, from initial submission through a reviewer's decision.",
+  },
+  readinessReady: {
+    term: "Ready",
+    definition:
+      "This use case has enough information on file for a reviewer to decide without asking the submitter for more.",
+  },
+  rmfAtRisk: {
+    term: "RMF at risk",
+    definition:
+      "At least one NIST AI RMF function (Govern, Map, Measure, or Manage) has a governance gap serious enough to need attention before this use case can move forward.",
   },
 }
 

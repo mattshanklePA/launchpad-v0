@@ -11,6 +11,9 @@ const EXPECTED_KEYS: GlossaryTermKey[] = [
   "tokenOverlapMatch",
   "awaitingBureauSignOff",
   "advisory",
+  "inPipeline",
+  "readinessReady",
+  "rmfAtRisk",
 ]
 
 describe("GLOSSARY", () => {

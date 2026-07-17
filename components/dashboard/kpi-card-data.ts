@@ -3,6 +3,7 @@
 // lib/officeRollup.ts / components/admin/office-rollup.tsx).
 
 import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
+import type { GlossaryTermKey } from "@/lib/glossary"
 
 export type KpiTrendDirection = "up" | "down" | "flat"
 export type KpiStatus = "neutral" | "good" | "warning" | "critical"
@@ -15,6 +16,10 @@ export type KpiCardData = {
   value: string | number
   delta?: KpiDelta
   status?: KpiStatus
+  /** Glossary key (lib/glossary.ts) behind the label's "?" tooltip — omitted for self-explanatory labels. */
+  glossary?: GlossaryTermKey
+  /** Short always-visible plain-language line under the value, for jargon labels a tooltip alone won't reach on touch. */
+  subtitle?: string
 }
 
 const STATUS_ACCENT_CLASS: Record<KpiStatus, string> = {
