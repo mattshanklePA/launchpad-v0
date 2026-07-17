@@ -17,7 +17,7 @@ import { Step11ExportTracking } from "./steps/step-11-export-tracking"
 import { Button } from "@/components/ui/button"
 import { UserCircle2, PencilLine } from "lucide-react"
 import { WizardNav } from "@/components/layout/wizard-nav"
-import { SUBMITTER_ROLE_LABELS } from "@/lib/steps"
+import { getSubmitterRoleLabels } from "@/lib/steps"
 import { getTenant } from "@/lib/tenant"
 
 export function FormContainer() {
@@ -69,7 +69,7 @@ export function FormContainer() {
   // actually have a name to show.
   const showSubmitterPill =
     currentStep >= 2 && currentStep <= 9 && Boolean(formData.submitterName)
-  const roleLabel = SUBMITTER_ROLE_LABELS[formData.submitterRole as string]
+  const roleLabel = getSubmitterRoleLabels()[formData.submitterRole as string]
   const buLabel = getTenant().unit.options.find((o) => o.value === formData.submitterOffice)?.label
 
   return (

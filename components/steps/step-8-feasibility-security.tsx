@@ -246,10 +246,9 @@ export function Step8FeasibilitySecurity() {
                   <SelectValue placeholder="Select classification..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unclassified">Unclassified / public (IL2)</SelectItem>
-                  <SelectItem value="cui">CUI (IL4)</SelectItem>
-                  <SelectItem value="il5">CUI, higher sensitivity / NSS (IL5)</SelectItem>
-                  <SelectItem value="il6">Classified up to Secret (IL6 / SIPRNet)</SelectItem>
+                  {tenant.dataClassifications.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

@@ -9,20 +9,15 @@ export type FormStep = {
   phaseName?: string
 }
 
-// Shared labels for the submitterRole enum (Step 1's "Role" dropdown). Kept
-// in one place and reused everywhere this value is displayed (the wizard's
-// "Submitting as…" pill, the Step 10 recap) so they can't drift out of sync
-// with each other — that drift is what showed a stale "Trademark Examiner"
-// in the pill after the dropdown itself had moved to neutral job titles.
-export const SUBMITTER_ROLE_LABELS: Record<string, string> = {
-  patent_examiner: "Operations / Staff Officer",
-  trademark_examiner: "Analyst",
-  manager: "Manager",
-  it_staff: "IT Staff",
-  product_owner: "Product Owner",
-  lead_product_owner: "Lead Product Owner",
-  developer: "Developer",
-  other: "Other",
+// Labels for the submitterRole enum (Step 1's "Role" dropdown), resolved
+// from the active tenant's `submitterRoles` (lib/tenant/types.ts) rather than
+// a static USPTO-shaped map. Kept in one place and reused everywhere this
+// value is displayed (the wizard's "Submitting as…" pill, the Step 10 recap,
+// the PDF export) so they can't drift out of sync with each other — that
+// drift is what once showed a stale "Trademark Examiner" in the pill after
+// the dropdown itself had moved to neutral job titles.
+export function getSubmitterRoleLabels(): Record<string, string> {
+  return Object.fromEntries(getTenant().submitterRoles.map((r) => [r.value, r.label]))
 }
 
 // Phase grouping for the progress reframe.
@@ -53,16 +48,10 @@ export type FormData = {
   // Step 1
   submitterName: string
   submitterEmail: string
-  submitterRole:
-    | "patent_examiner"
-    | "trademark_examiner"
-    | "manager"
-    | "it_staff"
-    | "product_owner"
-    | "lead_product_owner"
-    | "developer"
-    | "other"
-    | ""
+  // Tenant-defined role (`TenantConfig.submitterRoles`). Options come from the
+  // active tenant, so this is a free string rather than a per-tenant union —
+  // same pattern as `submitterOffice` below.
+  submitterRole: string
   // Tenant-defined org unit (USPTO business unit, DoC bureau, ...). Options come
   // from the active tenant's `unit.options`, so this is a free string rather than
   // a per-tenant union.
@@ -82,16 +71,9 @@ export type FormData = {
   isWithheld: "no" | "yes_risk_to_disclosure" | "yes_disclosure_prohibited" | "other" | ""
 
   // Step 3
-  targetAudience:
-    | "patent_examiner"
-    | "trademark_examiner"
-    | "supervisory_examiner"
-    | "product_owner"
-    | "lead_product_owner"
-    | "developer"
-    | "applicant"
-    | "other"
-    | ""
+  // Tenant-defined audience (`TenantConfig.targetAudiences`). Free string,
+  // same pattern as `submitterOffice`.
+  targetAudience: string
   impactedUsersCount: "lt_10" | "10_50" | "50_500" | "gt_500" | ""
   painPoints: string
   targetUserContext: string
@@ -100,7 +82,9 @@ export type FormData = {
   // Step 4
   coreProblem: string
   problemImpact: string
-  affectedSystem: "patents" | "trademarks" | "it_systems" | "cross_functional" | "other" | ""
+  // Tenant-defined system/process/group (`TenantConfig.affectedSystems`).
+  // Free string, same pattern as `submitterOffice`.
+  affectedSystem: string
   problemType: string[]
   severity: "low" | "medium" | "high" | ""
   problemDefinition: string
@@ -220,7 +204,10 @@ export type FormData = {
   humanOversightAppealNote: string
   publicConsultationSteps: string[] // #34 — select-multiple; steps taken to consult end users and the public
   // DoD responsible-AI + maturity disclosures
-  impactLevel: "unclassified" | "cui" | "il4" | "il5" | "il6" | "" // data classification -> required DoD Impact Level
+  // Tenant-defined data classification (`TenantConfig.dataClassifications`) —
+  // DoD Impact Levels for USPTO/DoW, FISMA impact levels for DoC. Free
+  // string, same pattern as `submitterOffice`.
+  impactLevel: string
   dataReadiness: "ai_ready" | "partial" | "needs_build" | "" // is AI-ready labeled data available today?
   trl: "" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" // Technology Readiness Level
   feasibilitySummary: string

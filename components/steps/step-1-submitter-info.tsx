@@ -54,14 +54,9 @@ export function Step1SubmitterInfo() {
                 <SelectValue placeholder="Select your role..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="patent_examiner">Operations / Staff Officer</SelectItem>
-                <SelectItem value="trademark_examiner">Analyst</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="it_staff">IT Staff</SelectItem>
-                <SelectItem value="product_owner">Product Owner</SelectItem>
-                <SelectItem value="lead_product_owner">Lead Product Owner</SelectItem>
-                <SelectItem value="developer">Developer</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                {getTenant().submitterRoles.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

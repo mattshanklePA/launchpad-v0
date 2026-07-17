@@ -4,7 +4,7 @@
 // focus-area chips, and a readiness assessment banner.
 
 import { jsPDF } from "jspdf"
-import { SUBMITTER_ROLE_LABELS, type FormData } from "@/lib/steps"
+import { getSubmitterRoleLabels, type FormData } from "@/lib/steps"
 import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
 
 const USPTO_BLUE_PRIMARY: [number, number, number] = [53, 94, 147]
@@ -43,7 +43,7 @@ function officeLabel(o?: string): string {
 
 function roleLabel(r?: string): string {
   if (!r) return "Unknown"
-  return SUBMITTER_ROLE_LABELS[r] || r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  return getSubmitterRoleLabels()[r] || r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function rangeLabel(v: string | undefined, suffix: string): string | undefined {

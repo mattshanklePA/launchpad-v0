@@ -30,6 +30,61 @@ describe("DoC tenant", () => {
   })
 })
 
+describe("submit-wizard dropdown options (issue #147 — USPTO-specific lists generalized to tenant config)", () => {
+  it("keeps USPTO's exact pre-existing option values (unchanged default)", () => {
+    expect(uspto.submitterRoles.map((o) => o.value)).toEqual([
+      "patent_examiner", "trademark_examiner", "manager", "it_staff",
+      "product_owner", "lead_product_owner", "developer", "other",
+    ])
+    expect(uspto.affectedSystems.map((o) => o.value)).toEqual([
+      "patents", "trademarks", "it_systems", "cross_functional", "other",
+    ])
+    expect(uspto.targetAudiences.map((o) => o.value)).toEqual([
+      "patent_examiner", "trademark_examiner", "supervisory_examiner", "product_owner",
+      "lead_product_owner", "developer", "applicant", "other",
+    ])
+    expect(uspto.dataClassifications.map((o) => o.value)).toEqual(["unclassified", "cui", "il5", "il6"])
+  })
+
+  it("gives DoW the DoD Impact Levels, same as USPTO", () => {
+    expect(dow.dataClassifications).toEqual(uspto.dataClassifications)
+  })
+
+  it("gives DoC FISMA impact levels instead of DoD Impact Levels", () => {
+    const values = doc.dataClassifications.map((o) => o.value)
+    expect(values).toEqual(["fisma_low", "fisma_moderate", "fisma_high"])
+    expect(values.some((v) => v.startsWith("il"))).toBe(false)
+  })
+
+  it("gives DoC and DoW their own affected-system and target-audience options, not USPTO's", () => {
+    expect(doc.affectedSystems).not.toEqual(uspto.affectedSystems)
+    expect(dow.affectedSystems).not.toEqual(uspto.affectedSystems)
+    expect(doc.targetAudiences).not.toEqual(uspto.targetAudiences)
+    expect(dow.targetAudiences).not.toEqual(uspto.targetAudiences)
+  })
+
+  it("every tenant includes the option values its own existing seed data uses, so seed data keeps resolving to a label", () => {
+    // Every tenant's seed data uses "other"; USPTO/DoW/DoC all use
+    // "cross_functional" for affectedSystem; USPTO/DoC use "applicant" for
+    // targetAudience (lib/seedSubmissions.ts, lib/seedSubmissionsDoc.ts,
+    // db/migrations/dow/0002_dow_seed.sql).
+    for (const tenant of [uspto, dow, doc]) {
+      expect(tenant.affectedSystems.map((o) => o.value)).toContain("other")
+      expect(tenant.affectedSystems.map((o) => o.value)).toContain("cross_functional")
+      expect(tenant.targetAudiences.map((o) => o.value)).toContain("other")
+    }
+    for (const tenant of [uspto, doc]) {
+      expect(tenant.targetAudiences.map((o) => o.value)).toContain("applicant")
+    }
+  })
+
+  it("only USPTO has rallyExport on, so only USPTO's route options include Rally", () => {
+    expect(uspto.features.rallyExport).toBe(true)
+    expect(dow.features.rallyExport).toBe(false)
+    expect(doc.features.rallyExport).toBe(false)
+  })
+})
+
 describe("admin dashboard OKRs label", () => {
   it("never leaks another tenant's org name", () => {
     expect(doc.okrsLabel).not.toMatch(/Department of War|USPTO/i)
