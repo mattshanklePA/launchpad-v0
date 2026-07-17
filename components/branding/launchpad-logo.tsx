@@ -1,4 +1,3 @@
-import { Rocket } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { getTenant } from "@/lib/tenant"
 
@@ -22,10 +21,35 @@ const SIZE_MAP: Record<LogoSize, { icon: string; title: string; subtitle: string
 }
 
 /**
+ * The Keystone keystone-wedge mark (brand/keystone/mark-fullcolor.svg). Amber
+ * two-tone by default; `monochrome` swaps both facets for `currentColor` so it
+ * can sit on any tenant surface (dark headers, sidebars) via the ancestor's
+ * text color, matching brand/keystone/README.md's "amber is reserved for the
+ * mark and alerts only" rule — the amber fill never appears as decoration.
+ */
+function KeystoneMark({ className, monochrome }: { className?: string; monochrome?: boolean }) {
+  if (monochrome) {
+    return (
+      <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+        <path d="M30 26 L70 26 L62 80 L38 80 Z" fill="currentColor" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+      <path d="M30 26 L70 26 L62 80 L38 80 Z" fill="#C77D3A" />
+      <path d="M30 26 L70 26 L67.3 39.5 L32.7 39.5 Z" fill="#DCA061" />
+    </svg>
+  )
+}
+
+/**
  * LaunchPadLogo
- * - Wordmark variant: Rocket icon + product name (Crimson Pro) + subtitle
- * - Icon variant: Rocket icon only with sr-only text
- * - Uses lucide-react for the icon, Tailwind for styling, and tenant brand colors
+ * - Wordmark variant: Keystone mark + product name (Chivo) + subtitle
+ * - Icon variant: Keystone mark only with sr-only text
+ * - The mark is the shared Keystone base brand asset; the product name and
+ *   subtitle text still come from the active tenant (see lib/tenant), so
+ *   USPTO/DoW's "LaunchPad" and DoC's "Warder" keep rendering as before.
  */
 export function LaunchPadLogo({
   size = "md",
@@ -38,14 +62,14 @@ export function LaunchPadLogo({
 }: LaunchPadLogoProps) {
   const sz = SIZE_MAP[size]
 
-  const iconColor = monochrome ? "text-current" : "text-uspto-blue-primary"
-  const titleColor = monochrome ? "text-current" : "text-uspto-gray-text"
-  const subtitleColor = monochrome ? "text-current/70" : "text-gray-500"
+  const iconColor = monochrome ? "text-current" : undefined
+  const titleColor = monochrome ? "text-current" : "text-foreground"
+  const subtitleColor = monochrome ? "text-current/70" : "text-muted-foreground"
 
   if (variant === "icon") {
     return (
       <span className={cn("inline-flex items-center", className)} role="img" aria-label={`${getTenant().productName} logo`}>
-        <Rocket className={cn(sz.icon, iconColor)} strokeWidth={2.2} />
+        <KeystoneMark className={cn(sz.icon, iconColor)} monochrome={monochrome} />
         <span className="sr-only">{getTenant().productName}</span>
       </span>
     )
@@ -53,9 +77,9 @@ export function LaunchPadLogo({
 
   return (
     <span className={cn("inline-flex items-center", sz.gap, className)} role="img" aria-label={`${getTenant().productName} logo`}>
-      <Rocket className={cn(sz.icon, iconColor)} strokeWidth={2.2} />
+      <KeystoneMark className={cn(sz.icon, "shrink-0", iconColor)} monochrome={monochrome} />
       <span className="flex flex-col leading-none">
-        <span className={cn("font-wordmark font-semibold tracking-tight", sz.title, titleColor, titleClassName)}>{getTenant().productName}</span>
+        <span className={cn("font-heading font-semibold tracking-tight", sz.title, titleColor, titleClassName)}>{getTenant().productName}</span>
         {withSubtitle && (
           <span className={cn("-mt-0.5 font-medium", sz.subtitle, subtitleColor, subtitleClassName)}>
             {getTenant().logoSubtitle}
