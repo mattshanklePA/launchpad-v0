@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge"
 import { User, Settings, LogOut, Shield, Home, LogIn } from "lucide-react"
 import { ensureSeeded, getSession, logout, type Session, hasAdminAccess, isAdmin } from "@/lib/auth"
 
-const darkBtn = "bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
+const darkBtn = "bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
 
 export function Header() {
   const router = useRouter()
@@ -40,10 +40,10 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#141414] text-white">
+    <header className="sticky top-0 z-50 w-full border-b border-primary-foreground/10 bg-primary text-primary-foreground">
       <div className="container flex h-20 max-w-screen-2xl items-center justify-between">
         <Link href={session ? "/home" : "/"}>
-          <LaunchPadLogo size="md" monochrome className="text-white" subtitleClassName="text-dow-steel" />
+          <LaunchPadLogo size="md" monochrome className="text-primary-foreground" subtitleClassName="text-primary-foreground/60" />
         </Link>
         <div className="flex items-center gap-4">
           <Button variant="outline" asChild className={darkBtn}>

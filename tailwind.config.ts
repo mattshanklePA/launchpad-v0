@@ -32,8 +32,16 @@ const config: Config = {
           foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "#D22630",
+          DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -50,6 +58,21 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        // Keystone brand palette (brand/keystone/tokens.json) — literal brand
+        // hex values for non-text/decorative uses (marks, large fills, chart
+        // accents). Semantic tokens above (primary/secondary/success/warning)
+        // carry the same palette, adjusted where needed for 508 text contrast.
+        keystone: {
+          basalt: "#2A333C",
+          activeBlue: "#0086CA",
+          amber: "#C77D3A",
+          amberLight: "#DCA061",
+          amberDark: "#9C5F22",
+          onTrack: "#2E9E7B",
+          alert: "#C24A3A",
+          limestone: "#E7E1D6",
+          chalk: "#F4F2EC",
         },
         uspto: {
           blue: {
@@ -73,12 +96,15 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-lato)", "system-ui", "sans-serif"],
-        heading: ["var(--font-oswald)", "var(--font-lato)", "sans-serif"],
-        wordmark: ["var(--font-crimson)", "Georgia", "serif"],
+        // Keystone base type system (brand/keystone/README.md): Hanken Grotesk
+        // (body/UI), Chivo (headings/wordmark). Self-hosted via next/font in
+        // app/layout.tsx. Tenants can still override per-surface via className.
+        sans: ["var(--font-hanken)", "system-ui", "sans-serif"],
+        heading: ["var(--font-chivo)", "var(--font-hanken)", "sans-serif"],
+        wordmark: ["var(--font-chivo)", "Archivo", "system-ui", "sans-serif"],
         // Public landing typography system (docs/landing-page-conversion-audit-2026-07-15.md).
         // Scoped to components/landing/public-landing.tsx — not used elsewhere in the app,
-        // so the app-wide DOW brand tokens above (sans/heading/wordmark) are unaffected.
+        // so the app-wide brand tokens above (sans/heading/wordmark) are unaffected.
         display: ["var(--font-fraunces)", "Georgia", "serif"],
         body: ["var(--font-public-sans)", "system-ui", "sans-serif"],
       },
