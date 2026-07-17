@@ -1,4 +1,4 @@
-import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
+import { getTenant } from "@/lib/tenant"
 
 export type FormStep = {
   step: number
@@ -12,8 +12,8 @@ export type FormStep = {
 // Labels for the submitterRole enum (Step 1's "Role" dropdown), resolved
 // from the active tenant's `submitterRoles` (lib/tenant/types.ts) rather than
 // a static USPTO-shaped map. Kept in one place and reused everywhere this
-// value is displayed (the wizard's "Submitting as…" pill, the Step 10 recap,
-// the PDF export) so they can't drift out of sync with each other — that
+// value is displayed (the wizard's "Submitting as…" pill, the Review & Submit
+// recap, the PDF export) so they can't drift out of sync with each other — that
 // drift is what once showed a stale "Trademark Examiner" in the pill after
 // the dropdown itself had moved to neutral job titles.
 export function getSubmitterRoleLabels(): Record<string, string> {
@@ -21,9 +21,14 @@ export function getSubmitterRoleLabels(): Record<string, string> {
 }
 
 // Phase grouping for the progress reframe.
-// Ramesh-bias: show "Phase N of 4" instead of intimidating step counts.
-// Steps 3 (Problem & Target Users) and 5 (Value) are merged steps that used
-// to be two separate substeps each.
+// Ramesh-bias: show "Phase N of 3" instead of intimidating step counts.
+//
+// Issue #162 slimmed the submit wizard down to a 5-step idea flow (steps
+// 2-6 below) — Strategic Alignment, the heavy OMB/M-25-21 Feasibility &
+// Security block, and Success Metrics are no longer collected at idea
+// intake. Those fields stay in `FormData` and get filled in during vetting
+// (lib/governanceCapture.ts's reviewer-side capture, or direct edits on the
+// submission) rather than by the submitter up front.
 export type FormPhase = {
   phase: number
   name: string
@@ -34,15 +39,37 @@ export type FormPhase = {
 
 export const formPhases: FormPhase[] = [
   { phase: 1, name: "Setup", description: "Who you are.", stepStart: 1, stepEnd: 1 },
-  { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken.", stepStart: 2, stepEnd: 2 },
-  { phase: 3, name: "Solution & Value", description: "What you'd build and why it matters.", stepStart: 3, stepEnd: 4 },
-  { phase: 4, name: "Alignment & Feasibility", description: "Strategic fit, security, and measurable success.", stepStart: 5, stepEnd: 7 },
-  { phase: 5, name: "Summary", description: "Name and summarize the finished idea.", stepStart: 8, stepEnd: 8 },
+  { phase: 2, name: "Your Idea", description: "The problem, your solution, and any constraints.", stepStart: 2, stepEnd: 4 },
+  { phase: 3, name: "Summary & Submit", description: "Name it, review it, send it for vetting.", stepStart: 5, stepEnd: 6 },
 ]
 
 export function getPhaseForStep(step: number): FormPhase | null {
   return formPhases.find((p) => step >= p.stepStart && step <= p.stepEnd) || null
 }
+
+// Admin-only field-grouping phases (Form Configuration tab, issue #57) —
+// separate from `formPhases` above because it still needs a home for every
+// FIELD_REGISTRY field, including the Strategic Alignment / Feasibility &
+// Security / Success Metrics fields that no longer render in the idea
+// intake wizard (issue #162) but reviewers still fill in during vetting and
+// admins still need to be able to toggle. Reusing `formPhases` for this
+// would either drop those fields from the admin panel entirely, or add
+// always-empty phantom segments to the wizard's own progress bar — this
+// keeps the two concerns (what the wizard shows vs. what admins can
+// configure) independent.
+export type AdminFieldGroup = { phase: number; name: string; description: string }
+
+export const adminFieldGroups: AdminFieldGroup[] = [
+  { phase: 1, name: "Setup", description: "Who you are." },
+  { phase: 2, name: "Problem & Users", description: "Who's affected and what's broken." },
+  { phase: 3, name: "Solution & Value", description: "What you'd build and why it matters." },
+  {
+    phase: 4,
+    name: "Alignment, Feasibility & Governance (vetting-only)",
+    description: "Strategic fit, security, and OMB/M-25-21 governance — filled in by reviewers during vetting, not shown at idea intake.",
+  },
+  { phase: 5, name: "Summary", description: "Name and summarize the finished idea." },
+]
 
 export type FormData = {
   // Step 1
@@ -182,9 +209,10 @@ export type FormData = {
   highImpactFactors: string[]
   // M-25-21 minimum-practice risk-management fields (#26-34) — required only
   // once highImpact is "high_impact" AND stageOfDevelopment is "deployed"
-  // (see components/steps/step-8-feasibility-security.tsx). Every multiple-choice
-  // field in this group also permits "In-progress" and a CAIO-waiver answer,
-  // not just Yes/No.
+  // (see components/submissions/governance-capture-panel.tsx — filled in
+  // during vetting, not at idea intake, as of issue #162). Every
+  // multiple-choice field in this group also permits "In-progress" and a
+  // CAIO-waiver answer, not just Yes/No.
   preDeploymentTesting: "yes" | "in_progress" | "waived" | "" // #26
   preDeploymentTestingNote: string
   aiImpactAssessmentCompleted: "yes" | "in_progress" | "waived" | "" // #27
@@ -336,14 +364,12 @@ export const initialFormData: FormData = {
 // (via getTenant()) rather than hardcoded, so a Commerce/USPTO deployment
 // never shows another tenant's org name. Everything else is shared.
 //
-// `submitterOffice` (the wizard's `formData.submitterOffice`) lets the
-// Strategic Alignment step (5) name the submitter's own bureau instead of
-// the department when that bureau has its own strategic priorities (DoC) —
-// see getOrgNameForUnit. Callers that don't have a submitter in scope (e.g.
-// the progress bar) can omit it and get the department-level fallback.
+// `submitterOffice` is accepted (but currently unused in the step copy
+// below) for call-site compatibility with the pre-#162 signature — Strategic
+// Alignment, the step that used to name the submitter's bureau here, is no
+// longer part of idea intake (filled in during vetting instead).
 export function getFormSteps(submitterOffice?: string | null): FormStep[] {
-  const { orgName, assistantName } = getTenant()
-  const alignmentOrgName = getOrgNameForUnit(submitterOffice)
+  const { assistantName } = getTenant()
   return [
     {
       step: 1,
@@ -353,54 +379,36 @@ export function getFormSteps(submitterOffice?: string | null): FormStep[] {
     },
     {
       step: 2,
-      name: "Problem & Target Users",
-      title: "Define the Problem and Who It Affects",
-      prompt: "What problem or opportunity are you trying to address, and who's affected by it?",
+      name: "Business Problem & Opportunity",
+      title: "What's the Problem or Opportunity?",
+      prompt: "Who's affected, what's broken, and why does it matter?",
     },
     {
       step: 3,
-      name: "Proposed Solution",
+      name: "Proposed Solution & Benefits",
       title: "Propose a Solution",
-      prompt: "How would this work? Describe your proposed AI/ML approach.",
+      prompt: "How would this work, and what benefit do you expect it to deliver?",
     },
     {
       step: 4,
-      name: "Value",
-      title: "Define the Value to Users and the Business",
-      prompt: `How does this help users, and what's the business case for the ${orgName}?`,
+      name: "Technical Constraints",
+      title: "Any Known Technical Constraints?",
+      prompt: "Quick notes only — dependencies, blockers, or integration realities we should know about.",
     },
     {
       step: 5,
-      name: "Strategic Alignment",
-      title: `Align with ${alignmentOrgName} Goals`,
-      prompt: `Does this align with the ${alignmentOrgName}'s strategic priorities? Which ones?`,
-    },
-    {
-      step: 6,
-      name: "Feasibility & Security",
-      title: "Assess Feasibility & Security",
-      prompt: "Is this idea feasible? Consider technical, security, and resource realities.",
-    },
-    {
-      step: 7,
-      name: "Success Metrics",
-      title: "Define Success Metrics",
-      prompt: "How will we know this worked? Define measurable success.",
-    },
-    {
-      step: 8,
       name: "Idea Overview",
       title: "Name & Summarize Your Idea",
       prompt: `${assistantName} drafted a title and summary from everything you entered — review and refine.`,
     },
     {
-      step: 9,
+      step: 6,
       name: "Review & Submit",
       title: "Review & Submit for Vetting",
       prompt: "Review your idea before submitting it for vetting.",
     },
     {
-      step: 10,
+      step: 7,
       name: "Submission Complete",
       title: "Idea Submitted for Vetting",
       prompt: "Your idea has been submitted and will be vetted by the review team.",

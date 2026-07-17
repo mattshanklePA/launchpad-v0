@@ -47,6 +47,60 @@ function baseComplete(overrides: Partial<FormData> = {}): FormData {
   }
 }
 
+describe("getSubmissionReadiness — idea gate scoped to the 5-step idea flow (issue #162)", () => {
+  it("can submit with Strategic Alignment, Feasibility & Security, and Success Metrics entirely blank", () => {
+    const { canSubmit, missing } = getSubmissionReadiness(
+      baseComplete({
+        relevantOkrs: "",
+        usptoFocusArea: [],
+        dependencies: "",
+        resourcesNeeded: [],
+        successMetrics: "",
+        timelineForResults: "",
+        keyMetrics: [],
+      }),
+    )
+    expect(missing).toEqual([])
+    expect(canSubmit).toBe(true)
+  })
+
+  it("can submit with every submitter self-rating field blank (severity, complexity, time/cost savings)", () => {
+    const { canSubmit, missing } = getSubmissionReadiness(
+      baseComplete({
+        severity: "",
+        implementationComplexity: "",
+        userTimeSavings: "",
+        costSavings: "",
+      }),
+    )
+    expect(missing).toEqual([])
+    expect(canSubmit).toBe(true)
+  })
+
+  it("can submit with the DoC AI-risk / data-readiness fields blank", () => {
+    const { canSubmit, missing } = getSubmissionReadiness(
+      baseComplete({
+        involvesSensitiveData: "",
+        aiDecisionalImpact: "",
+        aiModelSourcing: "",
+        aiHumanReview: "",
+        dataReadiness: "",
+        impactLevel: "",
+        trl: "",
+      }),
+    )
+    expect(missing).toEqual([])
+    expect(canSubmit).toBe(true)
+  })
+
+  it("still blocks on the light idea fields that remain required", () => {
+    const { canSubmit, missing } = getSubmissionReadiness(baseComplete({ coreProblem: "", proposedSolution: "" }))
+    expect(canSubmit).toBe(false)
+    expect(missing.some((m) => m.field === "coreProblem")).toBe(true)
+    expect(missing.some((m) => m.field === "proposedSolution")).toBe(true)
+  })
+})
+
 describe("getSubmissionReadiness — idea gate never blocks on governance fields (issue #160)", () => {
   it("can submit as an idea with every OMB/M-25-21/RMF governance field blank", () => {
     const { canSubmit, missing } = getSubmissionReadiness(baseComplete())

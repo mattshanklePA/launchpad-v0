@@ -302,8 +302,9 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
 
   const totalSteps = getFormSteps().length
   // Review is the LAST interactive step before the confirmation page.
-  // formSteps now has 10 entries (1-9 interactive + 10 confirmation).
-  const reviewStepNumber = 9
+  // formSteps now has 7 entries (1-6 interactive + 7 confirmation) — issue #162
+  // slimmed the wizard to a 5-step idea flow (steps 2-6) ahead of Submitter Info.
+  const reviewStepNumber = 6
 
   // Walk forward/backward until we hit a step that has at least one enabled
   // field, or land on the review step (which has no registry fields and is

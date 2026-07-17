@@ -1,21 +1,29 @@
 "use client"
 
-// MERGED STEP — User value and Business value on one screen. Required fields
-// stay visible; the optional tag pickers live behind an "Add optional detail"
-// disclosure so the screen leads with the value statements, not the chips.
+// MERGED STEP (issue #162) — Proposed Solution + Expected Benefits. Combines
+// the old separate "Proposed Solution" and "Value" steps into one screen: the
+// submitter describes what they'd build and what they *expect* it to deliver
+// for users and the business. This is deliberately framed as an expectation,
+// not a determination — the quantified self-ratings that used to live here
+// (`implementationComplexity`, `userTimeSavings`, `costSavings`) are gone;
+// value and impact are a Scout/reviewer determination, made during vetting.
+// The fields themselves stay in FormData, just no longer collected at intake.
 
+import { useState } from "react"
+import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "@/components/launchpad/chat-panel"
+import { X, ChevronDown, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
-import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
-import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { getTenant } from "@/lib/tenant"
-import { ChevronDown, ChevronRight } from "lucide-react"
+
+const MAX_FEATURES = 3
 
 const improvementOptions = [
   { value: "faster_processing", label: "Faster processing" },
@@ -33,18 +41,27 @@ function getBenefitOptions(orgName: string) {
   ]
 }
 
-export function Step5Value() {
+export function Step3SolutionBenefits() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility(formData)
-  const [showOptional, setShowOptional] = usePersistentDisclosure("value")
   const tenant = getTenant()
+  const [newFeature, setNewFeature] = useState("")
+  const [showOptional, setShowOptional] = usePersistentDisclosure("solution")
   const benefitOptions = getBenefitOptions(tenant.orgName)
 
-  const userSectionVisible =
-    isVisible("userValue") || isVisible("userTimeSavings") || isVisible("userValueSummary")
-  const businessSectionVisible =
-    isVisible("businessValue") || isVisible("costSavings") || isVisible("businessValueSummary")
-  const optionalVisible = isVisible("otherUserImprovements") || isVisible("strategicBenefit")
+  const benefitsSectionVisible = isVisible("userValue") || isVisible("businessValue")
+  const optionalVisible = isVisible("keyFunctionality") || isVisible("otherUserImprovements") || isVisible("strategicBenefit")
+
+  const handleAddFeature = () => {
+    if (newFeature && (formData.keyFunctionality || []).length < MAX_FEATURES) {
+      setFormData((prev) => ({ ...prev, keyFunctionality: [...(prev.keyFunctionality || []), newFeature] }))
+      setNewFeature("")
+    }
+  }
+
+  const handleRemoveFeature = (feature: string) => {
+    setFormData((prev) => ({ ...prev, keyFunctionality: (prev.keyFunctionality || []).filter((f) => f !== feature) }))
+  }
 
   const handleImprovementToggle = (item: string) => {
     const cur = formData.otherUserImprovements || []
@@ -58,25 +75,61 @@ export function Step5Value() {
     setFormData((prev) => ({ ...prev, strategicBenefit: next }))
   }
 
-  // Scout coaches on the business-value summary; user-value summary auto-fills
-  // from the same conversation.
   const handleSuggestion = (suggestion: string) => {
-    setFormData((prev) => ({ ...prev, businessValueSummary: suggestion }))
+    setFormData((prev) => ({ ...prev, solutionSummary: suggestion }))
   }
 
   return (
     <div className="grid lg:grid-cols-12 gap-10">
       <div className="lg:col-span-7">
         <div className="space-y-10">
-          {/* ─── VALUE TO USERS ─── */}
-          {userSectionVisible && (
-            <div className="space-y-6">
+          {/* ─── THE SOLUTION ─── */}
+          <div className="space-y-6">
+            {isVisible("proposedSolution") && (
+              <div className="space-y-2">
+                <Label htmlFor="proposedSolution" className="text-base font-semibold text-uspto-gray-text">
+                  Describe your proposed solution
+                </Label>
+                <Textarea
+                  id="proposedSolution"
+                  value={formData.proposedSolution}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, proposedSolution: e.target.value }))}
+                  placeholder="Provide a short narrative of your solution."
+                  rows={4}
+                  className="text-base"
+                />
+              </div>
+            )}
+
+            {isVisible("solutionSummary") && (
+              <div className="space-y-2">
+                <Label htmlFor="solutionSummary" className="text-base font-semibold text-uspto-gray-text">
+                  Solution Summary
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  AI-generated refined summary of your proposed solution. Open {tenant.assistantName} to draft or refine.
+                </p>
+                <TextareaAutosize
+                  id="solutionSummary"
+                  value={formData.solutionSummary || ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, solutionSummary: e.target.value }))}
+                  placeholder="AI-generated summary will appear here..."
+                  minRows={3}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ─── EXPECTED BENEFITS — the submitter's expectation, not a determination ─── */}
+          {benefitsSectionVisible && (
+            <div className="space-y-6 border-t pt-8">
               <div>
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Value to Users
+                  Expected Benefits
                 </h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  What changes for the people doing the work.
+                  What you expect this to deliver — reviewers will confirm the actual value and impact during vetting.
                 </p>
               </div>
 
@@ -90,61 +143,11 @@ export function Step5Value() {
                     value={formData.userValue}
                     onChange={(e) => setFormData((prev) => ({ ...prev, userValue: e.target.value }))}
                     placeholder="Describe the primary benefits for the end user."
-                    rows={4}
+                    rows={3}
                     className="text-base"
                   />
                 </div>
               )}
-
-              {isVisible("userTimeSavings") && (
-                <div className="space-y-2 md:max-w-sm">
-                  <Label htmlFor="userTimeSavings">Expected user time savings</Label>
-                  <OptionRadioGroup
-                    ariaLabel="Expected user time savings"
-                    value={formData.userTimeSavings}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, userTimeSavings: value as any }))}
-                    options={[
-                      { value: "lt_1", label: "<1 hr/week" },
-                      { value: "1_5", label: "1–5 hrs/week" },
-                      { value: "5_10", label: "5–10 hrs/week" },
-                      { value: "gt_10", label: "10+ hrs/week" },
-                    ]}
-                  />
-                </div>
-              )}
-
-              {isVisible("userValueSummary") && (
-                <div className="space-y-2">
-                  <Label htmlFor="userValueSummary" className="text-base font-semibold text-uspto-gray-text">
-                    Refined User Value Summary
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    AI-generated summary of how this changes the user's day.
-                  </p>
-                  <TextareaAutosize
-                    id="userValueSummary"
-                    value={formData.userValueSummary || ""}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, userValueSummary: e.target.value }))}
-                    placeholder="AI-generated summary will appear here..."
-                    minRows={3}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ─── VALUE TO THE BUSINESS ─── */}
-          {businessSectionVisible && (
-            <div className={`space-y-6 ${userSectionVisible ? "pt-8 border-t" : ""}`}>
-              <div>
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Value to the Business
-                </h3>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  What changes for the {tenant.orgName} at the enterprise level: {tenant.leadershipPriorities}.
-                </p>
-              </div>
 
               {isVisible("businessValue") && (
                 <div className="space-y-2">
@@ -156,44 +159,8 @@ export function Step5Value() {
                     value={formData.businessValue}
                     onChange={(e) => setFormData((prev) => ({ ...prev, businessValue: e.target.value }))}
                     placeholder="Describe the impact on the agency."
-                    rows={4}
+                    rows={3}
                     className="text-base"
-                  />
-                </div>
-              )}
-
-              {isVisible("costSavings") && (
-                <div className="space-y-2 md:max-w-sm">
-                  <Label htmlFor="costSavings">Estimate potential cost or time savings</Label>
-                  <OptionRadioGroup
-                    ariaLabel="Estimate potential cost or time savings"
-                    value={formData.costSavings}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, costSavings: value as any }))}
-                    options={[
-                      { value: "lt_50k", label: "<$50k" },
-                      { value: "50k_250k", label: "$50k–$250k" },
-                      { value: "250k_1m", label: "$250k–$1M" },
-                      { value: "gt_1m", label: "$1M+" },
-                    ]}
-                  />
-                </div>
-              )}
-
-              {isVisible("businessValueSummary") && (
-                <div className="space-y-2">
-                  <Label htmlFor="businessValueSummary" className="text-base font-semibold text-uspto-gray-text">
-                    Refined Business Value Summary
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    AI-generated summary of measurable agency-level impact.
-                  </p>
-                  <TextareaAutosize
-                    id="businessValueSummary"
-                    value={formData.businessValueSummary || ""}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, businessValueSummary: e.target.value }))}
-                    placeholder="AI-generated summary will appear here..."
-                    minRows={3}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
                   />
                 </div>
               )}
@@ -212,8 +179,39 @@ export function Step5Value() {
                 {showOptional ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 {showOptional ? "Hide optional detail" : "Add optional detail"}
               </button>
+
               {showOptional && (
                 <div className="mt-5 space-y-6">
+                  {isVisible("keyFunctionality") && (
+                    <div className="space-y-2">
+                      <Label>Key functionality (top 3 features)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={newFeature}
+                          onChange={(e) => setNewFeature(e.target.value)}
+                          placeholder="Add a feature..."
+                          disabled={(formData.keyFunctionality || []).length >= MAX_FEATURES}
+                        />
+                        <Button onClick={handleAddFeature} disabled={(formData.keyFunctionality || []).length >= MAX_FEATURES}>
+                          Add
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {(formData.keyFunctionality || []).map((feature) => (
+                          <div
+                            key={feature}
+                            className="flex items-center gap-1 bg-muted text-muted-foreground rounded-full pl-3 pr-1 py-1 text-sm"
+                          >
+                            <span>{feature}</span>
+                            <button onClick={() => handleRemoveFeature(feature)} className="rounded-full hover:bg-background">
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {isVisible("otherUserImprovements") && (
                     <div className="space-y-2">
                       <Label>Other measurable improvements</Label>
@@ -232,6 +230,7 @@ export function Step5Value() {
                       </div>
                     </div>
                   )}
+
                   {isVisible("strategicBenefit") && (
                     <div className="space-y-2">
                       <Label>Strategic benefit</Label>
@@ -256,9 +255,8 @@ export function Step5Value() {
           )}
         </div>
       </div>
-
       <div className="lg:col-span-5 flex flex-col">
-        <AIdChatPanel step={4} onApplySuggestion={handleSuggestion} />
+        <AIdChatPanel step={3} onApplySuggestion={handleSuggestion} />
       </div>
     </div>
   )

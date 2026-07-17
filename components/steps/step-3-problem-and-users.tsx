@@ -4,11 +4,15 @@
 // reinforced by the problem-first reorder). Non-required enrichment fields are
 // tucked behind an "Add optional detail" disclosure so the screen leads with
 // the core question instead of overwhelming the submitter with ~10 inputs.
+//
+// `severity` (a submitter self-rating of impact) was dropped from this step
+// at idea intake (issue #162) — value and impact are a Scout/reviewer
+// determination, not something submitters grade on their own idea. The field
+// stays in FormData, filled in during vetting instead.
 
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { useForm } from "@/context/form-context"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
@@ -82,50 +86,24 @@ export function Step3ProblemAndUsers() {
                 </div>
               )}
 
-              {(isVisible("affectedSystem") || isVisible("severity")) && (
+              {isVisible("affectedSystem") && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {isVisible("affectedSystem") && (
-                    <div className="space-y-2">
-                      <Label htmlFor="affectedSystem">Which process, system, or group does this affect?</Label>
-                      <Select
-                        value={formData.affectedSystem}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, affectedSystem: value as any }))}
-                      >
-                        <SelectTrigger id="affectedSystem">
-                          <SelectValue placeholder="Select an area..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tenant.affectedSystems.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {isVisible("severity") && (
-                    <div className="space-y-2">
-                      <Label>Severity</Label>
-                      <RadioGroup
-                        value={formData.severity}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, severity: value as any }))}
-                        className="flex gap-4 pt-2"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="low" id="sev-low" />
-                          <Label htmlFor="sev-low">Low</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="medium" id="sev-medium" />
-                          <Label htmlFor="sev-medium">Medium</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="high" id="sev-high" />
-                          <Label htmlFor="sev-high">High</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="affectedSystem">Which process, system, or group does this affect?</Label>
+                    <Select
+                      value={formData.affectedSystem}
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, affectedSystem: value as any }))}
+                    >
+                      <SelectTrigger id="affectedSystem">
+                        <SelectValue placeholder="Select an area..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tenant.affectedSystems.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
             </div>

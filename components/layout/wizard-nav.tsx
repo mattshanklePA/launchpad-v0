@@ -17,7 +17,7 @@ import { isStepEnabled } from "@/lib/formConfig"
 import { getProgressModel } from "@/lib/submissionReadiness"
 import { CheckCircle2, Circle, CircleDot, AlertCircle, ClipboardList } from "lucide-react"
 
-const REVIEW_STEP = 9
+const REVIEW_STEP = 6
 
 type StepStatus = "current" | "complete" | "incomplete" | "upcoming"
 
@@ -33,7 +33,7 @@ export function WizardNav() {
   const { isStepComplete, canSubmit } = getProgressModel(formData)
 
   // Confirmation page — nav doesn't apply
-  if (currentStep === 10) return null
+  if (currentStep === 7) return null
 
   return (
     <nav

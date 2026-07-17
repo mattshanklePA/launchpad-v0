@@ -1,7 +1,8 @@
 // Shared option lists for the OMB inventory / M-25-21 governance fields —
-// used by both the submitter wizard (components/steps/step-8-feasibility-security.tsx)
-// and the reviewer governance-capture panel (components/submissions/governance-capture-panel.tsx,
-// issue #161) so option labels can never drift between the two surfaces.
+// used by the reviewer governance-capture panel (components/submissions/governance-capture-panel.tsx,
+// issue #161) that fills these in during vetting. These fields are no longer
+// collected in the submitter wizard itself (issue #162 moved them out of
+// intake), but the shared option lists keep old and new consumers in sync.
 
 export type FieldOption = { value: string; label: string }
 

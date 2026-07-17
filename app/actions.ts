@@ -77,29 +77,23 @@ function buildSubmissionContext(formData: FormData, currentStep: number): string
       lines.push(`- Target users (from Step 2): ${formData.targetUserSummary || formData.targetUserContext}`)
     }
   }
-  if (currentStep > 3 && (formData.solutionSummary || formData.proposedSolution)) {
-    lines.push(`- Proposed solution (from Step 3): ${formData.solutionSummary || formData.proposedSolution}`)
-  }
-  // Step 5 is the merged Value step — both user and business value.
+  // Step 3 is the merged Proposed Solution + Expected Benefits step.
   if (
-    currentStep > 4 &&
-    (formData.userValueSummary || formData.userValue || formData.businessValueSummary || formData.businessValue)
+    currentStep > 3 &&
+    (formData.solutionSummary || formData.proposedSolution || formData.userValue || formData.businessValue)
   ) {
-    if (formData.userValueSummary || formData.userValue) {
-      lines.push(`- User value (from Step 4): ${formData.userValueSummary || formData.userValue}`)
+    if (formData.solutionSummary || formData.proposedSolution) {
+      lines.push(`- Proposed solution (from Step 3): ${formData.solutionSummary || formData.proposedSolution}`)
     }
-    if (formData.businessValueSummary || formData.businessValue) {
-      lines.push(`- Business value (from Step 4): ${formData.businessValueSummary || formData.businessValue}`)
+    if (formData.userValue) {
+      lines.push(`- Expected user benefit (from Step 3): ${formData.userValue}`)
+    }
+    if (formData.businessValue) {
+      lines.push(`- Expected business benefit (from Step 3): ${formData.businessValue}`)
     }
   }
-  if (currentStep > 5 && (formData.alignmentSummary || formData.relevantOkrs)) {
-    lines.push(`- Strategic alignment (from Step 5): ${formData.alignmentSummary || formData.relevantOkrs}`)
-  }
-  if (currentStep > 6 && (formData.feasibilitySummary || formData.dependencies)) {
-    lines.push(`- Feasibility (from Step 6): ${formData.feasibilitySummary || formData.dependencies}`)
-  }
-  if (currentStep > 7 && (formData.metricsSummary || formData.successMetrics)) {
-    lines.push(`- Success metrics (from Step 7): ${formData.metricsSummary || formData.successMetrics}`)
+  if (currentStep > 4 && formData.dependencies) {
+    lines.push(`- Technical constraints (from Step 4): ${formData.dependencies}`)
   }
 
   if (lines.length === 0) {
@@ -124,56 +118,28 @@ PROBLEM dimensions:
 TARGET USER dimensions:
 - The affected user role is named with specific workflow context (not just a job title)
 - The estimated number of users impacted is realistic at the organization's scale
-- Pain points are observable and frequent, with a clear severity
+- Pain points are observable and frequent
 - The user experience aligns with the organization's workforce and customer-experience goals
 COMBINED: a strong response makes the link explicit — for THIS problem, THESE users are affected in THIS specific way.`,
 
-  // Step 3: PROPOSED SOLUTION
-  3: `For PROPOSED SOLUTION, evaluate whether:
+  // Step 3: PROPOSED SOLUTION + EXPECTED BENEFITS (merged, issue #162)
+  3: `For PROPOSED SOLUTION + EXPECTED BENEFITS, evaluate whether:
+SOLUTION dimensions:
 - The AI/ML mechanism is specific (NLP query expansion, classification model, RAG, etc.) — not just "we'll use AI"
 - The user interaction model is defined (what does the user do, what does the system return)
 - Existing systems/APIs that must be touched are named
-- The approach aligns with the organization's priority of building AI capability through infrastructure and resources`,
+EXPECTED BENEFIT dimensions — framed as the submitter's honest expectation, not a determination:
+- The current-state baseline is described (how long/how much does this cost today)
+- The expected user- and business-level benefit is specific, not abstract
+- The strategic link to a named priority is explicit where the submitter can see one
+COMBINED: the benefit claim should read as a reasonable expectation a reviewer can sanity-check, not a padded ROI pitch.`,
 
-  // Step 4: VALUE (merged user + business)
-  4: `For VALUE (merged user + business value), evaluate whether:
-USER VALUE dimensions:
-- The current-state baseline is quantified (how long does the user spend today)
-- The expected improvement is grounded in data (pilot, benchmark, comparable system) — not a guess
-- The confidence level is acknowledged (high/medium/low and why)
-- The benefit is specific to real users, not abstract
-BUSINESS VALUE dimensions:
-- Labor-hour savings, dollar savings, throughput gains, or public-facing improvements are quantified with a defensible baseline
-- The strategic link to a named priority is explicit (especially the leadership priorities)
-- Secondary benefits (quality, consistency, reduced rework, public access) are identified
-- The ROI claim is realistic — overly aggressive estimates undermine credibility
-COMBINED: the user-level benefit must scale into a defensible business-level number.`,
-
-  // Step 5: STRATEGIC ALIGNMENT
-  5: `For STRATEGIC ALIGNMENT, evaluate whether:
-- The submitter names 1-2 specific strategic priorities, not vague gestures like "modernization" or "efficiency"
-- The mechanism connecting the idea to each priority is explicit (how, exactly, does this advance it?)
-- Expected contribution is quantified where possible
-- Responsible AI considerations are addressed — bias mitigation, human oversight, explainability
-- The submitter shows focus by naming what this idea does NOT prioritize`,
-
-  // Step 6: FEASIBILITY & SECURITY
-  6: `For FEASIBILITY & SECURITY, evaluate whether:
-- The hardest technical risk is named honestly (not buried)
-- FedRAMP/ATO timeline implications are realistic (typically 8-12+ weeks for amendments)
-- Data sensitivity and 508 accessibility are addressed
-- Union/CBA considerations are flagged where workflows change
-- Critical-path dependencies (other systems, teams, procurement) are identified
-- A fallback plan exists if the biggest risk materializes
-- AI risk management questions are addressed: PII use, decision-making impact, American-built model sourcing`,
-
-  // Step 7: SUCCESS METRICS
-  7: `For SUCCESS METRICS, evaluate whether:
-- Baseline data source is named (current system telemetry, time-motion study, etc.)
-- Leading indicators (adoption, usage frequency) are distinguished from lagging indicators (time saved, quality)
-- A decision point is defined (at week X, if metric < threshold, we will Y)
-- The collection method is realistic (not "we'll figure out how to measure later")
-- Metrics tie back to the strategic priority the idea is meant to advance`,
+  // Step 4: TECHNICAL CONSTRAINTS (issue #162 — light notes only, no
+  // self-graded feasibility, no OMB/M-25-21 fields; those move to vetting)
+  4: `For TECHNICAL CONSTRAINTS, evaluate whether:
+- Any named dependency, blocker, or integration point is stated plainly and honestly
+- The note is a quick, honest flag for reviewers — not an attempt at a full feasibility or security assessment
+- It's fine if this is brief or even blank; don't push the submitter toward manufacturing risk detail they don't have`,
 }
 
 // ============================================================
@@ -205,14 +171,15 @@ function buildStepInputs(
 
   switch (step) {
     case 2:
-      // Merged Problem & Target Users
+      // Business Problem & Opportunity. `severity` is a submitter self-rating
+      // dropped from idea intake (issue #162) — left out of the coaching
+      // context too since it's no longer gathered here.
       return section([
         `--- PROBLEM ---`,
         ["coreProblem", "Core problem (textarea)"],
         ["problemImpact", "Problem impact (textarea)"],
         ["affectedSystem", "Affected system"],
         ["problemType", "Problem type tags"],
-        ["severity", "Severity"],
         `--- TARGET USERS ---`,
         ["targetAudience", "Target audience"],
         ["impactedUsersCount", "Impacted users count"],
@@ -220,49 +187,27 @@ function buildStepInputs(
         ["targetUserContext", "User profile / context (textarea)"],
       ])
     case 3:
-      // Proposed Solution
+      // Merged Proposed Solution + Expected Benefits (issue #162).
+      // `implementationComplexity`/`userTimeSavings`/`costSavings` are
+      // submitter self-ratings dropped from idea intake — value and impact
+      // are a Scout/reviewer determination, not left out of the coaching
+      // context either.
       return section([
+        `--- SOLUTION ---`,
         ["proposedSolution", "Proposed solution (textarea)"],
-        ["implementationComplexity", "Implementation complexity"],
         ["keyFunctionality", "Key functionality tags"],
-      ])
-    case 4:
-      // Merged Value (user + business)
-      return section([
-        `--- USER VALUE ---`,
-        ["userValue", "User value (textarea)"],
-        ["userTimeSavings", "User time savings range"],
+        `--- EXPECTED BENEFITS ---`,
+        ["userValue", "Expected user benefit (textarea)"],
         ["otherUserImprovements", "Other user improvements"],
-        `--- BUSINESS VALUE ---`,
-        ["businessValue", "Business value (textarea)"],
-        ["costSavings", "Cost savings range"],
+        ["businessValue", "Expected business benefit (textarea)"],
         ["strategicBenefit", "Strategic benefit tags"],
       ])
-    case 5:
-      // Strategic Alignment
+    case 4:
+      // Technical Constraints — light free-text notes only (issue #162
+      // dropped the OMB/M-25-21 Feasibility & Security block from intake
+      // entirely; it's filled in during vetting instead).
       return section([
-        ["usptoFocusArea", "Strategic focus areas selected"],
-        ["relevantOkrs", "Relevant OKRs / alignment text"],
-      ])
-    case 6:
-      // Feasibility & Security (includes AI Risk Management questions)
-      return section([
-        ["resourcesNeeded", "Resources needed"],
-        ["dependencies", "Dependencies (textarea)"],
-        `--- AI RISK MANAGEMENT (DoC + EO mandated) ---`,
-        ["involvesSensitiveData", "Uses PII / sensitive data"],
-        ["securityClassification", "Security classification"],
-        ["accessControlRequirements", "Access control requirements"],
-        ["aiDecisionalImpact", "AI drives decisions about people"],
-        ["aiModelSourcing", "AI model sourcing"],
-        ["aiHumanReview", "Mandatory human review"],
-      ])
-    case 7:
-      // Success Metrics
-      return section([
-        ["successMetrics", "Success metrics description (textarea)"],
-        ["keyMetrics", "Key metrics tags"],
-        ["timelineForResults", "Timeline for results"],
+        ["dependencies", "Technical constraints / dependencies (textarea)"],
       ])
     default:
       return "(no inputs for this step)"
@@ -274,19 +219,13 @@ function buildStepInputs(
 function getInputFieldForStep(step: number): keyof FormData | null {
   switch (step) {
     case 2:
-      // Merged Problem & Users — coach on the problem first (per Jonathan's framing)
+      // Business Problem & Opportunity — coach on the problem first (per Jonathan's framing)
       return "coreProblem"
     case 3:
+      // Merged Solution + Benefits — coach on the solution first
       return "proposedSolution"
     case 4:
-      // Merged Value — coach on the business-value statement first
-      return "businessValue"
-    case 5:
-      return "relevantOkrs"
-    case 6:
       return "dependencies"
-    case 7:
-      return "successMetrics"
     default:
       return null
   }
@@ -348,31 +287,21 @@ export async function assessReadiness(
   const targetUser = formData.targetUserSummary || formData.targetUserContext || "[Not provided]"
   const problem = formData.problemDefinition || formData.coreProblem || "[Not provided]"
   const solution = formData.solutionSummary || formData.proposedSolution || "[Not provided]"
-  const userValue = formData.userValueSummary || formData.userValue || "[Not provided]"
-  const businessValue = formData.businessValueSummary || formData.businessValue || "[Not provided]"
-  const alignmentText = formData.alignmentSummary || formData.relevantOkrs || ""
-  const focusAreas = Array.isArray(formData.usptoFocusArea) ? formData.usptoFocusArea : []
-  const alignment =
-    alignmentText || (focusAreas.length ? `Focus areas: ${focusAreas.join(", ")}` : "[Not provided]")
-  const feasibility = formData.feasibilitySummary || formData.dependencies || "[Not provided]"
-  const metrics = formData.metricsSummary || formData.successMetrics || "[Not provided]"
-
-  // Risk profile — locked compliance fields, always assessed.
-  const riskFlags: string[] = []
-  if (formData.involvesSensitiveData === "yes") riskFlags.push("Uses PII / sensitive data")
-  if (formData.aiDecisionalImpact === "yes") riskFlags.push("AI drives decisions about applicants/employees")
-  if (formData.aiModelSourcing === "foreign") riskFlags.push("Foreign-built model — EO compliance issue")
-  if (formData.aiModelSourcing === "unknown") riskFlags.push("Model sourcing not yet determined")
-  if (formData.aiHumanReview === "no") riskFlags.push("No mandatory human review before action")
-  if (formData.dataReadiness === "needs_build") riskFlags.push("No AI-ready data yet — must be collected or labeled first")
-  if (formData.dataReadiness === "partial") riskFlags.push("Data only partially AI-ready — labeling/cleanup needed")
-  if (formData.impactLevel === "il6") riskFlags.push("Classified (IL6 / Secret) — requires an accredited secure enclave and the strictest controls")
+  const userValue = formData.userValue || "[Not provided]"
+  const businessValue = formData.businessValue || "[Not provided]"
+  const constraints = formData.dependencies || ""
 
   // Build the brief dimension-by-dimension. A toggleable dimension is included
   // only if at least one backing input field is still enabled in the form
   // config; dimensions the admin turned off are omitted AND listed under
   // "Intentionally NOT Collected" so the model never scores their absence as a
-  // gap. Locked dimensions (description, problem, solution, risk) always show.
+  // gap. Locked dimensions (description, problem, solution) always show.
+  //
+  // Issue #162 slimmed idea intake to 5 light steps — Strategic Alignment,
+  // Feasibility & Security (OMB/M-25-21), and Success Metrics are no longer
+  // collected from the submitter at all (filled in during vetting instead),
+  // so they're not part of this brief or the rating. Grading their absence
+  // here would penalize every idea for a step it was never shown.
   const omitted: string[] = []
   const sections: string[] = [`## Idea: ${formData.useCaseTitle || "Untitled"}`]
   const dim = (label: string, backing: string[], body: string, locked = false) => {
@@ -384,29 +313,17 @@ export async function assessReadiness(
   dim("Problem Statement", ["coreProblem"], problem, true)
   dim("Target Users", ["targetAudience", "targetUserContext", "painPoints"], targetUser)
   dim("Proposed Solution", ["proposedSolution"], solution, true)
-  dim("Value to Users", ["userValue", "userTimeSavings"], userValue)
-  dim("Value to the Business", ["businessValue", "costSavings"], businessValue)
-  dim("Strategic Alignment", ["usptoFocusArea", "relevantOkrs"], alignment)
-  dim("Feasibility & Security", ["dependencies", "resourcesNeeded"], feasibility)
+  dim("Expected Value to Users", ["userValue"], userValue)
+  dim("Expected Value to the Business", ["businessValue"], businessValue)
 
   // Enabled-and-present quantitative signals the exec summary may cite verbatim.
   const dataPoints: string[] = []
   if (on("impactedUsersCount") && formData.impactedUsersCount) dataPoints.push(`- Estimated users impacted: ${formData.impactedUsersCount}`)
-  if (on("costSavings") && formData.costSavings) dataPoints.push(`- Estimated cost / time savings: ${formData.costSavings}`)
-  if (on("userTimeSavings") && formData.userTimeSavings) dataPoints.push(`- Expected user time savings: ${formData.userTimeSavings}`)
-  if (on("severity") && formData.severity) dataPoints.push(`- Problem severity: ${formData.severity}`)
-  if (on("implementationComplexity") && formData.implementationComplexity) dataPoints.push(`- Implementation complexity: ${formData.implementationComplexity}`)
-  if (formData.impactLevel) dataPoints.push(`- Data classification / Impact Level: ${formData.impactLevel.toUpperCase()}`)
-  if (formData.dataReadiness) dataPoints.push(`- Data readiness: ${formData.dataReadiness === "ai_ready" ? "AI-ready data exists" : formData.dataReadiness === "partial" ? "partial — needs labeling/cleanup" : "must be built/relabeled"}`)
-  if (formData.trl) dataPoints.push(`- Maturity: TRL ${formData.trl} of 9`)
-  if (on("timelineForResults") && formData.timelineForResults) dataPoints.push(`- Timeline for results: ${formData.timelineForResults}`)
   if (dataPoints.length) sections.push(`### Key Data Points\n${dataPoints.join("\n")}`)
 
-  sections.push(
-    `### AI Risk Profile\n${riskFlags.length > 0 ? riskFlags.map((f) => `- ${f}`).join("\n") : "No mandatory-disclosure risk flags raised."}`,
-  )
-
-  dim("Success Metrics", ["successMetrics", "timelineForResults"], metrics)
+  // Technical constraints are a light, optional submitter note (issue #162)
+  // — never treated as a gap or scored down when blank.
+  if (constraints) sections.push(`### Technical Constraints (submitter note, informational only)\n${constraints}`)
 
   const omittedNote = omitted.length
     ? `\n\n### Intentionally NOT Collected (form configuration)\nThese dimensions were deliberately removed from the form by the administrator; the submitter was never asked for them. Do NOT treat their absence as a gap, do NOT list them as missing, do NOT lower the readiness rating for them, and do NOT mention them in the executive summary: ${omitted.join(", ")}.`
@@ -433,30 +350,28 @@ ${HUMANIZATION_GUIDELINES}
 
 You are given the submission across the dimensions the submitter was asked to complete. The form is configurable: optional dimensions may have been intentionally turned off by the administrator. Any such dimensions appear in an "Intentionally NOT Collected" section at the end of the brief. You MUST NOT treat those as gaps, missing information, or reasons to lower the readiness rating, and you MUST NOT mention them in the executive summary. Judge readiness and completeness ONLY against the dimensions that were actually collected.
 
+This is a FAST IDEA INTAKE, not a full governance review. Strategic alignment, feasibility/security, and success metrics are deliberately NOT collected here — a reviewer determines those during vetting, after the idea is submitted. Do not ask for them, do not penalize their absence, and do not mention them in the executive summary. Any "Technical Constraints" note is an optional, informational aside from the submitter — never treat it as missing or score it down when blank.
+
 LEADERSHIP FRAMING — IMPORTANT:
-Leadership priorities are: ${TENANT.leadershipPriorities}. When evaluating and summarizing, lead with the PROBLEM, then align EXPECTED BENEFITS to those priorities by name where the submission supports it. Don't force-fit; if the idea doesn't materially advance them, say so and connect it to the strategic priority it actually advances.
+Leadership priorities are: ${TENANT.leadershipPriorities}. When evaluating and summarizing, lead with the PROBLEM, then describe the EXPECTED BENEFITS the submitter is claiming — framed as their expectation for a reviewer to confirm, not a determination.
 
 EXECUTIVE SUMMARY STRUCTURE (MANDATORY ORDER):
 1. PROBLEM — what's broken, who it affects, and the cost of inaction (use the submitter's numbers if provided; do not invent any)
-2. EXPECTED BENEFITS / VALUE METRICS — quantified outcomes tied to named strategic priorities
-3. STRATEGIC ALIGNMENT — the specific Strategic Plan goal(s) and/or AI Strategy priority(ies) this advances
-4. RISK PROFILE — surface any flags from the AI Risk Profile section (PII, decisional impact, model sourcing, human review)
-5. READINESS — is this ready for a leadership decision, or what still needs work
-If a section above (1-3) maps to a dimension listed under "Intentionally NOT Collected", SKIP that section entirely rather than noting it as missing. PROBLEM and RISK PROFILE are always collected.
+2. EXPECTED BENEFITS — the user- and business-level value the submitter expects, in their own terms
+3. READINESS — is this idea clear and specific enough for a reviewer to vet, or what still needs work
+If a section above maps to a dimension listed under "Intentionally NOT Collected", SKIP that section entirely rather than noting it as missing. PROBLEM is always collected.
 
 EVALUATE THE IDEA HONESTLY:
 
 WEIGHTING — weigh these heavily in the rating, in roughly this order:
-1. DATA READINESS — does AI-ready data exist today? "Must be built/relabeled" is the most common reason AI initiatives fail; a strong concept with no data foundation is NOT "ready".
-2. STRATEGIC + MISSION ALIGNMENT — a specifically named strategic priority and mission outcome (see leadership priorities above), with a stated mechanism — not "modernization".
-3. RESPONSIBLE-AI POSTURE — appropriate human judgment for anything decisional, American-built model inside the accredited boundary, declared classification/Impact Level consistent with the data, and bias/traceability addressed.
-4. MATURITY — a declared TRL with a maturation or sustainment plan if low.
-5. VALUE — quantified, caveated outcomes that acknowledge sustainment cost, not adjectives.
+1. PROBLEM CLARITY — is the problem specific and grounded (who's affected, how badly), not vague ("things are slow")?
+2. SOLUTION SPECIFICITY — is the proposed AI/ML approach concrete enough that a reviewer could evaluate it, not just "we'll use AI"?
+3. EXPECTED BENEFIT CREDIBILITY — is the claimed user/business benefit plausible and reasonably specific, even if not yet quantified?
 
 Rate it as one of:
-- "ready" — All collected dimensions are substantive. The approving authority could make an informed funding decision. Data readiness is credible, alignment names a specific priority and mission outcome with a mechanism, the responsible-AI gate is clean (human judgment where decisional, American-built/in-boundary model, classification/Impact Level declared), TRL is stated, and value is quantified.
-- "needs_work" — The core idea has merit but 1-2 dimensions have significant gaps (partial data readiness, only nominal alignment, missing TRL, unquantified value, or one unresolved risk answer like model sourcing). Worth pursuing but needs strengthening before leadership review.
-- "early_stage" — Too vague or underdeveloped: multiple weak dimensions, buzzword alignment with no mechanism, NO realistic data foundation, OR multiple unaddressed responsible-AI flags (foreign/unknown sourcing, decisional AI without human review, undeclared classification). The submitter should keep refining before submitting.
+- "ready" — The problem is specific and grounded, the solution is concrete, and the expected benefit is plausible and reasonably specific. A reviewer has enough to start vetting.
+- "needs_work" — The core idea has merit but 1-2 dimensions are vague or thin (e.g., problem is real but underspecified, or the expected benefit is just an adjective with no substance). Worth pursuing but needs a bit more detail before vetting.
+- "early_stage" — Too vague or underdeveloped across multiple dimensions: no clear problem, no concrete solution, or no credible benefit claim. The submitter should keep refining before submitting.
 
 ANTI-FABRICATION RULE FOR THE EXECUTIVE SUMMARY:
 SYNTHESIZE only what the submitter actually wrote — do NOT invent specific numbers, named units, programs, or organizations, evidence sources, or impact figures the submitter did not include. If their input is too vague to produce a substantive summary, the summary should honestly reflect that.
@@ -483,8 +398,8 @@ The readinessSummary should be 2-3 sentences naming specific gaps rather than sm
     return {
       readinessScore: "needs_work",
       readinessSummary:
-        "This idea has a strong problem statement and clear target users, but the feasibility assessment and success metrics need more specificity. The business value claims should be grounded in baseline data, and the strategic alignment should explicitly name a strategic priority before this goes to leadership.",
-      executiveSummary: `"${formData.useCaseTitle || "Untitled Idea"}" proposes an AI-driven approach to improve operations for ${TENANT.shortName} staff. The idea targets a real operational pain point and connects to ${TENANT.shortName}'s published priorities, but requires additional detail on the specific priority it advances, implementation feasibility, and measurable success criteria before it's ready for executive decision-making.`,
+        "This idea has a clear problem statement and target users, but the expected user and business benefit could use more specificity before a reviewer starts vetting it.",
+      executiveSummary: `"${formData.useCaseTitle || "Untitled Idea"}" proposes an AI-driven approach to improve operations for ${TENANT.shortName} staff. The idea targets a real operational pain point, but the expected benefit needs more detail before it's ready for a reviewer to vet.`,
     }
   }
 }
@@ -636,12 +551,9 @@ export async function validateAndRefineInput(
   const assistantTurns = conversationHistory.filter((m) => m.role === "assistant").length
 
   const stepFormattingGuidelines: Record<number, string> = {
-    2: `When producing the scaffold: open with 2-3 sentences naming the problem (severity, mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
-    3: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
-    4: `When producing the scaffold: open with 2-3 sentences on user-level benefit (with a quantified time savings), then 2-3 sentences on agency-level business value tied to a named strategic priority.`,
-    5: `When producing the scaffold: 2-3 sentences mapping the idea to named strategic priorities and the explicit mechanism by which each is advanced.`,
-    6: `When producing the scaffold: bullet points covering Technical Feasibility, Security & Compliance, Dependencies, and Primary Risks with mitigation. Address AI risk management: PII use, decisional AI impact, American-built model sourcing.`,
-    7: `When producing the scaffold: bullet points for Success Metrics, Leading Indicators, Lagging Indicators, and Timeline.`,
+    2: `When producing the scaffold: open with 2-3 sentences naming the problem (mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
+    3: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality, then 2-3 sentences on the user- and business-level benefit you'd expect it to deliver — frame this as an expectation for reviewers to confirm, not a determination.`,
+    4: `When producing the scaffold: a few bullet points naming known dependencies, blockers, or integration realities. Keep it light — this is a quick note for reviewers, not a feasibility or security assessment.`,
   }
 
   try {
