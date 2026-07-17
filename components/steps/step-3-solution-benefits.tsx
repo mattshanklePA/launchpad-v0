@@ -76,8 +76,8 @@ export function Step3SolutionBenefits() {
     setFormData((prev) => ({ ...prev, strategicBenefit: next }))
   }
 
-  const handleSuggestion = (suggestion: string) => {
-    setFormData((prev) => ({ ...prev, solutionSummary: suggestion }))
+  const handleSuggestion = (fields: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...fields }))
   }
 
   return (

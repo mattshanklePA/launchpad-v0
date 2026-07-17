@@ -21,8 +21,8 @@ export function Step4TechnicalConstraints() {
   const { formData, setFormData } = useForm()
   const isVisible = useFieldVisibility(formData)
 
-  const handleSuggestion = (suggestion: string) => {
-    setFormData((prev) => ({ ...prev, dependencies: suggestion }))
+  const handleSuggestion = (fields: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...fields }))
   }
 
   return (

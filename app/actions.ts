@@ -13,6 +13,7 @@ import {
 import { getTenant } from "@/lib/tenant"
 import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
 import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
+import { scoutFieldsForStep, draftFieldFallback } from "@/lib/scoutFieldPlan"
 
 type Message = {
   role: "user" | "assistant"
@@ -240,6 +241,12 @@ export type ScoutOption = {
   isRecommended: boolean
 }
 
+/** A drafted value for one step output field, plus the reason a submitter sees before applying it. Mirrors lib/governanceCapture.ts's `GovernanceFieldProposal` shape. */
+export type ScoutFieldDraft = {
+  value: string
+  rationale: string
+}
+
 export type ScoutResponse =
   | {
       mode: "question"
@@ -249,8 +256,11 @@ export type ScoutResponse =
     }
   | {
       mode: "scaffold"
-      scaffoldText: string
       summary: string
+      // Keyed by FormData field name (see lib/scoutFieldPlan.ts's per-step
+      // plan) — one drafted value per output field the step collects, not a
+      // single blob the panel had to fan back out itself.
+      fields: Record<string, ScoutFieldDraft>
     }
 
 // Backwards-compat aliases (deprecated). Kept so older imports don't break
@@ -260,16 +270,19 @@ export type CoPilotResponse = ScoutResponse
 
 // Mock fallback for when the API is unavailable. Always returns a scaffold
 // (never a question) so the UI doesn't get stuck in a Q&A loop with no AI.
-function getMockResponse(step: number, userInput: string, submitterOffice?: string | null): ScoutResponse {
-  const currentStepInfo = getFormSteps(submitterOffice).find((s) => s.step === step)
-  const stepTitle = currentStepInfo?.title || "this step"
+// Drafts every field in the step's plan so a down-model moment still leaves
+// the submitter with a starting point per field, not just the primary one.
+function getMockResponse(step: number, formData: FormData, enabledFields?: Record<string, boolean>): ScoutResponse {
+  const plan = scoutFieldsForStep(step, enabledFields)
+  const fields: Record<string, ScoutFieldDraft> = {}
+  for (const f of plan) {
+    fields[f.key as string] = draftFieldFallback(f.label, formData[f.key] as string | undefined)
+  }
   return {
     mode: "scaffold",
     summary:
-      `(${TENANT.assistantName} is temporarily unavailable. Here's a generic scaffold — please fill in the bracketed sections with your specific details.)`,
-    scaffoldText: userInput
-      ? `${userInput}\n\n[Add the following specifics:\n- WHO specifically (which user group, what unit)\n- WHAT evidence you've observed\n- HOW OFTEN this occurs\n- WHICH strategic priority this advances by name\n- WHAT measurable outcome you expect]`
-      : `[Describe ${stepTitle} with:\n- Specific user group (not just a generic role)\n- Observable evidence you've seen\n- Frequency and severity\n- Connection to a named strategic priority\n- Measurable expected outcome]`,
+      `(${TENANT.assistantName} is temporarily unavailable. Here's a generic draft per field — please fill in the bracketed sections with your specific details.)`,
+    fields,
   }
 }
 
@@ -551,11 +564,40 @@ export async function validateAndRefineInput(
   const submissionContext = buildSubmissionContext(formData, step)
   const assistantTurns = conversationHistory.filter((m) => m.role === "assistant").length
 
-  const stepFormattingGuidelines: Record<number, string> = {
-    2: `When producing the scaffold: open with 2-3 sentences naming the problem (mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
-    3: `When producing the scaffold: a concise description of the AI/ML solution with 2-3 bullet points for core functionality, then 2-3 sentences on the user- and business-level benefit you'd expect it to deliver — frame this as an expectation for reviewers to confirm, not a determination.`,
-    4: `When producing the scaffold: a few bullet points naming known dependencies, blockers, or integration realities. Keep it light — this is a quick note for reviewers, not a feasibility or security assessment.`,
+  // Which FormData fields Scout drafts for this step (lib/scoutFieldPlan.ts),
+  // filtered to whatever the admin form config still has enabled. Propose-a-
+  // Solution plans 3 fields from one Q&A (solutionSummary, userValue,
+  // businessValue) instead of the single scaffoldText string every step used
+  // to get regardless of how many output fields it actually had.
+  const fieldPlan = scoutFieldsForStep(step, enabledFields)
+
+  const fieldFormattingHints: Partial<Record<keyof FormData, string>> = {
+    problemDefinition: `2-3 sentences naming the problem (mission impact, consequences of inaction), then 2-3 sentences describing the affected users (roles, workflow context, observable pain).`,
+    solutionSummary: `A concise description of the AI/ML solution with 2-3 bullet points for core functionality.`,
+    userValue: `2-3 sentences on the user-level benefit you'd expect it to deliver — frame as an expectation for reviewers to confirm, not a determination.`,
+    businessValue: `2-3 sentences on the business-level benefit you'd expect it to deliver — frame as an expectation for reviewers to confirm, not a determination.`,
+    dependencies: `A few bullet points naming known dependencies, blockers, or integration realities. Keep it light — this is a quick note for reviewers, not a feasibility or security assessment.`,
   }
+
+  // Build the "fields" sub-schema dynamically from the plan so the model is
+  // forced to draft exactly (and only) the named output fields for this
+  // step — never a field the step doesn't collect or the admin disabled.
+  const fieldsShape: Record<string, z.ZodTypeAny> = {}
+  for (const f of fieldPlan) {
+    fieldsShape[f.key as string] = z.object({
+      value: z
+        .string()
+        .describe(
+          `If mode=scaffold: the drafted value for "${f.label}" — ${fieldFormattingHints[f.key] || "format clearly and concisely."} Synthesize the submitter's actual selections into a paste-ready response, with [BRACKETED PLACEHOLDERS] for any specific facts they still need to provide. Never invent specifics. If mode=question: empty string.`,
+        ),
+      rationale: z
+        .string()
+        .describe(
+          `If mode=scaffold: 1 short sentence on what in the Q&A/inputs this "${f.label}" draft is grounded in. If mode=question: empty string.`,
+        ),
+    })
+  }
+  const fieldsSchema = z.object(fieldsShape)
 
   try {
     const { object } = await generateObject({
@@ -564,7 +606,7 @@ export async function validateAndRefineInput(
         mode: z
           .enum(["question", "scaffold"])
           .describe(
-            "'question' to ask another clarifying question; 'scaffold' to produce the final template. Prefer 'question' for the first 2-3 turns when input is sparse. Move to 'scaffold' after sufficient Q&A or when the user picks 'I have enough'.",
+            "'question' to ask another clarifying question; 'scaffold' to produce the final draft. Prefer 'question' for the first 2-3 turns when input is sparse. Move to 'scaffold' after sufficient Q&A or when the user picks 'I have enough'.",
           ),
         questionText: z.string().describe("If mode=question: the single, specific clarifying question. If mode=scaffold: empty string."),
         rationale: z.string().describe("If mode=question: 1-sentence reason why this question matters in strategic terms. If mode=scaffold: empty string."),
@@ -578,11 +620,9 @@ export async function validateAndRefineInput(
           .describe(
             "If mode=question: 4-5 options. Use 2-3 specific likely answers FIRST, then 'Other (let me type my own)', then 'I have enough, give me the scaffold'. If mode=scaffold: empty array.",
           ),
-        scaffoldText: z
-          .string()
-          .describe(
-            "If mode=scaffold: a template that synthesizes the submitter's actual selections into a paste-ready response, with [BRACKETED PLACEHOLDERS] for any specific facts they still need to provide. Never invent specifics. If mode=question: empty string.",
-          ),
+        fields: fieldsSchema.describe(
+          "If mode=scaffold: one drafted value + rationale per named output field for this step. If mode=question: every field's value and rationale are empty strings.",
+        ),
         summary: z.string().describe("If mode=scaffold: 1-2 sentences acknowledging what was learned through the Q&A. If mode=question: empty string."),
       }),
       messages: [
@@ -629,12 +669,11 @@ Provide 4-5 options. Structure them like this:
 Mark exactly ONE option as isRecommended=true if SUBMISSION CONTEXT suggests an obvious starting point. Otherwise mark none as recommended.
 
 — SCAFFOLD MODE —
-Synthesize the submitter's selections and draft text into a paste-ready template.
+Synthesize the submitter's selections and draft text into a paste-ready draft for EACH of this step's output fields (listed under "fields" in the schema — draft every one, even if some end up mostly bracketed placeholders).
 
-The 'summary' field should be 1-2 sentences acknowledging what the submitter clarified.
+The 'summary' field should be 1-2 sentences acknowledging what the submitter clarified, covering the Q&A as a whole rather than any single field.
 
-The 'scaffoldText' field should be the template itself. Format requirement for this step:
-${stepFormattingGuidelines[step] || "Format clearly and concisely."}
+Each field's 'value' is that field's draft; each field's 'rationale' is a 1-sentence note on what in the Q&A grounds it. Field-specific format requirements are given per-field in the schema.
 
 ═══ ABSOLUTE ANTI-FABRICATION RULES ═══
 - NEVER invent specific numbers (examiner counts, hours saved, dollar values, percentages)
@@ -672,14 +711,22 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
               ],
       }
     }
+    const fields: Record<string, ScoutFieldDraft> = {}
+    for (const f of fieldPlan) {
+      const drafted = (object.fields as Record<string, { value: string; rationale: string }>)[f.key as string]
+      fields[f.key as string] =
+        drafted && drafted.value
+          ? drafted
+          : draftFieldFallback(f.label, formData[f.key] as string | undefined)
+    }
     return {
       mode: "scaffold",
-      scaffoldText: object.scaffoldText || userInput || "[Add your content here]",
+      fields,
       summary: object.summary || "",
     }
   } catch (error) {
     console.error("AI Gateway error, falling back to mock:", error)
-    return getMockResponse(step, userInput, formData.submitterOffice)
+    return getMockResponse(step, formData, enabledFields)
   }
 }
 

@@ -59,8 +59,8 @@ export function Step3ProblemAndUsers() {
     setFormData((prev) => ({ ...prev, affectedBusinessUnits: next }))
   }
 
-  const handleSuggestion = (suggestion: string) => {
-    setFormData((prev) => ({ ...prev, problemDefinition: suggestion }))
+  const handleSuggestion = (fields: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...fields }))
   }
 
   return (
