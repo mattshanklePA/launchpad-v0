@@ -12,3 +12,27 @@ export const STATUS_BADGE_CLASS: Record<KeystoneStatus, string> = {
   alert: "bg-alert-subtle text-alert-foreground border-alert/30",
   neutral: "bg-neutral-subtle text-neutral-foreground border-neutral/40",
 }
+
+/** Left-border accent class for a card/panel carrying one of the four statuses — the KPI-card and reviewer-detail pattern (issue #157): a hairline card + this accent + a StatusPill, never a full background wash. */
+export const STATUS_BORDER_L_CLASS: Record<KeystoneStatus, string> = {
+  healthy: "border-l-healthy",
+  attention: "border-l-attention",
+  alert: "border-l-alert",
+  neutral: "border-l-neutral",
+}
+
+/** Solid dot color for a StatusPill (components/ui/status-pill.tsx). */
+export const STATUS_DOT_CLASS: Record<KeystoneStatus, string> = {
+  healthy: "bg-healthy",
+  attention: "bg-attention",
+  alert: "bg-alert",
+  neutral: "bg-neutral",
+}
+
+/** Default StatusPill copy when a caller doesn't supply its own label. */
+export const STATUS_DEFAULT_LABEL: Record<KeystoneStatus, string> = {
+  healthy: "On track",
+  attention: "Attention",
+  alert: "At risk",
+  neutral: "Neutral",
+}

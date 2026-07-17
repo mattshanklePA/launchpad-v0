@@ -64,6 +64,7 @@ import { DecisionHeader } from "@/components/submissions/decision-header"
 import { ChecklistItem } from "@/components/submissions/checklist-item"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
+import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import {
   ArrowLeft, ArrowRight, Check, X, MessageSquare, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
@@ -77,9 +78,9 @@ const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
 }
 
 const HIGH_IMPACT_BADGE_CLASS: Record<string, string> = {
-  high_impact: "bg-red-100 text-red-800 border-red-300",
-  presumed_not_high_impact: "bg-amber-100 text-amber-800 border-amber-300",
-  not_high_impact: "bg-gray-100 text-gray-600 border-gray-300",
+  high_impact: STATUS_BADGE_CLASS.alert,
+  presumed_not_high_impact: STATUS_BADGE_CLASS.attention,
+  not_high_impact: STATUS_BADGE_CLASS.neutral,
 }
 
 function newCommentId() {
@@ -92,18 +93,19 @@ const REPORTABILITY_LABEL: Record<ReportabilityStatus, string> = {
   review: "Needs review (OMB)",
 }
 
+// Active blue is reserved for interactive elements (guardrail), so a purely
+// informational compliance fact like "reportable" reads neutral ink, not
+// blue — only "review" (needs a reviewer decision) earns the amber
+// attention color.
 const REPORTABILITY_CLASSES: Record<ReportabilityStatus, string> = {
-  reportable: "bg-blue-100 text-blue-800 border-blue-300",
-  excluded: "bg-gray-100 text-gray-600 border-gray-300",
-  review: "bg-amber-100 text-amber-800 border-amber-300",
+  reportable: STATUS_BADGE_CLASS.neutral,
+  excluded: STATUS_BADGE_CLASS.neutral,
+  review: STATUS_BADGE_CLASS.attention,
 }
 
 function RiskRow({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <Badge
-      variant="outline"
-      className={ok ? "bg-green-100 text-green-800 border-green-300" : "bg-red-100 text-red-800 border-red-300"}
-    >
+    <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", ok ? STATUS_BADGE_CLASS.healthy : STATUS_BADGE_CLASS.alert)}>
       {ok ? <ShieldCheck className="w-3 h-3 mr-1" /> : <AlertTriangle className="w-3 h-3 mr-1" />}
       {label}
     </Badge>
@@ -377,20 +379,14 @@ export function SubmissionDetail({ id }: { id: string }) {
         : "Confirmed"
       : "Proposed — awaiting reviewer"
     : ""
-  const rmfStatusClass = resolvedRmf
-    ? resolvedRmf.review
-      ? "bg-green-100 text-green-800 border-green-300"
-      : "bg-amber-100 text-amber-800 border-amber-300"
-    : ""
+  const rmfStatusClass = resolvedRmf ? (resolvedRmf.review ? STATUS_BADGE_CLASS.healthy : STATUS_BADGE_CLASS.attention) : ""
 
   const rationalizationStatusLabel = blockReason
     ? "Rationalization pending"
     : rationalizationDecision?.decision === "consolidated"
       ? "Consolidated"
       : "Keep separate"
-  const rationalizationStatusClass = blockReason
-    ? "bg-amber-100 text-amber-800 border-amber-300"
-    : "bg-green-100 text-green-800 border-green-300"
+  const rationalizationStatusClass = blockReason ? STATUS_BADGE_CLASS.attention : STATUS_BADGE_CLASS.healthy
 
   return (
     <div className="space-y-5 max-w-3xl">
@@ -404,7 +400,7 @@ export function SubmissionDetail({ id }: { id: string }) {
             {getAssigneeName(sub) ? ` · assigned to ${getAssigneeName(sub)}` : ""}
           </p>
         </div>
-        <Badge variant="outline" className={statusBadgeClasses(status)}>{STATUS_LABEL[status]}</Badge>
+        <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", statusBadgeClasses(status))}>{STATUS_LABEL[status]}</Badge>
       </div>
 
       {showBureauTier && bureauSignoff && (
@@ -429,13 +425,13 @@ export function SubmissionDetail({ id }: { id: string }) {
 
       {/* OS/department final-approval confirmation — a distinct persona's decision, kept as-is (follow-up UX work tracked separately). */}
       {showBureauTier && deptTierEnabled && isDeptViewer && bureauSignoff && (
-        <div className={`rounded-lg border p-4 space-y-2 ${departmentApproval ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"}`}>
+        <div className={cn("rounded-lg border border-l-4 bg-card p-4 space-y-2", departmentApproval ? "border-l-healthy" : "border-l-attention")}>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-uspto-blue-primary" />
+            <ShieldCheck className="w-4 h-4 text-muted-foreground" />
             <span className="font-medium text-sm">Department final approval</span>
             <Badge
               variant="outline"
-              className={departmentApproval ? "bg-green-100 text-green-800 border-green-300" : "bg-amber-100 text-amber-800 border-amber-300"}
+              className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", departmentApproval ? STATUS_BADGE_CLASS.healthy : STATUS_BADGE_CLASS.attention)}
             >
               {departmentApproval ? (departmentApproval.decision === "approved" ? "Confirmed" : "Confirmed rejection") : "Awaiting department confirmation"}
             </Badge>
@@ -484,7 +480,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                 </Button>
               </div>
               {blockReason && (
-                <p className="flex items-center gap-1.5 text-xs text-amber-700">
+                <p className="flex items-center gap-1.5 text-xs text-attention-foreground">
                   <AlertTriangle className="w-3.5 h-3.5 flex-none" />
                   {blockReason}
                 </p>
@@ -495,17 +491,16 @@ export function SubmissionDetail({ id }: { id: string }) {
               index={highImpactIndex}
               title={<GlossaryTerm term="highImpactDetermination">High-impact determination</GlossaryTerm>}
               statusLabel={fd.highImpact ? HIGH_IMPACT_BADGE_LABELS[fd.highImpact] || "Not yet set" : "Not yet set"}
-              statusClassName={fd.highImpact ? HIGH_IMPACT_BADGE_CLASS[fd.highImpact] : "bg-amber-100 text-amber-800 border-amber-300"}
+              statusClassName={fd.highImpact ? HIGH_IMPACT_BADGE_CLASS[fd.highImpact] : STATUS_BADGE_CLASS.attention}
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">Recommended:</span>
                 <Badge
                   variant="outline"
-                  className={
-                    highImpactRec.recommendation === "yes"
-                      ? "bg-red-100 text-red-800 border-red-300"
-                      : "bg-gray-100 text-gray-600 border-gray-300"
-                  }
+                  className={cn(
+                    "font-mono text-[10px] uppercase tracking-[0.06em]",
+                    highImpactRec.recommendation === "yes" ? STATUS_BADGE_CLASS.alert : STATUS_BADGE_CLASS.neutral,
+                  )}
                 >
                   {highImpactRec.recommendation === "yes" ? "High-impact" : "Not high-impact"}
                 </Badge>
@@ -552,7 +547,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                 statusClassName={rmfStatusClass}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className={rmfBadgeClass(resolvedRmf.effectiveOverall)} title={resolvedRmf.profile.rationale}>
+                  <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", rmfBadgeClass(resolvedRmf.effectiveOverall))} title={resolvedRmf.profile.rationale}>
                     {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
                   </Badge>
                   {resolvedRmf.isProposal && (
@@ -671,26 +666,19 @@ export function SubmissionDetail({ id }: { id: string }) {
               Compliance details
             </span>
             <span className="flex flex-wrap items-center gap-1.5">
-              <Badge variant="outline" className={REPORTABILITY_CLASSES[reportability.status]}>
+              <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", REPORTABILITY_CLASSES[reportability.status])}>
                 {REPORTABILITY_LABEL[reportability.status]}
               </Badge>
-              <Badge
-                variant="outline"
-                className={
-                  consolidation.status === "Consolidated"
-                    ? "bg-purple-100 text-purple-800 border-purple-300"
-                    : "bg-gray-100 text-gray-600 border-gray-300"
-                }
-              >
+              <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS.neutral)}>
                 {consolidation.status}
               </Badge>
               {resolvedRmf && (
-                <Badge variant="outline" className={rmfBadgeClass(resolvedRmf.effectiveOverall)}>
+                <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", rmfBadgeClass(resolvedRmf.effectiveOverall))}>
                   {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
                 </Badge>
               )}
               {isReviewer && similarMatches.length > 0 && (
-                <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS.attention)}>
                   {similarMatches.length} similar
                 </Badge>
               )}
@@ -700,11 +688,11 @@ export function SubmissionDetail({ id }: { id: string }) {
 
         <CollapsibleContent className="space-y-4 border-t p-4">
           <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               <GlossaryTerm term="ombReportability">OMB reportability</GlossaryTerm>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className={REPORTABILITY_CLASSES[reportability.status]}>
+              <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", REPORTABILITY_CLASSES[reportability.status])}>
                 {REPORTABILITY_LABEL[reportability.status]}
               </Badge>
               <span className="text-sm text-muted-foreground">{reportability.reason}</span>
@@ -712,18 +700,11 @@ export function SubmissionDetail({ id }: { id: string }) {
           </div>
 
           <div className="space-y-2 border-t pt-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               <GlossaryTerm term="consolidatedIndividualReporting">OMB reporting mode</GlossaryTerm>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant="outline"
-                className={
-                  consolidation.status === "Consolidated"
-                    ? "bg-purple-100 text-purple-800 border-purple-300"
-                    : "bg-gray-100 text-gray-600 border-gray-300"
-                }
-              >
+              <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS.neutral)}>
                 {consolidation.status}
               </Badge>
               {consolidation.categoryLabel && (
@@ -736,7 +717,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           </div>
 
           <div className="space-y-2 border-t pt-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Risk profile</div>
+            <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Risk profile</div>
             <div className="flex flex-wrap gap-2">
               <RiskRow ok={fd.involvesSensitiveData !== "yes"} label={fd.involvesSensitiveData === "yes" ? "Uses PII" : "No PII"} />
               <RiskRow ok={fd.aiModelSourcing === "american_built" || fd.aiModelSourcing === "open_source_us"} label={fd.aiModelSourcing === "foreign" ? "Foreign model" : fd.aiModelSourcing === "unknown" || !fd.aiModelSourcing ? "Sourcing unknown" : "American-built"} />
@@ -747,7 +728,7 @@ export function SubmissionDetail({ id }: { id: string }) {
 
           {fd.highImpact === "high_impact" && (
             <div className="space-y-2 border-t pt-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 High-impact risk management
               </div>
               {fd.aiImpactAssessment && (
@@ -766,18 +747,17 @@ export function SubmissionDetail({ id }: { id: string }) {
 
           {!isReviewer && (
             <div className="space-y-2 border-t pt-4">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 <GlossaryTerm term="highImpactDetermination">High-impact determination</GlossaryTerm>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">Recommended:</span>
                 <Badge
                   variant="outline"
-                  className={
-                    highImpactRec.recommendation === "yes"
-                      ? "bg-red-100 text-red-800 border-red-300"
-                      : "bg-gray-100 text-gray-600 border-gray-300"
-                  }
+                  className={cn(
+                    "font-mono text-[10px] uppercase tracking-[0.06em]",
+                    highImpactRec.recommendation === "yes" ? STATUS_BADGE_CLASS.alert : STATUS_BADGE_CLASS.neutral,
+                  )}
                 >
                   {highImpactRec.recommendation === "yes" ? "High-impact" : "Not high-impact"}
                 </Badge>
@@ -797,7 +777,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           {resolvedRmf && (
             <div className="space-y-2 border-t pt-4">
               <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   <GlossaryTerm term="nistAiRmf">NIST AI RMF</GlossaryTerm> breakdown
                 </div>
                 <GlossaryTerm term="coveredPartialGap" className="text-[11px] text-muted-foreground">
@@ -809,7 +789,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                   const result = resolvedRmf.profile.functions[key]
                   return (
                     <div key={key} className="flex flex-wrap items-start gap-2">
-                      <Badge variant="outline" className={rmfFunctionStatusBadgeClass(result.status)}>
+                      <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", rmfFunctionStatusBadgeClass(result.status))}>
                         {RMF_FUNCTION_LABELS[key]}: {RMF_FUNCTION_STATUS_LABELS[result.status]}
                       </Badge>
                       <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-0.5">
@@ -827,7 +807,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           {isReviewer && similarMatches.length > 0 && (
             <div className="space-y-2 border-t pt-4">
               <div className="flex items-center gap-2">
-                <Copy className="w-4 h-4 text-amber-700" />
+                <Copy className="w-4 h-4 text-attention-foreground" />
                 <span className="font-medium text-sm">Similar use cases</span>
                 <GlossaryTerm term="tokenOverlapMatch" className="text-[10px] text-muted-foreground">
                   token-overlap match
@@ -854,7 +834,7 @@ export function SubmissionDetail({ id }: { id: string }) {
       </Collapsible>
 
       <div className="rounded-lg border bg-card p-4 space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Submission</div>
+        <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>
         {([
           ["Problem", fd.problemDefinition || fd.coreProblem],
           ["Proposed solution", fd.solutionSummary || fd.proposedSolution],
@@ -871,7 +851,7 @@ export function SubmissionDetail({ id }: { id: string }) {
       </div>
 
       <div className="rounded-lg border bg-card p-4 space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Conversation with submitter</div>
+        <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>
         {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
         {comments.map((c) => (
           <div key={c.id} className="flex gap-2">

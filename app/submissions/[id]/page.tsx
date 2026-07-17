@@ -10,7 +10,7 @@ export default function SubmissionDetailPage() {
   const id = String(params?.id || "")
   return (
     <RequireAuth>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container py-8">
           <SubmissionDetail id={id} />

@@ -34,10 +34,11 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
+import { StatusPill } from "@/components/ui/status-pill"
 import { cn } from "@/lib/utils"
 import {
   kpiStatusAccentClass,
-  kpiStatusSurfaceClass,
+  kpiStatusKeystone,
   kpiIsActionable,
   kpiTrendTextClass,
   sortKpiCardsByPriority,
@@ -141,21 +142,24 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
 function KpiCardLabel({ label, status, glossary }: Pick<KpiCardData, "label" | "status" | "glossary">) {
   const actionable = kpiIsActionable(status)
   return (
-    <p
-      className={cn(
-        "flex items-center gap-1 px-3 pt-3 text-[11px] font-medium uppercase tracking-wide",
-        actionable ? "text-foreground/70" : "text-muted-foreground",
-      )}
-    >
-      {status === "critical" && <AlertTriangle className="h-3 w-3 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />}
-      {glossary ? (
-        <GlossaryTerm term={glossary} className="normal-case tracking-normal">
-          {label}
-        </GlossaryTerm>
-      ) : (
-        label
-      )}
-    </p>
+    <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 px-3 pt-3">
+      <p
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-1 font-mono text-[11px] font-medium uppercase tracking-[0.08em]",
+          actionable ? "text-foreground/70" : "text-muted-foreground",
+        )}
+      >
+        {status === "critical" && <AlertTriangle className="h-3 w-3 shrink-0 text-alert" aria-hidden="true" />}
+        {glossary ? (
+          <GlossaryTerm term={glossary} className="normal-case tracking-normal">
+            {label}
+          </GlossaryTerm>
+        ) : (
+          label
+        )}
+      </p>
+      <StatusPill status={kpiStatusKeystone(status)} />
+    </div>
   )
 }
 
@@ -196,7 +200,6 @@ export function KpiCard({
     "shadow-none",
     kpiIsActionable(status) ? "border-l-4" : "border-l-[3px]",
     kpiStatusAccentClass(status),
-    kpiStatusSurfaceClass(status),
     items && "transition-colors hover:border-primary/50",
   )
 

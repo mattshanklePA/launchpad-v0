@@ -41,7 +41,7 @@ export const ChecklistItem = forwardRef<
           </span>
           <span className="text-sm font-semibold">{title}</span>
         </div>
-        <Badge variant="outline" className={statusClassName}>
+        <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", statusClassName)}>
           {statusLabel}
         </Badge>
       </div>

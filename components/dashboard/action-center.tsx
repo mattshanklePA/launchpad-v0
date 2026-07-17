@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import { STATUS_BADGE_CLASS, STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
 import { sortActionItemsBySeverity, type ActionItem, type ActionSeverity } from "./action-center-data"
 
 const SEVERITY_ICON: Record<ActionSeverity, LucideIcon> = {
@@ -22,16 +23,27 @@ const SEVERITY_ICON: Record<ActionSeverity, LucideIcon> = {
   info: Info,
 }
 
-const SEVERITY_ICON_CLASS: Record<ActionSeverity, string> = {
-  critical: "text-red-600",
-  warning: "text-amber-600",
-  info: "text-blue-600",
+// Maps the Action Center's own info/warning/critical vocabulary onto the DS's
+// healthy/attention/alert/neutral status colors (lib/statusTokens.ts) — the
+// same left-border-accent + badge/pill discipline as the KPI cards
+// (components/dashboard/kpi-card-data.ts), so a "critical" item is never a
+// different red than a "critical" KPI card.
+const SEVERITY_KEYSTONE: Record<ActionSeverity, KeystoneStatus> = {
+  critical: "alert",
+  warning: "attention",
+  info: "neutral",
 }
 
-const SEVERITY_BADGE_CLASS: Record<ActionSeverity, string> = {
-  critical: "bg-red-100 text-red-800 border-red-300",
-  warning: "bg-amber-100 text-amber-800 border-amber-300",
-  info: "bg-blue-100 text-blue-800 border-blue-300",
+const SEVERITY_ICON_CLASS: Record<ActionSeverity, string> = {
+  critical: "text-alert",
+  warning: "text-attention-foreground",
+  info: "text-neutral-foreground",
+}
+
+const SEVERITY_LABEL: Record<ActionSeverity, string> = {
+  critical: "Critical",
+  warning: "Attention",
+  info: "Info",
 }
 
 export function ActionCenter({ items, title = "Action Center" }: { items: ActionItem[]; title?: string }) {
@@ -71,14 +83,20 @@ export function ActionCenter({ items, title = "Action Center" }: { items: Action
           const SeverityIcon = SEVERITY_ICON[severity]
           const pending = pendingId === item.id
           return (
-            <div key={item.id} className="flex items-start justify-between gap-3 rounded-md border p-2.5">
+            <div
+              key={item.id}
+              className={cn(
+                "flex items-start justify-between gap-3 rounded-md border border-l-4 p-2.5",
+                STATUS_BORDER_L_CLASS[SEVERITY_KEYSTONE[severity]],
+              )}
+            >
               <div className="flex items-start gap-2">
                 <SeverityIcon className={cn("mt-0.5 h-4 w-4 shrink-0", SEVERITY_ICON_CLASS[severity])} />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    <Badge variant="outline" className={cn("text-[10px]", SEVERITY_BADGE_CLASS[severity])}>
-                      {severity}
+                    <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS[SEVERITY_KEYSTONE[severity]])}>
+                      {SEVERITY_LABEL[severity]}
                     </Badge>
                   </div>
                   {item.description && <p className="mt-0.5 text-xs text-muted-foreground">{item.description}</p>}

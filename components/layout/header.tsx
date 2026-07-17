@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge"
 import { User, Settings, LogOut, Shield, Home, LogIn } from "lucide-react"
 import { ensureSeeded, getSession, logout, type Session, hasAdminAccess, isAdmin } from "@/lib/auth"
 
-const darkBtn = "bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+const darkBtn = "bg-transparent border-secondary-foreground/30 text-secondary-foreground hover:bg-secondary-foreground/10 hover:text-secondary-foreground"
 
 export function Header() {
   const router = useRouter()
@@ -40,10 +40,10 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary-foreground/10 bg-primary text-primary-foreground">
+    <header className="sticky top-0 z-50 w-full border-b border-secondary-foreground/10 bg-secondary text-secondary-foreground">
       <div className="container flex h-20 max-w-screen-2xl items-center justify-between">
         <Link href={session ? "/home" : "/"}>
-          <LaunchPadLogo size="md" monochrome className="text-primary-foreground" subtitleClassName="text-primary-foreground/60" />
+          <LaunchPadLogo size="md" monochrome className="text-secondary-foreground" subtitleClassName="text-secondary-foreground/60" />
         </Link>
         <div className="flex items-center gap-4">
           <Button variant="outline" asChild className={darkBtn}>
@@ -57,7 +57,7 @@ export function Header() {
             <Button variant="outline" asChild className={darkBtn}>
               <Link href="/login">
                 <LogIn className="mr-2 h-4 w-4" />
-                Sign In
+                Sign in
               </Link>
             </Button>
           ) : (
@@ -91,7 +91,7 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link href="/admin?tab=settings">
                       <Settings className="mr-2 h-4 w-4" />
-                      User Management
+                      User management
                     </Link>
                   </DropdownMenuItem>
                 )}
@@ -106,7 +106,7 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                  Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

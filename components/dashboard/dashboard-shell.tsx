@@ -191,7 +191,7 @@ export function DashboardShell({
       </Sidebar>
 
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
           <SidebarTrigger />
           <div className="h-5 w-px bg-border" />
           <div className="flex min-w-0 items-center gap-2 text-sm">

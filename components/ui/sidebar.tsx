@@ -170,7 +170,7 @@ export function SidebarGroupLabel({ className, ...props }: React.ComponentProps<
   return (
     <div
       className={cn(
-        "px-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60",
+        "px-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/60",
         state === "collapsed" && "sr-only",
         className,
       )}

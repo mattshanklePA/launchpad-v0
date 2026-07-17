@@ -13,13 +13,13 @@ import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } fr
 
 describe("kpiStatusAccentClass", () => {
   it("defaults to the neutral accent when no status is given", () => {
-    expect(kpiStatusAccentClass()).toBe("border-l-border")
+    expect(kpiStatusAccentClass()).toBe("border-l-neutral")
   })
 
-  it("returns a distinct accent per status", () => {
-    expect(kpiStatusAccentClass("good")).toBe("border-l-emerald-500")
-    expect(kpiStatusAccentClass("warning")).toBe("border-l-amber-500")
-    expect(kpiStatusAccentClass("critical")).toBe("border-l-red-500")
+  it("returns a distinct accent per status, mapped onto the DS healthy/attention/alert vocabulary", () => {
+    expect(kpiStatusAccentClass("good")).toBe("border-l-healthy")
+    expect(kpiStatusAccentClass("warning")).toBe("border-l-attention")
+    expect(kpiStatusAccentClass("critical")).toBe("border-l-alert")
   })
 })
 

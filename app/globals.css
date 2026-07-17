@@ -70,14 +70,21 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: var(--radius-md);    /* effects.css — cards/panels radius */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* The console's fixed left rail (Shell.jsx's Rail, .claude/skills/
+       ui_kits/keystone-app/) — deeper basalt (--ks-basalt-800), chalk text,
+       raised-basalt (--ks-basalt-600) hover/active, active-blue focus ring.
+       Values reuse the exact HSL already verified elsewhere in this file:
+       --secondary-foreground for chalk, --primary for active-blue-dark,
+       --ring for active-blue. */
+    --sidebar-background: 210 19% 14%;    /* --ks-basalt-800 */
+    --sidebar-foreground: 45 33% 95%;     /* --ks-chalk */
+    --sidebar-primary: 200 100% 32%;      /* --ks-active-blue-dark */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 209 15% 27%;        /* --ks-basalt-600 */
+    --sidebar-accent-foreground: 45 33% 95%; /* --ks-chalk */
+    --sidebar-border: 209 15% 27%;        /* --ks-basalt-600 */
+    --sidebar-ring: 200 100% 40%;         /* --ks-active-blue */
   }
   .dark {
     --background: 210 20% 12%;
@@ -104,14 +111,16 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    /* Same fixed basalt rail as light mode (.claude/skills/readme.md: the
+       nav is always dark basalt, independent of canvas theme). */
+    --sidebar-background: 210 19% 14%;
+    --sidebar-foreground: 45 33% 95%;
+    --sidebar-primary: 200 100% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 209 15% 27%;
+    --sidebar-accent-foreground: 45 33% 95%;
+    --sidebar-border: 209 15% 27%;
+    --sidebar-ring: 200 100% 40%;
   }
 }
 
