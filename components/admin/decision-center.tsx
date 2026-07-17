@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import {
@@ -131,7 +132,10 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg">{d.useCaseTitle || "Untitled idea"}</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-lg">{d.useCaseTitle || "Untitled idea"}</CardTitle>
+              <LifecycleBadge submission={submission} />
+            </div>
             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
               <span>{fmt(d.submitterName)}</span>
               <span>·</span>

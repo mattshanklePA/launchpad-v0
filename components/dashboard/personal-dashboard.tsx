@@ -29,6 +29,7 @@ import { getStatus, getComments, STATUS_LABEL, statusBadgeClasses } from "@/lib/
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, ArrowRight, MessageSquare, FileText } from "lucide-react"
 
@@ -168,6 +169,7 @@ export function PersonalDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  <LifecycleBadge submission={s} />
                   <StatusBadge status={getStatus(s)} />
                   <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 </div>

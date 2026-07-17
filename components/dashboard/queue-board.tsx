@@ -17,6 +17,7 @@ import { User } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, getAssigneeName, STATUS_ORDER, STATUS_LABEL, statusBadgeClasses } from "@/lib/reviewWorkflow"
 import { Badge } from "@/components/ui/badge"
+import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 
 function readinessChip(score?: string): { cls: string; label: string } {
   switch (score) {
@@ -43,7 +44,10 @@ function QueueCard({ s }: { s: Submission }) {
     >
       <div className="line-clamp-2 text-sm font-medium">{title}</div>
       <div className="mt-1 truncate text-xs text-muted-foreground">{submitter}</div>
-      <div className={`mt-2 inline-block rounded px-1.5 py-0.5 text-[10px] ${r.cls}`}>{r.label}</div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <LifecycleBadge submission={s} />
+        <div className={`inline-block rounded px-1.5 py-0.5 text-[10px] ${r.cls}`}>{r.label}</div>
+      </div>
       <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
         <User className="h-3 w-3" />
         {assignee || "Unassigned"}
