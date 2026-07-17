@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
-import { Wand2, User, Info, Send, ClipboardCheck, Sparkles, Pencil } from "lucide-react"
+import { Wand2, User, Info, Send, ClipboardCheck, ClipboardList, Sparkles, Pencil } from "lucide-react"
 import { validateAndRefineInput, type ScoutResponse } from "@/app/actions"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { FormData } from "@/lib/steps"
+import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { useForm } from "@/context/form-context"
 import { getFormConfig } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
@@ -27,7 +28,15 @@ type ChatMessage =
 
 type LaunchPadChatPanelProps = {
   step: number
-  onApplySuggestion: (suggestion: string) => void
+  // Merges the given fields into FormData — called with every drafted field
+  // for "Apply all" or a single field for one field's own "Apply" button.
+  onApplySuggestion: (fields: Partial<FormData>) => void
+}
+
+// Falls back to the raw field key (Title Cased) when a key isn't registered
+// in FIELD_REGISTRY, so the panel never silently drops a drafted field.
+function fieldLabel(key: string): string {
+  return FIELD_REGISTRY_BY_KEY[key]?.label || key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())
 }
 
 function getStepContext(step: number): { buttonLabel: string; emptyMessage: string } {
@@ -78,7 +87,10 @@ function toApiMessages(msgs: ChatMessage[]): ApiMessage[] {
     if (m.response.mode === "question") {
       return { role: "assistant", content: `Question: ${m.response.questionText}` }
     }
-    return { role: "assistant", content: `Scaffold produced: ${m.response.scaffoldText}` }
+    const fieldSummary = Object.entries(m.response.fields)
+      .map(([key, draft]) => `${fieldLabel(key)}: ${draft.value}`)
+      .join("\n")
+    return { role: "assistant", content: `Draft produced:\n${fieldSummary}` }
   })
 }
 
@@ -266,7 +278,9 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                   )
                 }
 
-                // Assistant — scaffold
+                // Assistant — scaffold: one drafted field at a time, each
+                // individually applyable, plus an "apply all" for the whole draft.
+                const fieldEntries = Object.entries(msg.response.fields)
                 return (
                   <div key={index} className="flex items-start gap-3">
                     <PlumbMark className="h-5 w-5 flex-shrink-0 mt-1" />
@@ -274,28 +288,55 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
                       {msg.response.summary && (
                         <p className="mb-3 whitespace-pre-wrap">{msg.response.summary}</p>
                       )}
-                      <div className="pt-3 border-t">
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">SCAFFOLD TO FILL IN:</p>
-                        <p className="text-xs text-muted-foreground italic mb-2">
+                      <div className="pt-3 border-t space-y-3">
+                        <p className="text-xs text-muted-foreground italic">
                           Replace each [BRACKETED PLACEHOLDER] with specifics only you can provide.
                         </p>
-                        <p className="text-sm bg-white p-2 rounded border whitespace-pre-wrap">
-                          {msg.response.scaffoldText}
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="mt-2 w-full"
-                          onClick={() => {
-                            onApplySuggestion(msg.response.mode === "scaffold" ? msg.response.scaffoldText : "")
-                            toast({
-                              title: "Scaffold copied to response",
-                              description: "Now fill in the bracketed placeholders with your specifics.",
-                            })
-                          }}
-                        >
-                          <ClipboardCheck className="mr-2 h-4 w-4" /> Use as Starting Point
-                        </Button>
+
+                        {fieldEntries.map(([key, draft]) => (
+                          <div key={key} className="rounded border bg-white p-2">
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">
+                              {fieldLabel(key).toUpperCase()}
+                            </p>
+                            <p className="text-sm whitespace-pre-wrap">{draft.value}</p>
+                            {draft.rationale && (
+                              <p className="text-xs text-muted-foreground italic mt-1">{draft.rationale}</p>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="mt-2 w-full"
+                              onClick={() => {
+                                onApplySuggestion({ [key]: draft.value } as Partial<FormData>)
+                                toast({
+                                  title: `${fieldLabel(key)} applied`,
+                                  description: "Now fill in the bracketed placeholders with your specifics.",
+                                })
+                              }}
+                            >
+                              <ClipboardCheck className="mr-2 h-4 w-4" /> Apply {fieldLabel(key)}
+                            </Button>
+                          </div>
+                        ))}
+
+                        {fieldEntries.length > 1 && (
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              const all = Object.fromEntries(
+                                fieldEntries.map(([key, draft]) => [key, draft.value]),
+                              ) as Partial<FormData>
+                              onApplySuggestion(all)
+                              toast({
+                                title: "All drafted fields applied",
+                                description: "Now fill in the bracketed placeholders with your specifics.",
+                              })
+                            }}
+                          >
+                            <ClipboardList className="mr-2 h-4 w-4" /> Apply All
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -9,8 +9,8 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 export function Step3TargetUser() {
   const { formData, setFormData } = useForm()
 
-  const handleSuggestion = (suggestion: string) => {
-    setFormData((prev) => ({ ...prev, targetUserSummary: suggestion }))
+  const handleSuggestion = (fields: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...fields }))
   }
 
   return (
