@@ -1,4 +1,4 @@
-// Submission readiness gate.
+// Submission readiness gate — the *idea* intake gate (issue #160).
 // Two-layer check before the Submit button enables on Step 11:
 //   1. COMPLETENESS — every required field has *some* content
 //      (presence, not length — quality is judged by the AI, not by char count)
@@ -8,6 +8,18 @@
 // Rationale: the AI's verdict is a richer signal than any length threshold.
 // A 10-char title with a clear, specific use case can be more substantive
 // than a 100-char rambling title. We trust the AI to surface real quality.
+//
+// Two-stage lifecycle (issue #160): a submitter here is only ever submitting
+// an *idea* (raw, unvetted) — the OMB 34-field inventory, the M-25-21
+// minimum-practice block, and the RMF inputs are governance work that
+// belongs to the *vetting* stage (a reviewer turning an idea into an
+// approved use case, lib/reviewWorkflow.ts's `getLifecycleStage`), not
+// intake. Those checks still run (same `showWhen`-aware gating as every
+// other field) so the data is there the moment a reviewer needs it, but
+// they land in `governanceMissing` — informational, and never counted
+// toward `canSubmit`/`completenessPercent`. The fields themselves are
+// unchanged in the data model and the OMB export (lib/ombExport.ts) still
+// reads them regardless of whether they were "required" to submit.
 
 import type { FormData } from "@/lib/steps"
 import { isFieldVisible } from "@/lib/formConfig"
@@ -28,6 +40,10 @@ export type SubmissionReadiness = {
   totalChecks: number
   missing: MissingItem[]
   warnings: MissingItem[]
+  // Governance fields (OMB inventory, M-25-21 minimum practice, RMF inputs)
+  // that are currently applicable (per `showWhen`) but unanswered. Vetting-
+  // stage information only — never blocks idea submission.
+  governanceMissing: MissingItem[]
 }
 
 function presentString(v: string | undefined): boolean {
@@ -41,21 +57,32 @@ function hasArrayValue(v: string[] | undefined): boolean {
 export function getSubmissionReadiness(formData: FormData): SubmissionReadiness {
   const missing: MissingItem[] = []
   const warnings: MissingItem[] = []
+  const governanceMissing: MissingItem[] = []
 
   // Local helper that respects the admin Form Configuration and each field's
   // `showWhen` prerequisite (issue #60): a disabled field, or one whose
   // prerequisite isn't met yet (so the wizard doesn't render it), is by
   // definition not required — skip the check entirely. Same resolver the
   // wizard uses (`isFieldVisible`), so "still needed to submit" can never
-  // demand a field the submitter can't currently see.
-  const need = (
+  // demand a field the submitter can't currently see. `target` lets the idea
+  // gate (`missing`) and the vetting-stage governance checks
+  // (`governanceMissing`, issue #160) share this exact same gating logic
+  // while landing in separate buckets.
+  const needInto = (
+    target: MissingItem[],
     field: keyof FormData,
     item: Omit<MissingItem, "field"> & { field?: string },
     test: () => boolean,
   ) => {
     if (!isFieldVisible(field, formData)) return
-    if (test()) missing.push({ ...item, field: (item.field as string) || (field as string) })
+    if (test()) target.push({ ...item, field: (item.field as string) || (field as string) })
   }
+
+  const need = (
+    field: keyof FormData,
+    item: Omit<MissingItem, "field"> & { field?: string },
+    test: () => boolean,
+  ) => needInto(missing, field, item, test)
 
   // ---------- Step 1: Submitter Info (auto-filled from profile when available) ----------
   need("submitterName", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Submitter name" }, () => !presentString(formData.submitterName))
@@ -102,17 +129,20 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("impactLevel", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Data classification / Impact Level" }, () => !formData.impactLevel)
   need("trl", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Technology Readiness Level" }, () => !formData.trl)
 
-  // ---------- OMB federal AI use case inventory (issue #61) ----------
-  // Every check below is scoped to "currently applicable" purely by calling
-  // `need()`, which gates on `isFieldVisible` — the same resolver the wizard
-  // uses for `showWhen` conditional disclosure (lib/formConfig.ts). A field
-  // whose prerequisite isn't met (e.g. `topicArea` before a development
-  // stage is chosen, or any of the 9 high-impact-only fields unless
-  // `highImpact === "high_impact"` AND `stageOfDevelopment === "deployed"`)
-  // is simply never checked — no second copy of the `showWhen` predicates
-  // lives here.
+  // ---------- OMB federal AI use case inventory, M-25-21, and RMF inputs (issue #160) ----------
+  // These are governance fields that belong to the *vetting* stage, not idea
+  // intake (issue #160) — they land in `governanceMissing`, never `missing`,
+  // so they're tracked but don't block a submitter from submitting an idea.
+  // Every check below is still scoped to "currently applicable" purely by
+  // calling `needInto()`, which gates on `isFieldVisible` — the same
+  // resolver the wizard uses for `showWhen` conditional disclosure
+  // (lib/formConfig.ts). A field whose prerequisite isn't met (e.g.
+  // `topicArea` before a development stage is chosen, or any of the 9
+  // high-impact-only fields unless `highImpact === "high_impact"` AND
+  // `stageOfDevelopment === "deployed"`) is simply never checked — no second
+  // copy of the `showWhen` predicates lives here.
   const omb = (field: keyof FormData, message: string, test: () => boolean) =>
-    need(field, { step: 6, stepName: "Feasibility & Security", reason: "missing", message }, test)
+    needInto(governanceMissing, field, { step: 6, stepName: "Feasibility & Security", reason: "missing", message }, test)
 
   omb("stageOfDevelopment", "Stage of development", () => !formData.stageOfDevelopment)
   omb("highImpact", "High-impact determination", () => !formData.highImpact)
@@ -177,7 +207,10 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
 
   // Count enabled-and-required fields dynamically — disabled fields don't
   // count toward the completeness denominator, so a heavily-trimmed config
-  // doesn't show as artificially incomplete.
+  // doesn't show as artificially incomplete. The OMB inventory, M-25-21, and
+  // RMF governance fields are deliberately absent here (issue #160) — they're
+  // vetting-stage checks (`governanceMissing` above), not part of the idea
+  // completeness percentage.
   const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
     "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
     "useCaseTitle", "useCaseDescription", "isWithheld",
@@ -188,13 +221,6 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     "dependencies", "implementationComplexity",
     "involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview",
     "dataReadiness", "impactLevel", "trl",
-    "stageOfDevelopment", "highImpact", "highImpactJustification", "topicArea", "aiClassification",
-    "disseminatesToPublic", "scalable",
-    "hasATO", "atoSystemName", "systemSource", "systemSourceVendorName", "operationalDate",
-    "trainingDataDescription", "hasPii", "demographicFeatures", "customCode",
-    "preDeploymentTesting", "aiImpactAssessmentCompleted", "aiImpactAssessment", "independentReviewConducted",
-    "ongoingMonitoringPlan", "operatorTrainingEstablished", "failSafeMechanism", "humanOversightAppeal",
-    "publicConsultationSteps",
     "successMetrics", "timelineForResults",
   ]
   const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldVisible(k, formData)).length
@@ -208,6 +234,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     totalChecks,
     missing,
     warnings,
+    governanceMissing,
   }
 }
 

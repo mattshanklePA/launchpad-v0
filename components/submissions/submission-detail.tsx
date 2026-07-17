@@ -56,6 +56,7 @@ import {
 import { resolveRmfProfile, buildRmfProfileReviewPatch } from "@/lib/rmfProfileReview"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
@@ -400,7 +401,10 @@ export function SubmissionDetail({ id }: { id: string }) {
             {getAssigneeName(sub) ? ` · assigned to ${getAssigneeName(sub)}` : ""}
           </p>
         </div>
-        <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", statusBadgeClasses(status))}>{STATUS_LABEL[status]}</Badge>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <LifecycleBadge submission={sub} />
+          <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", statusBadgeClasses(status))}>{STATUS_LABEL[status]}</Badge>
+        </div>
       </div>
 
       {showBureauTier && bureauSignoff && (

@@ -74,6 +74,31 @@ export function getStatus(s: Submission): SubmissionStatus {
   return v && (STATUS_LABEL as Record<string, string>)[v] ? v : "submitted"
 }
 
+// Two-stage lifecycle (issue #160): a submission is a raw, unvetted *idea*
+// until a reviewer approves it, at which point it becomes a vetted *use
+// case*. Derived purely from the existing review status — no new field —
+// so every submission that already has a status automatically has a stage.
+// The OMB 34-field inventory, the M-25-21 minimum-practice block, and the
+// RMF inputs (lib/submissionReadiness.ts's `governanceMissing`) are the
+// vetting stage's concern, not the idea intake gate.
+export type LifecycleStage = "idea" | "use_case"
+
+export const LIFECYCLE_STAGE_LABEL: Record<LifecycleStage, string> = {
+  idea: "Idea",
+  use_case: "Use Case",
+}
+
+export function getLifecycleStage(s: Submission): LifecycleStage {
+  return getStatus(s) === "approved" ? "use_case" : "idea"
+}
+
+// Keystone status-badge classes for the lifecycle badge — a use case (vetted)
+// reads as the "healthy" state; an idea (still pre-vetting) is neutral, not
+// attention/alert, since being an idea isn't itself a problem.
+export function lifecycleStageBadgeClasses(stage: LifecycleStage): string {
+  return stage === "use_case" ? STATUS_BADGE_CLASS.healthy : STATUS_BADGE_CLASS.neutral
+}
+
 export function getComments(s: Submission): SubmissionComment[] {
   const c = (s.formData as Record<string, unknown>)?.comments
   return Array.isArray(c) ? (c as SubmissionComment[]) : []

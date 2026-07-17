@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { getStatus, visibleSubmissions } from "@/lib/reviewWorkflow"
+import { getStatus, getLifecycleStage, visibleSubmissions } from "@/lib/reviewWorkflow"
 import type { Submission } from "@/lib/submissions"
 
 type SubInput = {
@@ -34,6 +34,21 @@ describe("getStatus", () => {
   })
   it("defaults to submitted when nothing is set", () => {
     expect(getStatus(sub({}))).toBe("submitted")
+  })
+})
+
+describe("getLifecycleStage (issue #160)", () => {
+  it("is an idea for every pre-approval status", () => {
+    expect(getLifecycleStage(sub({ status: "draft" }))).toBe("idea")
+    expect(getLifecycleStage(sub({ status: "submitted" }))).toBe("idea")
+    expect(getLifecycleStage(sub({ status: "in_review" }))).toBe("idea")
+    expect(getLifecycleStage(sub({ status: "needs_info" }))).toBe("idea")
+  })
+  it("is still an idea once rejected — rejection never vets it into a use case", () => {
+    expect(getLifecycleStage(sub({ status: "rejected" }))).toBe("idea")
+  })
+  it("is a use case only once approved", () => {
+    expect(getLifecycleStage(sub({ status: "approved" }))).toBe("use_case")
   })
 })
 
