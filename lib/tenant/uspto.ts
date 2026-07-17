@@ -86,6 +86,43 @@ A serious AI idea names the specific priorities it advances, describes the mecha
     ],
   },
 
+  submitterRoles: [
+    { value: "patent_examiner", label: "Operations / Staff Officer" },
+    { value: "trademark_examiner", label: "Analyst" },
+    { value: "manager", label: "Manager" },
+    { value: "it_staff", label: "IT Staff" },
+    { value: "product_owner", label: "Product Owner" },
+    { value: "lead_product_owner", label: "Lead Product Owner" },
+    { value: "developer", label: "Developer" },
+    { value: "other", label: "Other" },
+  ],
+
+  affectedSystems: [
+    { value: "patents", label: "Patents" },
+    { value: "trademarks", label: "Trademarks" },
+    { value: "it_systems", label: "IT systems" },
+    { value: "cross_functional", label: "Cross-functional" },
+    { value: "other", label: "Other" },
+  ],
+
+  targetAudiences: [
+    { value: "patent_examiner", label: "Patent Examiner" },
+    { value: "trademark_examiner", label: "Trademark Examiner" },
+    { value: "supervisory_examiner", label: "Supervisory Examiner" },
+    { value: "product_owner", label: "Product Owner" },
+    { value: "lead_product_owner", label: "Lead Product Owner" },
+    { value: "developer", label: "Developer" },
+    { value: "applicant", label: "Applicant/External User" },
+    { value: "other", label: "Other" },
+  ],
+
+  dataClassifications: [
+    { value: "unclassified", label: "Unclassified / public (IL2)" },
+    { value: "cui", label: "CUI (IL4)" },
+    { value: "il5", label: "CUI, higher sensitivity / NSS (IL5)" },
+    { value: "il6", label: "Classified up to Secret (IL6 / SIPRNet)" },
+  ],
+
   riskFramework: {
     label: "DoC / OMB AI risk management",
     description: "Department of Commerce and Executive Order requirements: PII use, decisional impact, American-built model sourcing, and mandatory human review.",

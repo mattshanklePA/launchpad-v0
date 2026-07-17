@@ -253,6 +253,42 @@ A serious AI idea names the federal priority and the Department mission it advan
     ],
   },
 
+  submitterRoles: [
+    { value: "patent_examiner", label: "Operations / Staff Officer" },
+    { value: "trademark_examiner", label: "Analyst" },
+    { value: "manager", label: "Manager" },
+    { value: "it_staff", label: "IT Staff" },
+    { value: "product_owner", label: "Product Owner" },
+    { value: "lead_product_owner", label: "Lead Product Owner" },
+    { value: "developer", label: "Developer" },
+    { value: "other", label: "Other" },
+  ],
+
+  affectedSystems: [
+    { value: "program_operations", label: "Program operations" },
+    { value: "it_systems", label: "IT systems" },
+    { value: "cross_functional", label: "Cross-bureau" },
+    { value: "other", label: "Other" },
+  ],
+
+  targetAudiences: [
+    { value: "bureau_staff", label: "Bureau Staff / Analyst" },
+    { value: "program_manager", label: "Program Manager" },
+    { value: "supervisor", label: "Supervisor" },
+    { value: "product_owner", label: "Product Owner" },
+    { value: "lead_product_owner", label: "Lead Product Owner" },
+    { value: "developer", label: "Developer" },
+    { value: "applicant", label: "Public / External User" },
+    { value: "other", label: "Other" },
+  ],
+
+  // DoC uses FISMA impact levels, not DoD Impact Levels.
+  dataClassifications: [
+    { value: "fisma_low", label: "FISMA Low" },
+    { value: "fisma_moderate", label: "FISMA Moderate" },
+    { value: "fisma_high", label: "FISMA High" },
+  ],
+
   riskFramework: {
     label: "OMB / EO AI risk management",
     description:

@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useForm } from "@/context/form-context"
-import { getFormSteps, SUBMITTER_ROLE_LABELS, type FormData } from "@/lib/steps"
+import { getFormSteps, getSubmitterRoleLabels, type FormData } from "@/lib/steps"
 import { saveSubmission } from "@/lib/submissions"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -17,7 +17,9 @@ import { SubmissionGate } from "@/components/steps/submission-gate"
 import { isFieldVisible, getFormConfig } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
 
-const routeOptions = [
+// "Export to Rally" only applies to tenants with a Rally integration
+// (`TenantConfig.features.rallyExport` — on for USPTO, off for DoW/DoC).
+const ALL_ROUTE_OPTIONS = [
   { value: "rally", label: "Export to Rally" },
   { value: "governance", label: "Submit for Governance Vetting" },
   { value: "draft", label: "Save as Draft (continue later)" },
@@ -103,6 +105,8 @@ export function Step10ReviewSubmit() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showExecutiveSummary, setShowExecutiveSummary] = useState(false)
   const { toast } = useToast()
+  const tenant = getTenant()
+  const routeOptions = ALL_ROUTE_OPTIONS.filter((o) => o.value !== "rally" || tenant.features.rallyExport)
 
   const handleRouteToggle = (item: string) => {
     const currentItems = formData.routeTo || []
@@ -213,38 +217,22 @@ export function Step10ReviewSubmit() {
     open_source_us: "Open-source (U.S.)",
     foreign: "Foreign-built",
     unknown: "Unknown / TBD",
-    unclassified: "Unclassified / public (IL2)",
-    cui: "CUI (IL4)",
-    il5: "CUI, higher sensitivity (IL5)",
-    il6: "Classified up to Secret (IL6)",
     ai_ready: "AI-ready data exists",
     partial: "Partial — needs labeling/cleanup",
     needs_build: "Must be built / relabeled",
     "1": "TRL 1", "2": "TRL 2", "3": "TRL 3", "4": "TRL 4", "5": "TRL 5", "6": "TRL 6", "7": "TRL 7", "8": "TRL 8", "9": "TRL 9",
-    patents: "Patents",
-    trademarks: "Trademarks",
-    forscom: "Forces Command (FORSCOM)",
-    amc: "Army Materiel Command (AMC)",
-    tradoc: "Training & Doctrine Command (TRADOC)",
-    afc: "Army Futures Command (AFC)",
-    medcom: "Army Medical Command (MEDCOM)",
-    arcyber: "Army Cyber Command",
-    sustainment: "Sustainment / Logistics",
-    ocio: "OCIO",
-    ocfo: "OCFO",
-    ogc: "OGC",
-    opia: "OPIA",
-    hr: "Human Resources",
     other: "Other",
-    ...SUBMITTER_ROLE_LABELS,
-    supervisory_examiner: "Supervisory Examiner",
-    applicant: "Applicant",
-    it_systems: "IT Systems",
-    cross_functional: "Cross-Functional",
-    // Tenant's own org taxonomy (bureau/command codes), so the Business Unit
-    // recap shows the right label instead of a raw value like "bea" or
-    // "forscom" on tenants whose codes aren't in the static list above.
-    ...Object.fromEntries(getTenant().unit.options.map((o) => [o.value, o.label])),
+    // Tenant-driven dropdown options (issue #147) — submitter role, affected
+    // system, target audience, data classification, and org taxonomy
+    // (bureau/command) all resolve their labels from the active tenant
+    // instead of a static USPTO/DoW-shaped list, so the recap shows the
+    // right label instead of a raw value like "bea" or "forscom" on tenants
+    // whose codes aren't in the static list above.
+    ...getSubmitterRoleLabels(),
+    ...Object.fromEntries(tenant.affectedSystems.map((o) => [o.value, o.label])),
+    ...Object.fromEntries(tenant.targetAudiences.map((o) => [o.value, o.label])),
+    ...Object.fromEntries(tenant.dataClassifications.map((o) => [o.value, o.label])),
+    ...Object.fromEntries(tenant.unit.options.map((o) => [o.value, o.label])),
   }
   const prettify = (s: string) => ENUM_LABELS[s] || s
 

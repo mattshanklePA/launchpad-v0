@@ -95,11 +95,9 @@ export function Step3ProblemAndUsers() {
                           <SelectValue placeholder="Select an area..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="patents">Patents</SelectItem>
-                          <SelectItem value="trademarks">Trademarks</SelectItem>
-                          <SelectItem value="it_systems">IT systems</SelectItem>
-                          <SelectItem value="cross_functional">Cross-functional</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          {tenant.affectedSystems.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -157,14 +155,9 @@ export function Step3ProblemAndUsers() {
                             <SelectValue placeholder="Select an audience..." />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="patent_examiner">Patent Examiner</SelectItem>
-                            <SelectItem value="trademark_examiner">Trademark Examiner</SelectItem>
-                            <SelectItem value="supervisory_examiner">Supervisory Examiner</SelectItem>
-                            <SelectItem value="product_owner">Product Owner</SelectItem>
-                            <SelectItem value="lead_product_owner">Lead Product Owner</SelectItem>
-                            <SelectItem value="developer">Developer</SelectItem>
-                            <SelectItem value="applicant">Applicant/External User</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
+                            {tenant.targetAudiences.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

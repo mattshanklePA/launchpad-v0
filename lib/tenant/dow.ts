@@ -98,6 +98,44 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
     ],
   },
 
+  submitterRoles: [
+    { value: "patent_examiner", label: "Operations / Staff Officer" },
+    { value: "trademark_examiner", label: "Analyst" },
+    { value: "manager", label: "Manager" },
+    { value: "it_staff", label: "IT Staff" },
+    { value: "product_owner", label: "Product Owner" },
+    { value: "lead_product_owner", label: "Lead Product Owner" },
+    { value: "developer", label: "Developer" },
+    { value: "other", label: "Other" },
+  ],
+
+  affectedSystems: [
+    { value: "operations", label: "Mission operations" },
+    { value: "logistics", label: "Sustainment / logistics" },
+    { value: "it_systems", label: "IT systems" },
+    { value: "cross_functional", label: "Cross-functional" },
+    { value: "other", label: "Other" },
+  ],
+
+  targetAudiences: [
+    { value: "operator", label: "Operator / Warfighter" },
+    { value: "analyst", label: "Analyst" },
+    { value: "supervisor", label: "Supervisor" },
+    { value: "product_owner", label: "Product Owner" },
+    { value: "lead_product_owner", label: "Lead Product Owner" },
+    { value: "developer", label: "Developer" },
+    { value: "external_partner", label: "External Partner / Contractor" },
+    { value: "other", label: "Other" },
+  ],
+
+  // DoW keeps the DoD Impact Levels — same list as USPTO's default.
+  dataClassifications: [
+    { value: "unclassified", label: "Unclassified / public (IL2)" },
+    { value: "cui", label: "CUI (IL4)" },
+    { value: "il5", label: "CUI, higher sensitivity / NSS (IL5)" },
+    { value: "il6", label: "Classified up to Secret (IL6 / SIPRNet)" },
+  ],
+
   riskFramework: {
     label: "DoD AI Ethical Principles + CDAO Responsible AI",
     description: "Responsible-AI posture: data classification and Impact Level (Unclassified, CUI, IL4, IL5, IL6), data readiness, American-built model sourcing inside the accredited boundary, mandatory human judgment, bias mitigation, and a test-and-evaluation/assurance plan.",

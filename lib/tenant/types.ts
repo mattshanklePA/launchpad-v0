@@ -6,6 +6,11 @@ export type FocusArea = { id: string; label: string; category: string; descripti
 export type Objective = { title: string; description: string }
 export type ObjectiveGroup = { title: string; subtitle: string; items: Objective[] }
 export type OfficeOption = { value: string; label: string }
+// Generic value/label pair for the submit wizard's tenant-driven dropdowns
+// (submitterRoles, affectedSystems, targetAudiences, dataClassifications
+// below) — same shape as OfficeOption, named separately since these options
+// aren't offices.
+export type SelectOption = { value: string; label: string }
 // `offices` is the optional third tier (Department -> Bureau -> Office). Only
 // populated for tenants/bureaus that have one (DoC); absent elsewhere so
 // USPTO/DoW render exactly as before.
@@ -54,6 +59,20 @@ export type TenantConfig = {
 
   // Org taxonomy (USPTO "business unit" -> DoW "command")
   unit: { label: string; options: UnitOption[] }
+
+  // Submit-wizard dropdown options (issue #147). Each tenant supplies its own
+  // value/label list rather than the wizard hardcoding USPTO's patent/
+  // trademark taxonomy or DoW's DoD Impact Levels for every deployment — the
+  // same "options live in TenantConfig, components just map over them"
+  // pattern `unit.options` already established. Values are free strings
+  // (not a shared union) so a tenant's list can differ from another's
+  // entirely, same as `unit.options` today; existing stored submissions
+  // whose value isn't in the active tenant's list still render (the raw
+  // value is shown as a fallback — see step-10-review-submit.tsx's `prettify`).
+  submitterRoles: SelectOption[]      // Step 1 "Role"
+  affectedSystems: SelectOption[]     // Step 3 "Which process, system, or group does this affect?"
+  targetAudiences: SelectOption[]     // Step 3 "Primary audience"
+  dataClassifications: SelectOption[] // Step 8 "Data classification / required Impact Level"
 
   // Label for the admin dashboard's "OKRs / strategic priorities" tab, heading,
   // and subtitle copy (e.g. "Department of War OKRs", "OMB / Strategic Priorities").
