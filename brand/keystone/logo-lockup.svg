@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 120" width="620" height="120">
+  <path d="M30 26 L70 26 L62 80 L38 80 Z" fill="#C77D3A"></path>
+  <path d="M30 26 L70 26 L67.3 39.5 L32.7 39.5 Z" fill="#DCA061"></path>
+  <text x="120" y="72" font-family="Chivo, Archivo, system-ui, sans-serif" font-weight="700" font-size="80" letter-spacing="-1.5" fill="#2A333C">Keystone</text>
+</svg>
