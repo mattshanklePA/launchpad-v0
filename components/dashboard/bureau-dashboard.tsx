@@ -21,7 +21,7 @@
 import { useEffect, useState } from "react"
 import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
-import { getSession } from "@/lib/auth"
+import { getSession, hasAdminAccess } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
 import { getDashboardScope } from "@/lib/dashboard/scope"
 import { getDashboardMetrics, scopedSubmissions, officeRollupRowsForScope } from "@/lib/dashboard/metrics"
@@ -34,6 +34,8 @@ import { KpiCardGrid } from "@/components/dashboard/kpi-card"
 import { HealthGauge } from "@/components/dashboard/health-gauge"
 import type { EntitySelection } from "@/components/dashboard/entity-tree"
 import { ActionCenter } from "@/components/dashboard/action-center"
+import { WorklistSummary } from "@/components/dashboard/worklist-summary"
+import { OrientationBanner } from "@/components/dashboard/orientation-banner"
 import { PipelineStatusChart } from "@/components/dashboard/charts/pipeline-status-chart"
 import { ReadinessDistributionChart } from "@/components/dashboard/charts/readiness-distribution-chart"
 import { OfficeRollup } from "@/components/admin/office-rollup"
@@ -81,9 +83,9 @@ export function BureauDashboard() {
         <AdminToolsSection session={session} />
       </div>
 
-      <KpiCardGrid cards={kpiCards} drilldown={kpiDrilldown} />
+      {hasAdminAccess(session) && <OrientationBanner bureauTier={bureauTier} />}
 
-      <DecisionCenterLink />
+      <WorklistSummary items={actionItems} />
 
       <Tabs defaultValue="actions">
         <TabsList>
@@ -145,6 +147,13 @@ export function BureauDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <DecisionCenterLink />
+
+      <div className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Key metrics</h2>
+        <KpiCardGrid cards={kpiCards} drilldown={kpiDrilldown} />
+      </div>
     </DashboardShell>
   )
 }

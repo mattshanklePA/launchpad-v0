@@ -62,13 +62,22 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rm
   const { pipelineStatus, readiness, highImpact, ombReportability, crossBureauDuplicates, awaitingSignoff, rmfRollup } = metrics
 
   const cards: KpiCardData[] = [
-    { id: "pipeline", label: "In pipeline", value: pipelineStatus.total, status: "neutral" },
+    {
+      id: "pipeline",
+      label: "In pipeline",
+      value: pipelineStatus.total,
+      status: "neutral",
+      glossary: "inPipeline",
+      subtitle: "Total use cases in review",
+    },
     {
       id: "readiness",
       label: "Ready",
       value: readiness.ready,
       delta: { value: `${readiness.ready}/${readiness.total}`, direction: readiness.ready > 0 ? "up" : "flat" },
       status: readiness.total > 0 && readiness.ready === readiness.total ? "good" : "neutral",
+      glossary: "readinessReady",
+      subtitle: "Enough info for a decision",
     },
     {
       id: "high-impact",
@@ -85,6 +94,8 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rm
         direction: "flat",
       },
       status: ombReportability.review > 0 ? "warning" : "neutral",
+      glossary: "ombReportability",
+      subtitle: "Required for the annual AI inventory",
     },
   ]
 
@@ -94,6 +105,8 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rm
       label: "Awaiting bureau sign-off",
       value: awaitingSignoff.count,
       status: awaitingSignoff.count > 0 ? "warning" : "neutral",
+      glossary: "awaitingBureauSignOff",
+      subtitle: "Approved, pending bureau confirmation",
     })
     cards.push({
       id: "duplicates",
@@ -107,6 +120,8 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rm
             }
           : undefined,
       status: crossBureauDuplicates.pendingCount > 0 ? "critical" : "neutral",
+      glossary: "crossBureauRationalization",
+      subtitle: "May be the same effort, built twice",
     })
   }
 
@@ -117,6 +132,8 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rm
       value: rmfRollup.at_risk,
       delta: rmfRollup.attention > 0 ? { value: `${rmfRollup.attention} need attention`, direction: "down" } : undefined,
       status: rmfRollup.at_risk > 0 ? "critical" : rmfRollup.attention > 0 ? "warning" : "neutral",
+      glossary: "rmfAtRisk",
+      subtitle: "NIST AI RMF gap needs attention",
     })
   }
 
@@ -220,6 +237,17 @@ export function buildActionItems(
   }
 
   return items
+}
+
+/**
+ * UX #4: the one-line "worklist-first" headline shown above the Action
+ * Center so an admin sees what needs them before any metric — pluralizes,
+ * and reads as an all-clear rather than "0 items" once nothing does.
+ */
+export function worklistSummaryLabel(actionItems: ActionItem[]): string {
+  const n = actionItems.length
+  if (n === 0) return "Today: nothing needs you right now."
+  return `Today: ${n} item${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you.`
 }
 
 /**
