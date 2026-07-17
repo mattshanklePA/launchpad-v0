@@ -14,6 +14,7 @@ import type { FormData } from "@/lib/steps"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { departmentFinalApprovalEnabled } from "@/lib/bureauSignoff"
 import type { BureauSignoff, DepartmentApproval } from "@/lib/bureauSignoff"
+import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 
 export type RmfFunctionKey = "govern" | "map" | "measure" | "manage"
 
@@ -298,13 +299,13 @@ export function computeRmfProfile(fd: RmfInputs, tenant: TenantConfig = getTenan
 export function rmfBadgeClass(level: RmfRiskLevel): string {
   switch (level) {
     case "on_track":
-      return "bg-green-100 text-green-800 border-green-300"
+      return STATUS_BADGE_CLASS.healthy
     case "attention":
-      return "bg-amber-100 text-amber-800 border-amber-300"
+      return STATUS_BADGE_CLASS.attention
     case "at_risk":
-      return "bg-red-100 text-red-800 border-red-300"
+      return STATUS_BADGE_CLASS.alert
     default:
-      return "bg-gray-100 text-gray-700 border-gray-300"
+      return STATUS_BADGE_CLASS.neutral
   }
 }
 
@@ -312,12 +313,12 @@ export function rmfBadgeClass(level: RmfRiskLevel): string {
 export function rmfFunctionStatusBadgeClass(status: RmfFunctionStatus): string {
   switch (status) {
     case "covered":
-      return "bg-green-100 text-green-800 border-green-300"
+      return STATUS_BADGE_CLASS.healthy
     case "partial":
-      return "bg-amber-100 text-amber-800 border-amber-300"
+      return STATUS_BADGE_CLASS.attention
     case "gap":
-      return "bg-red-100 text-red-800 border-red-300"
+      return STATUS_BADGE_CLASS.alert
     default:
-      return "bg-gray-100 text-gray-700 border-gray-300"
+      return STATUS_BADGE_CLASS.neutral
   }
 }

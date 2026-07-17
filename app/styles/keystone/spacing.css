@@ -1,0 +1,27 @@
+/* Keystone design-system spacing tokens — copied verbatim from
+   .claude/skills/tokens/spacing.css. Keep in sync by hand if that file
+   changes.
+
+   Tailwind's default 4px-based spacing scale already lines up with this
+   scale value-for-value (space-1=4px through space-24=96px map onto
+   Tailwind's 1/2/3/4/5/6/8/10/12/16/20/24), so no tailwind.config change is
+   needed for spacing utilities — these custom properties exist for
+   non-Tailwind consumers (inline styles, DS component ports). */
+:root {
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  --container-max: 1200px;
+  --gutter: 24px;
+}
