@@ -1,0 +1,4 @@
+/* Keystone webfonts — all three are SIL OFL, loaded from Google Fonts CDN.
+   To fully self-host, download the woff2 files and replace this @import with
+   local @font-face rules. Flagged in readme.md. */
+@import url("https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;700;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");

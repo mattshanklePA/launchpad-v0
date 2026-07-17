@@ -1,0 +1,26 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Feedback — dialog & tooltip" subtitle="Dialog (modal) · Tooltip" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="../../_ds_bundle.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>body{margin:0;background:var(--surface-canvas);font-family:var(--font-body);padding:24px;display:flex;gap:16px;align-items:flex-start}</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const { Button, IconButton, Dialog, Tooltip } = window.KeystoneDesignSystem_37ff67;
+function App(){
+  const [open,setOpen]=React.useState(false);
+  React.useEffect(()=>window.lucide&&window.lucide.createIcons(),[open]);
+  return <div style={{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}>
+    <Button onClick={()=>setOpen(true)}>Open dialog</Button>
+    <Tooltip label="Locked by gate 3"><IconButton label="Info"><i data-lucide="info"/></IconButton></Tooltip>
+    <Tooltip label="On track" placement="bottom"><Button variant="secondary">Hover me</Button></Tooltip>
+    <Dialog open={open} onClose={()=>setOpen(false)} eyebrow="Decision needed" title="Hold Meridian for review?"
+      footer={<><Button variant="secondary" onClick={()=>setOpen(false)}>Cancel</Button><Button onClick={()=>setOpen(false)}>Hold initiative</Button></>}>
+      Meridian slipped past its spend gate. Holding pauses the next release until you clear it.
+    </Dialog>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

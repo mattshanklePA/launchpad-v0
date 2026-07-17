@@ -1,0 +1,53 @@
+<!-- @dsCard group="Components" viewport="700x360" name="Core — buttons, cards, status" subtitle="Button · IconButton · Card · Badge · StatusPill" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="../../_ds_bundle.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>body{margin:0;background:var(--surface-canvas);font-family:var(--font-body);padding:24px}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}.lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);width:100%;margin-bottom:2px}</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const { Button, IconButton, Card, CardHeader, Badge, StatusPill } = window.KeystoneDesignSystem_37ff67;
+function I(n,s){return <i data-lucide={n} style={{width:(s||18),height:(s||18)}}/>}
+function App(){
+  React.useEffect(()=>window.lucide&&window.lucide.createIcons(),[]);
+  return <div>
+    <div className="row"><span className="lbl">Button — variants</span>
+      <Button>Fund initiative</Button>
+      <Button variant="secondary">Hold for review</Button>
+      <Button variant="ghost">Cancel</Button>
+      <Button variant="danger">Stop launch</Button>
+      <Button disabled>Disabled</Button>
+    </div>
+    <div className="row"><span className="lbl">Button — sizes & icons</span>
+      <Button size="sm" iconLeft={I('check',16)}>Small</Button>
+      <Button size="md" iconLeft={I('lock',18)}>Medium</Button>
+      <Button size="lg" iconRight={I('arrow-right',20)}>Large</Button>
+      <IconButton label="More"><i data-lucide="more-vertical"/></IconButton>
+      <IconButton label="Add" variant="secondary"><i data-lucide="plus"/></IconButton>
+      <IconButton label="Confirm" variant="primary"><i data-lucide="check"/></IconButton>
+    </div>
+    <div className="row"><span className="lbl">StatusPill</span>
+      <StatusPill status="healthy"/>
+      <StatusPill status="attention"/>
+      <StatusPill status="alert"/>
+      <StatusPill status="neutral"/>
+      <StatusPill status="healthy" solid/>
+    </div>
+    <div className="row"><span className="lbl">Badge</span>
+      <Badge tone="neutral">12 initiatives</Badge>
+      <Badge tone="info">In review</Badge>
+      <Badge tone="amber">Flagged</Badge>
+      <Badge mono tone="basalt">GATE-3</Badge>
+    </div>
+    <div className="row" style={{marginBottom:0}}><span className="lbl">Card</span>
+      <Card style={{width:280}}>
+        <CardHeader eyebrow="Portfolio return · YTD" title="$4.2M" action={<IconButton label="Options"><i data-lucide="more-horizontal"/></IconButton>}/>
+        <div style={{display:'flex',alignItems:'center',gap:8,fontSize:14,color:'var(--text-body)'}}><StatusPill status="healthy"/> +18% vs plan</div>
+      </Card>
+    </div>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

@@ -1,0 +1,32 @@
+<!-- @dsCard group="Components" viewport="700x320" name="Forms — inputs & controls" subtitle="Input · Select · Checkbox · Radio · Switch" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="../../_ds_bundle.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<style>body{margin:0;background:var(--surface-canvas);font-family:var(--font-body);padding:24px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 32px;max-width:640px}.stack{display:flex;flex-direction:column;gap:14px}</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const { Input, Select, Checkbox, Radio, Switch } = window.KeystoneDesignSystem_37ff67;
+function App(){
+  const [c,setC]=React.useState(true);const [r,setR]=React.useState('q');const [sw,setSw]=React.useState(true);
+  return <div className="grid">
+    <Input label="Spend gate" prefix="$" suffix="USD" placeholder="0"/>
+    <Select label="Stage" options={["Discovery","Gate review","Funded","Launched"]}/>
+    <Input label="Owner" error="This field is required" placeholder="Name"/>
+    <div className="stack">
+      <Checkbox label="Include held initiatives" checked={c} onChange={e=>setC(e.target.checked)}/>
+      <Checkbox label="Auto-archive after launch"/>
+    </div>
+    <div className="stack">
+      <Radio name="cad" value="q" label="Quarterly review" checked={r==='q'} onChange={()=>setR('q')}/>
+      <Radio name="cad" value="m" label="Monthly review" checked={r==='m'} onChange={()=>setR('m')}/>
+    </div>
+    <div className="stack">
+      <Switch label="Flag off-plumb launches" checked={sw} onChange={e=>setSw(e.target.checked)}/>
+      <Switch label="Email digest" checked={false} onChange={()=>{}}/>
+    </div>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

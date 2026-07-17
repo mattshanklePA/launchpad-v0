@@ -1,0 +1,18 @@
+:root {
+  /* Keystone — brand color tokens */
+  --ks-basalt:        #2A333C; /* primary · surfaces, text */
+  --ks-active-blue:   #0086CA; /* secondary · links, interactive */
+  --ks-amber:         #C77D3A; /* attention · the keystone / flags */
+  --ks-amber-light:   #DCA061; /* amber top-face / highlight */
+  --ks-amber-dark:    #9C5F22; /* amber text on light */
+  --ks-on-track:      #2E9E7B; /* healthy / success state */
+  --ks-alert:         #C24A3A; /* error / stop state */
+  --ks-limestone:     #E7E1D6; /* neutral · fields */
+  --ks-chalk:         #F4F2EC; /* neutral · canvas */
+  --ks-white:         #FFFFFF;
+
+  /* Type */
+  --ks-font-head: "Chivo", "Archivo", system-ui, sans-serif;
+  --ks-font-body: "Hanken Grotesk", "Source Sans 3", sans-serif;
+  --ks-font-mono: "JetBrains Mono", ui-monospace, monospace;
+}

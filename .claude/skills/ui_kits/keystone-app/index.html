@@ -1,0 +1,52 @@
+<!-- @dsCard group="Keystone App" viewport="1180x720" name="Portfolio console" subtitle="Dashboard · initiative detail · Plumb assistant" -->
+<!-- @startingPoint section="Keystone App" subtitle="Portfolio-governance console — dashboard, gates, Plumb" viewport="1180x720" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Keystone — Portfolio console</title>
+<link rel="icon" href="../../assets/favicon.svg">
+<link rel="stylesheet" href="../../styles.css">
+<script src="../../_ds_bundle.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>html,body{margin:0;height:100%}#root{height:100vh}</style></head>
+<body><div id="root"></div>
+<script src="data.js"></script>
+<script type="text/babel" src="Shell.jsx"></script>
+<script type="text/babel" src="Dashboard.jsx"></script>
+<script type="text/babel" src="InitiativeDetail.jsx"></script>
+<script type="text/babel" src="PlumbPanel.jsx"></script>
+<script type="text/babel" data-presets="react">
+const { Button } = window.KeystoneDesignSystem_37ff67;
+function App(){
+  const [view,setView] = React.useState("portfolio");
+  const [selected,setSelected] = React.useState(null);
+  const [plumb,setPlumb] = React.useState(false);
+  React.useEffect(()=>{ window.lucide && window.lucide.createIcons(); });
+
+  const open = (it)=>{ setSelected(it); setView("initiative"); };
+  const isDetail = view==="initiative" && selected;
+
+  return (
+    <div style={{display:"flex",height:"100vh",background:"var(--surface-canvas)",position:"relative",overflow:"hidden"}}>
+      <window.Rail view={view} setView={(v)=>{setView(v); if(v!=="initiative")setSelected(null);}} onPlumb={()=>setPlumb(p=>!p)}/>
+      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+        <window.TopBar
+          title={isDetail?"Initiative":view==="portfolio"?"Portfolio":view[0].toUpperCase()+view.slice(1)}
+          sub={isDetail?"Governance detail":"Q3 · 2026 · Global product portfolio"}>
+          <Button variant="secondary" size="sm" iconLeft={<i data-lucide="ruler" style={{width:16,height:16}}/>} onClick={()=>setPlumb(true)}>Ask Plumb</Button>
+          <div style={{width:36,height:36,borderRadius:"50%",background:"var(--ks-limestone)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-mono)",fontSize:12,fontWeight:600,color:"var(--text-body)"}}>DO</div>
+        </window.TopBar>
+        <div style={{flex:1,overflow:"hidden",display:"flex"}}>
+          <div style={{flex:1,overflow:"auto"}}>
+            {isDetail
+              ? <window.InitiativeDetail item={selected} onBack={()=>{setView("portfolio");setSelected(null);}}/>
+              : <window.Dashboard onOpen={open}/>}
+          </div>
+        </div>
+      </div>
+      <window.PlumbPanel open={plumb} onClose={()=>setPlumb(false)}/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>
