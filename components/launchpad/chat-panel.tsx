@@ -35,7 +35,9 @@ type LaunchPadChatPanelProps = {
 
 // Falls back to the raw field key (Title Cased) when a key isn't registered
 // in FIELD_REGISTRY, so the panel never silently drops a drafted field.
-function fieldLabel(key: string): string {
+// Exported so other assistant-driven views (e.g. the conversational-first
+// intake, issue #169) label the same FormData keys identically.
+export function fieldLabel(key: string): string {
   return FIELD_REGISTRY_BY_KEY[key]?.label || key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())
 }
 

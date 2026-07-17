@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, ArrowRight, MessageSquare, FileText } from "lucide-react"
+import { Plus, ArrowRight, MessageSquare, FileText, Sparkles } from "lucide-react"
 
 function detectDraft(): { title: string } | null {
   if (typeof window === "undefined") return null
@@ -88,12 +88,20 @@ export function PersonalDashboard() {
           <h1 className="text-xl font-semibold text-foreground">My ideas</h1>
           <p className="text-sm text-muted-foreground">Track your AI ideas through review.</p>
         </div>
-        <Button asChild>
-          <Link href="/submit">
-            <Plus className="w-4 h-4 mr-2" />
-            Start a new idea
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/submit">
+              <Plus className="w-4 h-4 mr-2" />
+              Start a new idea
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/submit/conversational">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Talk to {tenant.assistantName}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {needsInfo.length > 0 && (
