@@ -260,6 +260,8 @@ const rmfOnTrack = rmfSub("rmf-ok", "noaa", {
   businessValue: "v",
   solutionSummary: "s",
   highImpact: "not_high_impact",
+  disseminatesToPublic: "no",
+  scalable: "no",
 })
 const rmfAtRisk = rmfSub("rmf-gap", "noaa", { ...initialFormData, stageOfDevelopment: "deployed" })
 const rmfUnknown = rmfSub("rmf-unknown", "noaa", { ...initialFormData, stageOfDevelopment: "" })

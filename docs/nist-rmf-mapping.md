@@ -83,8 +83,8 @@ Status column uses `docs/omb-field-mapping.md`'s legend (**kept** / **renamed** 
 | AI Classification | `aiClassification` (OMB #10) | kept |
 | Problem / expected benefits / outputs | `coreProblem`, `businessValue`, `solutionSummary` (OMB #11-13) | kept |
 | Is-high-impact + justification | `highImpact`, `highImpactJustification` (OMB #7-8) + `lib/highImpactDetermination.ts`'s `determineHighImpact` (advisory recommendation + reasons, reviewer makes the final call) | kept |
-| Disseminates info to the public? | `disseminatesToPublic` (Roadmap #22 story 4) | added |
-| Scalable? | `scalable` (Roadmap #22 story 4) | added |
+| Disseminates info to the public? | `disseminatesToPublic` (Roadmap #22 story 4) | added — folded into the Map rubric (§5) |
+| Scalable? | `scalable` (Roadmap #22 story 4) | added — folded into the Map rubric (§5) |
 | AI data readiness | `trainingDataDescription` (OMB #19) | partial — describes the training/eval data, but isn't a readiness/quality rating; see §7 |
 | Base platforms/models | `aiModelSourcing` (Department/EO field: american_built / open_source_us / foreign / unknown) | partial — captures sourcing *category* for EO compliance, not the specific platform/model name; see §7 |
 
@@ -143,9 +143,12 @@ Deterministic rule per function:
   are still blank; `partial` otherwise.
 - **Map** — `not_yet_applicable` if `stageOfDevelopment` is blank or `"retired"` (mirrors
   `topicArea`/`aiClassification`'s own `showWhen`). Otherwise: `covered` if `topicArea`,
-  `aiClassification`, `coreProblem`, `businessValue`, `solutionSummary`, and `highImpact`
-  are all answered (plus `highImpactJustification` when `highImpact` is
-  `presumed_not_high_impact`); `gap` if none of those are answered; `partial` otherwise.
+  `aiClassification`, `coreProblem`, `businessValue`, `solutionSummary`, `highImpact`,
+  `disseminatesToPublic`, and `scalable` are all answered (plus `highImpactJustification`
+  when `highImpact` is `presumed_not_high_impact`); `gap` if none of those are answered;
+  `partial` otherwise. `disseminatesToPublic`/`scalable` count as answered on either a
+  "yes" or a "no" — the check is whether the question was assessed, not which way it was
+  answered.
 - **Measure** — `not_yet_applicable` unless `highImpact === "high_impact" &&
   stageOfDevelopment === "deployed"`. Once applicable: `covered` if
   `preDeploymentTesting`, `aiImpactAssessmentCompleted`, `aiImpactAssessment`, and
@@ -226,11 +229,11 @@ deterministic mapping. Two genuine gaps, both under Map, with no existing `FormD
    whether the AI *system's output* is disseminated to the public as part of its function.
    No existing field captures this. **Added** in Roadmap #22 story 4 as `disseminatesToPublic`
    (`lib/fieldRegistry.ts`, `level: "department"`, shown once a stage is set and the tenant's
-   `rmf` feature is on) — captured for the record; not yet folded into `computeRmfProfile`'s
-   Map rubric (see note below).
+   `rmf` feature is on), and folded into `mapStatus`'s Map rubric (§5) — a field counts as
+   answered on either a "yes" or a "no".
 2. **Scalable?** — a forward-looking assessment of whether the use case is intended to scale
    beyond its current deployment. No existing field captures this. **Added** the same way, as
-   `scalable`.
+   `scalable`, and folded into the Map rubric the same way.
 
 Two further tracker fields have a *partial* stand-in today (§4) and remain candidates for a
 future dedicated field, not blocking gaps:
@@ -246,11 +249,10 @@ follow `docs/omb-field-mapping.md`'s **added** pattern (`lib/fieldRegistry.ts` e
 `level: "department"` since these are LaunchPad/RMF-specific, not part of OMB's 34) — the same
 pattern fields 1-2 now follow.
 
-**On folding 1-2 into the Map rubric:** story 4 stops at capturing the two fields — `mapStatus`
-in `lib/nistRmf.ts` still evaluates only the fields §5 already specifies, so
-`disseminatesToPublic`/`scalable` don't yet change a submission's Map status. Wiring them in
-would touch the rubric's own tests and the DoC seed fixtures (`lib/seedSubmissionsDoc.ts`) that
-assert a `covered` Map today; left as a deliberate follow-up rather than folded in silently.
+**Folding 1-2 into the Map rubric:** `mapStatus` in `lib/nistRmf.ts` now evaluates
+`disseminatesToPublic`/`scalable` alongside the rest of §5's Map fields, so a submission
+missing either reads `partial` rather than `covered` for Map — closing the gap story 4 left
+open (Roadmap #22 follow-up).
 
 ## See also
 

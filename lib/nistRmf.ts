@@ -150,6 +150,8 @@ function mapStatus(fd: RmfInputs): RmfFunctionResult {
     { label: "Business value statement", ok: presentText(fd.businessValue) },
     { label: "Solution summary", ok: presentText(fd.solutionSummary) },
     { label: "High-impact determination", ok: !!fd.highImpact },
+    { label: "Disseminates information to the public", ok: presentText(fd.disseminatesToPublic) },
+    { label: "Scalable beyond current deployment", ok: presentText(fd.scalable) },
   ]
   // Only counted when applicable — otherwise this check would be vacuously
   // "ok" and mask a fully-blank submission as partial instead of gap.

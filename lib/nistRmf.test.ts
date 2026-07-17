@@ -122,7 +122,7 @@ describe("computeRmfProfile — Map", () => {
     expect(functions.map.status).toBe("partial")
   })
 
-  it("is covered once topic, classification, problem/value/solution, and high-impact are all answered", () => {
+  it("is covered once topic, classification, problem/value/solution, high-impact, dissemination, and scalability are all answered", () => {
     const { functions } = computeRmfProfile(
       fd({
         stageOfDevelopment: "pilot",
@@ -132,6 +132,42 @@ describe("computeRmfProfile — Map", () => {
         businessValue: "Frees up analyst time.",
         solutionSummary: "Ranks alerts by severity.",
         highImpact: "not_high_impact",
+        disseminatesToPublic: "no",
+        scalable: "yes",
+      }),
+    )
+    expect(functions.map.status).toBe("covered")
+  })
+
+  it("is partial when topic/classification/problem/value/solution/high-impact are answered but dissemination or scalability is not", () => {
+    const { functions } = computeRmfProfile(
+      fd({
+        stageOfDevelopment: "pilot",
+        topicArea: "cybersecurity",
+        aiClassification: "generative_ai",
+        coreProblem: "Manual triage is slow.",
+        businessValue: "Frees up analyst time.",
+        solutionSummary: "Ranks alerts by severity.",
+        highImpact: "not_high_impact",
+        disseminatesToPublic: "no",
+        // scalable left blank
+      }),
+    )
+    expect(functions.map.status).toBe("partial")
+  })
+
+  it("counts a 'no' answer as answered, not just 'yes' — the question is whether it was assessed", () => {
+    const { functions } = computeRmfProfile(
+      fd({
+        stageOfDevelopment: "pilot",
+        topicArea: "cybersecurity",
+        aiClassification: "generative_ai",
+        coreProblem: "Manual triage is slow.",
+        businessValue: "Frees up analyst time.",
+        solutionSummary: "Ranks alerts by severity.",
+        highImpact: "not_high_impact",
+        disseminatesToPublic: "no",
+        scalable: "no",
       }),
     )
     expect(functions.map.status).toBe("covered")
@@ -146,6 +182,8 @@ describe("computeRmfProfile — Map", () => {
       businessValue: "Frees up analyst time.",
       solutionSummary: "Ranks alerts by severity.",
       highImpact: "presumed_not_high_impact" as const,
+      disseminatesToPublic: "no" as const,
+      scalable: "yes" as const,
     }
     expect(computeRmfProfile(fd(complete)).functions.map.status).toBe("partial")
     expect(
@@ -265,7 +303,7 @@ describe("computeRmfProfile — overall rollup", () => {
     expect(overall).toBe("at_risk")
   })
 
-  it("is attention when a function is partial (Govern in-review, Map already covered)", () => {
+  it("is attention when a function is partial (Govern in-review)", () => {
     const { overall } = computeRmfProfile(
       fd({
         stageOfDevelopment: "pre_deployment",
@@ -317,6 +355,8 @@ describe("computeRmfProfile — overall rollup", () => {
         coreProblem: "p",
         businessValue: "v",
         solutionSummary: "s",
+        disseminatesToPublic: "no",
+        scalable: "no",
         preDeploymentTesting: "yes",
         aiImpactAssessmentCompleted: "yes",
         aiImpactAssessment: "impacts",
@@ -350,6 +390,8 @@ describe("computeRmfProfile — overall rollup", () => {
           coreProblem: "p",
           businessValue: "v",
           solutionSummary: "s",
+          disseminatesToPublic: "yes",
+          scalable: "yes",
         }),
       },
       noDeptTier,
