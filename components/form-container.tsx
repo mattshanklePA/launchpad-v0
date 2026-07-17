@@ -7,11 +7,8 @@ import { StepWrapper } from "./steps/step-wrapper"
 import { Step1SubmitterInfo } from "./steps/step-1-submitter-info"
 import { Step2UseCaseOverview } from "./steps/step-2-use-case-overview"
 import { Step3ProblemAndUsers } from "./steps/step-3-problem-and-users"
-import { Step4ProposedSolution } from "./steps/step-4-proposed-solution"
-import { Step5Value } from "./steps/step-5-value"
-import { Step7Alignment } from "./steps/step-7-alignment"
-import { Step8FeasibilitySecurity } from "./steps/step-8-feasibility-security"
-import { Step9OutcomeMeasurements } from "./steps/step-9-outcome-measurements"
+import { Step3SolutionBenefits } from "./steps/step-3-solution-benefits"
+import { Step4TechnicalConstraints } from "./steps/step-4-technical-constraints"
 import { Step10ReviewSubmit } from "./steps/step-10-review-submit"
 import { Step11ExportTracking } from "./steps/step-11-export-tracking"
 import { Button } from "@/components/ui/button"
@@ -39,36 +36,30 @@ export function FormContainer() {
       case 2:
         return <Step3ProblemAndUsers />
       case 3:
-        return <Step4ProposedSolution />
+        return <Step3SolutionBenefits />
       case 4:
-        return <Step5Value />
+        return <Step4TechnicalConstraints />
       case 5:
-        return <Step7Alignment />
-      case 6:
-        return <Step8FeasibilitySecurity />
-      case 7:
-        return <Step9OutcomeMeasurements />
-      case 8:
         return <Step2UseCaseOverview />
-      case 9:
+      case 6:
         return <Step10ReviewSubmit />
-      case 10:
+      case 7:
         return <Step11ExportTracking />
       default:
         return <div>Invalid Step</div>
     }
   }
 
-  // Step 10 is the confirmation page and doesn't need the standard wrapper
-  if (currentStep === 10) {
+  // Step 7 is the confirmation page and doesn't need the standard wrapper
+  if (currentStep === 7) {
     return renderStepContent()
   }
 
-  // Show the "Submitting as…" pill on steps 2-9 (Step 1 IS the editable
+  // Show the "Submitting as…" pill on steps 2-6 (Step 1 IS the editable
   // submitter form, so no need to advertise it there). Only render if we
   // actually have a name to show.
   const showSubmitterPill =
-    currentStep >= 2 && currentStep <= 9 && Boolean(formData.submitterName)
+    currentStep >= 2 && currentStep <= 6 && Boolean(formData.submitterName)
   const roleLabel = getSubmitterRoleLabels()[formData.submitterRole as string]
   const buLabel = getTenant().unit.options.find((o) => o.value === formData.submitterOffice)?.label
 

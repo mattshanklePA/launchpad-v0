@@ -1,5 +1,6 @@
-// Submission readiness gate — the *idea* intake gate (issue #160).
-// Two-layer check before the Submit button enables on Step 11:
+// Submission readiness gate — the *idea* intake gate (issue #160, slimmed
+// further by issue #162).
+// Two-layer check before the Submit button enables on the Review step:
 //   1. COMPLETENESS — every required field has *some* content
 //      (presence, not length — quality is judged by the AI, not by char count)
 //   2. QUALITY — the AI readiness assessment must have been run AND
@@ -20,6 +21,16 @@
 // toward `canSubmit`/`completenessPercent`. The fields themselves are
 // unchanged in the data model and the OMB export (lib/ombExport.ts) still
 // reads them regardless of whether they were "required" to submit.
+//
+// Issue #162 narrowed idea intake further, to a 5-step flow (Problem,
+// Solution & Benefits, Technical Constraints, Summary, Review & Submit):
+// Strategic Alignment and Success Metrics are no longer collected at
+// intake at all (filled in during vetting, same as the governance block),
+// and the submitter *self-rating* fields — `severity`, `implementationComplexity`,
+// `userTimeSavings`, `costSavings` — are dropped from the gate too. Value and
+// impact are a Scout/reviewer determination, not something a submitter grades
+// on their own idea. All of these fields stay in `FormData`; they're simply
+// never demanded here, same treatment as the OMB governance block above.
 
 import type { FormData } from "@/lib/steps"
 import { isFieldVisible } from "@/lib/formConfig"
@@ -122,44 +133,22 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("submitterRole", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Job role" }, () => !formData.submitterRole)
   need("submitterOffice", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Business unit" }, () => !formData.submitterOffice)
 
-  // ---------- Step 2: Use Case Overview ----------
-  need("useCaseTitle", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
-  need("useCaseDescription", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
-  need("isWithheld", { step: 8, stepName: "Idea Overview", reason: "missing", message: "Withhold-from-public-reporting reason" }, () => !formData.isWithheld)
+  // ---------- Step 2: Business Problem & Opportunity ----------
+  need("coreProblem", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
+  need("affectedSystem", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Affected system" }, () => !formData.affectedSystem)
+  need("targetAudience", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Target audience" }, () => !formData.targetAudience)
+  need("impactedUsersCount", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Estimated users impacted" }, () => !formData.impactedUsersCount)
+  need("targetUserContext", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
 
-  // ---------- Step 3: Problem & Target Users (merged) ----------
-  need("coreProblem", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
-  need("severity", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Severity rating" }, () => !formData.severity)
-  need("affectedSystem", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Affected system" }, () => !formData.affectedSystem)
-  need("targetAudience", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Target audience" }, () => !formData.targetAudience)
-  need("impactedUsersCount", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "Estimated users impacted" }, () => !formData.impactedUsersCount)
-  need("targetUserContext", { step: 2, stepName: "Problem & Target Users", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
+  // ---------- Step 3: Proposed Solution & Expected Benefits (merged) ----------
+  need("proposedSolution", { step: 3, stepName: "Proposed Solution & Benefits", reason: "missing", message: "Proposed solution" }, () => !presentString(formData.proposedSolution))
+  need("userValue", { step: 3, stepName: "Proposed Solution & Benefits", reason: "missing", message: "Expected user benefit" }, () => !presentString(formData.userValue))
+  need("businessValue", { step: 3, stepName: "Proposed Solution & Benefits", reason: "missing", message: "Expected business benefit" }, () => !presentString(formData.businessValue))
 
-  // ---------- Step 4: Proposed Solution ----------
-  need("proposedSolution", { step: 3, stepName: "Proposed Solution", reason: "missing", message: "Proposed solution" }, () => !presentString(formData.proposedSolution))
-
-  // ---------- Step 5: Value to Users and the Business (merged) ----------
-  need("userValue", { step: 4, stepName: "Value", reason: "missing", message: "User value statement" }, () => !presentString(formData.userValue))
-  need("userTimeSavings", { step: 4, stepName: "Value", reason: "missing", message: "Time savings range" }, () => !formData.userTimeSavings)
-  need("businessValue", { step: 4, stepName: "Value", reason: "missing", message: "Business value statement" }, () => !presentString(formData.businessValue))
-  need("costSavings", { step: 4, stepName: "Value", reason: "missing", message: "Cost savings range" }, () => !formData.costSavings)
-
-  // ---------- Step 6: Strategic Alignment ----------
-  need("relevantOkrs", { step: 5, stepName: "Strategic Alignment", reason: "missing", message: "Strategic alignment text" }, () => !presentString(formData.relevantOkrs))
-  need("usptoFocusArea", { step: 5, stepName: "Strategic Alignment", reason: "missing", message: "At least one USPTO focus area" }, () => !hasArrayValue(formData.usptoFocusArea))
-
-  // ---------- Step 7: Feasibility & Security ----------
-  need("dependencies", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Feasibility / dependencies" }, () => !presentString(formData.dependencies))
-  need("implementationComplexity", { step: 3, stepName: "Proposed Solution", reason: "missing", message: "Implementation complexity" }, () => !formData.implementationComplexity)
-  // AI Risk Management — DoC mandated. These fields are locked-on in the
-  // registry so `need()` will always run the check.
-  need("involvesSensitiveData", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "PII / sensitive data answer" }, () => !formData.involvesSensitiveData)
-  need("aiDecisionalImpact", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI decisional impact answer" }, () => !formData.aiDecisionalImpact)
-  need("aiModelSourcing", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "AI model sourcing" }, () => !formData.aiModelSourcing)
-  need("aiHumanReview", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Human review answer" }, () => !formData.aiHumanReview)
-  need("dataReadiness", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Data readiness answer" }, () => !formData.dataReadiness)
-  need("impactLevel", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Data classification / Impact Level" }, () => !formData.impactLevel)
-  need("trl", { step: 6, stepName: "Feasibility & Security", reason: "missing", message: "Technology Readiness Level" }, () => !formData.trl)
+  // ---------- Step 5: Idea Overview ----------
+  need("useCaseTitle", { step: 5, stepName: "Idea Overview", reason: "missing", message: "Idea title" }, () => !presentString(formData.useCaseTitle))
+  need("useCaseDescription", { step: 5, stepName: "Idea Overview", reason: "missing", message: "Idea description" }, () => !presentString(formData.useCaseDescription))
+  need("isWithheld", { step: 5, stepName: "Idea Overview", reason: "missing", message: "Withhold-from-public-reporting reason" }, () => !formData.isWithheld)
 
   // ---------- OMB federal AI use case inventory, M-25-21, and RMF inputs (issue #160) ----------
   // These are governance fields that belong to the *vetting* stage, not idea
@@ -173,8 +162,11 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   // high-impact-only fields unless `highImpact === "high_impact"` AND
   // `stageOfDevelopment === "deployed"`) is simply never checked — no second
   // copy of the `showWhen` predicates lives here.
+  // step: 0 — these aren't demanded on any wizard step anymore (issue #162
+  // moved the whole governance block to vetting-only); 0 flags that plainly
+  // rather than pointing at a real intake step number.
   const omb = (field: keyof FormData, message: string, test: () => boolean) =>
-    needInto(governanceMissing, field, { step: 6, stepName: "Feasibility & Security", reason: "missing", message }, test)
+    needInto(governanceMissing, field, { step: 0, stepName: "Governance (vetting)", reason: "missing", message }, test)
 
   omb("stageOfDevelopment", "Stage of development", () => !formData.stageOfDevelopment)
   omb("highImpact", "High-impact determination", () => !formData.highImpact)
@@ -204,14 +196,10 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   omb("humanOversightAppeal", "Appeal process answer", () => !formData.humanOversightAppeal)
   omb("publicConsultationSteps", "Public consultation steps", () => !hasArrayValue(formData.publicConsultationSteps))
 
-  // ---------- Step 8: Success Metrics ----------
-  need("successMetrics", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Success metrics" }, () => !presentString(formData.successMetrics))
-  need("timelineForResults", { step: 7, stepName: "Success Metrics", reason: "missing", message: "Timeline for results" }, () => !formData.timelineForResults)
-
-  // ---------- Quality gate: AI readiness assessment ----------
+  // ---------- Quality gate: AI readiness assessment (Step 6: Review & Submit) ----------
   if (!formData.readinessScore) {
     missing.push({
-      step: 9,
+      step: 6,
       stepName: "Review",
       field: "readinessScore",
       reason: "not_assessed",
@@ -220,7 +208,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   } else if (formData.readinessScore === "early_stage") {
     // Quality threshold not met — submission blocked.
     missing.push({
-      step: 9,
+      step: 6,
       stepName: "Review",
       field: "readinessScore",
       reason: "low_quality",
@@ -229,7 +217,7 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
     })
   } else if (formData.readinessScore === "needs_work") {
     warnings.push({
-      step: 9,
+      step: 6,
       stepName: "Review",
       field: "readinessScore",
       reason: "low_quality",
@@ -240,20 +228,16 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   // Count enabled-and-required fields dynamically — disabled fields don't
   // count toward the completeness denominator, so a heavily-trimmed config
   // doesn't show as artificially incomplete. The OMB inventory, M-25-21, and
-  // RMF governance fields are deliberately absent here (issue #160) — they're
-  // vetting-stage checks (`governanceMissing` above), not part of the idea
-  // completeness percentage.
+  // RMF governance fields are deliberately absent here (issue #160), and so
+  // are Strategic Alignment, Success Metrics, and the submitter self-rating
+  // fields (`severity`, `implementationComplexity`, `userTimeSavings`,
+  // `costSavings`) as of issue #162 — none of them are part of the idea
+  // completeness percentage anymore.
   const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
     "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
+    "coreProblem", "affectedSystem", "targetAudience", "impactedUsersCount", "targetUserContext",
+    "proposedSolution", "userValue", "businessValue",
     "useCaseTitle", "useCaseDescription", "isWithheld",
-    "coreProblem", "severity", "affectedSystem", "targetAudience", "impactedUsersCount", "targetUserContext",
-    "proposedSolution",
-    "userValue", "userTimeSavings", "businessValue", "costSavings",
-    "relevantOkrs", "usptoFocusArea",
-    "dependencies", "implementationComplexity",
-    "involvesSensitiveData", "aiDecisionalImpact", "aiModelSourcing", "aiHumanReview",
-    "dataReadiness", "impactLevel", "trl",
-    "successMetrics", "timelineForResults",
   ]
   const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldVisible(k, formData)).length
   const totalChecks = enabledRequiredCount + 1 // + 1 for the AI quality gate
@@ -276,16 +260,16 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
 // Drives the left-nav checkmarks and the top progress bar so they reflect
 // real completeness (required fields filled) instead of just which step the
 // user has visited. The step numbers here line up with the wizard's
-// currentStep (1 = Submitter Info … 8 = Success Metrics, 9 = Review).
+// currentStep (1 = Submitter Info … 5 = Idea Overview, 6 = Review).
 // ---------------------------------------------------------------------------
 export type ProgressModel = {
-  /** Steps (1-8) that still have at least one missing required field. */
+  /** Steps (1-5) that still have at least one missing required field. */
   missingSteps: Set<number>
   /** True only when every required item passes (the Submit gate is open). */
   canSubmit: boolean
   /**
-   * Whether a given step is fully complete. Content steps (1-8) are complete
-   * when none of their required fields are missing. The review step (9) is
+   * Whether a given step is fully complete. Content steps (1-5) are complete
+   * when none of their required fields are missing. The review step (6) is
    * complete only when the whole submission can be submitted.
    */
   isStepComplete: (step: number) => boolean
@@ -295,7 +279,7 @@ export function getProgressModel(formData: FormData): ProgressModel {
   const { missing, canSubmit } = getSubmissionReadiness(formData)
   const missingSteps = new Set<number>(missing.map((m) => m.step))
   const isStepComplete = (step: number): boolean => {
-    if (step >= 9) return canSubmit // review / final step
+    if (step >= 6) return canSubmit // review / final step
     return !missingSteps.has(step)
   }
   return { missingSteps, canSubmit, isStepComplete }

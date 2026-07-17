@@ -18,9 +18,9 @@ import {
 } from "@/lib/draftStorage"
 
 // Friendly phase-based progress label for an in-progress draft, instead of a
-// raw "step N of 11" that no longer matches the merged step model.
+// raw "step N of 7" that no longer matches the merged step model.
 function draftProgressLabel(step: number): string {
-  if (step >= 9) return "Ready to review"
+  if (step >= 6) return "Ready to review"
   const phase = getPhaseForStep(step)
   return phase ? `Phase ${phase.phase} of ${formPhases.length} · ${phase.name}` : "Just started"
 }

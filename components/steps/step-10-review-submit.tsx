@@ -28,6 +28,11 @@ const ALL_ROUTE_OPTIONS = [
 // Explicit per-step field map for the review cards. Replaces an older
 // crude "filter formData keys by first word of step name" that silently
 // dropped entire steps (e.g. Step 2's fields don't contain the word "idea").
+//
+// Issue #162 slimmed the idea intake wizard to 5 steps (2-6 below, ahead of
+// Submitter Info) — Strategic Alignment, Feasibility & Security (OMB/M-25-21),
+// and Success Metrics are no longer collected here, so they have no card.
+// Those fields stay in FormData and get filled in during vetting instead.
 const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>> = {
   1: [
     { label: "Name", key: "submitterName" },
@@ -35,67 +40,37 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Role", key: "submitterRole" },
     { label: "Business Unit", key: "submitterOffice" },
   ],
+  // Step 2: Business Problem & Opportunity
   2: [
-    { label: "Idea Title", key: "useCaseTitle" },
-    { label: "Idea Description", key: "useCaseDescription" },
-    { label: "Withhold from Public Reporting?", key: "isWithheld" },
-  ],
-  // Step 3: merged Problem & Target Users
-  3: [
     { label: "Core Problem", key: "coreProblem" },
     { label: "Problem Impact", key: "problemImpact" },
     { label: "Affected System", key: "affectedSystem" },
     { label: "Problem Type Tags", key: "problemType" },
-    { label: "Severity", key: "severity" },
     { label: "Target Audience", key: "targetAudience" },
     { label: "Users Impacted", key: "impactedUsersCount" },
     { label: "Pain Points", key: "painPoints" },
     { label: "User Profile / Context", key: "targetUserContext" },
     { label: "Refined Problem & Users Summary", key: "problemDefinition" },
   ],
-  4: [
+  // Step 3: merged Proposed Solution & Expected Benefits
+  3: [
     { label: "Proposed Solution", key: "proposedSolution" },
     { label: "Key Functionality", key: "keyFunctionality" },
-    { label: "Refined Summary", key: "solutionSummary" },
-  ],
-  // Step 5: merged Value (user + business)
-  5: [
-    { label: "User Value", key: "userValue" },
-    { label: "Time Savings Range", key: "userTimeSavings" },
+    { label: "Refined Solution Summary", key: "solutionSummary" },
+    { label: "Expected User Benefit", key: "userValue" },
     { label: "Other Improvements", key: "otherUserImprovements" },
-    { label: "Refined User Value Summary", key: "userValueSummary" },
-    { label: "Business Value", key: "businessValue" },
-    { label: "Cost Savings Range", key: "costSavings" },
+    { label: "Expected Business Benefit", key: "businessValue" },
     { label: "Strategic Benefits", key: "strategicBenefit" },
-    { label: "Refined Business Value Summary", key: "businessValueSummary" },
   ],
-  6: [
-    { label: "Strategic focus areas", key: "usptoFocusArea" },
-    { label: "Relevant OKRs / Alignment", key: "relevantOkrs" },
-    { label: "Refined Summary", key: "alignmentSummary" },
+  // Step 4: Technical Constraints
+  4: [
+    { label: "Technical Constraints / Dependencies", key: "dependencies" },
   ],
-  7: [
-    { label: "Implementation Complexity", key: "implementationComplexity" },
-    { label: "Resources Needed", key: "resourcesNeeded" },
-    { label: "Dependencies / Feasibility", key: "dependencies" },
-    { label: "Involves PII / Sensitive Data", key: "involvesSensitiveData" },
-    { label: "Security Classification", key: "securityClassification" },
-    { label: "Access Control Requirements", key: "accessControlRequirements" },
-    { label: "AI Decisional Impact", key: "aiDecisionalImpact" },
-    { label: "AI Model Sourcing", key: "aiModelSourcing" },
-    { label: "Disseminates Info to the Public", key: "disseminatesToPublic" },
-    { label: "Scalable Beyond Current Deployment", key: "scalable" },
-    { label: "Mandatory Human Review", key: "aiHumanReview" },
-    { label: "Data Classification / Impact Level", key: "impactLevel" },
-    { label: "Data Readiness", key: "dataReadiness" },
-    { label: "Technology Readiness Level", key: "trl" },
-    { label: "Refined Summary", key: "feasibilitySummary" },
-  ],
-  8: [
-    { label: "Success Metrics", key: "successMetrics" },
-    { label: "Key Metrics Tags", key: "keyMetrics" },
-    { label: "Timeline for Results", key: "timelineForResults" },
-    { label: "Refined Summary", key: "metricsSummary" },
+  // Step 5: Idea Overview
+  5: [
+    { label: "Idea Title", key: "useCaseTitle" },
+    { label: "Idea Description", key: "useCaseDescription" },
+    { label: "Withhold from Public Reporting?", key: "isWithheld" },
   ],
 }
 
@@ -126,7 +101,7 @@ export function Step10ReviewSubmit() {
       })
       // Brief delay so the toast registers before the page transitions
       setTimeout(() => {
-        setCurrentStep(10)
+        setCurrentStep(7)
       }, 400)
     } catch (error) {
       console.error("Submission failed:", error)
@@ -185,7 +160,8 @@ export function Step10ReviewSubmit() {
   }
 
   // Human-readable labels for enum fields. Same map as decision-center /
-  // comparison-view — keep in lockstep with the Select options in step-3/5/6/9.
+  // comparison-view — keep in lockstep with the Select options across the
+  // wizard steps and the vetting-side governance capture surface.
   const ENUM_LABELS: Record<string, string> = {
     lt_10: "<10 users",
     "10_50": "10–50 users",
@@ -321,7 +297,7 @@ export function Step10ReviewSubmit() {
         </CardContent>
       </Card>
 
-      {getFormSteps(formData.submitterOffice).slice(0, 8).map((step) => {
+      {getFormSteps(formData.submitterOffice).slice(0, 5).map((step) => {
         // Filter STEP_FIELDS to only the fields currently enabled in the
         // admin Form Configuration. If a step has zero enabled fields, hide
         // its review card entirely.

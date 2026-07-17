@@ -16,8 +16,8 @@ export function ProgressBar() {
   const { currentStep, formData } = useForm()
   const { isStepComplete, canSubmit } = getProgressModel(formData)
 
-  // Review step (9) lives outside the 4 phases — show its own state.
-  const isReview = currentStep >= 9
+  // Review step (6) lives outside the phases — show its own state.
+  const isReview = currentStep >= 6
   const activePhase = getPhaseForStep(currentStep)
 
   // How many steps in the active phase are actually complete (not just visited)?

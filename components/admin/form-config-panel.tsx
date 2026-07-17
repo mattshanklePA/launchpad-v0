@@ -37,7 +37,7 @@ import {
   resetFormConfig,
   type FormConfig,
 } from "@/lib/formConfig"
-import { formPhases } from "@/lib/steps"
+import { adminFieldGroups } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import { subscribeToCache } from "@/lib/dataCache"
@@ -163,7 +163,7 @@ export function FormConfigPanel() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {formPhases.map((phase) => {
+        {adminFieldGroups.map((phase) => {
           const phaseFields = fields.filter((f) => f.phase === phase.phase)
           if (phaseFields.length === 0) return null
 

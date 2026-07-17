@@ -181,29 +181,27 @@ describe("wizard step copy (issue #16 — DoW branding leaking into the DoC wiza
       delete process.env.NEXT_PUBLIC_TENANT
     })
 
-    it("names the DoC tenant, never 'Department of War', in the Value and Strategic Alignment steps", () => {
+    // Issue #162 slimmed the submit wizard to a 5-step idea flow and removed
+    // the Strategic Alignment / Value steps' per-tenant org-name copy along
+    // with them (that content is now filled in during vetting, not intake).
+    // `getFormSteps()` is tenant-neutral wording now, so there's nothing
+    // tenant-specific left to assert here beyond "it returns 7 steps."
+    it("returns the 7-step idea intake flow regardless of tenant", () => {
       withTenant("doc", () => {
-        const steps = getFormSteps()
-        const valueStep = steps.find((s) => s.name === "Value")!
-        const alignmentStep = steps.find((s) => s.name === "Strategic Alignment")!
-        expect(valueStep.prompt).toContain("Department of Commerce")
-        expect(alignmentStep.title).toBe("Align with Department of Commerce Goals")
-        expect(alignmentStep.prompt).not.toMatch(/Department of War/)
-        expect(valueStep.prompt).not.toMatch(/Department of War/)
-      })
-    })
-
-    it("keeps DoW's Strategic Alignment step copy exactly as before", () => {
-      withTenant("dow", () => {
-        const steps = getFormSteps()
-        const alignmentStep = steps.find((s) => s.name === "Strategic Alignment")!
-        expect(alignmentStep.title).toBe("Align with Department of War Goals")
-        expect(alignmentStep.prompt).toBe("Does this align with the Department of War's strategic priorities? Which ones?")
+        expect(getFormSteps().map((s) => s.name)).toEqual([
+          "Submitter Info",
+          "Business Problem & Opportunity",
+          "Proposed Solution & Benefits",
+          "Technical Constraints",
+          "Idea Overview",
+          "Review & Submit",
+          "Submission Complete",
+        ])
       })
     })
   })
 
-  describe("bureau-level Strategic Alignment copy (issue #38)", () => {
+  describe("getOrgNameForUnit (bureau-level naming, issue #38)", () => {
     const withTenant = (id: string, run: () => void) => {
       const prev = process.env.NEXT_PUBLIC_TENANT
       process.env.NEXT_PUBLIC_TENANT = id
@@ -222,10 +220,6 @@ describe("wizard step copy (issue #16 — DoW branding leaking into the DoC wiza
     it("names the submitter's bureau when it declares its own strategic priorities", () => {
       withTenant("doc", () => {
         expect(getOrgNameForUnit("census")).toBe("U.S. Census Bureau")
-        const steps = getFormSteps("census")
-        const alignmentStep = steps.find((s) => s.name === "Strategic Alignment")!
-        expect(alignmentStep.title).toBe("Align with U.S. Census Bureau Goals")
-        expect(alignmentStep.prompt).toBe("Does this align with the U.S. Census Bureau's strategic priorities? Which ones?")
       })
     })
 
@@ -233,22 +227,15 @@ describe("wizard step copy (issue #16 — DoW branding leaking into the DoC wiza
       withTenant("doc", () => {
         expect(getOrgNameForUnit(undefined)).toBe("Department of Commerce")
         expect(getOrgNameForUnit("")).toBe("Department of Commerce")
-        const steps = getFormSteps()
-        const alignmentStep = steps.find((s) => s.name === "Strategic Alignment")!
-        expect(alignmentStep.title).toBe("Align with Department of Commerce Goals")
       })
     })
 
     it("leaves USPTO and DoW unaffected even though their `unit.options` are populated", () => {
       withTenant("uspto", () => {
         expect(getOrgNameForUnit("patents")).toBe("USPTO")
-        const steps = getFormSteps("patents")
-        expect(steps.find((s) => s.name === "Strategic Alignment")!.title).toBe("Align with USPTO Goals")
       })
       withTenant("dow", () => {
         expect(getOrgNameForUnit("forscom")).toBe("Department of War")
-        const steps = getFormSteps("forscom")
-        expect(steps.find((s) => s.name === "Strategic Alignment")!.title).toBe("Align with Department of War Goals")
       })
     })
   })

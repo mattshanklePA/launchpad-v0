@@ -116,7 +116,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Pre-deployment, pilot, deployed, or retired — the OMB inventory maturity stage.",
     reasonToInclude: "Required field in the OMB AI use case inventory; determines which reporting fields apply.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -128,7 +128,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
       "High-impact / presumed high-impact but determined not / not high-impact — OMB's three-way high-impact determination (M-25-21).",
     reasonToInclude: "Required in the OMB inventory; high-impact use cases trigger additional risk-management reporting.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -139,7 +139,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Justification for why a presumed high-impact use case was determined not to be high-impact.",
     reasonToInclude: "OMB inventory field #8 — required whenever the high-impact answer is 'presumed but determined not'.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -151,7 +151,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "The OMB topic-area category this AI use case falls under.",
     reasonToInclude: "OMB inventory field #9 — required once a development stage is set.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -163,7 +163,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "The type of AI/ML technique this use case employs (agentic, generative, computer vision, etc.).",
     reasonToInclude: "OMB inventory field #10 — required once a development stage is set.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -183,7 +183,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the AI system's output is disseminated to the public as part of its function.",
     reasonToInclude: "Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — the DoC tracker has no other signal for this.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "department",
     locked: true,
     lockedReason: "NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every bureau.",
@@ -195,7 +195,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether this use case is intended to scale beyond its current pilot/deployment footprint.",
     reasonToInclude: "Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — the DoC tracker has no other signal for this.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "department",
     locked: true,
     lockedReason: "NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every bureau.",
@@ -207,7 +207,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the AI system has an Authorization to Operate.",
     reasonToInclude: "OMB inventory field #17; signals the security authorization status of the AI system.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -221,7 +221,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "The authorized system's name, if the AI use case has an ATO.",
     reasonToInclude: "OMB inventory sub-field for field #18 — only meaningful once an ATO exists.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -233,7 +233,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the system was developed in-house, under contract, or purchased from a vendor.",
     reasonToInclude: "OMB inventory field #15; also informs acquisition and the custom-code / IP posture.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -245,7 +245,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "The vendor's name, if the system was purchased or developed under contract.",
     reasonToInclude: "OMB inventory sub-field for field #16 — only meaningful once a vendor/contractor is involved.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -257,7 +257,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Date the AI use case became operational, or the pilot's start date.",
     reasonToInclude: "OMB inventory field #14.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -269,7 +269,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Description of the data used to train, fine-tune, and/or evaluate the model(s) used in this use case.",
     reasonToInclude: "OMB inventory field #19.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -281,7 +281,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Link to the Federal Data Catalog entry, if the training/eval data is publicly disclosed as an open government data asset.",
     reasonToInclude: "OMB inventory field #20. Optional — never required.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -293,7 +293,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "OMB inventory field #21 — a distinct federal mandate from the Department's own PII/sensitive-data question below; both are kept.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -305,7 +305,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Link to the AI use case's associated Privacy Impact Assessment, if publicly available.",
     reasonToInclude: "OMB inventory field #22. Optional — never required.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -316,7 +316,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Which demographic variables (if any) are used as features by the model(s).",
     reasonToInclude: "OMB inventory field #23 — select all that apply.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -328,7 +328,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether this project includes custom-developed code.",
     reasonToInclude: "OMB inventory field #24.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -340,7 +340,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Link to the publicly available source code, if the custom-developed code is open source.",
     reasonToInclude: "OMB inventory sub-field for field #25 — only meaningful once custom code exists. Optional — never required.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -352,7 +352,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether this is a National Security System or Intelligence Community use of AI.",
     reasonToInclude: "OMB inventory field; NSS/IC uses are excluded from the public OMB AI use case inventory.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -364,7 +364,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "OMB inventory field; research-only uses are excluded unless they control or significantly influence a decision about individuals.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -375,7 +375,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Which OMB M-25-21 Section 5 categories (rights, safety, benefits access, resource allocation, enforcement) the AI output could meaningfully affect.",
     reasonToInclude: "Drives the rule-based high-impact recommendation (lib/highImpactDetermination.ts) instead of relying on a bare self-reported flag.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -391,7 +391,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the AI system was tested before deployment, including real-world/live-environment testing.",
     reasonToInclude: "OMB inventory field #26 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -403,7 +403,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether an AI impact assessment has been completed for this use case.",
     reasonToInclude: "OMB inventory field #27 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -415,7 +415,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Intended purpose, expected benefits, and potential risks of the AI system.",
     reasonToInclude: "OMB inventory field #28 — M-25-21 minimum practice for high-impact AI: an impact assessment before deployment.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -427,7 +427,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether an independent review of the AI use case has been conducted.",
     reasonToInclude: "OMB inventory field #29 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -439,7 +439,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether there's a plan to monitor the AI system's performance after deployment.",
     reasonToInclude: "OMB inventory field #30 — M-25-21 minimum practice for high-impact AI: ongoing monitoring.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -451,7 +451,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the agency has established sufficient and periodic training for operators of the AI to interpret and act on its output and manage associated risks.",
     reasonToInclude: "OMB inventory field #31 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -463,7 +463,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether the AI use case has an appropriate fail-safe that minimizes the risk of significant harm.",
     reasonToInclude: "OMB inventory field #32 — M-25-21 minimum practice for high-impact AI.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -475,7 +475,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Whether affected individuals have an established appeal process available.",
     reasonToInclude: "OMB inventory field #33 — M-25-21 minimum practice for high-impact AI: an appeal path for affected individuals.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -487,7 +487,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Which steps were taken to consult end users and the public on this AI use case.",
     reasonToInclude: "OMB inventory field #34 — M-25-21 minimum practice for high-impact AI. Select all that apply.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "omb",
     locked: false,
     omb: true,
@@ -550,7 +550,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The primary identifier across submissions, comparisons, and the AI readiness assessment.",
     phase: 5,
-    step: 8,
+    step: 5,
     locked: true,
     lockedReason: "Required — the AI assessment and Decision Center both key off this field.",
   },
@@ -561,7 +561,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       `Gives ${ASSISTANT_NAME} enough context to coach the submitter through subsequent steps without inventing details.`,
     phase: 5,
-    step: 8,
+    step: 5,
     locked: true,
     lockedReason: `Required — ${ASSISTANT_NAME} uses this as the seed context for every step's coaching.`,
   },
@@ -573,7 +573,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Flags submissions that need restricted handling, prevents them from appearing in public-facing exports, and captures the reason the OMB inventory export requires.",
     phase: 5,
-    step: 8,
+    step: 5,
     locked: false,
   },
 
@@ -722,7 +722,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Free-text description of how this benefits the end user.",
     reasonToInclude: "Articulates the user-facing benefit separate from the business case.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -732,7 +732,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Quantifies the user benefit. Pairs with impacted-users-count to project agency-level hour savings.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -741,7 +741,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Multi-select tags: faster processing, better accuracy, reduced frustration, etc.",
     reasonToInclude: "Captures non-time-savings benefits that still matter to user experience.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -751,7 +751,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Executive-ready quote for the value section. Editable after generation.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -761,7 +761,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The business-case framing that leadership reads first. Anchor for ROI estimates and strategic alignment.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -771,7 +771,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Order-of-magnitude $ figure that lets reviewers triage by ROI. Surfaces in the Decision Center prominently.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -780,7 +780,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Multi-select tags for what high-level outcomes this drives.",
     reasonToInclude: "Lets analytics roll up portfolio-level themes across the submission pool.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: false,
   },
   {
@@ -790,7 +790,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The most-quoted field from a submission. Goes directly into the exec summary briefing.",
     phase: 3,
-    step: 4,
+    step: 3,
     locked: true,
     lockedReason:
       `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
@@ -806,7 +806,11 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Forces explicit linkage to published agency priorities — prevents vague 'modernization' claims.",
     phase: 4,
-    step: 5,
+    // Strategic Alignment is no longer part of idea intake (issue #162) —
+    // filled during vetting. Sentinel step (outside the wizard's 1-7 range)
+    // so isStepEnabled never keys the intake "Summary" step (which reuses
+    // step 5) off whether these vetting-only fields are toggled on.
+    step: 15,
     locked: false,
   },
   {
@@ -816,7 +820,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Detailed alignment language reviewers can quote when justifying funding decisions.",
     phase: 4,
-    step: 5,
+    step: 15,
     locked: false,
   },
   {
@@ -825,7 +829,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "AI-generated executive summary of strategic alignment.",
     reasonToInclude: "Clean exec-ready quote for the strategic section of the readiness brief.",
     phase: 4,
-    step: 5,
+    step: 15,
     locked: true,
     lockedReason:
       `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
@@ -849,7 +853,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Surfaces dependencies on people/data/vendors so reviewers can confirm availability.",
     phase: 4,
-    step: 6,
+    step: 16,
     locked: false,
   },
   {
@@ -859,7 +863,11 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "The honest-risks field. Without it, reviewers can't assess realistic feasibility.",
     phase: 4,
-    step: 6,
+    // Idea intake's "Technical Constraints" step (issue #162) — the one
+    // field kept from the old Feasibility & Security block, renumbered out
+    // of the step:16 governance sentinel below so isStepEnabled/wizard nav
+    // gate correctly on it instead of on fields that no longer render here.
+    step: 4,
     locked: false,
   },
   {
@@ -869,7 +877,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required for federal AI risk management per Department of Commerce mandate.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "department",
     locked: true,
     lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
@@ -881,7 +889,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Determines handling controls when PII or sensitive data is involved.",
     phase: 4,
-    step: 6,
+    step: 16,
     locked: false,
   },
   {
@@ -890,7 +898,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Tags: role-based, MFA, FedRAMP — only shown if sensitive data answer is Yes.",
     reasonToInclude: "Catalogs the security controls required to safely operate this AI use case.",
     phase: 4,
-    step: 6,
+    step: 16,
     locked: false,
     // Dependent sub-field (issue #60): meaningless without PII/sensitive data
     // in play.
@@ -903,7 +911,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required for federal AI risk management. Decisional AI requires enhanced human-review controls per DoC mandate.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "department",
     locked: true,
     lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
@@ -915,7 +923,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required by the current Executive Order on federal AI — foreign sourcing requires additional review.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "department",
     locked: true,
     lockedReason: "Required per Executive Order on federal AI sourcing, applied Department-wide — mandatory for every bureau.",
@@ -927,7 +935,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Required for federal AI risk management. Human-in-the-loop status determines downstream control requirements.",
     phase: 4,
-    step: 6,
+    step: 16,
     level: "department",
     locked: true,
     lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
@@ -939,7 +947,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Compact exec-ready summary covering implementation feasibility, security posture, and risk profile.",
     phase: 4,
-    step: 6,
+    step: 16,
     locked: true,
     lockedReason:
       `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
@@ -953,7 +961,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Forces explicit measurement thinking — without this, ROI claims are unverifiable.",
     phase: 4,
-    step: 7,
+    step: 17,
     locked: false,
   },
   {
@@ -962,7 +970,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Multi-select tags for measurable outcome categories.",
     reasonToInclude: "Lets the metrics roll up to portfolio-level views (how many projects target which outcomes).",
     phase: 4,
-    step: 7,
+    step: 17,
     locked: false,
   },
   {
@@ -971,7 +979,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     description: "Range: <3, 3-6, 6-12, 12+ months.",
     reasonToInclude: "Sets reviewer expectations and helps prioritize quick wins vs. long bets.",
     phase: 4,
-    step: 7,
+    step: 17,
     locked: false,
   },
   {
@@ -981,7 +989,7 @@ export const FIELD_REGISTRY: FieldDefinition[] = [
     reasonToInclude:
       "Exec-ready summary used in the readiness briefing and Decision Center comparison.",
     phase: 4,
-    step: 7,
+    step: 17,
     locked: true,
     lockedReason:
       `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,

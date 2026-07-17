@@ -40,31 +40,16 @@ function getStepContext(step: number): { buttonLabel: string; emptyMessage: stri
           "Draft the core problem in the field above, then click below. I'll ask one question at a time, including who's affected and how badly.",
       }
     case 3:
+      // Merged Proposed Solution + Expected Benefits
       return {
         buttonLabel: "Help Me with the Solution",
         emptyMessage: "Sketch your solution, then click below. I'll ask focused questions to firm it up.",
       }
     case 4:
-      // Merged Value (user + business)
+      // Technical Constraints — light free-text notes only
       return {
-        buttonLabel: "Help Me with Value",
-        emptyMessage:
-          "Note the business case in the field above, then click below. I'll help you tie user-level benefit to defensible agency-level numbers.",
-      }
-    case 5:
-      return {
-        buttonLabel: "Help Me with Alignment",
-        emptyMessage: `Note how this maps to ${getTenant().orgName} strategy, then click below. I'll help you connect it specifically.`,
-      }
-    case 6:
-      return {
-        buttonLabel: "Help Me with Feasibility",
-        emptyMessage: "Note the dependencies/risks, then click below. I'll surface the federal realities you need to address.",
-      }
-    case 7:
-      return {
-        buttonLabel: "Help Me with Metrics",
-        emptyMessage: "Note success criteria, then click below. I'll help you ground them in measurable signals.",
+        buttonLabel: "Help Me with Constraints",
+        emptyMessage: "Note any dependencies or blockers, then click below. I'll help you phrase them clearly for reviewers.",
       }
     default:
       return { buttonLabel: "Help Me", emptyMessage: "Click below to get started." }
@@ -77,16 +62,10 @@ function getInputFieldForStep(step: number): keyof FormData | null {
       // Merged Problem & Users — coach on the problem first
       return "coreProblem"
     case 3:
+      // Merged Solution + Benefits — coach on the solution first
       return "proposedSolution"
     case 4:
-      // Merged Value — coach on the business-value statement
-      return "businessValue"
-    case 5:
-      return "relevantOkrs"
-    case 6:
       return "dependencies"
-    case 7:
-      return "successMetrics"
     default:
       return null
   }
