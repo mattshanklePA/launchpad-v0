@@ -1,0 +1,28 @@
+:root {
+  /* Radii — architectural, restrained. Cards and controls share a small radius;
+     amber marks & the app icon use the larger rounded-square radius. */
+  --radius-xs: 3px;
+  --radius-sm: 5px;   /* inputs, buttons */
+  --radius-md: 8px;   /* cards, panels */
+  --radius-lg: 12px;  /* modals, large surfaces */
+  --radius-xl: 20px;  /* app-icon style rounded square */
+  --radius-pill: 999px;
+
+  /* Borders — hairline, limestone. Keystone leans on borders over shadow. */
+  --border-hair: 1px;
+  --border-thick: 2px;
+
+  /* Shadows — soft, low, basalt-tinted. Never colorful. */
+  --shadow-xs: 0 1px 2px rgba(42,51,60,.06);
+  --shadow-sm: 0 1px 3px rgba(42,51,60,.08), 0 1px 2px rgba(42,51,60,.04);
+  --shadow-md: 0 4px 12px rgba(42,51,60,.10), 0 1px 3px rgba(42,51,60,.06);
+  --shadow-lg: 0 12px 32px rgba(42,51,60,.14), 0 4px 8px rgba(42,51,60,.06);
+  --shadow-focus: 0 0 0 3px rgba(0,134,202,.28); /* active-blue focus ring */
+
+  /* Motion — calm, precise. No bounce. */
+  --ease-standard: cubic-bezier(.2,.0,.2,1); /* @kind other */
+  --ease-out: cubic-bezier(.16,1,.3,1); /* @kind other */
+  --dur-fast: 120ms; /* @kind other */
+  --dur-base: 180ms; /* @kind other */
+  --dur-slow: 260ms; /* @kind other */
+}
