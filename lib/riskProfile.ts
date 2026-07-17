@@ -3,6 +3,7 @@
 // triage at a glance — low-risk go-aheads vs. things that need a closer look.
 
 import type { FormData } from "@/lib/steps"
+import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 
 export type RiskLevel = "low" | "medium" | "high" | "unknown"
 
@@ -99,12 +100,12 @@ export function computeRiskProfile(formData: Partial<FormData>): RiskProfile {
 export function riskBadgeClass(level: RiskLevel): string {
   switch (level) {
     case "low":
-      return "bg-green-100 text-green-800 border-green-300"
+      return STATUS_BADGE_CLASS.healthy
     case "medium":
-      return "bg-amber-100 text-amber-800 border-amber-300"
+      return STATUS_BADGE_CLASS.attention
     case "high":
-      return "bg-red-100 text-red-800 border-red-300"
+      return STATUS_BADGE_CLASS.alert
     default:
-      return "bg-gray-100 text-gray-700 border-gray-300"
+      return STATUS_BADGE_CLASS.neutral
   }
 }

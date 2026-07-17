@@ -402,16 +402,16 @@ describe("computeRmfProfile — overall rollup", () => {
 
 describe("badge helpers", () => {
   it("returns a distinct class per overall level", () => {
-    expect(rmfBadgeClass("on_track")).toMatch(/green/)
-    expect(rmfBadgeClass("attention")).toMatch(/amber/)
-    expect(rmfBadgeClass("at_risk")).toMatch(/red/)
-    expect(rmfBadgeClass("unknown")).toMatch(/gray/)
+    expect(rmfBadgeClass("on_track")).toMatch(/healthy/)
+    expect(rmfBadgeClass("attention")).toMatch(/attention/)
+    expect(rmfBadgeClass("at_risk")).toMatch(/alert/)
+    expect(rmfBadgeClass("unknown")).toMatch(/neutral/)
   })
 
   it("returns a distinct class per function status", () => {
-    expect(rmfFunctionStatusBadgeClass("covered")).toMatch(/green/)
-    expect(rmfFunctionStatusBadgeClass("partial")).toMatch(/amber/)
-    expect(rmfFunctionStatusBadgeClass("gap")).toMatch(/red/)
-    expect(rmfFunctionStatusBadgeClass("not_yet_applicable")).toMatch(/gray/)
+    expect(rmfFunctionStatusBadgeClass("covered")).toMatch(/healthy/)
+    expect(rmfFunctionStatusBadgeClass("partial")).toMatch(/attention/)
+    expect(rmfFunctionStatusBadgeClass("gap")).toMatch(/alert/)
+    expect(rmfFunctionStatusBadgeClass("not_yet_applicable")).toMatch(/neutral/)
   })
 })

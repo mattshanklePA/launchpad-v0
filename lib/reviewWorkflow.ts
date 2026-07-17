@@ -10,6 +10,7 @@
 import type { Submission } from "@/lib/submissions"
 import { getCachedUsers } from "@/lib/dataCache"
 import { getTenant } from "@/lib/tenant"
+import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 
 export type SubmissionStatus =
   | "draft"
@@ -45,21 +46,24 @@ export const STATUS_LABEL: Record<SubmissionStatus, string> = {
   rejected: "Rejected",
 }
 
-// Tailwind badge classes, matching the app's existing readiness-badge style.
+// Keystone status-badge classes (lib/statusTokens.ts) — mapped onto the DS's
+// four-state governance vocabulary: in_review is "someone needs to look"
+// (attention), needs_info/rejected are blocked (alert), approved is cleared
+// (healthy), submitted/draft are awaiting action with no signal yet
+// (neutral).
 export function statusBadgeClasses(status: SubmissionStatus): string {
   switch (status) {
-    case "submitted":
-      return "bg-blue-100 text-blue-800 border-blue-300"
     case "in_review":
-      return "bg-amber-100 text-amber-800 border-amber-300"
+      return STATUS_BADGE_CLASS.attention
     case "needs_info":
-      return "bg-red-100 text-red-800 border-red-300"
-    case "approved":
-      return "bg-green-100 text-green-800 border-green-300"
     case "rejected":
+      return STATUS_BADGE_CLASS.alert
+    case "approved":
+      return STATUS_BADGE_CLASS.healthy
+    case "submitted":
     case "draft":
     default:
-      return "bg-gray-100 text-gray-600 border-gray-300"
+      return STATUS_BADGE_CLASS.neutral
   }
 }
 

@@ -35,13 +35,36 @@ const config: Config = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
+        // Keystone status vocabulary (.claude/skills/tokens/colors.css's
+        // --status-* aliases / .claude/skills/components/core/StatusPill) —
+        // exactly four states, the DS's deliberate governance-status
+        // language. Each carries a light `subtle` fill + a darkened
+        // `foreground` text color so badges clear 4.5:1 text contrast
+        // (the raw on-track green and amber tokens don't, against a light
+        // fill, at ~3.3:1 — attention reuses the DS's own
+        // --ks-amber-dark "amber text on light" token; healthy's dark
+        // shade is derived the same way, same hue/saturation, lower
+        // lightness). Drives lib/reviewWorkflow.ts, lib/riskProfile.ts, and
+        // lib/nistRmf.ts's badge-class helpers (lib/statusTokens.ts).
+        healthy: {
+          DEFAULT: "#2E9E7B", // --status-healthy (--ks-on-track)
+          foreground: "#1F6B53",
+          subtle: "#E6F4F0",
         },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
+        attention: {
+          DEFAULT: "#C77D3A", // --status-attention (--ks-amber)
+          foreground: "#9C5F22", // --ks-amber-dark ("amber text on light")
+          subtle: "#F4EDE6",
+        },
+        alert: {
+          DEFAULT: "#C24A3A", // --status-alert (--ks-alert)
+          foreground: "#C24A3A", // clears 4.5:1 on white/subtle as-is
+          subtle: "#F4E8E6",
+        },
+        neutral: {
+          DEFAULT: "#6C7680", // --status-neutral (--ks-ink-500)
+          foreground: "#4A545E", // --ks-ink-700
+          subtle: "#E7E1D6", // --ks-limestone
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -59,10 +82,15 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Keystone brand palette (brand/keystone/tokens.json) — literal brand
-        // hex values for non-text/decorative uses (marks, large fills, chart
-        // accents). Semantic tokens above (primary/secondary/success/warning)
-        // carry the same palette, adjusted where needed for 508 text contrast.
+        // Keystone brand palette (.claude/skills/tokens/colors.css's
+        // --ks-* base palette) — literal brand hex values for non-text/
+        // decorative uses (marks, large fills, chart accents). Semantic
+        // tokens above (primary/secondary/destructive/healthy/attention/
+        // alert/neutral) carry the same palette, adjusted where needed for
+        // 508 text contrast. Supersedes the earlier brand/keystone/
+        // tokens.json-driven pass; that asset kit's SVG marks are still the
+        // active source for logo/favicon assets (public/keystone/), only
+        // its color/type token wiring is superseded.
         keystone: {
           basalt: "#2A333C",
           activeBlue: "#0086CA",
@@ -96,10 +124,11 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // Keystone base type system (brand/keystone/README.md): Hanken Grotesk
-        // (body/UI), Chivo (headings/wordmark), JetBrains Mono (mono/labels).
-        // Self-hosted via next/font in app/layout.tsx. Tenants can still
-        // override per-surface via className.
+        // Keystone base type system (.claude/skills/tokens/typography.css):
+        // Hanken Grotesk (body/UI), Chivo (headings/wordmark), JetBrains
+        // Mono (mono/labels). Self-hosted via next/font in app/layout.tsx —
+        // no runtime font CDN. Tenants can still override per-surface via
+        // className.
         sans: ["var(--font-hanken)", "system-ui", "sans-serif"],
         heading: ["var(--font-chivo)", "var(--font-hanken)", "sans-serif"],
         wordmark: ["var(--font-chivo)", "Archivo", "system-ui", "sans-serif"],
@@ -114,6 +143,20 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      // Keystone shadows (.claude/skills/tokens/effects.css) — soft, low,
+      // basalt-tinted; overriding Tailwind's own sm/md/lg/xl keys means
+      // every existing `shadow-sm`/`shadow-md`/etc. usage picks these up
+      // automatically. Keystone leans on hairline borders over shadow, so
+      // these stay subtle.
+      boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        xl: "var(--shadow-lg)",
+        focus: "var(--shadow-focus)",
       },
       keyframes: {
         "accordion-down": {

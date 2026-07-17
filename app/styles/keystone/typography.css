@@ -1,0 +1,46 @@
+/* Keystone design-system type-scale tokens — copied from
+   .claude/skills/tokens/typography.css. Keep in sync by hand if that file
+   changes.
+
+   The font-FAMILY aliases (--font-head/--font-body/--font-mono and their
+   --font-display/--font-heading/--font-label aliases) are intentionally
+   NOT copied verbatim here: the DS file points them at bare family-name
+   strings ("Chivo", "Hanken Grotesk", "JetBrains Mono") which only resolve
+   if those fonts are installed locally or loaded from a CDN. This app
+   self-hosts the three families via next/font/google (app/layout.tsx,
+   guardrail: no runtime third-party font CDN) and rebinds these same
+   variable names to the self-hosted next/font CSS variables directly below
+   the @import in globals.css, so anything written against the DS's font
+   tokens (component specs, etc.) still resolves to the real, self-hosted
+   webfonts. */
+:root {
+  /* Type scale (1.250 major-third, 16px base) */
+  --text-2xs: 11px;
+  --text-xs:  12px;
+  --text-sm:  14px;
+  --text-md:  16px;
+  --text-lg:  20px;
+  --text-xl:  25px;
+  --text-2xl: 31px;
+  --text-3xl: 39px;
+  --text-4xl: 49px;
+  --text-5xl: 61px;
+
+  /* Weights */
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+  --fw-black:   900;
+
+  /* Line heights */
+  --lh-tight:   1.1;
+  --lh-snug:    1.25;
+  --lh-normal:  1.5;
+  --lh-relaxed: 1.65;
+
+  /* Tracking */
+  --tracking-tight:  -0.02em;
+  --tracking-normal: 0;
+  --tracking-label:  0.08em;
+}

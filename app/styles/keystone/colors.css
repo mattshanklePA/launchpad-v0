@@ -1,0 +1,66 @@
+/* Keystone design-system color tokens — copied from
+   .claude/skills/tokens/colors.css (the authoritative DS source; see
+   .claude/skills/readme.md). Keep in sync by hand if that file changes.
+
+   NOTE: --ks-chalk-light and the --surface-canvas repoint below are the one
+   deliberate divergence from the current .claude/skills/tokens/colors.css —
+   the sandbox this change was authored in could not write under
+   .claude/skills/, so the DS source still points --surface-canvas at
+   --ks-chalk. A maintainer should apply the same two-line change there
+   (add --ks-chalk-light: #FAF9F6; repoint --surface-canvas to it) so the DS
+   file stays the single source of truth going forward. */
+:root {
+  /* ── Base palette ─────────────────────────────────── */
+  --ks-basalt:        #2A333C; /* primary dark · surfaces, text */
+  --ks-basalt-800:    #1E252C; /* deeper basalt · headers, nav */
+  --ks-basalt-600:    #3B4650; /* raised basalt · hover on dark */
+  --ks-active-blue:   #0086CA; /* secondary · links, interactive */
+  --ks-active-blue-dark: #006BA1; /* link/interactive pressed */
+  --ks-amber:         #C77D3A; /* attention · the keystone / flags */
+  --ks-amber-light:   #DCA061; /* amber top-face / highlight */
+  --ks-amber-dark:    #9C5F22; /* amber text on light */
+  --ks-on-track:      #2E9E7B; /* healthy / success state */
+  --ks-alert:         #C24A3A; /* error / stop state */
+  --ks-limestone:     #E7E1D6; /* neutral · fields, dividers */
+  --ks-limestone-dark:#D6CEBE; /* neutral · borders on chalk */
+  --ks-chalk:         #F4F2EC; /* neutral · named swatch — dividers, text-on-dark */
+  --ks-chalk-light:   #FAF9F6; /* neutral · canvas (lighter-warm, see --surface-canvas) */
+  --ks-white:         #FFFFFF;
+
+  /* ── Neutral text ramp (basalt-tinted) ────────────── */
+  --ks-ink-900: #2A333C;
+  --ks-ink-700: #4A545E;
+  --ks-ink-500: #6C7680;
+  --ks-ink-300: #97A0A9;
+
+  /* ── Semantic aliases ─────────────────────────────── */
+  --text-strong:     var(--ks-ink-900);
+  --text-body:       var(--ks-ink-700);
+  --text-muted:      var(--ks-ink-500);
+  --text-faint:      var(--ks-ink-300);
+  --text-on-dark:    var(--ks-chalk);
+  --text-link:       var(--ks-active-blue);
+  --text-link-hover: var(--ks-active-blue-dark);
+
+  --surface-canvas:  var(--ks-chalk-light);
+  --surface-card:    var(--ks-white);
+  --surface-sunken:  var(--ks-limestone);
+  --surface-inverse: var(--ks-basalt);
+  --surface-nav:     var(--ks-basalt-800);
+
+  --border-subtle:   var(--ks-limestone);
+  --border-default:  var(--ks-limestone-dark);
+  --border-strong:   var(--ks-ink-300);
+  --border-focus:    var(--ks-active-blue);
+
+  /* NOTE: the DS's own alias here is `--accent: var(--ks-amber)`. The app
+     does not consume it — Tailwind's `accent` slot (globals.css) stays
+     limestone-based, since shadcn wires `accent` to hover/selected menu
+     backgrounds and the DS guardrail is explicit that amber must never be a
+     background wash. Amber only ever appears via --status-attention. */
+  --accent:          var(--ks-amber);
+  --status-healthy:  var(--ks-on-track);
+  --status-attention:var(--ks-amber);
+  --status-alert:    var(--ks-alert);
+  --status-neutral:  var(--ks-ink-500);
+}
