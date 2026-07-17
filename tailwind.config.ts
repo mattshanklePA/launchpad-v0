@@ -97,11 +97,13 @@ const config: Config = {
       },
       fontFamily: {
         // Keystone base type system (brand/keystone/README.md): Hanken Grotesk
-        // (body/UI), Chivo (headings/wordmark). Self-hosted via next/font in
-        // app/layout.tsx. Tenants can still override per-surface via className.
+        // (body/UI), Chivo (headings/wordmark), JetBrains Mono (mono/labels).
+        // Self-hosted via next/font in app/layout.tsx. Tenants can still
+        // override per-surface via className.
         sans: ["var(--font-hanken)", "system-ui", "sans-serif"],
         heading: ["var(--font-chivo)", "var(--font-hanken)", "sans-serif"],
         wordmark: ["var(--font-chivo)", "Archivo", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "ui-monospace", "monospace"],
         // Public landing typography system (docs/landing-page-conversion-audit-2026-07-15.md).
         // Scoped to components/landing/public-landing.tsx — not used elsewhere in the app,
         // so the app-wide brand tokens above (sans/heading/wordmark) are unaffected.

@@ -62,9 +62,10 @@ import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { RationalizationPanel } from "@/components/admin/rationalization-panel"
 import { DecisionHeader } from "@/components/submissions/decision-header"
 import { ChecklistItem } from "@/components/submissions/checklist-item"
+import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
 import {
-  ArrowLeft, ArrowRight, Check, X, MessageSquare, Sparkles, ShieldCheck, AlertTriangle, Copy, ChevronDown,
+  ArrowLeft, ArrowRight, Check, X, MessageSquare, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
@@ -413,7 +414,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         </p>
       )}
 
-      {/* Zone 1: Kestrel's rolled-up recommendation, what's blocking approval, one primary action. */}
+      {/* Zone 1: the assistant's rolled-up recommendation, what's blocking approval, one primary action. */}
       {isReviewer && (
         <DecisionHeader
           assistantName={tenant.assistantName}
@@ -901,7 +902,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                   disabled={busy || assisting}
                   onClick={() => assist?.draftRequestInfo && setComment(assist.draftRequestInfo)}
                 >
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />Draft with {tenant.assistantName}
+                  <PlumbMark className="w-3.5 h-3.5 mr-1.5" />Draft with {tenant.assistantName}
                 </Button>
                 <Button size="sm" disabled={busy || !comment.trim()} onClick={() => postComment("needs_info")}>
                   Send &amp; request info
