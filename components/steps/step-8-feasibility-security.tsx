@@ -14,6 +14,7 @@ import { getTenant } from "@/lib/tenant"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { FieldRequirementBadge } from "../launchpad/field-requirement-badge"
 import { AiProposedHint } from "../launchpad/ai-proposed-hint"
+import { GlossaryTerm } from "../launchpad/glossary-term"
 import { HIGH_IMPACT_FACTOR_LABELS, type HighImpactFactor } from "@/lib/highImpactDetermination"
 import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
 import { useAiPropose } from "@/hooks/use-ai-propose"
@@ -411,7 +412,8 @@ export function Step8FeasibilitySecurity() {
 
               <div className="space-y-2">
                 <Label>
-                  Is this a high-impact AI use case? <FieldRequirementBadge fieldKey="highImpact" />
+                  Is this a <GlossaryTerm term="highImpactDetermination">high-impact</GlossaryTerm> AI use case?{" "}
+                  <FieldRequirementBadge fieldKey="highImpact" />
                 </Label>
                 <RadioGroup
                   value={formData.highImpact}
