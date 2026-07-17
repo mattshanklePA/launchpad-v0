@@ -53,7 +53,7 @@ export const seedSubmissions: Submission[] = [
         "Boolean keyword search misses semantically relevant prior art. Examiners must manually expand search terms, translate foreign disclosures, and iterate — leading to longer pendency and inconsistent search quality.",
       problemImpact:
         "Average prior art search adds 6-8 hours per application. With 600K applications/year, conservative estimate is 3.6M examiner-hours annually spent on a task where 30-50% could be automated. Search misses also drive post-allowance prior art surprises and reissue activity.",
-      affectedSystem: "patents",
+      affectedBusinessUnits: ["patents"],
       problemType: ["productivity", "quality", "search_retrieval"],
       severity: "high",
       problemDefinition:
@@ -152,7 +152,7 @@ export const seedSubmissions: Submission[] = [
       coreProblem:
         "Trademark backlog grew 40% in the last 18 months. Examiners spend significant time on likelihood-of-confusion analysis that could be partially pre-screened.",
       problemImpact: "Pendency for first office action has grown from 8 months to 14 months.",
-      affectedSystem: "trademarks",
+      affectedBusinessUnits: ["trademarks"],
       problemType: ["productivity", "backlog"],
       severity: "high",
       problemDefinition:
@@ -236,7 +236,7 @@ export const seedSubmissions: Submission[] = [
         "HR ticket volume from new hires is dominated by repetitive policy questions that are answerable from existing handbook/intranet content. New hires don't know where to look and HR is overwhelmed.",
       problemImpact:
         "HR estimates 60-70% of new-hire tickets could be self-served if discovery were easier. Currently ~3,000 tickets/year tied up.",
-      affectedSystem: "cross_functional",
+      affectedBusinessUnits: ["cross_functional"],
       problemType: ["productivity", "user_experience"],
       severity: "medium",
       problemDefinition:
@@ -325,7 +325,7 @@ export const seedSubmissions: Submission[] = [
         "Manual IT ticket triage is slow, inconsistent, and miscategorizes 18% of tickets, causing rerouting and resolution delay.",
       problemImpact:
         "Average ticket-to-resolution time is 3.2 business days. Internal benchmarks suggest 1.8 days is achievable with automated triage. Lost productivity across USPTO from IT-blocked work is estimated at 8,000 hours/year.",
-      affectedSystem: "it_systems",
+      affectedBusinessUnits: ["it_systems"],
       problemType: ["productivity", "operational_efficiency"],
       severity: "medium",
       problemDefinition:
@@ -413,7 +413,7 @@ export const seedSubmissions: Submission[] = [
 
       coreProblem: "FOIA backlog.",
       problemImpact: "Requests take too long.",
-      affectedSystem: "cross_functional",
+      affectedBusinessUnits: ["cross_functional"],
       problemType: ["backlog"],
       severity: "medium",
       problemDefinition: "FOIA backlog is too big.",

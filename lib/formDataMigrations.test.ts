@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { migrateIsWithheld, migrateFormData } from "@/lib/formDataMigrations"
+import { migrateIsWithheld, migrateAffectedBusinessUnits, migrateFormData } from "@/lib/formDataMigrations"
 
 describe("migrateIsWithheld", () => {
   it("passes through an already-migrated value unchanged", () => {
@@ -28,6 +28,36 @@ describe("migrateIsWithheld", () => {
   })
 })
 
+describe("migrateAffectedBusinessUnits", () => {
+  it("passes through an already-migrated array unchanged", () => {
+    expect(migrateAffectedBusinessUnits({ affectedBusinessUnits: ["patents", "trademarks"] })).toEqual([
+      "patents",
+      "trademarks",
+    ])
+    expect(migrateAffectedBusinessUnits({ affectedBusinessUnits: [] })).toEqual([])
+  })
+
+  it("wraps a legacy single-value affectedSystem string into a one-element array", () => {
+    expect(migrateAffectedBusinessUnits({ affectedSystem: "cross_functional" })).toEqual(["cross_functional"])
+  })
+
+  it("returns [] for a submission with neither field answered yet", () => {
+    expect(migrateAffectedBusinessUnits({})).toEqual([])
+    expect(migrateAffectedBusinessUnits(null)).toEqual([])
+    expect(migrateAffectedBusinessUnits(undefined)).toEqual([])
+  })
+
+  it("returns [] rather than wrapping an empty legacy string", () => {
+    expect(migrateAffectedBusinessUnits({ affectedSystem: "" })).toEqual([])
+  })
+
+  it("ignores a corrupt non-string-array value rather than trusting it", () => {
+    expect(migrateAffectedBusinessUnits({ affectedBusinessUnits: [1, 2] as any, affectedSystem: "patents" })).toEqual([
+      "patents",
+    ])
+  })
+})
+
 describe("migrateFormData", () => {
   it("adds isWithheld without disturbing other fields", () => {
     const raw = { useCaseTitle: "Test", publicIndicator: "public", coreProblem: "x" }
@@ -35,6 +65,12 @@ describe("migrateFormData", () => {
     expect(migrated.isWithheld).toBe("no")
     expect(migrated.useCaseTitle).toBe("Test")
     expect(migrated.coreProblem).toBe("x")
+  })
+
+  it("migrates a legacy single-value affectedSystem into affectedBusinessUnits", () => {
+    const raw = { affectedSystem: "it_systems" }
+    const migrated = migrateFormData(raw)
+    expect(migrated.affectedBusinessUnits).toEqual(["it_systems"])
   })
 
   it("does not mutate the input object", () => {

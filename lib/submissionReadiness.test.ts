@@ -20,7 +20,7 @@ function baseComplete(overrides: Partial<FormData> = {}): FormData {
     isWithheld: "no",
     coreProblem: "Staff spend too long manually triaging requests.",
     severity: "medium",
-    affectedSystem: "cross_functional",
+    affectedBusinessUnits: ["cross_functional"],
     targetAudience: "product_owner",
     impactedUsersCount: "50_500",
     targetUserContext: "Front-line staff across several offices.",

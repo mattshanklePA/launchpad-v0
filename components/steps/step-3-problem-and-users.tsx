@@ -53,6 +53,12 @@ export function Step3ProblemAndUsers() {
     setFormData((prev) => ({ ...prev, problemType: newTypes }))
   }
 
+  const handleAffectedBusinessUnitToggle = (unit: string) => {
+    const current = formData.affectedBusinessUnits || []
+    const next = current.includes(unit) ? current.filter((u) => u !== unit) : [...current, unit]
+    setFormData((prev) => ({ ...prev, affectedBusinessUnits: next }))
+  }
+
   const handleSuggestion = (suggestion: string) => {
     setFormData((prev) => ({ ...prev, problemDefinition: suggestion }))
   }
@@ -86,23 +92,21 @@ export function Step3ProblemAndUsers() {
                 </div>
               )}
 
-              {isVisible("affectedSystem") && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="affectedSystem">Which process, system, or group does this affect?</Label>
-                    <Select
-                      value={formData.affectedSystem}
-                      onValueChange={(value) => setFormData((prev) => ({ ...prev, affectedSystem: value as any }))}
-                    >
-                      <SelectTrigger id="affectedSystem">
-                        <SelectValue placeholder="Select an area..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tenant.affectedSystems.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              {isVisible("affectedBusinessUnits") && (
+                <div className="space-y-2">
+                  <Label>Which business units, systems, or groups does this affect?</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {tenant.affectedSystems.map((option) => (
+                      <Toggle
+                        key={option.value}
+                        pressed={formData.affectedBusinessUnits.includes(option.value)}
+                        onPressedChange={() => handleAffectedBusinessUnitToggle(option.value)}
+                        variant="outline"
+                        className="rounded-full px-3 py-1 text-sm h-auto"
+                      >
+                        {option.label}
+                      </Toggle>
+                    ))}
                   </div>
                 </div>
               )}

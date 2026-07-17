@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
+import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
 
 const MAX_FEATURES = 3
 
@@ -116,6 +117,21 @@ export function Step3SolutionBenefits() {
                   placeholder="AI-generated summary will appear here..."
                   minRows={3}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                />
+              </div>
+            )}
+
+            {isVisible("deliveryAudience") && (
+              <div className="space-y-2">
+                <Label htmlFor="deliveryAudience">Is this solution internal or external facing?</Label>
+                <OptionRadioGroup
+                  ariaLabel="Is this solution internal or external facing?"
+                  value={formData.deliveryAudience}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, deliveryAudience: value as any }))}
+                  options={[
+                    { value: "internal", label: "Internal — for our own staff" },
+                    { value: "external", label: "External — customer/public-facing" },
+                  ]}
                 />
               </div>
             )}

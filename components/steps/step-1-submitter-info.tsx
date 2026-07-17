@@ -100,6 +100,51 @@ export function Step1SubmitterInfo() {
           </div>
         )}
       </div>
+
+      {(isVisible("sponsorName") || isVisible("sponsorRole") || isVisible("sponsorEmail")) && (
+        <div className="space-y-2 border-t pt-6">
+          <Label className="text-base font-semibold text-uspto-gray-text">Client sponsor</Label>
+          <p className="text-sm text-muted-foreground">
+            Leave blank if you are your own sponsor. Fill this in if someone else is sponsoring this idea.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+            {isVisible("sponsorName") && (
+              <div className="space-y-2">
+                <Label htmlFor="sponsorName">Sponsor name</Label>
+                <Input
+                  id="sponsorName"
+                  value={formData.sponsorName}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sponsorName: e.target.value }))}
+                  placeholder="e.g., Jonathan Smith"
+                />
+              </div>
+            )}
+            {isVisible("sponsorRole") && (
+              <div className="space-y-2">
+                <Label htmlFor="sponsorRole">Sponsor role</Label>
+                <Input
+                  id="sponsorRole"
+                  value={formData.sponsorRole}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sponsorRole: e.target.value }))}
+                  placeholder="e.g., Director of Operations"
+                />
+              </div>
+            )}
+            {isVisible("sponsorEmail") && (
+              <div className="space-y-2">
+                <Label htmlFor="sponsorEmail">Sponsor email</Label>
+                <Input
+                  id="sponsorEmail"
+                  type="email"
+                  value={formData.sponsorEmail}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sponsorEmail: e.target.value }))}
+                  placeholder="e.g., jonathan.smith@uspto.gov"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

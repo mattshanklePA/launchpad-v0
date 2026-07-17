@@ -28,7 +28,28 @@ export function migrateIsWithheld(raw: Record<string, unknown> | null | undefine
   return ""
 }
 
+/**
+ * Resolves `affectedBusinessUnits` (issue #163) for a raw, possibly-legacy
+ * form_data blob. Already-migrated array data passes through unchanged.
+ * Legacy single-value `affectedSystem` (a plain string) is wrapped into a
+ * one-element array; an empty/missing legacy value becomes `[]`.
+ */
+export function migrateAffectedBusinessUnits(
+  raw: Record<string, unknown> | null | undefined,
+): FormData["affectedBusinessUnits"] {
+  const current = raw?.affectedBusinessUnits
+  if (Array.isArray(current) && current.every((v) => typeof v === "string")) {
+    return current as string[]
+  }
+  const legacy = raw?.affectedSystem
+  return typeof legacy === "string" && legacy.length > 0 ? [legacy] : []
+}
+
 /** Applies every field migration to a raw form_data blob. Never mutates the input. */
 export function migrateFormData(raw: Record<string, unknown>): Record<string, unknown> {
-  return { ...raw, isWithheld: migrateIsWithheld(raw) }
+  return {
+    ...raw,
+    isWithheld: migrateIsWithheld(raw),
+    affectedBusinessUnits: migrateAffectedBusinessUnits(raw),
+  }
 }
