@@ -302,7 +302,7 @@ A serious AI idea names the federal priority and the Department mission it advan
   modelSourcingGuidance:
     "OMB and EO 14179 prefer American-built or U.S.-hosted models with documented sourcing (per M-25-22). Foreign or unknown sourcing requires additional review.",
 
-  theme: { primary: "#003366", primaryForeground: "#ffffff" },
+  theme: { primary: "#2A333C", primaryForeground: "#ffffff" }, // Keystone basalt (brand/keystone/README.md)
   // departmentFinalApproval: optional second sign-off tier on top of bureau
   // sign-off (see lib/bureauSignoff.ts) — bureau signs off, then an OS/
   // department admin confirms. Bureau sign-off works fully without it; unset
