@@ -39,12 +39,32 @@ const publicSans = Public_Sans({
   display: "swap",
 })
 
-function ObjectiveList({ items }: { items: { title: string; description: string }[] }) {
+// Decorative accent classes for this shared landing. Keystone (DoC) gets the
+// brand active-blue (#0086CA, tailwind.config.ts's `keystone.activeBlue`);
+// every other tenant keeps the pre-brand uspto-blue-primary shade so USPTO/DoW
+// stay visually unchanged (issue #174 — the accent is a hardcoded literal
+// here, not derived from `tenant.theme`, so it must be gated explicitly).
+type AccentClasses = { tint: string; text: string; border: string }
+const KEYSTONE_ACCENT: AccentClasses = {
+  tint: "bg-keystone-activeBlue/10 text-keystone-activeBlue",
+  text: "text-keystone-activeBlue",
+  border: "border-l-keystone-activeBlue",
+}
+const DEFAULT_ACCENT: AccentClasses = {
+  tint: "bg-uspto-blue-primary/10 text-uspto-blue-primary",
+  text: "text-uspto-blue-primary",
+  border: "border-l-uspto-blue-primary",
+}
+function getAccentClasses(tenant: TenantConfig): AccentClasses {
+  return tenant.id === "doc" ? KEYSTONE_ACCENT : DEFAULT_ACCENT
+}
+
+function ObjectiveList({ items, accent }: { items: { title: string; description: string }[]; accent: AccentClasses }) {
   return (
     <div className="space-y-3">
       {items.map((it, i) => (
         <div key={i} className="rounded-lg border bg-white p-4 flex gap-3">
-          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-uspto-blue-primary/10 text-uspto-blue-primary flex items-center justify-center text-sm font-semibold">
+          <div className={cn("flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold", accent.tint)}>
             {i + 1}
           </div>
           <div>
@@ -75,7 +95,15 @@ const PREVIEW_TONE_CLASS: Record<(typeof PREVIEW_QUEUE)[number]["tone"], string>
 // Decorative Command Center dashboard preview for the hero. Built from the
 // app's own visual language (KPI tiles, status-pill queue rows) rather than a
 // static screenshot, so it never goes stale and needs no binary asset.
-function DashboardPreview({ productName, metrics }: { productName: string; metrics: { submitted: number; deployed: number } }) {
+function DashboardPreview({
+  productName,
+  metrics,
+  accent,
+}: {
+  productName: string
+  metrics: { submitted: number; deployed: number }
+  accent: AccentClasses
+}) {
   return (
     <div
       role="img"
@@ -90,7 +118,7 @@ function DashboardPreview({ productName, metrics }: { productName: string; metri
       </div>
       <div className="space-y-3 p-4">
         <div className="grid grid-cols-2 gap-2.5">
-          <div className="rounded-lg border border-l-4 border-l-uspto-blue-primary bg-white p-2.5">
+          <div className={cn("rounded-lg border border-l-4 bg-white p-2.5", accent.border)}>
             <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Use cases submitted</div>
             <div className="text-xl font-bold text-uspto-gray-text">{metrics.submitted}</div>
           </div>
@@ -158,7 +186,7 @@ function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: 
   )
 }
 
-function Features({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: boolean }) {
+function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureauTier: boolean; accent: AccentClasses }) {
   const items = [
     {
       icon: Sparkles,
@@ -201,7 +229,7 @@ function Features({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: bo
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <div key={item.title} className="rounded-xl border bg-white p-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-uspto-blue-primary/10 text-uspto-blue-primary">
+              <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", accent.tint)}>
                 <item.icon className="h-5 w-5" />
               </div>
               <h3 className="mt-4 font-medium text-uspto-gray-text">{item.title}</h3>
@@ -232,7 +260,7 @@ const PROOF_SIGNALS = [
   },
 ]
 
-function Proof() {
+function Proof({ accent }: { accent: AccentClasses }) {
   return (
     <section className="bg-white py-16">
       <div className="container">
@@ -240,7 +268,7 @@ function Proof() {
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
           {PROOF_SIGNALS.map((signal) => (
             <div key={signal.title} className="rounded-xl border p-6">
-              <signal.icon className="h-6 w-6 text-uspto-blue-primary" />
+              <signal.icon className={cn("h-6 w-6", accent.text)} />
               <h3 className="mt-3 font-medium text-uspto-gray-text">{signal.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{signal.description}</p>
             </div>
@@ -281,6 +309,7 @@ function ClosingCTA({ tenant }: { tenant: TenantConfig }) {
 export function PublicLanding() {
   const t = getTenant()
   const bureauTier = tenantHasBureauTier()
+  const accent = getAccentClasses(t)
   const [session, setSession] = useState<Session | null>(null)
   const [hydrated, setHydrated] = useState(false)
   const [metrics, setMetrics] = useState<{ submitted: number; deployed: number }>({ submitted: 0, deployed: 0 })
@@ -301,7 +330,7 @@ export function PublicLanding() {
 
   return (
     <div className={cn(fraunces.variable, publicSans.variable, "min-h-screen bg-white flex flex-col font-body")}>
-      <header className="border-b border-white/10 bg-[#141414]">
+      <header className="border-b border-white/10 bg-keystone-basalt">
         <div className="container flex h-20 items-center justify-between">
           <LaunchPadLogo size="md" monochrome className="text-white" subtitleClassName="text-dow-steel" />
           <div className="flex items-center gap-2">
@@ -376,7 +405,7 @@ export function PublicLanding() {
               </div>
               <div className="flex justify-center lg:justify-end">
                 <div className="lg:w-[110%] lg:-mr-10 xl:-mr-24">
-                  <DashboardPreview productName={t.productName} metrics={metrics} />
+                  <DashboardPreview productName={t.productName} metrics={metrics} accent={accent} />
                 </div>
               </div>
             </div>
@@ -384,8 +413,8 @@ export function PublicLanding() {
         </section>
 
         <HowItWorks tenant={t} bureauTier={bureauTier} />
-        <Features tenant={t} bureauTier={bureauTier} />
-        <Proof />
+        <Features tenant={t} bureauTier={bureauTier} accent={accent} />
+        <Proof accent={accent} />
 
         <section className="border-t bg-gray-50 py-14">
           <div className="container">
@@ -397,7 +426,7 @@ export function PublicLanding() {
                 <div key={group.title}>
                   <h2 className="font-display text-xl font-semibold tracking-tight text-dow-space mb-1">{group.title}</h2>
                   <p className="text-sm text-muted-foreground mb-4">{group.subtitle}</p>
-                  <ObjectiveList items={group.items} />
+                  <ObjectiveList items={group.items} accent={accent} />
                 </div>
               ))}
             </div>
@@ -407,7 +436,7 @@ export function PublicLanding() {
         <ClosingCTA tenant={t} />
       </main>
 
-      <footer className="border-t bg-[#141414]">
+      <footer className="border-t bg-keystone-basalt">
         <div className="container py-6 text-center text-xs text-dow-steel">
           {t.productName} &middot; {t.logoSubtitle}
         </div>
