@@ -11,8 +11,6 @@ import type { FormData } from "@/lib/steps"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 
-const ASSISTANT_NAME = getTenant().assistantName
-
 // Field-authority cascade (DoC field-config cascade, issue #57): OMB mandates
 // a prescriptive field set every bureau must collect, the Department (Office
 // of the Secretary) adds its own mandatory fields on top, and a bureau may
@@ -91,19 +89,32 @@ const highImpactAndDeployed = (fd: FormData) => fd.highImpact === "high_impact" 
 // Single flat list, built for one tenant. Grouping is computed at render time
 // so admin UI changes don't require reshuffling the registry.
 //
-// A function of the tenant rather than a static array because three labels are
-// org-tier vocabulary (`tierLabels`, see docs/ARCHITECTURE.md) that render
-// straight into the wizard — a hardcoded "Business Unit" on step 1 is USPTO's
-// word in every other tenant's mouth. Same shape `lib/steps.ts`'s
-// `getFormSteps()` and `step-10-review-submit.tsx`'s `STEP_FIELDS(tenant)` use.
+// A function of the tenant rather than a static array because the copy below
+// is org vocabulary (`tierLabels`, `riskFramework.label`, `productName`,
+// `assistantName` — see docs/ARCHITECTURE.md) that renders straight at users.
+// A hardcoded "Business Unit" on step 1 is USPTO's word in every other
+// tenant's mouth. Same shape `lib/steps.ts`'s `getFormSteps()` and
+// `step-10-review-submit.tsx`'s `STEP_FIELDS(tenant)` use.
+//
+// FOUR strings on `FieldDefinition` reach a user, across three render sites —
+// scope any copy change against all four rather than the one you noticed:
+//   label           -> submit wizard; admin Form Configuration panel
+//   description     -> admin Form Configuration panel
+//   reasonToInclude -> admin Form Configuration panel; the wizard's
+//                      field-requirement tooltip (field-requirement-badge.tsx)
+//   lockedReason    -> admin Form Configuration panel
+// `lib/fieldRegistry.test.ts` sweeps all four, for every registered tenant,
+// against a list of other orgs' names and tier words — so a hardcoded one
+// fails the build rather than waiting for someone to notice it on screen.
 //
 // Fields carrying `level: "omb"` or `omb: true` are deliberately excluded from
-// that: their wording is OMB's published data dictionary, identical for every
-// agency (see docs/omb-2025-inventory-fields.md). `hasPii`'s "…maintained by
-// the agency?" is the clearest case — "agency" there is OMB's word, not ours.
-// `lib/fieldRegistry.test.ts` pins that set byte-for-byte.
+// the label sweep: their wording is OMB's published data dictionary, identical
+// for every agency (see docs/omb-2025-inventory-fields.md). `hasPii`'s
+// "…maintained by the agency?" is the clearest case — "agency" there is OMB's
+// word, not ours. `lib/fieldRegistry.test.ts` pins that set byte-for-byte.
 export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefinition[] {
   const tiers = tenant.tierLabels
+  const assistantName = tenant.assistantName
   return [
     // ────── Federal AI use case inventory (OMB) — Phase 4 / Feasibility ──────
     //
@@ -195,24 +206,24 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       fieldKey: "disseminatesToPublic",
       label: "Disseminates information to the public?",
       description: "Whether the AI system's output is disseminated to the public as part of its function.",
-      reasonToInclude: "Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — the DoC tracker has no other signal for this.",
+      reasonToInclude: `Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — ${tenant.productName} has no other signal for this.`,
       phase: 4,
       step: 16,
       level: "department",
       locked: true,
-      lockedReason: "NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every bureau.",
+      lockedReason: `NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every ${tiers.unit.toLowerCase()}.`,
       showWhen: (fd) => stageAtOrPastPreDeployment(fd) && !!getTenant().features.rmf,
     },
     {
       fieldKey: "scalable",
       label: "Scalable beyond current deployment?",
       description: "Whether this use case is intended to scale beyond its current pilot/deployment footprint.",
-      reasonToInclude: "Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — the DoC tracker has no other signal for this.",
+      reasonToInclude: `Closes a NIST AI RMF Map-function gap (docs/nist-rmf-mapping.md §8) — ${tenant.productName} has no other signal for this.`,
       phase: 4,
       step: 16,
       level: "department",
       locked: true,
-      lockedReason: "NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every bureau.",
+      lockedReason: `NIST AI RMF-mandated Map-function question — required for RMF governance, mandatory for every ${tiers.unit.toLowerCase()}.`,
       showWhen: (fd) => stageAtOrPastPreDeployment(fd) && !!getTenant().features.rmf,
     },
     {
@@ -542,7 +553,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       label: tiers.unit,
       description: `Which ${tiers.unit.toLowerCase()} the submitter belongs to.`,
       reasonToInclude:
-        "Routes the idea to the correct business unit reviewer and surfaces it on per-unit dashboards.",
+        `Routes the idea to the correct ${tiers.unit.toLowerCase()} reviewer and surfaces it on per-unit dashboards.`,
       phase: 1,
       step: 1,
       locked: false,
@@ -552,7 +563,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       label: tiers.subUnit,
       description: `${tiers.subUnit} sub-level under the submitter's ${tiers.unit.toLowerCase()}, for ${tiers.unitPlural.toLowerCase()} that define one.`,
       reasonToInclude:
-        "Routes the idea to the correct office-scoped reviewer and enables office-level roll-up when a bureau has offices.",
+        `Routes the idea to the correct ${tiers.subUnit.toLowerCase()}-scoped reviewer and enables ${tiers.subUnit.toLowerCase()}-level roll-up when a ${tiers.unit.toLowerCase()} has ${tiers.subUnitPlural.toLowerCase()}.`,
       phase: 1,
       step: 1,
       locked: false,
@@ -600,11 +611,11 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       label: "Idea Description",
       description: "1-3 sentence narrative explanation of the idea.",
       reasonToInclude:
-        `Gives ${ASSISTANT_NAME} enough context to coach the submitter through subsequent steps without inventing details.`,
+        `Gives ${assistantName} enough context to coach the submitter through subsequent steps without inventing details.`,
       phase: 5,
       step: 5,
       locked: true,
-      lockedReason: `Required — ${ASSISTANT_NAME} uses this as the seed context for every step's coaching.`,
+      lockedReason: `Required — ${assistantName} uses this as the seed context for every step's coaching.`,
     },
     {
       fieldKey: "isWithheld",
@@ -717,7 +728,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 2,
       locked: true,
       lockedReason:
-        `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
+        `Holds ${assistantName}'s drafted summary — locked on so the AI output always has a field to land in.`,
     },
 
     // ────── Phase 3: Solution & Value ──────
@@ -731,7 +742,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       phase: 3,
       step: 3,
       locked: true,
-      lockedReason: `Required — ${ASSISTANT_NAME}'s assessment and the Decision Center both depend on this field.`,
+      lockedReason: `Required — ${assistantName}'s assessment and the Decision Center both depend on this field.`,
     },
     {
       fieldKey: "keyFunctionality",
@@ -753,7 +764,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 3,
       locked: true,
       lockedReason:
-        `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
+        `Holds ${assistantName}'s drafted summary — locked on so the AI output always has a field to land in.`,
     },
     {
       fieldKey: "deliveryAudience",
@@ -843,7 +854,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 3,
       locked: true,
       lockedReason:
-        `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
+        `Holds ${assistantName}'s drafted summary — locked on so the AI output always has a field to land in.`,
     },
 
     // ────── Phase 4: Alignment & Feasibility ──────
@@ -882,7 +893,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 15,
       locked: true,
       lockedReason:
-        `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
+        `Holds ${assistantName}'s drafted summary — locked on so the AI output always has a field to land in.`,
     },
 
     // Step 7: Feasibility & Security
@@ -925,12 +936,12 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       label: "Uses PII / Sensitive Data",
       description: "Yes / No — does this idea use or expose PII or other sensitive data?",
       reasonToInclude:
-        "Required for federal AI risk management per Department of Commerce mandate.",
+        `Required for federal AI risk management per ${tenant.riskFramework.label}.`,
       phase: 4,
       step: 16,
       level: "department",
       locked: true,
-      lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
+      lockedReason: `${tenant.riskFramework.label} — required for compliance, mandatory for every ${tiers.unit.toLowerCase()}.`,
     },
     {
       fieldKey: "securityClassification",
@@ -959,12 +970,12 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       label: "AI Drives Decisions About People",
       description: "Yes / No — does the AI output drive a decision affecting an applicant or employee?",
       reasonToInclude:
-        "Required for federal AI risk management. Decisional AI requires enhanced human-review controls per DoC mandate.",
+        `Required for federal AI risk management. Decisional AI requires enhanced human-review controls per ${tenant.riskFramework.label}.`,
       phase: 4,
       step: 16,
       level: "department",
       locked: true,
-      lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
+      lockedReason: `${tenant.riskFramework.label} — required for compliance, mandatory for every ${tiers.unit.toLowerCase()}.`,
     },
     {
       fieldKey: "aiModelSourcing",
@@ -976,7 +987,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 16,
       level: "department",
       locked: true,
-      lockedReason: "Required per Executive Order on federal AI sourcing, applied Department-wide — mandatory for every bureau.",
+      lockedReason: `Required per Executive Order on federal AI sourcing, applied ${tiers.department}-wide — mandatory for every ${tiers.unit.toLowerCase()}.`,
     },
     {
       fieldKey: "aiHumanReview",
@@ -988,7 +999,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 16,
       level: "department",
       locked: true,
-      lockedReason: "DoC-mandated AI risk question — required for federal compliance, mandatory for every bureau.",
+      lockedReason: `${tenant.riskFramework.label} — required for compliance, mandatory for every ${tiers.unit.toLowerCase()}.`,
     },
     {
       fieldKey: "feasibilitySummary",
@@ -1000,7 +1011,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 16,
       locked: true,
       lockedReason:
-        `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
+        `Holds ${assistantName}'s drafted summary — locked on so the AI output always has a field to land in.`,
     },
 
     // Step 8: Success Metrics
@@ -1042,7 +1053,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
       step: 17,
       locked: true,
       lockedReason:
-        `Holds ${ASSISTANT_NAME}'s drafted summary — locked on so the AI output always has a field to land in.`,
+        `Holds ${assistantName}'s drafted summary — locked on so the AI output always has a field to land in.`,
     },
   ]
 }
@@ -1052,8 +1063,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
  *
  * `NEXT_PUBLIC_TENANT` is fixed for a deployment (Next.js inlines it at build
  * time, and each org is its own deployment), so a snapshot is correct at
- * runtime — the same assumption `ASSISTANT_NAME` above already makes. It is
- * kept so the many consumers that have no tenant in scope
+ * runtime. It is kept so the many consumers that have no tenant in scope
  * (`components/launchpad/chat-panel.tsx`, `field-requirement-badge.tsx`,
  * `governance-capture-panel.tsx`, most of lib/formConfig.ts) need no change.
  * Anything that *does* hold a tenant should call `getFieldRegistry(tenant)`

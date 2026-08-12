@@ -14,7 +14,8 @@ import {
 import { initialFormData, type FormData } from "@/lib/steps"
 import { doc } from "@/lib/tenant/doc"
 import { uspto } from "@/lib/tenant/uspto"
-import type { TenantConfig } from "@/lib/tenant"
+import { dow } from "@/lib/tenant/dow"
+import { ALL_TENANTS, type TenantConfig } from "@/lib/tenant"
 
 const withTenant = (id: string, run: () => void) => {
   const prev = process.env.NEXT_PUBLIC_TENANT
@@ -187,6 +188,119 @@ describe("org-tier field labels resolve through the tenant (ISS-3)", () => {
         expect(field.description, `${tenant.id}: ${field.fieldKey}`).not.toMatch(orgNames)
       }
     }
+  })
+
+  // ISS-3C — the guardrail that ends the label/description/reason/lock cycle.
+  //
+  // Three prior passes swept this file one field at a time and kept missing
+  // things, because none of them enumerated `FieldDefinition`'s full
+  // user-facing string surface. This one covers all four strings, for every
+  // registered tenant (`ALL_TENANTS`, so a new tenant is included the moment
+  // it is registered), against every org name and tier word that has actually
+  // leaked here.
+  //
+  // A string is allowed to contain one of these words only when it came from
+  // the tenant's own config — USPTO's `riskFramework.label` really is
+  // "DoC / OMB AI risk management", and its `tierLabels.unit` really is
+  // "Business Unit". The tenant's own vocabulary is stripped out before the
+  // match, so what's left is only what this file hardcoded.
+  describe("no hardcoded org name or tier word in any user-facing registry string (ISS-3C)", () => {
+    const USER_FACING = ["label", "description", "reasonToInclude", "lockedReason"] as const
+    const FORBIDDEN =
+      /\bDoC\b|Department of Commerce|Commerce|USPTO|Patents|Trademarks|OCIO|Census|Decennial|\bDoD\b|bureau|business unit/i
+
+    // Everything a field's copy may legitimately interpolate from the tenant.
+    const ownVocabulary = (tenant: TenantConfig): string[] =>
+      [
+        tenant.riskFramework.label,
+        tenant.productName,
+        tenant.assistantName,
+        tenant.orgName,
+        tenant.shortName,
+        tenant.inventoryLabel,
+        ...Object.values(tenant.tierLabels),
+      ]
+        .filter(Boolean)
+        .flatMap((v) => [v, v.toLowerCase()])
+        // Longest first, so "Business Units" is removed before "Business Unit"
+        // can leave a stray "s" behind.
+        .sort((a, b) => b.length - a.length)
+
+    const strip = (value: string, vocabulary: string[]) =>
+      vocabulary.reduce((acc, word) => acc.split(word).join(""), value)
+
+    it("holds for every string, on every registered tenant", () => {
+      expect(ALL_TENANTS.length).toBeGreaterThanOrEqual(4)
+      for (const tenant of ALL_TENANTS) {
+        const vocabulary = ownVocabulary(tenant)
+        for (const field of getFieldRegistry(tenant)) {
+          for (const key of USER_FACING) {
+            const value = field[key]
+            if (!value) continue
+            expect(
+              strip(value, vocabulary),
+              `${tenant.id} → ${field.fieldKey}.${key}: "${value}"`,
+            ).not.toMatch(FORBIDDEN)
+          }
+        }
+      }
+    })
+
+    it("would catch a hardcoded word — the stripping is not swallowing everything", () => {
+      const vocabulary = ownVocabulary(es2)
+      expect(strip("mandatory for every bureau", vocabulary)).toMatch(FORBIDDEN)
+      expect(strip("the DoC tracker has no other signal", vocabulary)).toMatch(FORBIDDEN)
+      // …while ES2's own words survive the same treatment.
+      expect(strip(`mandatory for every ${es2.tierLabels.unit.toLowerCase()}`, vocabulary)).not.toMatch(FORBIDDEN)
+    })
+  })
+
+  it("resolves the mandating-authority copy from the tenant's own riskFramework label", () => {
+    // Two tenants whose `riskFramework.label` differs, so this can't pass by
+    // accident on a shared string.
+    expect(doc.riskFramework.label).not.toBe(dow.riskFramework.label)
+
+    for (const tenant of [doc, dow]) {
+      const byKey = getFieldRegistryByKey(tenant)
+      const unit = tenant.tierLabels.unit.toLowerCase()
+      for (const key of ["involvesSensitiveData", "aiDecisionalImpact", "aiHumanReview"]) {
+        expect(byKey[key].lockedReason, `${tenant.id}: ${key}.lockedReason`).toBe(
+          `${tenant.riskFramework.label} — required for compliance, mandatory for every ${unit}.`,
+        )
+      }
+      expect(byKey.involvesSensitiveData.reasonToInclude).toBe(
+        `Required for federal AI risk management per ${tenant.riskFramework.label}.`,
+      )
+      expect(byKey.aiDecisionalImpact.reasonToInclude).toContain(`per ${tenant.riskFramework.label}.`)
+    }
+
+    // DoC's rendered text changes here, deliberately: "DoC-mandated AI risk
+    // question — required for federal compliance…" is gone.
+    expect(getFieldRegistryByKey(doc).involvesSensitiveData.lockedReason).toBe(
+      "OMB / EO AI risk management — required for compliance, mandatory for every bureau.",
+    )
+  })
+
+  it("names the product, not another org's tracker, in the RMF Map-function reason", () => {
+    for (const tenant of [doc, es2, uspto]) {
+      const byKey = getFieldRegistryByKey(tenant)
+      for (const key of ["disseminatesToPublic", "scalable"]) {
+        expect(byKey[key].reasonToInclude, `${tenant.id}: ${key}`).toContain(
+          `${tenant.productName} has no other signal for this.`,
+        )
+      }
+    }
+  })
+
+  it("resolves the assistant's name from the tenant passed in, not the active one", () => {
+    // The registry used to read a module-load `getTenant().assistantName`
+    // snapshot, so `getFieldRegistry(otherTenant)` handed back the active
+    // tenant's assistant name.
+    const usptoSummary = getFieldRegistryByKey(uspto).useCaseDescription
+    const docSummary = getFieldRegistryByKey(doc).useCaseDescription
+    expect(usptoSummary.lockedReason).toContain(uspto.assistantName)
+    expect(docSummary.lockedReason).toContain(doc.assistantName)
+    expect(usptoSummary.lockedReason).not.toContain(doc.assistantName)
   })
 
   it("never shows a non-Commerce tenant Commerce's or USPTO's vocabulary", () => {
