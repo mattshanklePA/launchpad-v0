@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from "vitest"
 import { doc } from "@/lib/tenant/doc"
 import { dow } from "@/lib/tenant/dow"
 import { uspto } from "@/lib/tenant/uspto"
+import { es2 } from "@/lib/tenant/es2"
 import { getTenant, getOrgNameForUnit, tenantHasBureauTier, ALL_TENANTS } from "@/lib/tenant"
 import { getFormSteps } from "@/lib/steps"
 
@@ -27,6 +28,98 @@ describe("DoC tenant", () => {
 
   it("enables the AI Hub export feature", () => {
     expect(doc.features.aiHubExport).toBe(true)
+  })
+})
+
+describe("ES2 tenant (ISS-4 — Army CPE ES2)", () => {
+  it("has id 'es2' and a program-office org taxonomy whose values the seed data and migration reference", () => {
+    expect(es2.id).toBe("es2")
+    expect(es2.unit.label).toBe("Program Office")
+    // Load-bearing: db/migrations/es2/0000_es2_base_schema.sql's column
+    // comments name these exact codes, as does the seed data.
+    expect(es2.unit.options.map((o) => o.value)).toEqual(["atr", "hrfm", "logfin", "bts", "cerp"])
+    const atr = es2.unit.options.find((o) => o.value === "atr")!
+    expect(atr.offices?.map((o) => o.value)).toEqual(["acws", "atis", "fmsaces", "digitalmarket"])
+    // Only AT&R has a third tier; the rest are program-office level only.
+    for (const unit of es2.unit.options.filter((o) => o.value !== "atr")) {
+      expect(unit.offices, `${unit.value}.offices`).toBeUndefined()
+    }
+  })
+
+  it("keeps the org chart's own wording, including the ampersand-free AT&R name and the FMS-ACES en dash", () => {
+    const byValue = Object.fromEntries(es2.unit.options.map((o) => [o.value, o.label]))
+    expect(byValue.atr).toBe("Acquisition, Training and Readiness (AT&R)")
+    expect(byValue.hrfm).toBe("Human Resources & Force Management (HR-FM)")
+    expect(byValue.logfin).toBe("Logistics & Finance (LOG-FIN)")
+    expect(byValue.bts).toBe("Business Technology Solutions (BTS)")
+    expect(byValue.cerp).toBe("Consolidated ERP (C-ERP)")
+    const atrOffices = Object.fromEntries(
+      (es2.unit.options.find((o) => o.value === "atr")!.offices || []).map((o) => [o.value, o.label]),
+    )
+    expect(atrOffices.acws).toBe("Army Contract Writing System (ACWS)")
+    expect(atrOffices.atis).toBe("Army Training Information System (ATIS)")
+    expect(atrOffices.fmsaces).toBe("Foreign Military Sales – Army Case Execution System (FMS-ACES)")
+    expect(atrOffices.digitalmarket).toBe("Digital Market")
+  })
+
+  it("gives every program office its own focus areas, which is what turns the bureau tier on", () => {
+    for (const unit of es2.unit.options) {
+      expect(unit.focusAreas?.length, `${unit.value}.focusAreas`).toBeGreaterThan(0)
+    }
+    expect(es2.unit.options.find((o) => o.value === "atr")!.focusAreas).toHaveLength(6)
+    for (const unit of es2.unit.options.filter((o) => o.value !== "atr")) {
+      expect(unit.focusAreas, `${unit.value}.focusAreas`).toHaveLength(3)
+    }
+  })
+
+  it("anchors enterprise-level focus areas to the DoW AI Strategy and the ethical principles", () => {
+    const categories = new Set(es2.focusAreas.map((f) => f.category))
+    expect(categories).toEqual(new Set(["DoW AI Strategy", "DoW AI Ethical Principles"]))
+    expect(es2.focusAreas.filter((f) => f.category === "DoW AI Ethical Principles")).toHaveLength(5)
+  })
+
+  it("stays a configured instance of Keystone/Plumb rather than a second product", () => {
+    expect(es2.productName).toBe("Keystone")
+    expect(es2.assistantName).toBe("Plumb")
+  })
+
+  it("leaves trlSystemName and heroImage unset", () => {
+    // No downstream marketplace an internal submitter files into, and the hero
+    // falls back to `theme.primary` rather than inheriting another org's image.
+    expect(es2.trlSystemName).toBeUndefined()
+    expect(es2.heroImage).toBeUndefined()
+  })
+
+  it("turns off Commerce's AI Hub export and the second department sign-off tier, keeps RMF on", () => {
+    expect(es2.features.aiHubExport).toBe(false)
+    expect(es2.features.departmentFinalApproval).toBe(false)
+    expect(es2.features.rmf).toBe(true)
+    expect(es2.features.rallyExport).toBe(false)
+  })
+
+  it("does not reuse DoW's submitterRole values, which are still USPTO's underneath", () => {
+    const values = es2.submitterRoles.map((o) => o.value)
+    expect(values).not.toContain("patent_examiner")
+    expect(values).not.toContain("trademark_examiner")
+    expect(values).toContain("contracting_officer")
+    expect(es2.submitterRoles).not.toEqual(dow.submitterRoles)
+  })
+
+  // The naming rule, enforced: the department is the Department of War / DoW.
+  // "DoDD 3000.09" is a published directive number and keeps its own spelling —
+  // `\bDoD\b` does not match it, which is exactly the distinction being drawn.
+  it("never uses a bare 'DoD' in any of its strings", () => {
+    const strings: string[] = []
+    const walk = (value: unknown) => {
+      if (typeof value === "string") strings.push(value)
+      else if (Array.isArray(value)) value.forEach(walk)
+      else if (value && typeof value === "object") Object.values(value).forEach(walk)
+    }
+    walk(es2)
+    expect(strings.length).toBeGreaterThan(50)
+    for (const s of strings) expect(s, s.slice(0, 80)).not.toMatch(/\bDoD\b/)
+    // The directive number survives the rule.
+    expect(es2.humanReviewCitation).toBe("Governable / DoDD 3000.09")
   })
 })
 
@@ -101,7 +194,7 @@ describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerc
   const TIER_FIELDS = ["department", "unit", "unitPlural", "subUnit", "subUnitPlural"] as const
 
   it("every tenant defines all five tierLabels fields as non-empty strings", () => {
-    for (const tenant of [uspto, dow, doc]) {
+    for (const tenant of ALL_TENANTS) {
       for (const field of TIER_FIELDS) {
         const value = tenant.tierLabels[field]
         expect(typeof value, `${tenant.id}.tierLabels.${field}`).toBe("string")
@@ -143,6 +236,7 @@ describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerc
     // the slash so it reads in headings and inline sentences.
     expect(dow.unit.label).toBe("Command / organization")
     expect(dow.tierLabels.unit).toBe("Command")
+    expect(es2.tierLabels.unit).toBe(es2.unit.label)
   })
 
   // ISS-3B: `affectedBusinessUnits`' registry label is `Affected ${unitPlural}`,
@@ -179,11 +273,24 @@ describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerc
     expect(`Affected ${dow.tierLabels.unitPlural}`).toBe("Affected Commands")
   })
 
-  it("never leaks Commerce's bureau vocabulary into USPTO or DoW", () => {
-    for (const tenant of [uspto, dow]) {
+  it("never leaks Commerce's bureau vocabulary into USPTO, DoW, or ES2", () => {
+    for (const tenant of [uspto, dow, es2]) {
       for (const field of TIER_FIELDS) {
         expect(tenant.tierLabels[field], `${tenant.id}.tierLabels.${field}`).not.toMatch(/bureau/i)
       }
+    }
+  })
+
+  it("gives ES2 its own program-office vocabulary, with no Commerce or USPTO words in it", () => {
+    expect(es2.tierLabels).toEqual({
+      department: "Enterprise",
+      unit: "Program Office",
+      unitPlural: "Program Offices",
+      subUnit: "Program",
+      subUnitPlural: "Programs",
+    })
+    for (const field of TIER_FIELDS) {
+      expect(es2.tierLabels[field], `es2.tierLabels.${field}`).not.toMatch(/bureau|business unit|department|agency/i)
     }
   })
 })
@@ -191,6 +298,73 @@ describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerc
 describe("getTenant", () => {
   it("defaults to uspto when NEXT_PUBLIC_TENANT is unset", () => {
     expect(getTenant().id).toBe("uspto")
+  })
+
+  it("resolves NEXT_PUBLIC_TENANT=es2 to the ES2 config, without moving the default", () => {
+    const prev = process.env.NEXT_PUBLIC_TENANT
+    process.env.NEXT_PUBLIC_TENANT = "es2"
+    try {
+      expect(getTenant()).toBe(es2)
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+      else process.env.NEXT_PUBLIC_TENANT = prev
+    }
+    expect(getTenant().id).toBe("uspto")
+  })
+
+  it("registers exactly the four tenants", () => {
+    expect(ALL_TENANTS.map((t) => t.id).sort()).toEqual(["doc", "dow", "es2", "uspto"])
+  })
+})
+
+// Adding a tenant must not change any existing tenant's rendered output. These
+// pin the fields ES2 could plausibly have disturbed had it been built by
+// editing shared config rather than adding a file.
+describe("adding ES2 leaves USPTO, DoW, and DoC untouched (ISS-4 guardrail)", () => {
+  it("keeps each existing tenant's identity and tier labels exactly as they were", () => {
+    expect(uspto.tierLabels).toEqual({
+      department: "Agency",
+      unit: "Business Unit",
+      unitPlural: "Business Units",
+      subUnit: "Office",
+      subUnitPlural: "Offices",
+    })
+    expect(dow.tierLabels).toEqual({
+      department: "Department",
+      unit: "Command",
+      unitPlural: "Commands",
+      subUnit: "Office",
+      subUnitPlural: "Offices",
+    })
+    expect(doc.tierLabels).toEqual({
+      department: "Department",
+      unit: "Bureau",
+      unitPlural: "Bureaus",
+      subUnit: "Office",
+      subUnitPlural: "Offices",
+    })
+    expect([uspto.productName, uspto.assistantName]).toEqual(["LaunchPad", "Scout"])
+    expect([dow.productName, dow.assistantName]).toEqual(["LaunchPad", "Scout"])
+    expect([doc.productName, doc.assistantName]).toEqual(["Keystone", "Plumb"])
+  })
+
+  it("keeps each existing tenant's org taxonomy and feature flags as they were", () => {
+    expect(uspto.unit.label).toBe("Business unit")
+    expect(dow.unit.label).toBe("Command / organization")
+    expect(doc.unit.label).toBe("Bureau")
+    expect(uspto.features.rallyExport).toBe(true)
+    expect(doc.features.aiHubExport).toBe(true)
+    expect(doc.features.departmentFinalApproval).toBe(true)
+    expect(dow.features.rallyExport).toBe(false)
+  })
+
+  it("does not give ES2's program-office codes to anyone else", () => {
+    for (const tenant of [uspto, dow, doc]) {
+      const values = tenant.unit.options.map((o) => o.value)
+      for (const code of ["atr", "hrfm", "logfin", "bts", "cerp"]) {
+        expect(values, `${tenant.id} should not carry "${code}"`).not.toContain(code)
+      }
+    }
   })
 })
 
@@ -210,8 +384,11 @@ describe("tenantHasBureauTier", () => {
     delete process.env.NEXT_PUBLIC_TENANT
   })
 
-  it("is true only for doc, whose bureaus declare their own focus areas", () => {
+  it("is true for the tenants whose units declare their own focus areas (doc, es2)", () => {
     withTenant("doc", () => expect(tenantHasBureauTier()).toBe(true))
+    // ES2 depends on this: it gates sign-off, cross-program rationalization,
+    // and the roll-up views the demo is built around.
+    withTenant("es2", () => expect(tenantHasBureauTier()).toBe(true))
     withTenant("uspto", () => expect(tenantHasBureauTier()).toBe(false))
     withTenant("dow", () => expect(tenantHasBureauTier()).toBe(false))
   })

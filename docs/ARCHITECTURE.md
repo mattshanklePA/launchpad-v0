@@ -117,6 +117,21 @@ A `UnitOption` (`lib/tenant/types.ts`) can optionally declare its own `focusArea
 
 `lib/tenant/index.ts` exports the companion `getOrgNameForUnit(businessUnit?: string | null): string`, resolving "whose name goes in this sentence" the same way: it returns the matched `UnitOption.label` (e.g. "U.S. Census Bureau") only when that option declares `focusAreas` — the same bureau-tier gate as `getFocusAreasForUnit` — and falls back to `tenant.orgName` otherwise. Consumers: the alignment section heading in the PDF export (`lib/pdfGenerator.ts`), and (pre-#162) the now-unused Strategic Alignment Scout action above.
 
+#### Registered tenants
+
+Every tenant is one `lib/tenant/*.ts` file registered in `lib/tenant/index.ts`'s `TENANTS` map and selected at deploy time by `NEXT_PUBLIC_TENANT`. `getTenant()` defaults to `uspto` when the variable is unset, so adding a tenant never moves the default. `ALL_TENANTS` (same module) exposes the registered set for checks that must hold across all of them.
+
+| `NEXT_PUBLIC_TENANT` | Org | Product / assistant | Tier vocabulary (`tierLabels`) | Bureau tier? |
+| --- | --- | --- | --- | --- |
+| `uspto` | USPTO | LaunchPad / Scout | Agency → Business Unit | no |
+| `dow` | Department of War | LaunchPad / Scout | Department → Command | no |
+| `doc` | Department of Commerce | Keystone / Plumb | Department → Bureau → Office | yes |
+| `es2` | Enterprise Software and Services (Army CPE ES2) | Keystone / Plumb | Enterprise → Program Office → Program | yes |
+
+"Bureau tier?" is `tenantHasBureauTier()` — true when any `unit.options` entry declares its own `focusAreas`, which is what gates sign-off, cross-unit rationalization, and the roll-up views (see "Per-bureau strategic priorities" above). DoC declares it per bureau; ES2 declares it for all five program offices, deliberately, because the demo is built on those surfaces.
+
+**ES2** (`lib/tenant/es2.ts`, ISS-4) is a configured instance of the same product DoC runs — `productName` "Keystone", `assistantName` "Plumb" — not a second product. Its `unit.options` values (`atr`, `hrfm`, `logfin`, `bts`, `cerp`) and AT&R's `offices` values (`acws`, `atis`, `fmsaces`, `digitalmarket`) are load-bearing: the seed data and `db/migrations/es2/0000_es2_base_schema.sql`'s column comments reference them by name. Its labels are verbatim from the organization's published org chart, ampersand and en-dash inconsistencies included. Two optional fields are deliberately unset — `heroImage` (so the hero falls back to `theme.primary` rather than inheriting another org's imagery) and `trlSystemName` (no downstream marketplace an internal submitter files into; TRL still renders without it). Throughout that file the department is the **Department of War / DoW**; a test walks every string in the config asserting none matches `/\bDoD\b/`, while published directive numbers keep their own spelling (`humanReviewCitation` is "Governable / DoDD 3000.09"). A reusable generic commercial baseline that `es2.ts` would extend is the right long-term shape and is deliberately deferred until after the demo.
+
 #### Wizard step copy (tenant-aware)
 
 The admin dashboard fix above (`okrsLabel`) covered the admin surface only; the submission wizard itself had its own hardcoded DoW/DoD copy (org name, strategic-priorities framing, and Feasibility & Security's DoD-specific citations) that leaked onto every tenant, including DoC. That copy now comes from `TenantConfig` (`lib/tenant/types.ts`) instead:
@@ -469,7 +484,7 @@ Required env vars:
 | `SLACK_WEBHOOK_URL` | Optional. Slack notifications. |
 | `RALLY_API_KEY` | Optional. Rally integration. |
 | `AI_HUB_ENDPOINT_URL` | Optional. AI Hub inventory endpoint (`lib/adapters/aiHub/aiHubConnector.ts`); unset means the adapter no-ops (log + succeed) instead of pushing. |
-| `NEXT_PUBLIC_TENANT` | Multi-tenant builds only. Selects tenant config; defaults to `uspto`. DoW build uses `dow`. |
+| `NEXT_PUBLIC_TENANT` | Multi-tenant builds only. Selects tenant config; defaults to `uspto`. One of `uspto` / `dow` / `doc` / `es2` — see "Registered tenants" above. |
 
 **Multi-tenant:** a `getTenant()` resolver keyed off `NEXT_PUBLIC_TENANT` selects branding/config per deployment. Each tenant = separate Vercel project + Supabase instance + git branch (e.g., `USPTO-launchpad`, `dow`). The admin dashboard (`app/admin/page.tsx`) reads its header, subtitle, tab label, and seed OKR/priorities list from `getTenant().okrsLabel` and `getTenant().focusAreas` — no org-specific copy is hardcoded there, so a wrong tenant's strategic-priority term or content never leaks into another org's dashboard.
 
