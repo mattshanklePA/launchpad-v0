@@ -84,6 +84,18 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
     },
   ],
 
+  // Department -> Command. `unit` agrees with `unit.label` below ("Command /
+  // organization") but drops the slash, since the tier noun is read inline in
+  // sentences and headings where the alternative reads badly. Like USPTO, DoW
+  // configures no third tier, so `subUnit`/`subUnitPlural` never render today.
+  tierLabels: {
+    department: "Department",
+    unit: "Command",
+    unitPlural: "Commands",
+    subUnit: "Office",
+    subUnitPlural: "Offices",
+  },
+
   unit: {
     label: "Command / organization",
     options: [

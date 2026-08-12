@@ -79,6 +79,17 @@ A serious AI idea names the federal priority and the Department mission it advan
     },
   ],
 
+  // Department -> Bureau -> Office. These are the exact words the DoC UI
+  // printed when the tier vocabulary was hardcoded, so nothing on screen
+  // changed when it moved into config.
+  tierLabels: {
+    department: "Department",
+    unit: "Bureau",
+    unitPlural: "Bureaus",
+    subUnit: "Office",
+    subUnitPlural: "Offices",
+  },
+
   unit: {
     label: "Bureau",
     options: [

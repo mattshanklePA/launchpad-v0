@@ -71,7 +71,7 @@ export function DepartmentDashboard() {
     <DashboardShell baseScope={baseScope} hierarchy={hierarchy} selection={selection} onSelect={setSelection} breadcrumb={currentScopeLabel}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Department Dashboard</h1>
+          <h1 className="text-xl font-semibold text-foreground">{tenant.tierLabels.department} Dashboard</h1>
           <p className="text-sm text-muted-foreground">{currentScopeLabel}</p>
         </div>
         <AdminToolsSection session={session} />

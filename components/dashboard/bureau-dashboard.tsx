@@ -104,7 +104,7 @@ export function BureauDashboard() {
           {scope.level === "bureau" && officeRows.length > 0 && (
             <Card className="shadow-none">
               <CardHeader className="border-b px-4 py-3">
-                <CardTitle className="text-sm font-semibold">Office breakdown</CardTitle>
+                <CardTitle className="text-sm font-semibold">{tenant.tierLabels.subUnit} breakdown</CardTitle>
               </CardHeader>
               <CardContent className="p-3">
                 <OfficeRollup submissions={queue} bureau={scope.businessUnit} bureauLabel={currentScopeLabel} />

@@ -72,6 +72,18 @@ A serious AI idea names the specific priorities it advances, describes the mecha
     },
   ],
 
+  // USPTO is an agency of business units; it has no third tier configured
+  // (no `UnitOption.offices`), so `subUnit`/`subUnitPlural` are the generic
+  // fallback rather than a tier that renders today. `unit` agrees with
+  // `unit.label` below so the two never drift.
+  tierLabels: {
+    department: "Agency",
+    unit: "Business unit",
+    unitPlural: "Business units",
+    subUnit: "Office",
+    subUnitPlural: "Offices",
+  },
+
   unit: {
     label: "Business unit",
     options: [

@@ -151,7 +151,7 @@ function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: 
     {
       title: "Vet & de-dupe",
       description: bureauTier
-        ? "Every use case is checked against what's already in flight across bureaus, so duplicate effort gets flagged before it's funded twice."
+        ? `Every use case is checked against what's already in flight across ${tenant.tierLabels.unitPlural.toLowerCase()}, so duplicate effort gets flagged before it's funded twice.`
         : "Every use case is checked against what's already in flight, so duplicate effort gets flagged before it's funded twice.",
     },
     {
@@ -200,9 +200,9 @@ function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureau
     },
     {
       icon: GitMerge,
-      title: bureauTier ? "Cross-bureau duplicate detection" : "Duplicate detection",
+      title: bureauTier ? `Cross-${tenant.tierLabels.unit.toLowerCase()} duplicate detection` : "Duplicate detection",
       description: bureauTier
-        ? "Flags overlapping or duplicate efforts across bureaus before they're funded twice."
+        ? `Flags overlapping or duplicate efforts across ${tenant.tierLabels.unitPlural.toLowerCase()} before they're funded twice.`
         : "Flags overlapping or duplicate efforts before they're funded twice.",
     },
     {
@@ -261,6 +261,7 @@ const PROOF_SIGNALS = [
 ]
 
 function Proof({ accent }: { accent: AccentClasses }) {
+  const unitLower = getTenant().tierLabels.unit.toLowerCase()
   return (
     <section className="bg-white py-16">
       <div className="container">
@@ -275,8 +276,10 @@ function Proof({ accent }: { accent: AccentClasses }) {
           ))}
         </div>
         <blockquote className="mt-10 rounded-xl border bg-gray-50 p-6 text-uspto-gray-text">
-          <p className="italic">&ldquo;[Placeholder: pilot bureau quote on time-to-inventory or duplicate-catch impact.]&rdquo;</p>
-          <footer className="mt-3 text-sm not-italic text-muted-foreground">&mdash; [Placeholder name, title], [Placeholder bureau]</footer>
+          <p className="italic">&ldquo;[Placeholder: pilot {unitLower} quote on time-to-inventory or duplicate-catch impact.]&rdquo;</p>
+          <footer className="mt-3 text-sm not-italic text-muted-foreground">
+            &mdash; [Placeholder name, title], [Placeholder {unitLower}]
+          </footer>
         </blockquote>
       </div>
     </section>

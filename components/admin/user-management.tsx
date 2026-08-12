@@ -88,6 +88,7 @@ export function UserManagement() {
   const session = typeof window !== "undefined" ? getSession() : null
   const unitOptions = getTenant().unit.options
   const unitLabel = getTenant().unit.label
+  const tiers = getTenant().tierLabels
   const formOffices = unitOptions.find((o) => o.value === formBusinessUnit)?.offices || []
 
   // Re-render the local users array from the shared cache.
@@ -182,7 +183,7 @@ export function UserManagement() {
     if (newOffice === (user.office || "")) return
     const result = await updateUserProfile(user.id, { office: newOffice })
     if (!result.ok) {
-      toast({ variant: "destructive", title: "Could not update office", description: result.error })
+      toast({ variant: "destructive", title: `Could not update ${tiers.subUnit.toLowerCase()}`, description: result.error })
       return
     }
     toast({
@@ -290,7 +291,7 @@ export function UserManagement() {
               </div>
               {formOffices.length > 0 && (
                 <div className="space-y-1">
-                  <Label htmlFor="newOffice">Office</Label>
+                  <Label htmlFor="newOffice">{tiers.subUnit}</Label>
                   <Select
                     value={formOffice || "_none"}
                     onValueChange={(v) => setFormOffice(v === "_none" ? "" : v)}
@@ -415,7 +416,7 @@ export function UserManagement() {
                   </div>
                   {userOffices.length > 0 && (
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Office</Label>
+                      <Label className="text-xs text-muted-foreground">{tiers.subUnit}</Label>
                       <Select
                         value={u.office || "_none"}
                         onValueChange={(v) => handleOfficeChange(u, v === "_none" ? "" : v)}

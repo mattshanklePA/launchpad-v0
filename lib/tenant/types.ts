@@ -60,6 +60,18 @@ export type TenantConfig = {
   // Org taxonomy (USPTO "business unit" -> DoW "command")
   unit: { label: string; options: UnitOption[] }
 
+  // On-screen names for the org hierarchy tiers. The tiers themselves are
+  // structural (see tenantHasBureauTier, submissions.business_unit,
+  // submissions.office); these are only what a user reads. Every tenant
+  // supplies its own, so no org's vocabulary leaks into another's UI.
+  tierLabels: {
+    department: string    // top tier, e.g. "Department"
+    unit: string          // middle tier, singular, e.g. "Bureau"
+    unitPlural: string    // e.g. "Bureaus"
+    subUnit: string       // optional third tier, singular, e.g. "Office"
+    subUnitPlural: string // e.g. "Offices"
+  }
+
   // Submit-wizard dropdown options (issue #147). Each tenant supplies its own
   // value/label list rather than the wizard hardcoding USPTO's patent/
   // trademark taxonomy or DoW's DoD Impact Levels for every deployment — the

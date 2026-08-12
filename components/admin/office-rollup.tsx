@@ -7,6 +7,7 @@
 import type { Submission } from "@/lib/submissions"
 import { officeRollupRows } from "@/lib/officeRollup"
 import { STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
+import { getTenant } from "@/lib/tenant"
 import { Badge } from "@/components/ui/badge"
 
 const dash = <span className="text-muted-foreground/40">–</span>
@@ -20,17 +21,20 @@ export function OfficeRollup({
   bureau: string
   bureauLabel: string
 }) {
+  const tiers = getTenant().tierLabels
   const rows = officeRollupRows(submissions, bureau)
   if (rows.length === 0) return null
 
   return (
     <div className="ml-4 mb-2 rounded-md border bg-muted/20 p-3">
-      <div className="text-xs font-semibold text-muted-foreground mb-2">{bureauLabel} offices</div>
+      <div className="text-xs font-semibold text-muted-foreground mb-2">
+        {bureauLabel} {tiers.subUnitPlural.toLowerCase()}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              <th className="text-left font-semibold py-1 pr-3">Office</th>
+              <th className="text-left font-semibold py-1 pr-3">{tiers.subUnit}</th>
               {STATUS_ORDER.map((st) => (
                 <th key={st} className="text-center font-semibold px-2 py-1 whitespace-nowrap">
                   {STATUS_LABEL[st]}

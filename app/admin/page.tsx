@@ -811,7 +811,7 @@ function AdminPageInner() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Department Breakdown</CardTitle>
+                  <CardTitle>{tenant.tierLabels.department} Breakdown</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -839,10 +839,12 @@ function AdminPageInner() {
                 {bureausWithFocusAreas.length > 0 && (
                   <Select value={okrBureau || "__department__"} onValueChange={(v) => setOkrBureau(v === "__department__" ? "" : v)}>
                     <SelectTrigger className="w-[240px]">
-                      <SelectValue placeholder={`Department-level (all ${tenant.unit.label.toLowerCase()}s)`} />
+                      <SelectValue placeholder={`${tenant.tierLabels.department}-level (all ${tenant.tierLabels.unitPlural.toLowerCase()})`} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__department__">Department-level (all {tenant.unit.label.toLowerCase()}s)</SelectItem>
+                      <SelectItem value="__department__">
+                        {tenant.tierLabels.department}-level (all {tenant.tierLabels.unitPlural.toLowerCase()})
+                      </SelectItem>
                       {bureausWithFocusAreas.map((b) => (
                         <SelectItem key={b.value} value={b.value}>
                           {b.label}

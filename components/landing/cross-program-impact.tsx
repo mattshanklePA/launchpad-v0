@@ -1,14 +1,15 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
-const programs = [
-  { name: "Patents", description: "Use cases for patent examination and processing." },
-  { name: "Trademarks", description: "Tools and processes for the trademark lifecycle." },
-  { name: "IT Systems", description: "Improvements to internal and external IT infrastructure." },
-  { name: "Public Engagement", description: "Ideas for better outreach and public services." },
-  { name: "All Offices", description: "Broad initiatives that impact the entire agency." },
-]
+import { getTenant } from "@/lib/tenant"
 
 export function CrossProgramImpact() {
+  const programs = [
+    { name: "Patents", description: "Use cases for patent examination and processing." },
+    { name: "Trademarks", description: "Tools and processes for the trademark lifecycle." },
+    { name: "IT Systems", description: "Improvements to internal and external IT infrastructure." },
+    { name: "Public Engagement", description: "Ideas for better outreach and public services." },
+    { name: `All ${getTenant().tierLabels.subUnitPlural}`, description: "Broad initiatives that impact the entire agency." },
+  ]
+
   return (
     <TooltipProvider>
       <section className="text-center py-16">

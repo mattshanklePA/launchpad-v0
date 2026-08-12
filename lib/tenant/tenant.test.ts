@@ -97,6 +97,57 @@ describe("admin dashboard OKRs label", () => {
   })
 })
 
+describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerce strings)", () => {
+  const TIER_FIELDS = ["department", "unit", "unitPlural", "subUnit", "subUnitPlural"] as const
+
+  it("every tenant defines all five tierLabels fields as non-empty strings", () => {
+    for (const tenant of [uspto, dow, doc]) {
+      for (const field of TIER_FIELDS) {
+        const value = tenant.tierLabels[field]
+        expect(typeof value, `${tenant.id}.tierLabels.${field}`).toBe("string")
+        expect(value.trim().length, `${tenant.id}.tierLabels.${field}`).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  // Regression guardrail: these are the exact words the DoC UI printed when
+  // the tier vocabulary was hardcoded ("Bureau sign-off", "All bureaus",
+  // "Office breakdown", "Department Dashboard", ...). If any of these change,
+  // the Commerce tenant's rendered text changes with it.
+  it("resolves DoC to the same words the UI printed before the sweep", () => {
+    expect(doc.tierLabels).toEqual({
+      department: "Department",
+      unit: "Bureau",
+      unitPlural: "Bureaus",
+      subUnit: "Office",
+      subUnitPlural: "Offices",
+    })
+    // Lowercased inline forms ("across bureaus", "your bureau's sign-off
+    // progress", "{bureau} offices") have to resolve back too.
+    expect(doc.tierLabels.unit.toLowerCase()).toBe("bureau")
+    expect(doc.tierLabels.unitPlural.toLowerCase()).toBe("bureaus")
+    expect(doc.tierLabels.subUnitPlural.toLowerCase()).toBe("offices")
+    expect(doc.tierLabels.department.toLowerCase()).toBe("department")
+  })
+
+  it("keeps each tenant's middle tier in step with its own unit.label", () => {
+    expect(doc.tierLabels.unit).toBe(doc.unit.label)
+    expect(uspto.tierLabels.unit).toBe(uspto.unit.label)
+    // DoW's form-field label is "Command / organization"; the tier noun drops
+    // the slash so it reads in headings and inline sentences.
+    expect(dow.unit.label).toBe("Command / organization")
+    expect(dow.tierLabels.unit).toBe("Command")
+  })
+
+  it("never leaks Commerce's bureau vocabulary into USPTO or DoW", () => {
+    for (const tenant of [uspto, dow]) {
+      for (const field of TIER_FIELDS) {
+        expect(tenant.tierLabels[field], `${tenant.id}.tierLabels.${field}`).not.toMatch(/bureau/i)
+      }
+    }
+  })
+})
+
 describe("getTenant", () => {
   it("defaults to uspto when NEXT_PUBLIC_TENANT is unset", () => {
     expect(getTenant().id).toBe("uspto")
