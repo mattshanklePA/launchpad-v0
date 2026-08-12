@@ -18,7 +18,21 @@ afterEach(() => {
   container = null
   root = null
   localStorage.clear()
+  delete process.env.NEXT_PUBLIC_TENANT
 })
+
+// The sign-off stage names the tenant's middle org tier (`tierLabels.unit`),
+// so the bureau-tier case has to run as a bureau-tier tenant to read "Bureau".
+function withTenant(id: string, run: () => void) {
+  const prev = process.env.NEXT_PUBLIC_TENANT
+  process.env.NEXT_PUBLIC_TENANT = id
+  try {
+    run()
+  } finally {
+    if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = prev
+  }
+}
 
 function render(ui: ReactElement) {
   container = document.createElement("div")
@@ -37,8 +51,18 @@ describe("OrientationBanner", () => {
   })
 
   it("adds the bureau sign-off stage for a bureau-tier tenant", () => {
-    const el = render(<OrientationBanner bureauTier={true} />)
-    expect(el.textContent).toContain("Bureau sign-off")
+    withTenant("doc", () => {
+      const el = render(<OrientationBanner bureauTier={true} />)
+      expect(el.textContent).toContain("Bureau sign-off")
+    })
+  })
+
+  it("names the sign-off stage with the tenant's own tier label", () => {
+    withTenant("dow", () => {
+      const el = render(<OrientationBanner bureauTier={true} />)
+      expect(el.textContent).toContain("Command sign-off")
+      expect(el.textContent).not.toContain("Bureau sign-off")
+    })
   })
 
   it("hides once dismissed, and stays dismissed across a fresh mount", () => {

@@ -83,13 +83,13 @@ export function Step1SubmitterInfo() {
         )}
         {isVisible("submitterSubOffice") && offices.length > 0 && (
           <div className="space-y-2">
-            <Label htmlFor="submitterSubOffice">Office</Label>
+            <Label htmlFor="submitterSubOffice">{getTenant().tierLabels.subUnit}</Label>
             <Select
               value={formData.submitterSubOffice}
               onValueChange={(value) => setFormData((prev) => ({ ...prev, submitterSubOffice: value as any }))}
             >
               <SelectTrigger id="submitterSubOffice">
-                <SelectValue placeholder="Select your office (optional)..." />
+                <SelectValue placeholder={`Select your ${getTenant().tierLabels.subUnit.toLowerCase()} (optional)...`} />
               </SelectTrigger>
               <SelectContent>
                 {offices.map((o) => (

@@ -40,11 +40,15 @@ import {
 import { adminFieldGroups } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
+import { getTenant } from "@/lib/tenant"
 import { subscribeToCache } from "@/lib/dataCache"
 
 export function FormConfigPanel() {
   const [config, setConfig] = useState<FormConfig | null>(null)
   const { toast } = useToast()
+  const tiers = getTenant().tierLabels
+  const unitLower = tiers.unit.toLowerCase()
+  const unitPluralLower = tiers.unitPlural.toLowerCase()
 
   // Re-derive config from the shared cache on mount AND whenever the cache
   // changes (e.g., when the DataProvider's initial fetch lands after this
@@ -91,8 +95,8 @@ export function FormConfigPanel() {
     }
     setConfig(getFormConfig())
     toast({
-      title: next ? "Marked mandatory for all bureaus" : "No longer mandatory",
-      description: `"${field.label}" ${next ? "now appears for, and can't be turned off by, every bureau." : "is back to an optional field bureaus can toggle."}`,
+      title: next ? `Marked mandatory for all ${unitPluralLower}` : "No longer mandatory",
+      description: `"${field.label}" ${next ? `now appears for, and can't be turned off by, every ${unitLower}.` : `is back to an optional field ${unitPluralLower} can toggle.`}`,
     })
   }
 
@@ -197,13 +201,13 @@ export function FormConfigPanel() {
 
                   let levelHint: string | null = null
                   if (level === "omb" && !toggleAllowed) {
-                    levelHint = "Required by OMB — mandatory for every bureau, cannot be turned off."
+                    levelHint = `Required by OMB — mandatory for every ${unitLower}, cannot be turned off.`
                   } else if (level === "department" && !toggleAllowed) {
-                    levelHint = "Required by the Department — mandatory for every bureau, cannot be turned off."
+                    levelHint = `Required by the ${tiers.department} — mandatory for every ${unitLower}, cannot be turned off.`
                   } else if (mandatoryOverride) {
-                    levelHint = "Marked mandatory for all bureaus by a department admin."
+                    levelHint = `Marked mandatory for all ${unitPluralLower} by a ${tiers.department.toLowerCase()} admin.`
                   } else if (owningBureauLabel) {
-                    levelHint = `${owningBureauLabel} optional field — only that bureau can toggle it.`
+                    levelHint = `${owningBureauLabel} optional field — only that ${unitLower} can toggle it.`
                   }
 
                   return (
@@ -239,13 +243,13 @@ export function FormConfigPanel() {
                             {level === "department" && (
                               <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
                                 <Building2 className="h-2.5 w-2.5 mr-1" />
-                                Department
+                                {tiers.department}
                               </Badge>
                             )}
                             {mandatoryOverride && (
                               <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
                                 <Lock className="h-2.5 w-2.5 mr-1" />
-                                Mandatory (all bureaus)
+                                Mandatory (all {unitPluralLower})
                               </Badge>
                             )}
                             {owningBureauLabel && (
@@ -287,7 +291,7 @@ export function FormConfigPanel() {
                               className="h-6 px-2 text-[10px] text-muted-foreground"
                               onClick={() => handleToggleMandatory(field, !mandatoryOverride)}
                             >
-                              {mandatoryOverride ? "Unmark mandatory" : "Mark mandatory for all bureaus"}
+                              {mandatoryOverride ? "Unmark mandatory" : `Mark mandatory for all ${unitPluralLower}`}
                             </Button>
                           )}
                         </div>

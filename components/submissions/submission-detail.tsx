@@ -117,6 +117,7 @@ function RiskRow({ ok, label }: { ok: boolean; label: string }) {
 
 export function SubmissionDetail({ id }: { id: string }) {
   const tenant = getTenant()
+  const tiers = tenant.tierLabels
   const { loaded, refetchSubmissions } = useDataProvider()
   const [sub, setSub] = useState<Submission | null>(null)
   const [ready, setReady] = useState(false)
@@ -453,12 +454,16 @@ export function SubmissionDetail({ id }: { id: string }) {
         <div className={cn("rounded-lg border border-l-4 bg-card p-4 space-y-2", departmentApproval ? "border-l-healthy" : "border-l-attention")}>
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium text-sm">Department final approval</span>
+            <span className="font-medium text-sm">{tiers.department} final approval</span>
             <Badge
               variant="outline"
               className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", departmentApproval ? STATUS_BADGE_CLASS.healthy : STATUS_BADGE_CLASS.attention)}
             >
-              {departmentApproval ? (departmentApproval.decision === "approved" ? "Confirmed" : "Confirmed rejection") : "Awaiting department confirmation"}
+              {departmentApproval
+                ? departmentApproval.decision === "approved"
+                  ? "Confirmed"
+                  : "Confirmed rejection"
+                : `Awaiting ${tiers.department.toLowerCase()} confirmation`}
             </Badge>
           </div>
           {departmentApproval ? (
@@ -652,14 +657,18 @@ export function SubmissionDetail({ id }: { id: string }) {
               <ChecklistItem
                 ref={rationalizationRef}
                 index={rationalizationIndex}
-                title={<GlossaryTerm term="crossBureauRationalization">Cross-bureau rationalization</GlossaryTerm>}
+                title={
+                  <GlossaryTerm term="crossBureauRationalization">
+                    Cross-{tiers.unit.toLowerCase()} rationalization
+                  </GlossaryTerm>
+                }
                 statusLabel={rationalizationStatusLabel}
                 statusClassName={rationalizationStatusClass}
                 highlighted={highlightedItem === "rationalization"}
               >
                 <p className="text-sm text-muted-foreground">
                   {blockReason
-                    ? "This use case closely matches work filed under another bureau."
+                    ? `This use case closely matches work filed under another ${tiers.unit.toLowerCase()}.`
                     : rationalizationDecision?.decision === "consolidated"
                       ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}.`
                       : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}` : ""}.`}

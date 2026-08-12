@@ -3,8 +3,9 @@
 // Department-level roll-up: one row per org unit (bureau, for DoC) with a count
 // of use cases in each pipeline status, a total, and a high-impact tally, plus a
 // grand-total row. Gives leadership the "one commerce" cross-bureau view without
-// drilling in. Tenant-neutral — uses getTenant().unit for labels/ordering, so it
-// reads as a "Bureau roll-up" for DoC and a "Business unit roll-up" for USPTO.
+// drilling in. Tenant-neutral — tier nouns come from getTenant().tierLabels and
+// row ordering from getTenant().unit.options, so it reads as a "Bureau roll-up"
+// for DoC and a "Business unit roll-up" for USPTO.
 
 import { Fragment, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
@@ -24,8 +25,10 @@ const dash = <span className="text-muted-foreground/40">–</span>
 
 export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
-  const unitLabel = getTenant().unit.label
-  const unitLower = unitLabel.toLowerCase()
+  const tiers = getTenant().tierLabels
+  const unitLabel = tiers.unit
+  const unitLower = tiers.unit.toLowerCase()
+  const unitPluralLower = tiers.unitPlural.toLowerCase()
   const configOrder = getTenant().unit.options.map((o) => o.value)
   // Sign-off column only applies where bureau sign-off exists (DoC) — USPTO/DoW
   // render exactly as before. See lib/bureauSignoff.ts.
@@ -93,8 +96,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
       <div className="flex items-baseline justify-between mb-3 gap-3">
         <h2 className="text-sm font-semibold text-uspto-gray-text">{unitLabel} roll-up</h2>
         <span className="text-xs text-muted-foreground">
-          {submissions.length} use cases across {units.length} {unitLower}
-          {units.length === 1 ? "" : "s"}
+          {submissions.length} use cases across {units.length} {units.length === 1 ? unitLower : unitPluralLower}
           {grandConsolidated > 0 && ` · consolidates to ${reportableEntries} OMB reportable ${reportableEntries === 1 ? "entry" : "entries"}`}
         </span>
       </div>
@@ -196,7 +198,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               )
             })}
             <tr className="border-t-2 border-gray-300 font-semibold">
-              <td className="py-2 pr-3">All {unitLower}s</td>
+              <td className="py-2 pr-3">All {unitPluralLower}</td>
               {STATUS_ORDER.map((st) => (
                 <td key={st} className="text-center px-2 py-2">
                   {grand(st) || dash}

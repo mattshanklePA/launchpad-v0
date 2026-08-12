@@ -12,6 +12,7 @@
 
 import { Compass, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getTenant } from "@/lib/tenant"
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 
 export function OrientationBanner({ bureauTier }: { bureauTier: boolean }) {
@@ -19,7 +20,7 @@ export function OrientationBanner({ bureauTier }: { bureauTier: boolean }) {
   if (dismissed) return null
 
   const stages = bureauTier
-    ? ["Submitted", "In review", "Approved", "Bureau sign-off", "OMB reportable"]
+    ? ["Submitted", "In review", "Approved", `${getTenant().tierLabels.unit} sign-off`, "OMB reportable"]
     : ["Submitted", "In review", "Approved", "OMB reportable"]
 
   return (

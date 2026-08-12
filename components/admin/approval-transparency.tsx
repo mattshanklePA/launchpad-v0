@@ -20,6 +20,7 @@
 import { getSession } from "@/lib/auth"
 import type { Submission } from "@/lib/submissions"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
+import { getTenant } from "@/lib/tenant"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { approvalTransparency, hasDepartmentTransparency, type SignoffProgress } from "@/lib/bureauSignoff"
 import { ShieldCheck } from "lucide-react"
@@ -41,6 +42,7 @@ const PROGRESS_CLASSES: Record<SignoffProgress, string> = {
 export function ApprovalTransparency({ submissions }: { submissions: Submission[] }) {
   if (!tenantHasBureauTier()) return null
 
+  const tiers = getTenant().tierLabels
   const session = typeof window !== "undefined" ? getSession() : null
   const viewer = session
     ? { role: session.role, email: session.email, businessUnit: session.businessUnit, office: session.office }
@@ -56,10 +58,12 @@ export function ApprovalTransparency({ submissions }: { submissions: Submission[
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <h2 className="text-sm font-semibold text-uspto-gray-text flex items-center gap-2">
           <ShieldCheck className="w-4 h-4" />
-          {isDepartmentView ? "Department approval transparency" : "Bureau sign-off"}
+          {isDepartmentView ? `${tiers.department} approval transparency` : `${tiers.unit} sign-off`}
         </h2>
         <span className="text-xs text-muted-foreground">
-          {isDepartmentView ? "Every bureau's sign-off progress, department-wide" : "Your bureau's sign-off progress"}
+          {isDepartmentView
+            ? `Every ${tiers.unit.toLowerCase()}'s sign-off progress, ${tiers.department.toLowerCase()}-wide`
+            : `Your ${tiers.unit.toLowerCase()}'s sign-off progress`}
         </span>
       </div>
 
@@ -67,7 +71,7 @@ export function ApprovalTransparency({ submissions }: { submissions: Submission[
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-muted-foreground">
-              <th className="text-left font-semibold py-2 pr-3">Bureau</th>
+              <th className="text-left font-semibold py-2 pr-3">{tiers.unit}</th>
               <th className="text-center font-semibold px-2 py-2">Signed off</th>
               <th className="text-center font-semibold px-2 py-2">Pending</th>
               <th className="text-center font-semibold px-2 py-2">Rejected</th>
