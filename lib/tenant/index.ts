@@ -2,8 +2,9 @@ import type { TenantConfig } from "./types"
 import { uspto } from "./uspto"
 import { dow } from "./dow"
 import { doc } from "./doc"
+import { es2 } from "./es2"
 
-const TENANTS: Record<string, TenantConfig> = { uspto, dow, doc }
+const TENANTS: Record<string, TenantConfig> = { uspto, dow, doc, es2 }
 
 // Every registered tenant, for checks that must hold across all of them (e.g.
 // the tier-label convention pinned in tenant.test.ts). Derived from TENANTS so
