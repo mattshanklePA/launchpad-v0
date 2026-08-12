@@ -21,7 +21,9 @@ export function FieldRequirementBadge({ fieldKey }: { fieldKey: keyof FormData |
   if (level !== "omb" && level !== "department") return null
 
   const Icon = level === "omb" ? Landmark : Building2
-  const label = level === "omb" ? `Required (${getTenant().inventoryShortLabel})` : "Required (Department)"
+  const tenant = getTenant()
+  const label =
+    level === "omb" ? `Required (${tenant.inventoryShortLabel})` : `Required (${tenant.tierLabels.department})`
 
   return (
     <TooltipProvider>

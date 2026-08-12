@@ -54,7 +54,7 @@ export function DecisionHeader({
 }) {
   const [showAnalysis, setShowAnalysis] = useState(false)
   const hasAnalysis = !!assist && (assist.strengths.length > 0 || assist.gaps.length > 0)
-  const primaryLabel = blockingText ? "Resolve the blocker" : assisting ? "Approve" : "Approve as recommended"
+  const primaryLabel = blockingText ? "Resolve the blocker" : "Approve as recommended"
 
   return (
     <section aria-labelledby="decision-heading" className="space-y-3 rounded-lg border bg-card p-4 text-card-foreground">
@@ -68,13 +68,6 @@ export function DecisionHeader({
         </Badge>
       </div>
 
-      {assisting && (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          Reading the submission…
-        </p>
-      )}
-
       {!assisting && assist && (
         <div className="flex flex-wrap items-start gap-2">
           <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS[DISPOSITION_KEYSTONE[assist.suggestedDisposition]])}>
@@ -87,21 +80,29 @@ export function DecisionHeader({
       <div
         className={cn(
           "flex items-start gap-2 rounded-md border border-l-4 bg-card p-3 text-sm text-foreground",
-          STATUS_BORDER_L_CLASS[blockingText ? "attention" : "healthy"],
+          STATUS_BORDER_L_CLASS[assisting ? "neutral" : blockingText ? "attention" : "healthy"],
         )}
       >
-        {blockingText ? (
+        {assisting ? (
+          <Loader2 className="mt-0.5 h-4 w-4 flex-none animate-spin text-muted-foreground" aria-hidden="true" />
+        ) : blockingText ? (
           <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-attention-foreground" aria-hidden="true" />
         ) : (
           <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-healthy-foreground" aria-hidden="true" />
         )}
-        <span>{blockingText ?? "Nothing is blocking approval right now."}</span>
+        <span>
+          {assisting
+            ? `${assistantName} is reviewing this submission…`
+            : blockingText ?? "Nothing is blocking approval right now."}
+        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={blockingText ? onResolveBlocker : onApprove} disabled={busy}>
-          {primaryLabel}
-        </Button>
+        {!assisting && (
+          <Button onClick={blockingText ? onResolveBlocker : onApprove} disabled={busy}>
+            {primaryLabel}
+          </Button>
+        )}
         {hasAnalysis && (
           <Button
             type="button"

@@ -42,6 +42,10 @@ export type GlossaryEntry = {
 export function getGlossary(tenant: TenantConfig = getTenant()): Record<GlossaryTermKey, GlossaryEntry> {
   const unit = tenant.tierLabels.unit.toLowerCase()
   const unitPlural = tenant.tierLabels.unitPlural.toLowerCase()
+  const department = tenant.tierLabels.department.toLowerCase()
+  const inventory = tenant.inventoryLabel
+  const inventoryShort = tenant.inventoryShortLabel
+  const authority = tenant.riskFramework.label
   return {
     crossBureauRationalization: {
       term: `Cross-${unit} rationalization`,
@@ -49,19 +53,19 @@ export function getGlossary(tenant: TenantConfig = getTenant()): Record<Glossary
         `A check for AI use cases that look like the same effort being built more than once across different ${unitPlural}, so a reviewer can decide whether to consolidate them or keep them separate before approving.`,
     },
     ombReportability: {
-      term: "OMB reportability",
+      term: `${inventoryShort} reportability`,
       definition:
-        "Whether federal guidance requires this AI use case to appear in the government-wide AI use case inventory OMB collects each year.",
+        `Whether governance requires this AI use case to appear in the ${inventory} the organization reports each year.`,
     },
     consolidatedIndividualReporting: {
       term: "Consolidated / individual reporting",
       definition:
-        "How a use case is counted in the OMB inventory: \"Consolidated\" means it matches a common, widely-used AI category and is reported once for the whole department instead of once per bureau; \"Individual\" means it's reported on its own.",
+        `How a use case is counted in the ${inventory}: "Consolidated" means it matches a common, widely-used AI category and is reported once for the whole ${department} instead of once per ${unit}; "Individual" means it's reported on its own.`,
     },
     highImpactDetermination: {
       term: "High-impact determination",
       definition:
-        "A recommendation on whether an AI use case meets OMB's definition of \"high-impact\" — meaning its output could meaningfully affect people's rights, safety, access to benefits, resource allocation, or enforcement outcomes. A reviewer makes the final call.",
+        `A recommendation on whether an AI use case meets the high-impact definition in ${authority} — meaning its output could meaningfully affect people's rights, safety, access to benefits, resource allocation, or enforcement outcomes. A reviewer makes the final call.`,
     },
     nistAiRmf: {
       term: "NIST AI RMF",

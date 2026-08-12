@@ -6,8 +6,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
-
-const PRIMARY_ADMIN_EMAIL = "matt.shankle@uspto.gov"
+import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth"
 
 type ApiUser = {
   id: string

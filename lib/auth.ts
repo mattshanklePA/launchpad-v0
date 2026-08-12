@@ -16,6 +16,11 @@ import {
   setCachedUsers,
 } from "@/lib/dataCache"
 
+// The seeded primary admin, protected from destructive role changes and
+// deletion. An identity constant, never display text — kept here so the API
+// route and the admin UI can't drift to two different addresses.
+export const PRIMARY_ADMIN_EMAIL = "matt.shankle@uspto.gov"
+
 export type Role = "admin" | "reviewer" | "submitter"
 
 export type JobRole =
