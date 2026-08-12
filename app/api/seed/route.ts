@@ -4,13 +4,17 @@
 //   GET  → peek at seed status without mutating.
 //
 // Seed data is per-tenant: USPTO uses lib/seedSubmissions.ts, DoC uses
-// lib/seedSubmissionsDoc.ts. Other tenants (DoW, ...) are seeded explicitly via
-// SQL, so the route no-ops for them to avoid cross-tenant pollution.
+// lib/seedSubmissionsDoc.ts, ES2 uses lib/seedSubmissionsEs2.ts. Other tenants
+// (DoW, ...) are seeded explicitly via SQL, so the route no-ops for them to
+// avoid cross-tenant pollution. ES2's *users* are still SQL
+// (db/migrations/es2/0001_es2_users_seed.sql); only its submissions come from
+// here, same split as DoC.
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseClient"
 import { seedSubmissions } from "@/lib/seedSubmissions"
 import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
+import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
 import { getTenant } from "@/lib/tenant"
 import { errToDetail } from "@/lib/errToDetail"
 import type { Submission } from "@/lib/submissions"
@@ -23,6 +27,8 @@ function seedForActiveTenant(): Submission[] | null {
       return seedSubmissions
     case "doc":
       return docSeedSubmissions
+    case "es2":
+      return es2SeedSubmissions
     default:
       return null
   }
