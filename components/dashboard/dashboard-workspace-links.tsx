@@ -17,6 +17,7 @@ import { ArrowRight, ChevronDown, Database, Download, Scale, SlidersHorizontal, 
 import { isAdmin, type Session } from "@/lib/auth"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { hasDepartmentTransparency } from "@/lib/bureauSignoff"
+import { getTenant } from "@/lib/tenant"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -52,6 +53,7 @@ export function AdminToolsSection({ session }: { session: Session | null }) {
     ? { role: session.role, email: session.email, businessUnit: session.businessUnit, office: session.office }
     : null
   const showApprovalExport = tenantHasBureauTier() && hasDepartmentTransparency(viewer)
+  const tenant = getTenant()
 
   return (
     <DropdownMenu>
@@ -86,7 +88,7 @@ export function AdminToolsSection({ session }: { session: Session | null }) {
         <DropdownMenuItem asChild>
           <a href="/api/export/omb">
             <Download className="mr-2 h-4 w-4" />
-            Export OMB inventory (CSV)
+            Export {tenant.inventoryLabel} (CSV)
           </a>
         </DropdownMenuItem>
         {showApprovalExport && (

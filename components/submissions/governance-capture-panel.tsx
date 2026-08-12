@@ -22,6 +22,7 @@ import type { Submission } from "@/lib/submissions"
 import { patchSubmissionFormData } from "@/lib/submissions"
 import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { isFieldVisible } from "@/lib/formConfig"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 import {
   GOVERNANCE_FIELD_KEYS,
   getGovernanceCaptureReview,
@@ -61,40 +62,51 @@ import { Check, ShieldCheck } from "lucide-react"
 
 type FieldKind = "text" | "textarea" | "date" | "select" | "radio" | "multiselect"
 
+// Structural section key, not a heading. The heading itself is the tenant's
+// vocabulary (`inventoryLabel` / `minimumPracticesLabel`) — this panel is the
+// vetting-side surface that carries the two-stage lifecycle story, and its
+// headers named the wrong authority on a tenant that doesn't report to OMB.
+type CaptureSection = "inventory" | "minimum_practices"
+
 type CaptureFieldSpec = {
   key: keyof FormData
   kind: FieldKind
   options?: FieldOption[]
-  section: "OMB federal AI use case inventory" | "M-25-21 minimum practices"
+  section: CaptureSection
+}
+
+/** Display heading for a section, for one tenant. */
+function sectionHeading(section: CaptureSection, tenant: TenantConfig): string {
+  return section === "inventory" ? tenant.inventoryLabel : tenant.minimumPracticesLabel
 }
 
 // Order matches lib/submissionReadiness.ts's GOVERNANCE_FIELD_KEYS.
 const CAPTURE_FIELD_SPECS: CaptureFieldSpec[] = [
-  { key: "stageOfDevelopment", kind: "select", options: STAGE_OF_DEVELOPMENT_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "highImpact", kind: "radio", options: HIGH_IMPACT_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "highImpactJustification", kind: "textarea", section: "OMB federal AI use case inventory" },
-  { key: "topicArea", kind: "select", options: TOPIC_AREA_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "aiClassification", kind: "select", options: AI_CLASSIFICATION_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "disseminatesToPublic", kind: "radio", options: YES_NO_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "scalable", kind: "radio", options: YES_NO_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "hasATO", kind: "radio", options: HAS_ATO_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "atoSystemName", kind: "text", section: "OMB federal AI use case inventory" },
-  { key: "systemSource", kind: "select", options: SYSTEM_SOURCE_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "systemSourceVendorName", kind: "text", section: "OMB federal AI use case inventory" },
-  { key: "operationalDate", kind: "date", section: "OMB federal AI use case inventory" },
-  { key: "trainingDataDescription", kind: "textarea", section: "OMB federal AI use case inventory" },
-  { key: "hasPii", kind: "radio", options: YES_NO_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "demographicFeatures", kind: "multiselect", options: DEMOGRAPHIC_FEATURE_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "customCode", kind: "radio", options: YES_NO_OPTIONS, section: "OMB federal AI use case inventory" },
-  { key: "preDeploymentTesting", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "M-25-21 minimum practices" },
-  { key: "aiImpactAssessmentCompleted", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "M-25-21 minimum practices" },
-  { key: "aiImpactAssessment", kind: "textarea", section: "M-25-21 minimum practices" },
-  { key: "independentReviewConducted", kind: "radio", options: INDEPENDENT_REVIEW_OPTIONS, section: "M-25-21 minimum practices" },
-  { key: "ongoingMonitoringPlan", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "M-25-21 minimum practices" },
-  { key: "operatorTrainingEstablished", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "M-25-21 minimum practices" },
-  { key: "failSafeMechanism", kind: "radio", options: FAILSAFE_OPTIONS, section: "M-25-21 minimum practices" },
-  { key: "humanOversightAppeal", kind: "radio", options: APPEAL_OPTIONS, section: "M-25-21 minimum practices" },
-  { key: "publicConsultationSteps", kind: "multiselect", options: PUBLIC_CONSULTATION_OPTIONS, section: "M-25-21 minimum practices" },
+  { key: "stageOfDevelopment", kind: "select", options: STAGE_OF_DEVELOPMENT_OPTIONS, section: "inventory" },
+  { key: "highImpact", kind: "radio", options: HIGH_IMPACT_OPTIONS, section: "inventory" },
+  { key: "highImpactJustification", kind: "textarea", section: "inventory" },
+  { key: "topicArea", kind: "select", options: TOPIC_AREA_OPTIONS, section: "inventory" },
+  { key: "aiClassification", kind: "select", options: AI_CLASSIFICATION_OPTIONS, section: "inventory" },
+  { key: "disseminatesToPublic", kind: "radio", options: YES_NO_OPTIONS, section: "inventory" },
+  { key: "scalable", kind: "radio", options: YES_NO_OPTIONS, section: "inventory" },
+  { key: "hasATO", kind: "radio", options: HAS_ATO_OPTIONS, section: "inventory" },
+  { key: "atoSystemName", kind: "text", section: "inventory" },
+  { key: "systemSource", kind: "select", options: SYSTEM_SOURCE_OPTIONS, section: "inventory" },
+  { key: "systemSourceVendorName", kind: "text", section: "inventory" },
+  { key: "operationalDate", kind: "date", section: "inventory" },
+  { key: "trainingDataDescription", kind: "textarea", section: "inventory" },
+  { key: "hasPii", kind: "radio", options: YES_NO_OPTIONS, section: "inventory" },
+  { key: "demographicFeatures", kind: "multiselect", options: DEMOGRAPHIC_FEATURE_OPTIONS, section: "inventory" },
+  { key: "customCode", kind: "radio", options: YES_NO_OPTIONS, section: "inventory" },
+  { key: "preDeploymentTesting", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "minimum_practices" },
+  { key: "aiImpactAssessmentCompleted", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "minimum_practices" },
+  { key: "aiImpactAssessment", kind: "textarea", section: "minimum_practices" },
+  { key: "independentReviewConducted", kind: "radio", options: INDEPENDENT_REVIEW_OPTIONS, section: "minimum_practices" },
+  { key: "ongoingMonitoringPlan", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "minimum_practices" },
+  { key: "operatorTrainingEstablished", kind: "radio", options: MIN_PRACTICE_STATUS_OPTIONS, section: "minimum_practices" },
+  { key: "failSafeMechanism", kind: "radio", options: FAILSAFE_OPTIONS, section: "minimum_practices" },
+  { key: "humanOversightAppeal", kind: "radio", options: APPEAL_OPTIONS, section: "minimum_practices" },
+  { key: "publicConsultationSteps", kind: "multiselect", options: PUBLIC_CONSULTATION_OPTIONS, section: "minimum_practices" },
 ]
 const CAPTURE_FIELD_SPECS_BY_KEY: Record<string, CaptureFieldSpec> = Object.fromEntries(
   CAPTURE_FIELD_SPECS.map((s) => [s.key as string, s]),
@@ -126,6 +138,7 @@ export function GovernanceCapturePanel({
   setBusy: (b: boolean) => void
   onSaved: () => Promise<void>
 }) {
+  const tenant = getTenant()
   const fd = submission.formData
   const review = getGovernanceCaptureReview(submission)
 
@@ -191,7 +204,7 @@ export function GovernanceCapturePanel({
   const confirmedCount = review?.entries.filter((e) => e.decision === "confirmed").length ?? 0
   const overriddenCount = review?.entries.filter((e) => e.decision === "overridden").length ?? 0
 
-  const bySection = new Map<string, CaptureFieldSpec[]>()
+  const bySection = new Map<CaptureSection, CaptureFieldSpec[]>()
   for (const key of applicable) {
     const spec = CAPTURE_FIELD_SPECS_BY_KEY[key as string]
     if (!spec) continue
@@ -223,7 +236,7 @@ export function GovernanceCapturePanel({
 
       {Array.from(bySection.entries()).map(([section, specs]) => (
         <div key={section} className="space-y-4 border-t pt-4 first:border-t-0 first:pt-0">
-          <h4 className="text-sm font-semibold text-uspto-gray-text">{section}</h4>
+          <h4 className="text-sm font-semibold text-uspto-gray-text">{sectionHeading(section, tenant)}</h4>
           {specs.map((spec) => {
             const def = FIELD_REGISTRY_BY_KEY[spec.key as string]
             const label = def?.label || (spec.key as string)

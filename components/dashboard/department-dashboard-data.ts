@@ -98,7 +98,7 @@ export function buildKpiCards(
     },
     {
       id: "omb-reportable",
-      label: "OMB reportable",
+      label: `${tenant.inventoryShortLabel} reportable`,
       value: ombReportability.reportable,
       delta: {
         value: `${ombReportability.consolidated} consolidated / ${ombReportability.individual} individual`,
@@ -243,7 +243,7 @@ export function buildActionItems(
     const n = metrics.ombReportability.review
     items.push({
       id: "omb-review",
-      title: `${n} submission${n === 1 ? " needs" : "s need"} an OMB reportability review`,
+      title: `${n} submission${n === 1 ? " needs" : "s need"} an ${tenant.inventoryShortLabel} reportability review`,
       severity: "info",
       actionLabel: "Review",
     })

@@ -26,6 +26,7 @@ const dash = <span className="text-muted-foreground/40">–</span>
 export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const tiers = getTenant().tierLabels
+  const inventoryShort = getTenant().inventoryShortLabel
   const unitLabel = tiers.unit
   const unitLower = tiers.unit.toLowerCase()
   const unitPluralLower = tiers.unitPlural.toLowerCase()
@@ -97,7 +98,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
         <h2 className="text-sm font-semibold text-uspto-gray-text">{unitLabel} roll-up</h2>
         <span className="text-xs text-muted-foreground">
           {submissions.length} use cases across {units.length} {units.length === 1 ? unitLower : unitPluralLower}
-          {grandConsolidated > 0 && ` · consolidates to ${reportableEntries} OMB reportable ${reportableEntries === 1 ? "entry" : "entries"}`}
+          {grandConsolidated > 0 && ` · consolidates to ${reportableEntries} ${inventoryShort} reportable ${reportableEntries === 1 ? "entry" : "entries"}`}
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -112,9 +113,9 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
               ))}
               <th className="text-center font-semibold px-2 py-2">Total</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">High-impact</th>
-              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">OMB review needed</th>
+              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">{inventoryShort} review needed</th>
               <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Possible duplicates</th>
-              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Consolidated (OMB)</th>
+              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Consolidated ({inventoryShort})</th>
               {showSignoff && <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Signed off</th>}
             </tr>
           </thead>

@@ -11,6 +11,7 @@ import { Landmark, Building2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { FIELD_REGISTRY_BY_KEY, fieldLevel } from "@/lib/fieldRegistry"
+import { getTenant } from "@/lib/tenant"
 import type { FormData } from "@/lib/steps"
 
 export function FieldRequirementBadge({ fieldKey }: { fieldKey: keyof FormData | string }) {
@@ -20,7 +21,7 @@ export function FieldRequirementBadge({ fieldKey }: { fieldKey: keyof FormData |
   if (level !== "omb" && level !== "department") return null
 
   const Icon = level === "omb" ? Landmark : Building2
-  const label = level === "omb" ? "Required (OMB)" : "Required (Department)"
+  const label = level === "omb" ? `Required (${getTenant().inventoryShortLabel})` : "Required (Department)"
 
   return (
     <TooltipProvider>

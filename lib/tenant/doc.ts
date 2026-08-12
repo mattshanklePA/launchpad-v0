@@ -59,6 +59,8 @@ A serious AI idea names the federal priority and the Department mission it advan
 
   // Commerce reports to the published federal inventory OMB collects each year.
   inventoryLabel: "OMB inventory",
+  inventoryShortLabel: "OMB",
+  minimumPracticesLabel: "M-25-21 minimum practices",
 
   landingObjectives: [
     {

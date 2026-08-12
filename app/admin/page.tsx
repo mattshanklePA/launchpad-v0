@@ -1259,8 +1259,8 @@ function AdminPageInner() {
                   </CardTitle>
                   <CardDescription>
                     Pre-loaded sample submissions across {tenant.unit.label.toLowerCase()}s for the Decision Center
-                    demo — every review status (including a draft and a rejected idea), a comparison pair, and OMB
-                    reportability variety. Use these controls if the seed didn't load or you want a clean slate.
+                    demo — every review status (including a draft and a rejected idea), a comparison pair, and{" "}
+                    {tenant.inventoryShortLabel} reportability variety. Use these controls if the seed didn't load or you want a clean slate.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">

@@ -135,10 +135,10 @@ export function DashboardShell({
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="Export OMB inventory (CSV)">
+                    <SidebarMenuButton asChild tooltip={`Export ${tenant.inventoryLabel} (CSV)`}>
                       <a href="/api/export/omb">
                         <Download />
-                        <span>Export OMB inventory</span>
+                        <span>Export {tenant.inventoryLabel}</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
