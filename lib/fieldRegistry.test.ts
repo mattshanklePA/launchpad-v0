@@ -2,6 +2,8 @@ import { describe, it, expect, afterEach } from "vitest"
 import {
   FIELD_REGISTRY,
   FIELD_REGISTRY_BY_KEY,
+  getFieldRegistry,
+  getFieldRegistryByKey,
   fieldLevel,
   fieldsForBureau,
   canToggleField,
@@ -10,6 +12,9 @@ import {
   type FieldDefinition,
 } from "@/lib/fieldRegistry"
 import { initialFormData, type FormData } from "@/lib/steps"
+import { doc } from "@/lib/tenant/doc"
+import { uspto } from "@/lib/tenant/uspto"
+import type { TenantConfig } from "@/lib/tenant"
 
 const withTenant = (id: string, run: () => void) => {
   const prev = process.env.NEXT_PUBLIC_TENANT
@@ -62,6 +67,132 @@ const censusOnlyField: FieldDefinition = {
   businessUnit: "census",
   locked: false,
 }
+
+// A bureau-tier tenant that is not Commerce — the vocabulary a submitter on
+// an ES2-shaped instance must see on steps 1 and 2 (ISS-3).
+const es2 = {
+  ...doc,
+  id: "es2",
+  tierLabels: {
+    department: "Command",
+    unit: "Directorate",
+    unitPlural: "Directorates",
+    subUnit: "Branch",
+    subUnitPlural: "Branches",
+  },
+} as TenantConfig
+
+// Every label carrying OMB's authority (`level: "omb"` or `omb: true`), frozen
+// byte-for-byte. This is federal wording from OMB's published data dictionary
+// (docs/omb-2025-inventory-fields.md), not our vocabulary — `hasPii`'s
+// "…maintained by the agency?" is the clearest case: "agency" there is OMB's
+// word. A future tier-vocabulary sweep must not quietly rewrite any of it.
+const OMB_LABELS: Record<string, string> = {
+  stageOfDevelopment: "Stage of Development",
+  highImpact: "High-impact AI?",
+  highImpactJustification: "High-impact justification",
+  topicArea: "Use Case Topic Area",
+  aiClassification: "AI Classification",
+  hasATO: "Associated ATO?",
+  atoSystemName: "ATO system name",
+  systemSource: "Built in-house, under contract, or purchased?",
+  systemSourceVendorName: "Vendor name",
+  operationalDate: "Operational / pilot start date",
+  trainingDataDescription: "Training / evaluation data",
+  federalDataCatalogLink: "Federal Data Catalog entry",
+  hasPii: "Involves PII maintained by the agency?",
+  piaLink: "Privacy Impact Assessment (PIA) link",
+  demographicFeatures: "Demographic variables used as model features",
+  customCode: "Includes custom-developed code?",
+  openSourceCodeLink: "Open source code link",
+  nationalSecuritySystem: "National Security System / IC use?",
+  researchOnly: "Research-only use?",
+  highImpactFactors: "High-impact factors",
+  preDeploymentTesting: "Pre-deployment / real-world testing done?",
+  aiImpactAssessmentCompleted: "AI impact assessment completed?",
+  aiImpactAssessment: "Potential impacts and how they were identified",
+  independentReviewConducted: "Independent review conducted?",
+  ongoingMonitoringPlan: "Ongoing monitoring plan?",
+  operatorTrainingEstablished: "Periodic operator training established?",
+  failSafeMechanism: "Appropriate fail-safe in place?",
+  humanOversightAppeal: "Established appeal process?",
+  publicConsultationSteps: "Steps taken to consult end users and the public",
+}
+
+describe("OMB-authored labels are frozen (ISS-3 guardrail)", () => {
+  const ombFieldsFor = (tenant: TenantConfig) =>
+    getFieldRegistry(tenant).filter((f) => f.level === "omb" || f.omb)
+
+  it("covers exactly the OMB-level field set, so a new OMB field can't slip past this guardrail", () => {
+    expect(ombFieldsFor(doc).map((f) => f.fieldKey).sort()).toEqual(Object.keys(OMB_LABELS).sort())
+  })
+
+  it("keeps every OMB label byte-identical, for every tenant", () => {
+    for (const tenant of [doc, uspto, es2]) {
+      for (const f of ombFieldsFor(tenant)) {
+        expect(f.label, `${tenant.id}: ${f.fieldKey}`).toBe(OMB_LABELS[f.fieldKey as string])
+      }
+    }
+  })
+
+  it("leaves OMB's own use of \"agency\" alone even on a tenant that calls its top tier something else", () => {
+    const byKey = getFieldRegistryByKey(es2)
+    expect(byKey.hasPii.label).toBe("Involves PII maintained by the agency?")
+  })
+})
+
+describe("org-tier field labels resolve through the tenant (ISS-3)", () => {
+  const TIER_KEYS = ["submitterOffice", "submitterSubOffice", "affectedBusinessUnits"] as const
+
+  it("gives Commerce its own vocabulary — the three approved changes", () => {
+    const byKey = getFieldRegistryByKey(doc)
+    // Approved: was "Business Unit", now matches what the wizard's own step-1
+    // label (`unit.label`) and the components swept in #177/#178 already say.
+    expect(byKey.submitterOffice.label).toBe("Bureau")
+    // Unchanged for Commerce: doc.tierLabels.subUnit is already "Office".
+    expect(byKey.submitterSubOffice.label).toBe("Office")
+    // Approved: closes the mismatch #178 recorded against submissionReadiness.
+    expect(byKey.affectedBusinessUnits.label).toBe("Affected Bureaus")
+    expect(byKey.affectedBusinessUnits.description).toBe(
+      "Which bureaus, processes, or groups the problem affects (multi-select).",
+    )
+  })
+
+  it("never shows a non-Commerce tenant Commerce's or USPTO's vocabulary", () => {
+    const byKey = getFieldRegistryByKey(es2)
+    expect(byKey.submitterOffice.label).toBe("Directorate")
+    expect(byKey.submitterSubOffice.label).toBe("Branch")
+    expect(byKey.affectedBusinessUnits.label).toBe("Affected Directorates")
+    for (const key of TIER_KEYS) {
+      expect(byKey[key].label, key).not.toMatch(/business unit/i)
+      expect(byKey[key].label, key).not.toMatch(/bureau/i)
+    }
+    expect(byKey.affectedBusinessUnits.description).not.toMatch(/business unit|bureau/i)
+  })
+
+  it("moves only the label — fieldKey, step, level, and locked are structural", () => {
+    const docByKey = getFieldRegistryByKey(doc)
+    const es2ByKey = getFieldRegistryByKey(es2)
+    for (const key of TIER_KEYS) {
+      expect(es2ByKey[key].fieldKey).toBe(docByKey[key].fieldKey)
+      expect(es2ByKey[key].step).toBe(docByKey[key].step)
+      expect(es2ByKey[key].phase).toBe(docByKey[key].phase)
+      expect(es2ByKey[key].locked).toBe(docByKey[key].locked)
+      expect(es2ByKey[key].level).toBe(docByKey[key].level)
+    }
+  })
+
+  it("leaves every other label identical across tenants", () => {
+    const docFields = getFieldRegistry(doc)
+    const es2Fields = getFieldRegistry(es2)
+    const tierKeys = new Set<string>(TIER_KEYS)
+    for (let i = 0; i < docFields.length; i++) {
+      if (tierKeys.has(docFields[i].fieldKey as string)) continue
+      expect(es2Fields[i].label, docFields[i].fieldKey as string).toBe(docFields[i].label)
+      expect(es2Fields[i].description, docFields[i].fieldKey as string).toBe(docFields[i].description)
+    }
+  })
+})
 
 describe("fieldLevel", () => {
   it("defaults to 'bureau' when unset", () => {
