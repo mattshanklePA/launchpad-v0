@@ -47,6 +47,9 @@ A serious AI idea names the specific priorities it advances, describes the mecha
     { id: "ai_partnerships", label: "Collaborate with governmental & international AI partners", category: "AI Strategy" },
   ],
 
+  // USPTO reports to the published federal inventory OMB collects each year.
+  inventoryLabel: "OMB inventory",
+
   landingObjectives: [
     {
       title: "USPTO strategic objectives",

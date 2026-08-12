@@ -88,6 +88,9 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
 
   // Public landing's "strategic priorities, for reference" columns — the same
   // two groups as `focusAreas` above, in the shape that section renders.
+  // Internal inventory to the same field set, not a published federal one.
+  inventoryLabel: "AI use case inventory",
+
   landingObjectives: [
     {
       title: "Department of War AI Strategy",
@@ -110,6 +113,16 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
         { title: "Governable", description: "Detect and avoid unintended behavior, with the ability to disengage." },
       ],
     },
+  ],
+
+  // Illustrative rows in the landing page's Command Center preview. Set here
+  // because the shared default list is civilian-agency flavored ("Grant
+  // application triage"); the three existing tenants leave it unset and render
+  // that default unchanged.
+  heroPreviewItems: [
+    { label: "Contract clause recommendation", status: "needs_work" },
+    { label: "Training content refresh from doctrine", status: "ready" },
+    { label: "FMS case document summarization", status: "early" },
   ],
 
   tierLabels: {

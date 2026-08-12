@@ -59,6 +59,9 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
     { id: "rai_governable", label: "Governable (detect and avoid unintended behavior)", category: "DoW AI Ethical Principles" },
   ],
 
+  // Internal inventory to the same field set, not a published federal one.
+  inventoryLabel: "AI use case inventory",
+
   landingObjectives: [
     {
       title: "Department of War AI priorities",

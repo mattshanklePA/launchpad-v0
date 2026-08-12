@@ -57,6 +57,9 @@ A serious AI idea names the federal priority and the Department mission it advan
     { id: "rationalization", label: "Rationalize duplicate efforts across bureaus", category: "Commerce Priorities" },
   ],
 
+  // Commerce reports to the published federal inventory OMB collects each year.
+  inventoryLabel: "OMB inventory",
+
   landingObjectives: [
     {
       title: "Federal AI governance",
