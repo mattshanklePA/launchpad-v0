@@ -74,12 +74,19 @@ A serious AI idea names the specific priorities it advances, describes the mecha
 
   // USPTO is an agency of business units; it has no third tier configured
   // (no `UnitOption.offices`), so `subUnit`/`subUnitPlural` are the generic
-  // fallback rather than a tier that renders today. `unit` agrees with
-  // `unit.label` below so the two never drift.
+  // fallback rather than a tier that renders today. `unit` names the same tier
+  // as `unit.label` below so the two never drift.
+  //
+  // Title case, matching every other tenant's tier labels ("Bureau"/"Bureaus",
+  // "Command"/"Commands"). These read as proper tier nouns inside composed
+  // strings — sentence case here produced the hybrid "Affected Business units"
+  // once `affectedBusinessUnits`' label became `Affected ${unitPlural}`.
+  // `unit.label` below stays sentence case: it is a form-field label, not a
+  // tier noun, and it is what renders on the wizard's own step-1 input.
   tierLabels: {
     department: "Agency",
-    unit: "Business unit",
-    unitPlural: "Business units",
+    unit: "Business Unit",
+    unitPlural: "Business Units",
     subUnit: "Office",
     subUnitPlural: "Offices",
   },

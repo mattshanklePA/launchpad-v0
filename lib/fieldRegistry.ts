@@ -540,7 +540,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
     {
       fieldKey: "submitterOffice",
       label: tiers.unit,
-      description: "Which business unit the submitter belongs to (Patents, Trademarks, OCIO, etc.).",
+      description: `Which ${tiers.unit.toLowerCase()} the submitter belongs to.`,
       reasonToInclude:
         "Routes the idea to the correct business unit reviewer and surfaces it on per-unit dashboards.",
       phase: 1,
@@ -550,7 +550,7 @@ export function getFieldRegistry(tenant: TenantConfig = getTenant()): FieldDefin
     {
       fieldKey: "submitterSubOffice",
       label: tiers.subUnit,
-      description: "Office sub-level under the submitter's bureau, for tenants/bureaus that define one (e.g. DoC Census -> Decennial).",
+      description: `${tiers.subUnit} sub-level under the submitter's ${tiers.unit.toLowerCase()}, for ${tiers.unitPlural.toLowerCase()} that define one.`,
       reasonToInclude:
         "Routes the idea to the correct office-scoped reviewer and enables office-level roll-up when a bureau has offices.",
       phase: 1,

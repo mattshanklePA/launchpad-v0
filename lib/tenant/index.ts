@@ -5,6 +5,11 @@ import { doc } from "./doc"
 
 const TENANTS: Record<string, TenantConfig> = { uspto, dow, doc }
 
+// Every registered tenant, for checks that must hold across all of them (e.g.
+// the tier-label convention pinned in tenant.test.ts). Derived from TENANTS so
+// registering a new tenant above automatically brings it under those checks.
+export const ALL_TENANTS: TenantConfig[] = Object.values(TENANTS)
+
 // Resolve the active tenant from the deployment env. Each org is its own
 // Vercel deployment with NEXT_PUBLIC_TENANT set (so it is available on both
 // server and client). Defaults to USPTO so existing behavior is unchanged.
