@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest"
 import { doc } from "@/lib/tenant/doc"
 import { dow } from "@/lib/tenant/dow"
 import { uspto } from "@/lib/tenant/uspto"
-import { getTenant, getOrgNameForUnit, tenantHasBureauTier } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit, tenantHasBureauTier, ALL_TENANTS } from "@/lib/tenant"
 import { getFormSteps } from "@/lib/steps"
 
 describe("DoC tenant", () => {
@@ -131,12 +131,52 @@ describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerc
   })
 
   it("keeps each tenant's middle tier in step with its own unit.label", () => {
-    expect(doc.tierLabels.unit).toBe(doc.unit.label)
-    expect(uspto.tierLabels.unit).toBe(uspto.unit.label)
+    // Same words, so the form-field label and the tier noun can't drift apart.
+    // Casing is allowed to differ: `unit.label` is a form-field label (sentence
+    // case), `tierLabels.unit` is a tier noun composed into headings and other
+    // labels (title case, consistent across tenants) — see uspto.ts.
+    expect(doc.tierLabels.unit.toLowerCase()).toBe(doc.unit.label.toLowerCase())
+    expect(uspto.tierLabels.unit.toLowerCase()).toBe(uspto.unit.label.toLowerCase())
+    expect(uspto.tierLabels.unit).toBe("Business Unit")
+    expect(uspto.unit.label).toBe("Business unit")
     // DoW's form-field label is "Command / organization"; the tier noun drops
     // the slash so it reads in headings and inline sentences.
     expect(dow.unit.label).toBe("Command / organization")
     expect(dow.tierLabels.unit).toBe("Command")
+  })
+
+  // ISS-3B: `affectedBusinessUnits`' registry label is `Affected ${unitPlural}`,
+  // so a tier label whose own words disagree on case produced the hybrid
+  // "Affected Business units". Every registered tenant is checked, so adding a
+  // fourth brings it under this guardrail automatically.
+  it("title-cases every tier label, so composed strings never come out half-capitalized", () => {
+    // Minor words stay lowercase mid-phrase under normal title-case rules
+    // (e.g. a tenant naming its top tier "Office of the Secretary").
+    const MINOR_WORDS = new Set(["of", "the", "and", "for", "a", "an", "in", "to"])
+    const isTitleCase = (s: string) =>
+      s.split(/\s+/).every((word, i) => {
+        const firstLetter = word.replace(/[^A-Za-z]/g, "")[0]
+        if (!firstLetter) return true
+        if (i > 0 && MINOR_WORDS.has(word.toLowerCase())) return true
+        return firstLetter === firstLetter.toUpperCase()
+      })
+
+    for (const tenant of ALL_TENANTS) {
+      for (const field of TIER_FIELDS) {
+        expect(isTitleCase(tenant.tierLabels[field]), `${tenant.id}.tierLabels.${field}`).toBe(true)
+      }
+      // The exact string the field registry composes.
+      expect(
+        isTitleCase(`Affected ${tenant.tierLabels.unitPlural}`),
+        `${tenant.id}: "Affected ${tenant.tierLabels.unitPlural}"`,
+      ).toBe(true)
+    }
+  })
+
+  it("restores USPTO's pre-tierLabels wording for the composed affected-units label", () => {
+    expect(`Affected ${uspto.tierLabels.unitPlural}`).toBe("Affected Business Units")
+    expect(`Affected ${doc.tierLabels.unitPlural}`).toBe("Affected Bureaus")
+    expect(`Affected ${dow.tierLabels.unitPlural}`).toBe("Affected Commands")
   })
 
   it("never leaks Commerce's bureau vocabulary into USPTO or DoW", () => {

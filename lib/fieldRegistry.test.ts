@@ -158,6 +158,37 @@ describe("org-tier field labels resolve through the tenant (ISS-3)", () => {
     )
   })
 
+  // ISS-3B: `description` renders under each field in the admin Form
+  // Configuration panel (form-config-panel.tsx), so these two carried another
+  // org's vocabulary — and its literal unit names — onto a golden-path screen.
+  it("resolves the two org-tier descriptions through the tenant", () => {
+    const docByKey = getFieldRegistryByKey(doc)
+    expect(docByKey.submitterOffice.description).toBe("Which bureau the submitter belongs to.")
+    expect(docByKey.submitterSubOffice.description).toBe(
+      "Office sub-level under the submitter's bureau, for bureaus that define one.",
+    )
+
+    const es2ByKey = getFieldRegistryByKey(es2)
+    expect(es2ByKey.submitterOffice.description).toBe("Which directorate the submitter belongs to.")
+    expect(es2ByKey.submitterSubOffice.description).toBe(
+      "Branch sub-level under the submitter's directorate, for directorates that define one.",
+    )
+    expect(es2ByKey.submitterOffice.description).not.toMatch(/business unit|bureau/i)
+    expect(es2ByKey.submitterSubOffice.description).not.toMatch(/business unit|bureau/i)
+  })
+
+  it("never names another org's units in any registry description", () => {
+    // The old copy read "(Patents, Trademarks, OCIO, etc.)" and "(e.g. DoC
+    // Census -> Decennial)". Tenant-specific example lists go stale and belong
+    // to whichever org happened to be first; drop them rather than parameterize.
+    const orgNames = /Patents|Trademarks|OCIO|Census|Decennial|DoC\b/
+    for (const tenant of [doc, uspto, es2]) {
+      for (const field of getFieldRegistry(tenant)) {
+        expect(field.description, `${tenant.id}: ${field.fieldKey}`).not.toMatch(orgNames)
+      }
+    }
+  })
+
   it("never shows a non-Commerce tenant Commerce's or USPTO's vocabulary", () => {
     const byKey = getFieldRegistryByKey(es2)
     expect(byKey.submitterOffice.label).toBe("Directorate")
