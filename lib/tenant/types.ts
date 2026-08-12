@@ -20,6 +20,11 @@ export type SelectOption = { value: string; label: string }
 // USPTO/DoW are unaffected.
 export type UnitOption = { value: string; label: string; offices?: OfficeOption[]; focusAreas?: FocusArea[] }
 
+// One illustrative row in the public landing page's Command Center preview.
+// `status` is a display state, not a `reviewStatus` — see PREVIEW_STATUS in
+// components/landing/public-landing.tsx for the label/tone it renders as.
+export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }
+
 export type TenantConfig = {
   id: string
   shortName: string          // "USPTO" | "DoW"
@@ -56,6 +61,17 @@ export type TenantConfig = {
 
   // Public landing objective columns
   landingObjectives: ObjectiveGroup[]
+
+  // What this tenant calls its AI use case inventory. Some organizations report
+  // to a published federal inventory; others maintain an internal one to the
+  // same schema. The field set is identical either way — only the name differs.
+  // (The OMB export's own column names are OMB's published schema and never
+  // follow this — see lib/ombExport.ts.)
+  inventoryLabel: string
+
+  // Three illustrative rows in the landing page's Command Center preview.
+  // Optional: when unset, the existing default list renders unchanged.
+  heroPreviewItems?: HeroPreviewItem[]
 
   // Org taxonomy (USPTO "business unit" -> DoW "command")
   unit: { label: string; options: UnitOption[] }

@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import { getTenant, tenantHasBureauTier, type TenantConfig } from "@/lib/tenant"
+import type { HeroPreviewItem } from "@/lib/tenant/types"
 import { cn } from "@/lib/utils"
 
 // Public landing typography system (docs/landing-page-conversion-audit-2026-07-15.md):
@@ -80,16 +81,25 @@ function ObjectiveList({ items, accent }: { items: { title: string; description:
 // Illustrative queue rows for the hero's Command Center preview — representative
 // of the app's real queue-by-status board (components/dashboard/queue-board.tsx),
 // not a claim about any tenant's actual submissions.
-const PREVIEW_QUEUE: { title: string; status: string; tone: "amber" | "green" | "gray" }[] = [
-  { title: "Duplicate detection assistant", status: "Needs work", tone: "amber" },
-  { title: "Grant application triage", status: "Ready", tone: "green" },
-  { title: "Correspondence summarizer", status: "Early", tone: "gray" },
+//
+// The default list below renders for any tenant that doesn't declare
+// `heroPreviewItems`; a tenant whose work looks nothing like these supplies its
+// own (see lib/tenant/es2.ts).
+const DEFAULT_HERO_PREVIEW_ITEMS: HeroPreviewItem[] = [
+  { label: "Duplicate detection assistant", status: "needs_work" },
+  { label: "Grant application triage", status: "ready" },
+  { label: "Correspondence summarizer", status: "early" },
 ]
 
-const PREVIEW_TONE_CLASS: Record<(typeof PREVIEW_QUEUE)[number]["tone"], string> = {
-  amber: "bg-amber-100 text-amber-700",
-  green: "bg-green-100 text-green-700",
-  gray: "bg-gray-100 text-gray-500",
+const PREVIEW_STATUS: Record<HeroPreviewItem["status"], { label: string; className: string }> = {
+  needs_work: { label: "Needs work", className: "bg-amber-100 text-amber-700" },
+  ready: { label: "Ready", className: "bg-green-100 text-green-700" },
+  early: { label: "Early", className: "bg-gray-100 text-gray-500" },
+}
+
+/** The preview rows for a tenant — its own when declared, otherwise the shared default. */
+export function heroPreviewItems(tenant: TenantConfig): HeroPreviewItem[] {
+  return tenant.heroPreviewItems ?? DEFAULT_HERO_PREVIEW_ITEMS
 }
 
 // Decorative Command Center dashboard preview for the hero. Built from the
@@ -99,10 +109,12 @@ function DashboardPreview({
   productName,
   metrics,
   accent,
+  items,
 }: {
   productName: string
   metrics: { submitted: number; deployed: number }
   accent: AccentClasses
+  items: HeroPreviewItem[]
 }) {
   return (
     <div
@@ -128,11 +140,11 @@ function DashboardPreview({
           </div>
         </div>
         <div className="space-y-1.5">
-          {PREVIEW_QUEUE.map((row) => (
-            <div key={row.title} className="flex items-center justify-between rounded-lg border bg-white px-3 py-2">
-              <span className="truncate text-xs font-medium text-uspto-gray-text">{row.title}</span>
-              <span className={cn("shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium", PREVIEW_TONE_CLASS[row.tone])}>
-                {row.status}
+          {items.map((row) => (
+            <div key={row.label} className="flex items-center justify-between rounded-lg border bg-white px-3 py-2">
+              <span className="truncate text-xs font-medium text-uspto-gray-text">{row.label}</span>
+              <span className={cn("shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium", PREVIEW_STATUS[row.status].className)}>
+                {PREVIEW_STATUS[row.status].label}
               </span>
             </div>
           ))}
@@ -142,11 +154,19 @@ function DashboardPreview({
   )
 }
 
-function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: boolean }) {
-  const steps = [
+// The three "How it works" steps. Exported so the copy can be asserted over
+// directly (public-landing.test.tsx) without rendering the page.
+//
+// Step 1 deliberately does NOT claim the inventory field set is captured at
+// intake: since issues #164/#166 those fields are completed by reviewers during
+// vetting, and intake is the short flow the hero advertises. Every reference to
+// the inventory itself resolves from `tenant.inventoryLabel`, since not every
+// org reports to OMB's published one.
+export function howItWorksSteps(tenant: TenantConfig, bureauTier: boolean) {
+  return [
     {
       title: "Submit",
-      description: `${tenant.assistantName} guides every submitter through the full 34-field OMB intake, so nothing is missing on day one.`,
+      description: `${tenant.assistantName} walks a submitter through a short intake in about two minutes, asking the follow-up questions a reviewer would.`,
     },
     {
       title: "Vet & de-dupe",
@@ -156,9 +176,13 @@ function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: 
     },
     {
       title: "Fund & report",
-      description: "Leadership reviews a role-based roll-up of the portfolio and exports the current OMB inventory in one click.",
+      description: `Leadership reviews a role-based roll-up of the portfolio and exports the current ${tenant.inventoryLabel} in one click.`,
     },
   ]
+}
+
+function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: boolean }) {
+  const steps = howItWorksSteps(tenant, bureauTier)
 
   return (
     <section id="explore" className="scroll-mt-8 bg-white py-16">
@@ -186,17 +210,18 @@ function HowItWorks({ tenant, bureauTier }: { tenant: TenantConfig; bureauTier: 
   )
 }
 
-function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureauTier: boolean; accent: AccentClasses }) {
-  const items = [
+/** The "What {product} does" cards. Exported for the copy assertions. */
+export function featureItems(tenant: TenantConfig, bureauTier: boolean) {
+  return [
     {
       icon: Sparkles,
       title: "AI-guided intake",
-      description: `${tenant.assistantName} walks every submitter through intake, asking the follow-up questions a reviewer would, so use cases arrive complete.`,
+      description: `Conversational intake that captures the substance of an idea while it's fresh, and leaves the governance record for reviewers to complete during vetting.`,
     },
     {
       icon: ClipboardList,
-      title: "Built-in OMB inventory",
-      description: "Captures all 34 fields of the 2025 OMB AI use case inventory from day one, no end-of-year scramble to backfill.",
+      title: `Built-in ${tenant.inventoryLabel}`,
+      description: `Every field the ${tenant.inventoryLabel} requires has a home in the data model, so the record is filled in as a use case is vetted rather than backfilled at year end.`,
     },
     {
       icon: GitMerge,
@@ -207,8 +232,8 @@ function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureau
     },
     {
       icon: Download,
-      title: "One-click OMB export",
-      description: "Generates the OMB-ready inventory export in the exact format reviewers require, no manual reformatting.",
+      title: `One-click ${tenant.inventoryLabel} export`,
+      description: `Generates the ${tenant.inventoryLabel} export in the exact format reviewers require, no manual reformatting.`,
     },
     {
       icon: LayoutDashboard,
@@ -216,6 +241,10 @@ function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureau
       description: "Submitters, reviewers, and leadership each get a dashboard scoped to what they're responsible for.",
     },
   ]
+}
+
+function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureauTier: boolean; accent: AccentClasses }) {
+  const items = featureItems(tenant, bureauTier)
 
   return (
     <section className="border-y bg-gray-50 py-16">
@@ -242,32 +271,46 @@ function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureau
   )
 }
 
-const PROOF_SIGNALS = [
-  {
-    icon: ShieldCheck,
-    title: "Built to the 2025 OMB inventory spec",
-    description: "All 34 fields, mapped field-for-field to the current OMB AI use case inventory guidance.",
-  },
-  {
-    icon: Award,
-    title: "HUBZone-certified small business",
-    description: "Built and supported by an SBA-certified HUBZone small business.",
-  },
-  {
-    icon: Landmark,
-    title: "USPTO & Commerce provenance",
-    description: "Built with reviewers from USPTO and the Department of Commerce AI governance community.",
-  },
-]
+/**
+ * The "Why it holds up" cards. Exported for the copy assertions.
+ *
+ * The third card used to be a "USPTO & Commerce provenance" claim. It named two
+ * customers to every other prospect and described a relationship stronger than
+ * the facts support, so it is gone rather than made tenant-aware — what the
+ * product is built *to* is the durable claim, not who it was built *with*.
+ *
+ * The placeholder testimonial that sat under these cards is gone for the same
+ * class of reason: a fabricated customer quote on a government-facing page is
+ * an honesty problem, not a copy-polish problem. Restore a quote here only when
+ * there is a real, attributable one.
+ */
+export function proofSignals(tenant: TenantConfig) {
+  return [
+    {
+      icon: ShieldCheck,
+      title: `Built to the ${tenant.inventoryLabel} field set`,
+      description: `Every field the ${tenant.inventoryLabel} requires is mapped field-for-field, and completed by reviewers during vetting rather than demanded of submitters up front.`,
+    },
+    {
+      icon: Award,
+      title: "HUBZone-certified small business",
+      description: "Built and supported by an SBA-certified HUBZone small business.",
+    },
+    {
+      icon: Landmark,
+      title: "Built to recognized AI governance frameworks",
+      description: `Structured around ${tenant.riskFramework.label}, so a use case carries the evidence a reviewer needs without a separate compliance exercise.`,
+    },
+  ]
+}
 
-function Proof({ accent }: { accent: AccentClasses }) {
-  const unitLower = getTenant().tierLabels.unit.toLowerCase()
+function Proof({ tenant, accent }: { tenant: TenantConfig; accent: AccentClasses }) {
   return (
     <section className="bg-white py-16">
       <div className="container">
-        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">Why agencies trust it</h2>
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">Why it holds up</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
-          {PROOF_SIGNALS.map((signal) => (
+          {proofSignals(tenant).map((signal) => (
             <div key={signal.title} className="rounded-xl border p-6">
               <signal.icon className={cn("h-6 w-6", accent.text)} />
               <h3 className="mt-3 font-medium text-uspto-gray-text">{signal.title}</h3>
@@ -275,12 +318,6 @@ function Proof({ accent }: { accent: AccentClasses }) {
             </div>
           ))}
         </div>
-        <blockquote className="mt-10 rounded-xl border bg-gray-50 p-6 text-uspto-gray-text">
-          <p className="italic">&ldquo;[Placeholder: pilot {unitLower} quote on time-to-inventory or duplicate-catch impact.]&rdquo;</p>
-          <footer className="mt-3 text-sm not-italic text-muted-foreground">
-            &mdash; [Placeholder name, title], [Placeholder {unitLower}]
-          </footer>
-        </blockquote>
       </div>
     </section>
   )
@@ -295,7 +332,8 @@ function ClosingCTA({ tenant }: { tenant: TenantConfig }) {
           Ready to see {tenant.productName} on your own use cases?
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-white/85">
-          Request a walkthrough and we&apos;ll show you the intake, de-dupe, and OMB export end to end.
+          Request a walkthrough and we&apos;ll show you the intake, de-dupe, and {tenant.inventoryLabel} export end
+          to end.
         </p>
         <div className="mt-8">
           <Button size="lg" className="bg-white hover:bg-white/90" style={{ color: tenant.theme.primary }} asChild>
@@ -307,6 +345,41 @@ function ClosingCTA({ tenant }: { tenant: TenantConfig }) {
       </div>
     </section>
   )
+}
+
+/**
+ * The copy THIS FILE authors, resolved for one tenant — what the copy
+ * guardrails in public-landing.test.tsx assert over: no other org's name, no
+ * unfilled placeholder, and no "OMB" the page wrote itself.
+ *
+ * Deliberately excludes the tenant's own content rendered verbatim
+ * (`heroHeadline`, `heroSubtitle`, `landingObjectives`). Those legitimately
+ * name their own org — USPTO's headline says "USPTO", DoC's objectives say
+ * "Commerce" — and are not strings in this file.
+ *
+ * Keep in step with the sections below when copy is added.
+ */
+export function landingStrings(tenant: TenantConfig, bureauTier: boolean): string[] {
+  return [
+    ...heroPreviewItems(tenant).map((r) => r.label),
+    ...Object.values(PREVIEW_STATUS).map((s) => s.label),
+    "Use cases submitted",
+    "Use cases deployed",
+    "Command Center",
+    "See it in 2 minutes",
+    "How it works",
+    "From a submitted idea to a funded, reportable use case, in three steps.",
+    ...howItWorksSteps(tenant, bureauTier).flatMap((s) => [s.title, s.description]),
+    `What ${tenant.productName} does`,
+    "Purpose-built for the AI use case pipeline federal governance actually requires.",
+    ...featureItems(tenant, bureauTier).flatMap((f) => [f.title, f.description]),
+    "Why it holds up",
+    ...proofSignals(tenant).flatMap((p) => [p.title, p.description]),
+    `Strategic priorities at ${tenant.orgName}, for reference`,
+    `Ready to see ${tenant.productName} on your own use cases?`,
+    `Request a walkthrough and we'll show you the intake, de-dupe, and ${tenant.inventoryLabel} export end to end.`,
+    "Request a walkthrough",
+  ]
 }
 
 export function PublicLanding() {
@@ -408,7 +481,12 @@ export function PublicLanding() {
               </div>
               <div className="flex justify-center lg:justify-end">
                 <div className="lg:w-[110%] lg:-mr-10 xl:-mr-24">
-                  <DashboardPreview productName={t.productName} metrics={metrics} accent={accent} />
+                  <DashboardPreview
+                    productName={t.productName}
+                    metrics={metrics}
+                    accent={accent}
+                    items={heroPreviewItems(t)}
+                  />
                 </div>
               </div>
             </div>
@@ -417,12 +495,14 @@ export function PublicLanding() {
 
         <HowItWorks tenant={t} bureauTier={bureauTier} />
         <Features tenant={t} bureauTier={bureauTier} accent={accent} />
-        <Proof accent={accent} />
+        <Proof tenant={t} accent={accent} />
 
         <section className="border-t bg-gray-50 py-14">
           <div className="container">
+            {/* Phrased "at {orgName}" rather than a possessive: an org name
+                ending in S ("…Services's") reads badly in the uppercase eyebrow. */}
             <p className="mb-6 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t.orgName}&rsquo;s strategic priorities, for reference
+              Strategic priorities at {t.orgName}, for reference
             </p>
             <div className="grid lg:grid-cols-2 gap-10">
               {t.landingObjectives.map((group) => (
