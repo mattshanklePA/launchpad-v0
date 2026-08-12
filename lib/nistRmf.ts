@@ -100,6 +100,7 @@ function governStatus(fd: RmfInputs, tenant: TenantConfig): RmfFunctionResult {
   }
 
   const reviewStatus = fd.reviewStatus || "submitted"
+  const tiers = tenant.tierLabels
   const departmentTierEnabled = departmentFinalApprovalEnabled(tenant)
   const atoAnswered = fd.hasATO === "no" || (fd.hasATO === "yes" && presentText(fd.atoSystemName))
 
@@ -107,8 +108,10 @@ function governStatus(fd: RmfInputs, tenant: TenantConfig): RmfFunctionResult {
   if (reviewStatus !== "approved") {
     missing.push(`Review is not yet approved (current status: "${reviewStatus}").`)
   } else {
-    if (!fd.bureauSignoff) missing.push("Approved with no bureau sign-off on file.")
-    if (departmentTierEnabled && !fd.departmentApproval) missing.push("Approved with no department-level approval on file.")
+    if (!fd.bureauSignoff) missing.push(`Approved with no ${tiers.unit.toLowerCase()} sign-off on file.`)
+    if (departmentTierEnabled && !fd.departmentApproval) {
+      missing.push(`Approved with no ${tiers.department.toLowerCase()}-level approval on file.`)
+    }
   }
   if (!atoAnswered) {
     if (!fd.hasATO) missing.push("Associated ATO status has not been answered.")
@@ -122,8 +125,8 @@ function governStatus(fd: RmfInputs, tenant: TenantConfig): RmfFunctionResult {
       status: "covered",
       reasons: [
         departmentTierEnabled
-          ? "Review is approved with bureau sign-off and department approval on file, and ATO and public-disclosure status are both recorded."
-          : "Review is approved with bureau sign-off on file, and ATO and public-disclosure status are both recorded.",
+          ? `Review is approved with ${tiers.unit.toLowerCase()} sign-off and ${tiers.department.toLowerCase()} approval on file, and ATO and public-disclosure status are both recorded.`
+          : `Review is approved with ${tiers.unit.toLowerCase()} sign-off on file, and ATO and public-disclosure status are both recorded.`,
       ],
     }
   }

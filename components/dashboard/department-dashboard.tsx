@@ -59,10 +59,10 @@ export function DepartmentDashboard() {
   const bureauTier = tenantHasBureauTier(tenant)
 
   const metrics = getDashboardMetrics(scope, submissions, tenant)
-  const kpiCards = buildKpiCards(metrics, bureauTier, !!tenant.features.rmf)
+  const kpiCards = buildKpiCards(metrics, bureauTier, !!tenant.features.rmf, tenant)
   const kpiDrilldown = getKpiDrilldown(scope, submissions, tenant)
   const dashboardActions = getDashboardActions(scope, submissions, tenant)
-  const actionItems = buildActionItems(metrics, bureauTier, dashboardActions)
+  const actionItems = buildActionItems(metrics, bureauTier, dashboardActions, tenant)
   const healthScore = computeHealthScore(metrics)
   const rollupSubmissions = scopedSubmissions(scope, submissions)
   const currentScopeLabel = scopeLabel(scope, tenant)

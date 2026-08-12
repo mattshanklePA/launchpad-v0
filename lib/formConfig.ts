@@ -179,11 +179,16 @@ export async function setFieldMandatory(
   mandatory: boolean,
   updatedBy?: string,
   viewer?: FieldViewer,
+  tenant: TenantConfig = getTenant(),
 ): Promise<{ ok: boolean; error?: string }> {
   const def = FIELD_REGISTRY_BY_KEY[fieldKey as string]
   if (!def) return { ok: false, error: "Unknown field" }
   if (viewer && !canMarkFieldMandatory(def, viewer)) {
-    return { ok: false, error: "Only a department-level admin can mark a field mandatory for all bureaus" }
+    const { department, unitPlural } = tenant.tierLabels
+    return {
+      ok: false,
+      error: `Only a ${department.toLowerCase()}-level admin can mark a field mandatory for all ${unitPlural.toLowerCase()}`,
+    }
   }
   const current = getFormConfig()
   const prevMandatory = current.mandatory

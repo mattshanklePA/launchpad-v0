@@ -46,12 +46,36 @@ const doc = {
       { value: "nist", label: "NIST", offices: [] },
     ],
   },
+  tierLabels: { department: "Department", unit: "Bureau", unitPlural: "Bureaus", subUnit: "Office", subUnitPlural: "Offices" },
 } as unknown as TenantConfig
 
 const uspto = {
   id: "uspto",
   orgName: "USPTO",
   unit: { label: "Business unit", options: [{ value: "patents", label: "Patents" }] },
+  tierLabels: {
+    department: "Agency",
+    unit: "Business unit",
+    unitPlural: "Business units",
+    subUnit: "Office",
+    subUnitPlural: "Offices",
+  },
+} as unknown as TenantConfig
+
+// A bureau-tier tenant that is not Commerce — the case `tenantHasBureauTier()`
+// does not protect against (ISS-2). Every bureau-tier card/action below has to
+// read these words, not Commerce's.
+const es2 = {
+  id: "es2",
+  orgName: "Army CPE ES2",
+  unit: { label: "Directorate", options: [{ value: "g3", label: "G-3/5/7" }] },
+  tierLabels: {
+    department: "Command",
+    unit: "Directorate",
+    unitPlural: "Directorates",
+    subUnit: "Branch",
+    subUnitPlural: "Branches",
+  },
 } as unknown as TenantConfig
 
 function baseMetrics(overrides: Partial<DashboardMetrics> = {}): DashboardMetrics {
@@ -203,6 +227,27 @@ describe("buildKpiCards", () => {
     const cards = buildKpiCards(baseMetrics(), true, true)
     expect(cards.find((c) => c.id === "high-impact")?.glossary).toBeUndefined()
   })
+
+  it("keeps Commerce's bureau-tier card copy exactly as it read before ISS-2", () => {
+    const cards = buildKpiCards(baseMetrics(), true, false, doc)
+    const byId = Object.fromEntries(cards.map((c) => [c.id, c]))
+    expect(byId.signoff.label).toBe("Awaiting bureau sign-off")
+    expect(byId.signoff.subtitle).toBe("Approved, pending bureau confirmation")
+    expect(byId.duplicates.label).toBe("Cross-bureau duplicate clusters")
+  })
+
+  // ISS-2 regression: the bureau-tier gate decides *whether* these two cards
+  // render, never *what words* they use.
+  it("labels the bureau-tier cards with a non-Commerce tenant's own vocabulary", () => {
+    const cards = buildKpiCards(baseMetrics(), true, false, es2)
+    const byId = Object.fromEntries(cards.map((c) => [c.id, c]))
+    expect(byId.signoff.label).toBe("Awaiting directorate sign-off")
+    expect(byId.signoff.subtitle).toBe("Approved, pending directorate confirmation")
+    expect(byId.duplicates.label).toBe("Cross-directorate duplicate clusters")
+    // The glossary keys are internal identifiers and must not follow the copy.
+    expect(byId.signoff.glossary).toBe("awaitingBureauSignOff")
+    expect(byId.duplicates.glossary).toBe("crossBureauRationalization")
+  })
 })
 
 describe("worklistSummaryLabel", () => {
@@ -255,12 +300,25 @@ describe("buildActionItems", () => {
       crossBureauDuplicates: { clusterCount: 1, pendingCount: 1 },
       ombReportability: { reportable: 0, excluded: 0, review: 1, consolidated: 0, individual: 0 },
     })
-    const items = buildActionItems(metrics, true)
+    const items = buildActionItems(metrics, true, [], doc)
     expect(items.map((i) => i.title)).toEqual([
       "1 cross-bureau duplicate cluster pending rationalization",
       "1 approved use case awaiting bureau sign-off",
       "1 submission needs an OMB reportability review",
     ])
+  })
+
+  // ISS-2 regression: these titles used to hardcode "bureau", so the first
+  // thing an ES2 admin read on the Action Center was Commerce's vocabulary.
+  it("names the tenant's own org tier, not Commerce's, for a non-Commerce bureau-tier tenant", () => {
+    const metrics = baseMetrics({
+      awaitingSignoff: { count: 2, total: 5 },
+      crossBureauDuplicates: { clusterCount: 2, pendingCount: 2 },
+    })
+    const items = buildActionItems(metrics, true, [], es2)
+    expect(items.map((i) => i.title)).toContain("2 cross-directorate duplicate clusters pending rationalization")
+    expect(items.map((i) => i.title)).toContain("2 approved use cases awaiting directorate sign-off")
+    expect(items.map((i) => i.title).join(" ")).not.toMatch(/bureau/i)
   })
 
   it("adds a wired sign-off nudge item once dashboardActions has a signoff_nudge entry", () => {

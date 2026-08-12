@@ -4,7 +4,7 @@
 // here fetches; every function takes CC-2's DashboardMetrics/DashboardScope
 // plus the active tenant and returns view-model values.
 
-import type { TenantConfig } from "@/lib/tenant"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { isLevelAllowed } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
@@ -57,9 +57,20 @@ export function scopeLabel(scope: DashboardScope, tenant: TenantConfig): string 
  * the RMF rollup card only for tenants with `features.rmf` on (DoC) — same
  * gate `submission-detail.tsx`/`decision-center.tsx` use for their own RMF
  * surfaces.
+ *
+ * `tenant` supplies the org-tier vocabulary the bureau-tier cards read
+ * (`tierLabels`, see docs/ARCHITECTURE.md). The `bureauTier` gate decides
+ * *whether* those cards render, never *what words* they use — every
+ * bureau-tier tenant (DoC today, ES2 next) needs its own.
  */
-export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rmfEnabled: boolean = false): KpiCardData[] {
+export function buildKpiCards(
+  metrics: DashboardMetrics,
+  bureauTier: boolean,
+  rmfEnabled: boolean = false,
+  tenant: TenantConfig = getTenant(),
+): KpiCardData[] {
   const { pipelineStatus, readiness, highImpact, ombReportability, crossBureauDuplicates, awaitingSignoff, rmfRollup } = metrics
+  const tiers = tenant.tierLabels
 
   const cards: KpiCardData[] = [
     {
@@ -102,15 +113,15 @@ export function buildKpiCards(metrics: DashboardMetrics, bureauTier: boolean, rm
   if (bureauTier) {
     cards.push({
       id: "signoff",
-      label: "Awaiting bureau sign-off",
+      label: `Awaiting ${tiers.unit.toLowerCase()} sign-off`,
       value: awaitingSignoff.count,
       status: awaitingSignoff.count > 0 ? "warning" : "neutral",
       glossary: "awaitingBureauSignOff",
-      subtitle: "Approved, pending bureau confirmation",
+      subtitle: `Approved, pending ${tiers.unit.toLowerCase()} confirmation`,
     })
     cards.push({
       id: "duplicates",
-      label: "Cross-bureau duplicate clusters",
+      label: `Cross-${tiers.unit.toLowerCase()} duplicate clusters`,
       value: crossBureauDuplicates.clusterCount,
       delta:
         crossBureauDuplicates.clusterCount > 0
@@ -168,14 +179,16 @@ export function buildActionItems(
   metrics: DashboardMetrics,
   bureauTier: boolean,
   dashboardActions: DashboardAction[] = [],
+  tenant: TenantConfig = getTenant(),
 ): ActionItem[] {
   const items: ActionItem[] = []
+  const tiers = tenant.tierLabels
 
   if (bureauTier && metrics.crossBureauDuplicates.pendingCount > 0) {
     const n = metrics.crossBureauDuplicates.pendingCount
     items.push({
       id: "duplicates",
-      title: `${n} cross-bureau duplicate cluster${n === 1 ? "" : "s"} pending rationalization`,
+      title: `${n} cross-${tiers.unit.toLowerCase()} duplicate cluster${n === 1 ? "" : "s"} pending rationalization`,
       severity: "critical",
       actionLabel: "Rationalize",
     })
@@ -186,7 +199,7 @@ export function buildActionItems(
     const signoffActions = dashboardActions.filter((a) => a.kind === "signoff_nudge")
     items.push({
       id: "signoff",
-      title: `${n} approved use case${n === 1 ? "" : "s"} awaiting bureau sign-off`,
+      title: `${n} approved use case${n === 1 ? "" : "s"} awaiting ${tiers.unit.toLowerCase()} sign-off`,
       severity: "warning",
       actionLabel: "Nudge sign-off",
       onAction:
@@ -194,7 +207,7 @@ export function buildActionItems(
           ? () =>
               notifyDashboardActions(
                 signoffActions,
-                "No reviewer is on file for these bureaus yet — assign one from Pipeline before nudging.",
+                `No reviewer is on file for these ${tiers.unitPlural.toLowerCase()} yet — assign one from Pipeline before nudging.`,
               )
           : undefined,
     })

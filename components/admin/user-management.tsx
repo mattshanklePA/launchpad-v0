@@ -169,7 +169,7 @@ export function UserManagement() {
     // scoped to its own bureau.
     const result = await updateUserProfile(user.id, { businessUnit: newBu, office: "" })
     if (!result.ok) {
-      toast({ variant: "destructive", title: "Could not update business unit", description: result.error })
+      toast({ variant: "destructive", title: `Could not update ${tiers.unit.toLowerCase()}`, description: result.error })
       return
     }
     toast({

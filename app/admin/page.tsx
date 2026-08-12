@@ -1012,7 +1012,7 @@ function AdminPageInner() {
                           <h3 className="font-semibold text-lg">{draft.title}</h3>
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                             <span>Submitter: {draft.submitter}</span>
-                            <span>Business Unit: {draft.department}</span>
+                            <span>{tenant.tierLabels.unit}: {draft.department}</span>
                             <span>Last Updated: {draft.lastUpdated}</span>
                             <div className="flex items-center gap-1">
                               <span>Classification:</span>
@@ -1066,7 +1066,7 @@ function AdminPageInner() {
                       <TableRow>
                         <TableHead className="w-[300px]">Title</TableHead>
                         <TableHead>Submitter</TableHead>
-                        <TableHead>Business Unit</TableHead>
+                        <TableHead>{tenant.tierLabels.unit}</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Progress</TableHead>
                         <TableHead>Last Updated</TableHead>
@@ -1129,7 +1129,7 @@ function AdminPageInner() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Submissions by Business Unit</CardTitle>
+                  <CardTitle>Submissions by {tenant.tierLabels.unit}</CardTitle>
                   <CardDescription>Where ideas are coming from across the agency.</CardDescription>
                 </CardHeader>
                 <CardContent>

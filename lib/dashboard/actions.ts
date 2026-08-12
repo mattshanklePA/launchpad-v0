@@ -78,7 +78,16 @@ function knownRecipient(s: Submission): { name: string; email: string } | null {
   return assigneeForBusinessUnit(getBusinessUnit(s))
 }
 
-function needsInfoAction(s: Submission): DashboardAction {
+// All three builders below take the tenant explicitly rather than reaching for
+// `getTenant()` themselves — `getDashboardActions` already resolves it once, and
+// the org-tier words in these messages are the tenant's vocabulary
+// (`tierLabels`), not ours. `tenantHasBureauTier()` is not a substitute guard
+// here: a tenant whose `unit.options` declare `focusAreas` (DoC today, ES2 next)
+// passes that gate and still needs its own words. Two of the three messages
+// happen not to name a tier today — they still take `tenant`, so the next
+// wording change has one obvious place to read vocabulary from rather than
+// reintroducing a hardcoded word.
+function needsInfoAction(s: Submission, tenant: TenantConfig): DashboardAction {
   const bureau = getBusinessUnit(s)
   const bureauLabel = businessUnitLabel(bureau)
   const title = submissionTitle(s)
@@ -97,7 +106,7 @@ function needsInfoAction(s: Submission): DashboardAction {
   }
 }
 
-function unassignedAction(s: Submission): DashboardAction {
+function unassignedAction(s: Submission, tenant: TenantConfig): DashboardAction {
   const bureau = getBusinessUnit(s)
   const bureauLabel = businessUnitLabel(bureau)
   const title = submissionTitle(s)
@@ -114,7 +123,7 @@ function unassignedAction(s: Submission): DashboardAction {
   }
 }
 
-function signoffNudgeAction(s: Submission): DashboardAction {
+function signoffNudgeAction(s: Submission, tenant: TenantConfig): DashboardAction {
   const bureau = getBusinessUnit(s)
   const bureauLabel = businessUnitLabel(bureau)
   const title = submissionTitle(s)
@@ -127,7 +136,7 @@ function signoffNudgeAction(s: Submission): DashboardAction {
     bureau,
     bureauLabel,
     severity: "critical",
-    message: `"${title}" (${bureauLabel}) was approved and is awaiting bureau sign-off${recipient ? ` from ${recipient.name}` : ""}.`,
+    message: `"${title}" (${bureauLabel}) was approved and is awaiting ${tenant.tierLabels.unit.toLowerCase()} sign-off${recipient ? ` from ${recipient.name}` : ""}.`,
     recipientName: recipient?.name,
     recipientEmail: recipient?.email,
     canAutoSend: !!recipient,
@@ -148,18 +157,18 @@ export function getDashboardActions(
   const actions: DashboardAction[] = []
 
   for (const s of rows) {
-    if (getStatus(s) === "needs_info") actions.push(needsInfoAction(s))
+    if (getStatus(s) === "needs_info") actions.push(needsInfoAction(s, tenant))
   }
 
   for (const s of rows) {
     const status = getStatus(s)
     const active = status === "submitted" || status === "in_review" || status === "needs_info"
-    if (active && !getAssigneeEmail(s)) actions.push(unassignedAction(s))
+    if (active && !getAssigneeEmail(s)) actions.push(unassignedAction(s, tenant))
   }
 
   if (tenantHasBureauTier(tenant)) {
     for (const s of rows) {
-      if (getStatus(s) === "approved" && !getBureauSignoff(s)) actions.push(signoffNudgeAction(s))
+      if (getStatus(s) === "approved" && !getBureauSignoff(s)) actions.push(signoffNudgeAction(s, tenant))
     }
   }
 

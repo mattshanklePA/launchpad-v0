@@ -141,6 +141,19 @@ describe("getKpiDrilldown", () => {
   it("signoff list is the approved-but-unsigned submissions", () => {
     const drilldown = getKpiDrilldown(NOAA, submissions, doc)
     expect(drilldown.signoff.map((i) => i.id)).toEqual(["n2"])
+    expect(drilldown.signoff[0].cardField).toBe("Awaiting bureau sign-off")
+  })
+
+  // ISS-2 regression: the drill-down label used to hardcode "bureau", which
+  // the `tenantHasBureauTier()` gate does not protect — ES2 passes that gate.
+  it("labels the signoff drill-down with a non-Commerce bureau-tier tenant's own tier word", () => {
+    const es2 = {
+      ...doc,
+      id: "es2",
+      tierLabels: { department: "Command", unit: "Directorate", unitPlural: "Directorates", subUnit: "Branch", subUnitPlural: "Branches" },
+    }
+    const drilldown = getKpiDrilldown(NOAA, submissions, es2)
+    expect(drilldown.signoff[0].cardField).toBe("Awaiting directorate sign-off")
   })
 
   it("is scope-correct: a bureau-scoped viewer never gets another bureau's item", () => {

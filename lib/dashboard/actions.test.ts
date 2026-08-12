@@ -142,6 +142,43 @@ describe("getDashboardActions", () => {
     expect(actions.map((a) => a.submissionId)).toEqual(["n1"])
   })
 
+  it("keeps Commerce's sign-off message word-for-word", () => {
+    const s = sub({ id: "s11", businessUnit: "noaa", status: "approved", useCaseTitle: "Chatbot triage" })
+    const [action] = getDashboardActions(DEPT, [s], doc)
+    // `businessUnitLabel` resolves against the *active* tenant (uspto under
+    // test), not the one passed here, so the unit renders as its raw value —
+    // unchanged by ISS-2, which only touches the tier noun after it.
+    expect(action.message).toBe(
+      '"Chatbot triage" (noaa) was approved and is awaiting bureau sign-off from Noaa Reviewer.',
+    )
+  })
+
+  // ISS-2 regression. `tenantHasBureauTier()` gates *whether* this action is
+  // derived, not *what words* it uses — a tenant whose `unit.options` declare
+  // `focusAreas` (ES2) passes that gate, so the hardcoded "bureau sign-off"
+  // this replaces would have been the first sentence an ES2 admin read on the
+  // Action Center (PR #152 made it the admin landing surface).
+  it("uses a non-Commerce bureau-tier tenant's own tier vocabulary in the sign-off message", () => {
+    const es2 = {
+      ...doc,
+      id: "es2",
+      tierLabels: {
+        department: "Command",
+        unit: "Directorate",
+        unitPlural: "Directorates",
+        subUnit: "Branch",
+        subUnitPlural: "Branches",
+      },
+    }
+    const s = sub({ id: "s12", businessUnit: "noaa", status: "approved", useCaseTitle: "Readiness triage" })
+    const [action] = getDashboardActions(DEPT, [s], es2)
+    expect(action.kind).toBe("signoff_nudge")
+    expect(action.message).toContain("awaiting directorate sign-off")
+    expect(action.message).not.toMatch(/bureau/i)
+    // Internal field names are not display copy and must not follow the swap.
+    expect(action.bureau).toBe("noaa")
+  })
+
   it("surfaces every kind together for a submission that qualifies for more than one", () => {
     // Not realistic (needs_info + unassigned can't both hold for one row given
     // status, but unassigned + no assignee is exactly what needs_info also

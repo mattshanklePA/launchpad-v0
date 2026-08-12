@@ -98,7 +98,9 @@ export function getKpiDrilldown(
     })
 
   const signoff = tenantHasBureauTier(tenant)
-    ? rows.filter((s) => getStatus(s) === "approved" && !getBureauSignoff(s)).map((s) => toItem(s, "Awaiting bureau sign-off"))
+    ? rows
+        .filter((s) => getStatus(s) === "approved" && !getBureauSignoff(s))
+        .map((s) => toItem(s, `Awaiting ${tenant.tierLabels.unit.toLowerCase()} sign-off`))
     : []
 
   const clusters = clusterDuplicates(submissions, tenant)

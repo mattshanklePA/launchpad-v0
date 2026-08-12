@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest"
 import { getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { initialFormData, type FormData } from "@/lib/steps"
+import { doc } from "@/lib/tenant/doc"
+import type { TenantConfig } from "@/lib/tenant"
 
 // A submission with every idea-gate-required field filled, and the OMB/
 // M-25-21/RMF governance fields left at their initial (unanswered) state —
@@ -46,6 +48,38 @@ function baseComplete(overrides: Partial<FormData> = {}): FormData {
     ...overrides,
   }
 }
+
+describe("getSubmissionReadiness — org-tier wording comes from the tenant (ISS-2)", () => {
+  const es2 = {
+    ...doc,
+    id: "es2",
+    tierLabels: { department: "Command", unit: "Directorate", unitPlural: "Directorates", subUnit: "Branch", subUnitPlural: "Branches" },
+  } as TenantConfig
+
+  it("names the tenant's own middle tier for a missing org unit", () => {
+    // ISS-2 override #1: DoC's readiness list used to read "Business unit"
+    // even though the rest of that tenant says "Bureau". Approved change.
+    const docMissing = getSubmissionReadiness(baseComplete({ submitterOffice: "" }), doc).missing
+    expect(docMissing.map((m) => m.message)).toContain("Bureau")
+
+    const es2Missing = getSubmissionReadiness(baseComplete({ submitterOffice: "" }), es2).missing
+    expect(es2Missing.map((m) => m.message)).toContain("Directorate")
+    expect(es2Missing.map((m) => m.message).join(" ")).not.toMatch(/bureau|business unit/i)
+  })
+
+  it("names the tenant's own plural tier for missing affected units", () => {
+    const docMissing = getSubmissionReadiness(baseComplete({ affectedBusinessUnits: [] }), doc).missing
+    expect(docMissing.map((m) => m.message)).toContain("Affected bureaus")
+
+    const es2Missing = getSubmissionReadiness(baseComplete({ affectedBusinessUnits: [] }), es2).missing
+    expect(es2Missing.map((m) => m.message)).toContain("Affected directorates")
+  })
+
+  it("leaves the field keys alone — only the human-readable message moves", () => {
+    const { missing } = getSubmissionReadiness(baseComplete({ submitterOffice: "" }), es2)
+    expect(missing.map((m) => m.field)).toContain("submitterOffice")
+  })
+})
 
 describe("getSubmissionReadiness — idea gate scoped to the 5-step idea flow (issue #162)", () => {
   it("can submit with Strategic Alignment, Feasibility & Security, and Success Metrics entirely blank", () => {

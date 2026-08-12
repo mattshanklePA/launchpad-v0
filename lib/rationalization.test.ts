@@ -122,6 +122,21 @@ describe("approve-gate predicate", () => {
     expect(isRationalizationPending(s, clusters)).toBe(true)
     expect(canApprove(s, clusters)).toBe(false)
     expect(rationalizationBlockReason(s, clusters)).toMatch(/rationalization pending/i)
+    expect(rationalizationBlockReason(s, clusters, doc)).toContain("cross-bureau duplicate cluster")
+  })
+
+  // ISS-2: the block reason is display copy, so its org-tier word follows the
+  // tenant. The cluster machinery around it keeps its internal "bureau" naming.
+  it("names the tenant's own tier in the block reason", () => {
+    const es2 = {
+      ...doc,
+      id: "es2",
+      tierLabels: { department: "Command", unit: "Directorate", unitPlural: "Directorates", subUnit: "Branch", subUnitPlural: "Branches" },
+    }
+    const s = mkSub("target", "nist", {})
+    expect(rationalizationBlockReason(s, clusters, es2)).toContain("cross-directorate duplicate cluster")
+    expect(rationalizationBlockReason(s, clusters, es2)).not.toMatch(/bureau/i)
+    expect(cluster.bureaus).toEqual(["census", "nist"])
   })
 
   it("allows approval once the cluster is decided (consolidated)", () => {
