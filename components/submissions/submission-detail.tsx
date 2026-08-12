@@ -229,7 +229,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const clusters = clusterDuplicates(allSubmissions)
   const cluster = clusterForSubmission(sub, clusters)
   const rationalizationDecision = getRationalization(sub)
-  const blockReason = rationalizationBlockReason(sub, clusters)
+  const blockReason = rationalizationBlockReason(sub, clusters, tenant)
   const clusterMembers = cluster
     ? cluster.memberIds
         .map((cid) => allSubmissions.find((s) => s.id === cid))

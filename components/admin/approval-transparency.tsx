@@ -75,7 +75,7 @@ export function ApprovalTransparency({ submissions }: { submissions: Submission[
               <th className="text-center font-semibold px-2 py-2">Signed off</th>
               <th className="text-center font-semibold px-2 py-2">Pending</th>
               <th className="text-center font-semibold px-2 py-2">Rejected</th>
-              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">Dept. approved</th>
+              <th className="text-center font-semibold px-2 py-2 whitespace-nowrap">{tiers.department} approved</th>
             </tr>
           </thead>
           <tbody>

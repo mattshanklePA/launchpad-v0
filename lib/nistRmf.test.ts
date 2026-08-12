@@ -7,8 +7,12 @@ import {
   type RmfInputs,
 } from "@/lib/nistRmf"
 
-const noDeptTier = { features: {} } as any
-const deptTier = { features: { departmentFinalApproval: true } } as any
+// Govern's reasons name the tenant's own org tiers (`tierLabels`, ISS-2), so
+// these stubs carry Commerce's vocabulary — the words the assertions below
+// have always pinned.
+const docTiers = { department: "Department", unit: "Bureau", unitPlural: "Bureaus", subUnit: "Office", subUnitPlural: "Offices" }
+const noDeptTier = { features: {}, tierLabels: docTiers } as any
+const deptTier = { features: { departmentFinalApproval: true }, tierLabels: docTiers } as any
 
 function fd(overrides: Partial<RmfInputs> = {}): RmfInputs {
   return { ...initialFormData, ...overrides }
@@ -80,6 +84,22 @@ describe("computeRmfProfile — Govern", () => {
         deptTier,
       ).functions.govern.status,
     ).toBe("covered")
+  })
+
+  // ISS-2 regression: Govern's rationale used to hardcode "bureau"/"department",
+  // so a bureau-tier tenant that isn't Commerce read Commerce's vocabulary back.
+  it("names the tenant's own org tiers in its reasons, not Commerce's", () => {
+    const es2 = {
+      features: { departmentFinalApproval: true },
+      tierLabels: { department: "Command", unit: "Directorate", unitPlural: "Directorates", subUnit: "Branch", subUnitPlural: "Branches" },
+    } as any
+    const { functions } = computeRmfProfile(
+      fd({ stageOfDevelopment: "pilot", reviewStatus: "approved", hasATO: "no", isWithheld: "no" }),
+      es2,
+    )
+    expect(functions.govern.reasons.some((r) => /no directorate sign-off/i.test(r))).toBe(true)
+    expect(functions.govern.reasons.some((r) => /no command-level approval/i.test(r))).toBe(true)
+    expect(functions.govern.reasons.join(" ")).not.toMatch(/bureau|department/i)
   })
 
   it("treats hasATO === yes with no system name as unanswered", () => {

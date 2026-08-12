@@ -15,7 +15,7 @@ import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCir
 import { assessReadiness } from "@/app/actions"
 import { SubmissionGate } from "@/components/steps/submission-gate"
 import { isFieldVisible, getFormConfig } from "@/lib/formConfig"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 
 // "Export to Rally" only applies to tenants with a Rally integration
 // (`TenantConfig.features.rallyExport` — on for USPTO, off for DoW/DoC).
@@ -33,12 +33,17 @@ const ALL_ROUTE_OPTIONS = [
 // Submitter Info) — Strategic Alignment, Feasibility & Security (OMB/M-25-21),
 // and Success Metrics are no longer collected here, so they have no card.
 // Those fields stay in FormData and get filled in during vetting instead.
-const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>> = {
+//
+// Takes the tenant because Step 1's org-unit row is the tenant's own tier
+// vocabulary (`tierLabels.unit`), not fixed wizard copy — see
+// docs/ARCHITECTURE.md. Everything else here is wording that reads the same
+// for every org.
+const STEP_FIELDS = (tenant: TenantConfig): Record<number, Array<{ label: string; key: keyof FormData }>> => ({
   1: [
     { label: "Name", key: "submitterName" },
     { label: "Email", key: "submitterEmail" },
     { label: "Role", key: "submitterRole" },
-    { label: "Business Unit", key: "submitterOffice" },
+    { label: tenant.tierLabels.unit, key: "submitterOffice" },
     { label: "Client Sponsor Name", key: "sponsorName" },
     { label: "Client Sponsor Role", key: "sponsorRole" },
     { label: "Client Sponsor Email", key: "sponsorEmail" },
@@ -76,7 +81,7 @@ const STEP_FIELDS: Record<number, Array<{ label: string; key: keyof FormData }>>
     { label: "Idea Description", key: "useCaseDescription" },
     { label: "Withhold from Public Reporting?", key: "isWithheld" },
   ],
-}
+})
 
 export function Step10ReviewSubmit() {
   const { formData, setCurrentStep, setFormData } = useForm()
@@ -305,7 +310,7 @@ export function Step10ReviewSubmit() {
         // Filter STEP_FIELDS to only the fields currently enabled in the
         // admin Form Configuration. If a step has zero enabled fields, hide
         // its review card entirely.
-        const fields = (STEP_FIELDS[step.step] || []).filter(({ key }) => isFieldVisible(key, formData))
+        const fields = (STEP_FIELDS(tenant)[step.step] || []).filter(({ key }) => isFieldVisible(key, formData))
         if (fields.length === 0) return null
         return (
           <Card key={step.step}>

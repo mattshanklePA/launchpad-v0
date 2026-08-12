@@ -1,7 +1,35 @@
 import { describe, it, expect, afterEach } from "vitest"
 import { setCachedFormConfig } from "@/lib/dataCache"
-import { getFormConfig, isFieldEnabled, isFieldMandatory, isFieldVisible } from "@/lib/formConfig"
+import { getFormConfig, isFieldEnabled, isFieldMandatory, isFieldVisible, setFieldMandatory } from "@/lib/formConfig"
 import { initialFormData, type FormData } from "@/lib/steps"
+import { doc } from "@/lib/tenant/doc"
+import type { TenantConfig } from "@/lib/tenant"
+
+// ISS-2: the permission-denied message names two org tiers, so it reads from
+// the tenant. This path returns before any I/O, so no fetch mock is needed.
+describe("setFieldMandatory — permission message wording", () => {
+  // A bureau-scoped admin: `canMarkFieldMandatory` is false for them, which is
+  // the branch that produces the message.
+  const bureauAdmin = { role: "admin" as const, businessUnit: "noaa" }
+
+  it("uses Commerce's tier words for the DoC tenant", async () => {
+    const result = await setFieldMandatory("coreProblem", true, "a@doc.gov", bureauAdmin, doc)
+    expect(result).toEqual({
+      ok: false,
+      error: "Only a department-level admin can mark a field mandatory for all bureaus",
+    })
+  })
+
+  it("uses a non-Commerce bureau-tier tenant's own tier words", async () => {
+    const es2 = {
+      ...doc,
+      id: "es2",
+      tierLabels: { department: "Command", unit: "Directorate", unitPlural: "Directorates", subUnit: "Branch", subUnitPlural: "Branches" },
+    } as TenantConfig
+    const result = await setFieldMandatory("coreProblem", true, "a@es2.mil", bureauAdmin, es2)
+    expect(result.error).toBe("Only a command-level admin can mark a field mandatory for all directorates")
+  })
+})
 
 const withTenant = (id: string, run: () => void) => {
   const prev = process.env.NEXT_PUBLIC_TENANT

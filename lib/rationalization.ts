@@ -154,8 +154,11 @@ export function isRationalizationPending(s: Submission, clusters: Rationalizatio
   return !decision || decision.clusterId !== cluster.id
 }
 
-const BLOCK_REASON =
-  "Rationalization pending — this cross-bureau duplicate cluster must be marked consolidated or keep-separate before approval."
+// Display copy, so the org-tier word comes from the tenant (`tierLabels`) —
+// see docs/ARCHITECTURE.md. The cluster/duplicate machinery around it keeps
+// its "bureau" naming: those are internal identifiers, never rendered.
+const blockReason = (tenant: TenantConfig): string =>
+  `Rationalization pending — this cross-${tenant.tierLabels.unit.toLowerCase()} duplicate cluster must be marked consolidated or keep-separate before approval.`
 
 /** True when `s` may be moved to "approved" given its cluster's decision state. */
 export function canApprove(s: Submission, clusters: RationalizationCluster[]): boolean {
@@ -163,8 +166,12 @@ export function canApprove(s: Submission, clusters: RationalizationCluster[]): b
 }
 
 /** Human-readable block reason for `s`, or undefined when approval isn't blocked. */
-export function rationalizationBlockReason(s: Submission, clusters: RationalizationCluster[]): string | undefined {
-  return isRationalizationPending(s, clusters) ? BLOCK_REASON : undefined
+export function rationalizationBlockReason(
+  s: Submission,
+  clusters: RationalizationCluster[],
+  tenant: TenantConfig = getTenant(),
+): string | undefined {
+  return isRationalizationPending(s, clusters) ? blockReason(tenant) : undefined
 }
 
 /**

@@ -34,6 +34,7 @@
 
 import type { FormData } from "@/lib/steps"
 import { isFieldVisible } from "@/lib/formConfig"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 
 // The governance fields tracked in `governanceMissing` below — exported so
 // lib/governanceCapture.ts (issue #161's reviewer-side "complete the use
@@ -97,7 +98,11 @@ function hasArrayValue(v: string[] | undefined): boolean {
   return Array.isArray(v) && v.length > 0
 }
 
-export function getSubmissionReadiness(formData: FormData): SubmissionReadiness {
+export function getSubmissionReadiness(
+  formData: FormData,
+  tenant: TenantConfig = getTenant(),
+): SubmissionReadiness {
+  const tiers = tenant.tierLabels
   const missing: MissingItem[] = []
   const warnings: MissingItem[] = []
   const governanceMissing: MissingItem[] = []
@@ -131,11 +136,11 @@ export function getSubmissionReadiness(formData: FormData): SubmissionReadiness 
   need("submitterName", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Submitter name" }, () => !presentString(formData.submitterName))
   need("submitterEmail", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Submitter email" }, () => !presentString(formData.submitterEmail))
   need("submitterRole", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Job role" }, () => !formData.submitterRole)
-  need("submitterOffice", { step: 1, stepName: "Submitter Info", reason: "missing", message: "Business unit" }, () => !formData.submitterOffice)
+  need("submitterOffice", { step: 1, stepName: "Submitter Info", reason: "missing", message: tiers.unit }, () => !formData.submitterOffice)
 
   // ---------- Step 2: Business Problem & Opportunity ----------
   need("coreProblem", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Problem statement" }, () => !presentString(formData.coreProblem))
-  need("affectedBusinessUnits", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Affected business units" }, () => !hasArrayValue(formData.affectedBusinessUnits))
+  need("affectedBusinessUnits", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: `Affected ${tiers.unitPlural.toLowerCase()}` }, () => !hasArrayValue(formData.affectedBusinessUnits))
   need("targetAudience", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Target audience" }, () => !formData.targetAudience)
   need("impactedUsersCount", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "Estimated users impacted" }, () => !formData.impactedUsersCount)
   need("targetUserContext", { step: 2, stepName: "Business Problem & Opportunity", reason: "missing", message: "User profile / context" }, () => !presentString(formData.targetUserContext))
