@@ -226,7 +226,32 @@ All four now resolve org vocabulary from the tenant: `tierLabels` for tier words
 
 **OMB wording is frozen.** Any `FieldDefinition` with `level: "omb"` or `omb: true` carries OMB's published data-dictionary phrasing (`docs/omb-2025-inventory-fields.md`) and is excluded from the sweep — `hasPii`'s "Involves PII maintained by the agency?" is the clearest case, where "agency" is OMB's word and not a tier label. `lib/fieldRegistry.test.ts` pins all 29 OMB labels byte-for-byte, across every tenant, and asserts the pinned set covers the whole OMB field list so a newly added OMB field can't slip past the guardrail. `lib/ombExport.ts`'s column names and `lib/ombConsolidation.ts`'s categories stay out of scope entirely for the same reason. Glossary lookup keys (`crossBureauRationalization`, `awaitingBureauSignOff`) and all `fieldKey` values are structural — persisted in `form_data` and referenced by `<GlossaryTerm term="…">` call sites — and never follow the copy.
 
-**Not yet converted** (deliberate, tracked as follow-on): `lib/pdfGenerator.ts`.
+**The inventory vocabulary's surface.** Same lesson, second vocabulary. `inventoryLabel` was added for the public landing page and applied there only, because that is where the problem was noticed — and nine more surfaces went on saying "OMB" to a tenant that does not report to OMB. Three `TenantConfig` fields now carry it, and here is the whole surface so the next copy change is scoped against all of it at once:
+
+| Field | Value for `doc` / `uspto` | Value for `dow` / `es2` | Used for |
+| --- | --- | --- | --- |
+| `inventoryLabel` | `OMB inventory` | `AI use case inventory` | the inventory named as a noun |
+| `inventoryShortLabel` | `OMB` | `Inventory` | adjectival/inline use, where the long form doesn't fit |
+| `minimumPracticesLabel` | `M-25-21 minimum practices` | `High-impact AI minimum practices` | the governance panel's second section |
+
+| Surface | Strings |
+| --- | --- |
+| `components/dashboard/dashboard-shell.tsx` | sidebar export tooltip + label — visible on every authenticated screen |
+| `components/dashboard/dashboard-workspace-links.tsx` | the same export item in the Admin dropdown |
+| `components/dashboard/department-dashboard-data.ts` | the reportability KPI label; the Action Center's reportability-review item |
+| `components/dashboard/orientation-banner.tsx` | the final pipeline stage |
+| `components/admin/bureau-rollup.tsx` | consolidation summary, "review needed" and "Consolidated (…)" column headers |
+| `components/admin/form-config-panel.tsx` | the OMB level hint and the level badge |
+| `components/launchpad/field-requirement-badge.tsx` | the wizard's "Required (…)" tooltip |
+| `components/submissions/governance-capture-panel.tsx` | both section headings on the reviewer's "Complete the use case" checklist |
+| `components/submissions/submission-detail.tsx` | reportability status labels and the two reportability headings |
+| `components/landing/public-landing.tsx` | feature/proof/CTA copy |
+| `app/admin/page.tsx` | the Demo Data description |
+| `app/actions.ts` | the two minimum-practice draft rationales, which render in the governance panel |
+
+`lib/tenant/inventoryLabel.test.ts` is the guardrail: it builds every data-shaped string for every tenant in `ALL_TENANTS` and asserts a tenant whose `inventoryShortLabel` is not `OMB` produces nothing matching `/\bOMB\b|M-25-21/`, then scans the listed files for a bare `OMB`/`M-25-21` literal outside a comment — the inline-JSX equivalent of the same guarantee. `FieldLevel`'s `"omb"` value, the `omb-reportable` KPI id, the `ombReportability` glossary key and the `/api/export/omb` route path are structural and unchanged; the scan's word-boundary match skips them by construction. `lib/ombExport.ts` and `lib/ombConsolidation.ts` stay untouched — those are OMB's published schema and correct for every tenant regardless of what the UI calls the inventory.
+
+**Not yet converted** (deliberate, tracked as follow-on): `lib/pdfGenerator.ts`; `lib/glossary.ts`'s `ombReportability` / `consolidatedIndividualReporting` entries, whose `term` and definition still name OMB; and `field-requirement-badge.tsx`'s `"Required (Department)"`, which is a *tier* word the `tierLabels` passes missed rather than inventory vocabulary.
 
 #### Product & assistant naming (tenant-aware)
 

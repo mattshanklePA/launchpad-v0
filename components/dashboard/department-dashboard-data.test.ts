@@ -47,6 +47,9 @@ const doc = {
     ],
   },
   tierLabels: { department: "Department", unit: "Bureau", unitPlural: "Bureaus", subUnit: "Office", subUnitPlural: "Offices" },
+  inventoryLabel: "OMB inventory",
+  inventoryShortLabel: "OMB",
+  minimumPracticesLabel: "M-25-21 minimum practices",
 } as unknown as TenantConfig
 
 const uspto = {
@@ -60,6 +63,9 @@ const uspto = {
     subUnit: "Office",
     subUnitPlural: "Offices",
   },
+  inventoryLabel: "OMB inventory",
+  inventoryShortLabel: "OMB",
+  minimumPracticesLabel: "M-25-21 minimum practices",
 } as unknown as TenantConfig
 
 // A bureau-tier tenant that is not Commerce — the case `tenantHasBureauTier()`
@@ -76,6 +82,9 @@ const es2 = {
     subUnit: "Branch",
     subUnitPlural: "Branches",
   },
+  inventoryLabel: "AI use case inventory",
+  inventoryShortLabel: "Inventory",
+  minimumPracticesLabel: "High-impact AI minimum practices",
 } as unknown as TenantConfig
 
 function baseMetrics(overrides: Partial<DashboardMetrics> = {}): DashboardMetrics {

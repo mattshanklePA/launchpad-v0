@@ -49,6 +49,8 @@ A serious AI idea names the specific priorities it advances, describes the mecha
 
   // USPTO reports to the published federal inventory OMB collects each year.
   inventoryLabel: "OMB inventory",
+  inventoryShortLabel: "OMB",
+  minimumPracticesLabel: "M-25-21 minimum practices",
 
   landingObjectives: [
     {

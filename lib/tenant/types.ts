@@ -69,6 +69,18 @@ export type TenantConfig = {
   // follow this — see lib/ombExport.ts.)
   inventoryLabel: string
 
+  // Short form of `inventoryLabel`, used adjectivally where the long form
+  // doesn't fit inline — "OMB reportable", "Required (OMB)", "Consolidated
+  // (OMB)". Kept separate rather than derived, since the useful abbreviation
+  // isn't recoverable from the long form.
+  inventoryShortLabel: string
+
+  // Heading for the reviewer governance panel's second section — the
+  // high-impact minimum practices. Named for the authority that mandates them,
+  // which is an OMB memo number for tenants that report to OMB's inventory and
+  // a plain description for those that don't.
+  minimumPracticesLabel: string
+
   // Three illustrative rows in the landing page's Command Center preview.
   // Optional: when unset, the existing default list renders unchanged.
   heroPreviewItems?: HeroPreviewItem[]

@@ -90,6 +90,8 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
   // two groups as `focusAreas` above, in the shape that section renders.
   // Internal inventory to the same field set, not a published federal one.
   inventoryLabel: "AI use case inventory",
+  inventoryShortLabel: "Inventory",
+  minimumPracticesLabel: "High-impact AI minimum practices",
 
   landingObjectives: [
     {

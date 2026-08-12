@@ -19,9 +19,11 @@ export function OrientationBanner({ bureauTier }: { bureauTier: boolean }) {
   const [dismissed, setDismissed] = usePersistentDisclosure("dashboard-orientation-banner", false)
   if (dismissed) return null
 
+  const tenant = getTenant()
+  const reportable = `${tenant.inventoryShortLabel} reportable`
   const stages = bureauTier
-    ? ["Submitted", "In review", "Approved", `${getTenant().tierLabels.unit} sign-off`, "OMB reportable"]
-    : ["Submitted", "In review", "Approved", "OMB reportable"]
+    ? ["Submitted", "In review", "Approved", `${tenant.tierLabels.unit} sign-off`, reportable]
+    : ["Submitted", "In review", "Approved", reportable]
 
   return (
     <div className="flex items-start gap-3 rounded-lg border border-secondary/30 bg-secondary/5 p-3">

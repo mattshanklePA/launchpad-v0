@@ -49,6 +49,7 @@ export function FormConfigPanel() {
   const tiers = getTenant().tierLabels
   const unitLower = tiers.unit.toLowerCase()
   const unitPluralLower = tiers.unitPlural.toLowerCase()
+  const inventoryShort = getTenant().inventoryShortLabel
 
   // Re-derive config from the shared cache on mount AND whenever the cache
   // changes (e.g., when the DataProvider's initial fetch lands after this
@@ -201,7 +202,7 @@ export function FormConfigPanel() {
 
                   let levelHint: string | null = null
                   if (level === "omb" && !toggleAllowed) {
-                    levelHint = `Required by OMB — mandatory for every ${unitLower}, cannot be turned off.`
+                    levelHint = `Required by ${inventoryShort} — mandatory for every ${unitLower}, cannot be turned off.`
                   } else if (level === "department" && !toggleAllowed) {
                     levelHint = `Required by the ${tiers.department} — mandatory for every ${unitLower}, cannot be turned off.`
                   } else if (mandatoryOverride) {
@@ -237,7 +238,7 @@ export function FormConfigPanel() {
                             {level === "omb" && (
                               <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
                                 <Landmark className="h-2.5 w-2.5 mr-1" />
-                                OMB
+                                {inventoryShort}
                               </Badge>
                             )}
                             {level === "department" && (

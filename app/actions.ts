@@ -920,7 +920,7 @@ const DEMOGRAPHIC_FEATURE_VALUES = [
 function minPracticeNotStarted(practice: string): { value: "in_progress"; rationale: string } {
   return {
     value: "in_progress",
-    rationale: `M-25-21 minimum practice — ${practice} hasn't started yet for a use case still moving through vetting.`,
+    rationale: `${TENANT.minimumPracticesLabel} — ${practice} hasn't started yet for a use case still moving through vetting.`,
   }
 }
 
@@ -955,7 +955,7 @@ export async function draftGovernanceFields(formData: FormData): Promise<Governa
   draft.humanOversightAppeal = minPracticeNotStarted("the appeal process")
   draft.publicConsultationSteps = {
     value: ["in_progress"],
-    rationale: "M-25-21 minimum practice — public consultation hasn't started yet for a use case still moving through vetting.",
+    rationale: `${TENANT.minimumPracticesLabel} — public consultation hasn't started yet for a use case still moving through vetting.`,
   }
 
   // Tier 2 — Scout drafts the fields that are a real judgment call on the

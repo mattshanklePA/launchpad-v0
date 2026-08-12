@@ -43,7 +43,7 @@ import {
 } from "@/lib/bureauSignoff"
 import { assistReviewer } from "@/app/actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 import {
   rmfBadgeClass,
   rmfFunctionStatusBadgeClass,
@@ -90,10 +90,13 @@ function newCommentId() {
   return `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
 
-const REPORTABILITY_LABEL: Record<ReportabilityStatus, string> = {
-  reportable: "Reportable to OMB",
-  excluded: "Excluded from OMB inventory",
-  review: "Needs review (OMB)",
+function reportabilityLabels(tenant: TenantConfig): Record<ReportabilityStatus, string> {
+  const short = tenant.inventoryShortLabel
+  return {
+    reportable: `Reportable to ${short}`,
+    excluded: `Excluded from ${tenant.inventoryLabel}`,
+    review: `Needs review (${short})`,
+  }
 }
 
 // Active blue is reserved for interactive elements (guardrail), so a purely
@@ -718,7 +721,7 @@ export function SubmissionDetail({ id }: { id: string }) {
             </span>
             <span className="flex flex-wrap items-center gap-1.5">
               <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", REPORTABILITY_CLASSES[reportability.status])}>
-                {REPORTABILITY_LABEL[reportability.status]}
+                {reportabilityLabels(tenant)[reportability.status]}
               </Badge>
               <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS.neutral)}>
                 {consolidation.status}
@@ -740,11 +743,11 @@ export function SubmissionDetail({ id }: { id: string }) {
         <CollapsibleContent className="space-y-4 border-t p-4">
           <div className="space-y-2">
             <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              <GlossaryTerm term="ombReportability">OMB reportability</GlossaryTerm>
+              <GlossaryTerm term="ombReportability">{tenant.inventoryShortLabel} reportability</GlossaryTerm>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", REPORTABILITY_CLASSES[reportability.status])}>
-                {REPORTABILITY_LABEL[reportability.status]}
+                {reportabilityLabels(tenant)[reportability.status]}
               </Badge>
               <span className="text-sm text-muted-foreground">{reportability.reason}</span>
             </div>
@@ -752,7 +755,7 @@ export function SubmissionDetail({ id }: { id: string }) {
 
           <div className="space-y-2 border-t pt-4">
             <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              <GlossaryTerm term="consolidatedIndividualReporting">OMB reporting mode</GlossaryTerm>
+              <GlossaryTerm term="consolidatedIndividualReporting">{tenant.inventoryShortLabel} reporting mode</GlossaryTerm>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS.neutral)}>
