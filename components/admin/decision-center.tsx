@@ -27,6 +27,7 @@ import { computeRiskProfile, riskBadgeClass } from "@/lib/riskProfile"
 import { rmfBadgeClass, RMF_OVERALL_LABELS } from "@/lib/nistRmf"
 import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant } from "@/lib/tenant"
+import { businessUnitLabel } from "@/lib/reviewWorkflow"
 
 // Higher rank sorts first in the Decision Center list; unassessed drafts (rank 0)
 // always trail the fully-assessed candidates. Mirrors the ranking used for the
@@ -139,7 +140,7 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
               <span>{fmt(d.submitterName)}</span>
               <span>·</span>
-              <span>{(d.submitterOffice || "").toUpperCase() || "—"}</span>
+              <span>{d.submitterOffice ? businessUnitLabel(d.submitterOffice) : "—"}</span>
               <span>·</span>
               <span>Submitted {dateLabel(submission.submittedAt)}</span>
             </div>

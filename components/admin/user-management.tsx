@@ -29,6 +29,7 @@ import {
 } from "@/lib/auth"
 import { useDataProvider } from "@/components/data-provider"
 import { getTenant } from "@/lib/tenant"
+import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth"
 import { businessUnitLabel, officeLabel } from "@/lib/reviewWorkflow"
 
 // Job role is USPTO-shaped and not yet tenant-configurable; bureau/office
@@ -204,7 +205,7 @@ export function UserManagement() {
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage who has access to admin features. Job Role and Business Unit auto-fill the
+          Manage who has access to admin features. Job Role and {unitLabel} auto-fill the
           submitter step of the wizard so people don't have to retype it.
         </p>
       </CardHeader>
@@ -223,7 +224,7 @@ export function UserManagement() {
                   type="email"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
-                  placeholder="jane.smith@uspto.gov"
+                  placeholder={getTenant().loginEmailPlaceholder}
                 />
               </div>
               <div className="space-y-1">
@@ -318,7 +319,7 @@ export function UserManagement() {
         <div className="space-y-2">
           {users.map((u) => {
             const isMe = session?.userId === u.id
-            const isPrimaryAdmin = u.email === "matt.shankle@uspto.gov"
+            const isPrimaryAdmin = u.email === PRIMARY_ADMIN_EMAIL
             const userOffices = unitOptions.find((o) => o.value === u.businessUnit)?.offices || []
             return (
               <div

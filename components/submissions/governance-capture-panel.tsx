@@ -252,7 +252,7 @@ export function GovernanceCapturePanel({
                       variant="outline"
                       className={cn("font-mono text-[9px] uppercase tracking-[0.06em]", isOverride ? STATUS_BADGE_CLASS.attention : STATUS_BADGE_CLASS.neutral)}
                     >
-                      {isOverride ? "overridden" : "Scout proposed"}
+                      {isOverride ? "overridden" : `${assistantName} proposed`}
                     </Badge>
                   )}
                 </div>

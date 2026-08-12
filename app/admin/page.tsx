@@ -44,7 +44,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { getFocusAreasForUnit } from "@/lib/strategicFocusAreas"
-import { getStatus, STATUS_ORDER, STATUS_LABEL, visibleSubmissions } from "@/lib/reviewWorkflow"
+import { getStatus, STATUS_ORDER, STATUS_LABEL, visibleSubmissions, businessUnitLabel } from "@/lib/reviewWorkflow"
 
 // Real USPTO strategic objectives:
 //   - 2022-2026 Strategic Plan — 5 agency-wide goals
@@ -280,6 +280,17 @@ const FUNNEL_STYLES: Record<string, { bg: string; border: string; text: string; 
 
 // Wrapper that provides shared app data to the admin page. The actual page
 // logic lives in AdminPageInner so it can call useDataProvider().
+// Reset Demo Data runs three sequential awaits and takes tens of seconds; the
+// button reports which one is in flight rather than one undifferentiated
+// spinner, so a slow reset never reads as a hung page.
+type ResetStage = "clearing" | "seeding" | "refreshing"
+
+const RESET_STAGE_LABEL: Record<ResetStage, string> = {
+  clearing: "Clearing submissions…",
+  seeding: "Re-seeding demo data…",
+  refreshing: "Refreshing…",
+}
+
 export default function AdminPage() {
   return (
     <DataProvider>
@@ -316,6 +327,7 @@ function AdminPageInner() {
   const { loaded: dataLoaded, refetchSubmissions } = useDataProvider()
   const { toast } = useToast()
   const [resettingDemoData, setResettingDemoData] = useState(false)
+  const [resetStage, setResetStage] = useState<ResetStage | null>(null)
   const [clearingSubmissions, setClearingSubmissions] = useState(false)
 
   useEffect(() => {
@@ -363,8 +375,10 @@ function AdminPageInner() {
     )
       return
     setResettingDemoData(true)
+    setResetStage("clearing")
     try {
       await clearSubmissions()
+      setResetStage("seeding")
       const res = await fetch("/api/seed", { method: "POST" })
       const json = await res.json().catch(() => null)
       if (!res.ok) {
@@ -373,6 +387,7 @@ function AdminPageInner() {
       if (json?.seeded === false && (json?.existingCount ?? 0) > 0) {
         throw new Error("Clearing existing submissions didn't fully complete, so the reset was skipped. Try again.")
       }
+      setResetStage("refreshing")
       await refetchSubmissions()
       toast({
         title: "Demo data reset",
@@ -386,6 +401,7 @@ function AdminPageInner() {
       })
     } finally {
       setResettingDemoData(false)
+      setResetStage(null)
     }
   }
 
@@ -817,7 +833,7 @@ function AdminPageInner() {
                   <div className="space-y-3">
                     {buRows.map(([bu, count]) => (
                       <div key={bu} className="flex justify-between items-center">
-                        <span className="text-sm">{bu}</span>
+                        <span className="text-sm">{businessUnitLabel(bu)}</span>
                         <span className="text-sm font-medium">
                           {count} submission{count === 1 ? "" : "s"}
                         </span>
@@ -1204,8 +1220,8 @@ function AdminPageInner() {
             <p className="text-sm text-muted-foreground -mt-4 max-w-3xl">
               Turn individual wizard fields on or off so the form captures exactly the data your
               organization needs — no more, no less. Hidden fields are also excluded from the
-              readiness check on the final step. Core fields and DoC-mandated AI risk questions
-              are locked on by design.
+              readiness check on the final step. Core fields and the AI risk questions{" "}
+              {tenant.riskFramework.label} mandates are locked on by design.
             </p>
             <FormConfigPanel />
           </TabsContent>
@@ -1273,7 +1289,7 @@ function AdminPageInner() {
                       {resettingDemoData ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Resetting…
+                          {RESET_STAGE_LABEL[resetStage ?? "clearing"]}
                         </>
                       ) : (
                         "Reset Demo Data"

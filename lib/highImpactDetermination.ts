@@ -15,6 +15,7 @@
 // final call — this is advisory, same as Scout's read on a submission.
 
 import type { FormData } from "@/lib/steps"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 
 export type HighImpactRecommendation = "yes" | "no"
 
@@ -38,17 +39,23 @@ export const HIGH_IMPACT_FACTOR_LABELS: Record<HighImpactFactor, string> = {
   enforcement: "Could affect an enforcement action (investigations, inspections, penalties)",
 }
 
-const FACTOR_REASONS: Record<HighImpactFactor, string> = {
-  rights: "AI output could meaningfully affect an individual's rights (OMB M-25-21 Section 5).",
-  safety: "AI output could meaningfully affect the safety of individuals (OMB M-25-21 Section 5).",
-  benefits_access: "AI output could meaningfully affect access to benefits or services (OMB M-25-21 Section 5).",
-  resource_allocation:
-    "AI output could meaningfully affect the allocation of government or public resources (OMB M-25-21 Section 5).",
-  enforcement: "AI output could meaningfully affect an enforcement action (OMB M-25-21 Section 5).",
+// The mandating authority named in every reason's closing parenthetical. It is
+// the tenant's own framework (`riskFramework.label`) rather than a hardcoded
+// OMB memo number — the rule these reasons implement is the same one for every
+// org, but the authority that mandates it is not. Only the citation moves;
+// each reason's substance is unchanged, and so is the determination logic.
+function factorReasons(authority: string): Record<HighImpactFactor, string> {
+  return {
+    rights: `AI output could meaningfully affect an individual's rights (${authority}).`,
+    safety: `AI output could meaningfully affect the safety of individuals (${authority}).`,
+    benefits_access: `AI output could meaningfully affect access to benefits or services (${authority}).`,
+    resource_allocation: `AI output could meaningfully affect the allocation of government or public resources (${authority}).`,
+    enforcement: `AI output could meaningfully affect an enforcement action (${authority}).`,
+  }
 }
 
-const NOT_HIGH_IMPACT_REASON =
-  "None of the AI output was flagged as affecting rights, safety, benefits access, resource allocation, or enforcement actions (OMB M-25-21 Section 5)."
+const notHighImpactReason = (authority: string) =>
+  `None of the AI output was flagged as affecting rights, safety, benefits access, resource allocation, or enforcement actions (${authority}).`
 
 // Fields this module reads to infer criteria the submitter/reviewer didn't
 // explicitly check. Only `highImpactFactors` is required; the rest are
@@ -100,17 +107,14 @@ function problemSolutionText(fd: HighImpactInputs): string {
     .join(" ")
 }
 
-const INFERRED_SIGNAL_REASONS: Record<HighImpactFactor, string> = {
-  rights:
-    "Decisional AI: the AI makes or influences a decision or outcome about an individual (decisional impact on individuals → rights, OMB M-25-21 Section 5).",
-  safety:
-    "Life-safety context: a high-severity problem describes a safety-of-life scenario (life-safety / safety-of-life context → safety, OMB M-25-21 Section 5).",
-  benefits_access:
-    "Decisional AI over eligibility/benefits: the AI decision touches benefits eligibility or adjudication (benefits eligibility or adjudication → access to benefits, OMB M-25-21 Section 5).",
-  resource_allocation:
-    "Decisional AI over resource allocation: the AI decision touches how government or public resources are allocated (resource allocation context → resource allocation, OMB M-25-21 Section 5).",
-  enforcement:
-    "Decisional AI over enforcement/adjudication: the AI decision touches an enforcement or adjudication action (enforcement / adjudication context → enforcement actions, OMB M-25-21 Section 5).",
+function inferredSignalReasons(authority: string): Record<HighImpactFactor, string> {
+  return {
+    rights: `Decisional AI: the AI makes or influences a decision or outcome about an individual (decisional impact on individuals → rights, ${authority}).`,
+    safety: `Life-safety context: a high-severity problem describes a safety-of-life scenario (life-safety / safety-of-life context → safety, ${authority}).`,
+    benefits_access: `Decisional AI over eligibility/benefits: the AI decision touches benefits eligibility or adjudication (benefits eligibility or adjudication → access to benefits, ${authority}).`,
+    resource_allocation: `Decisional AI over resource allocation: the AI decision touches how government or public resources are allocated (resource allocation context → resource allocation, ${authority}).`,
+    enforcement: `Decisional AI over enforcement/adjudication: the AI decision touches an enforcement or adjudication action (enforcement / adjudication context → enforcement actions, ${authority}).`,
+  }
 }
 
 // Each inferred signal is gated on a structured field LaunchPad already
@@ -138,19 +142,22 @@ const INFERRED_SIGNALS: { factor: HighImpactFactor; test: (fd: HighImpactInputs)
   },
 ]
 
-/** Recommends an OMB high-impact determination for one submission's fields. Pure — no I/O. */
-export function determineHighImpact(fd: HighImpactInputs): HighImpactResult {
+/** Recommends a high-impact determination for one submission's fields. Pure — no I/O. */
+export function determineHighImpact(fd: HighImpactInputs, tenant: TenantConfig = getTenant()): HighImpactResult {
+  const authority = tenant.riskFramework.label
   const manualFactors = new Set((fd.highImpactFactors || []) as HighImpactFactor[])
   const inferredSignals = INFERRED_SIGNALS.filter((s) => s.test(fd))
   const inferredFactors = new Set(inferredSignals.map((s) => s.factor))
 
   if (manualFactors.size === 0 && inferredFactors.size === 0) {
-    return { recommendation: "no", reasons: [NOT_HIGH_IMPACT_REASON] }
+    return { recommendation: "no", reasons: [notHighImpactReason(authority)] }
   }
 
+  const factorReason = factorReasons(authority)
+  const inferredReason = inferredSignalReasons(authority)
   const reasons: string[] = []
-  for (const f of manualFactors) reasons.push(FACTOR_REASONS[f])
-  for (const s of inferredSignals) reasons.push(INFERRED_SIGNAL_REASONS[s.factor])
+  for (const f of manualFactors) reasons.push(factorReason[f])
+  for (const s of inferredSignals) reasons.push(inferredReason[s.factor])
 
   return { recommendation: "yes", reasons }
 }

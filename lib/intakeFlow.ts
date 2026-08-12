@@ -18,6 +18,7 @@
 
 import type { FormData } from "@/lib/steps"
 import { isFieldEnabled } from "@/lib/formConfig"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 
 export type IntakeTopicId = "problem" | "affectedUnits" | "audience" | "solutionBenefits"
 
@@ -37,9 +38,14 @@ export type IntakeTopic = {
   fields: (keyof FormData)[]
 }
 
-export const INTAKE_TOPICS: IntakeTopic[] = [
+// The affected-units topic's label is the tenant's own tier vocabulary — it
+// sits directly under the record panel's card heading, which resolves from
+// `lib/fieldRegistry.ts`'s `Affected ${unitPlural}`, so a hardcoded label made
+// one screen contradict itself.
+export function getIntakeTopics(tenant: TenantConfig = getTenant()): IntakeTopic[] {
+  return [
   { id: "problem", label: "Business problem or opportunity", kind: "draft", scoutStep: 2, fields: ["problemDefinition"] },
-  { id: "affectedUnits", label: "Affected business unit(s)", kind: "choice", fields: ["affectedBusinessUnits"] },
+  { id: "affectedUnits", label: `Affected ${tenant.tierLabels.unitPlural}`, kind: "choice", fields: ["affectedBusinessUnits"] },
   { id: "audience", label: "Internal or external", kind: "choice", fields: ["deliveryAudience"] },
   {
     id: "solutionBenefits",
@@ -48,7 +54,11 @@ export const INTAKE_TOPICS: IntakeTopic[] = [
     scoutStep: 3,
     fields: ["solutionSummary", "userValue", "businessValue"],
   },
-]
+  ]
+}
+
+/** The active tenant's topics — the module-load snapshot every existing consumer uses. */
+export const INTAKE_TOPICS: IntakeTopic[] = getIntakeTopics()
 
 function present(v: unknown): boolean {
   if (Array.isArray(v)) return v.length > 0

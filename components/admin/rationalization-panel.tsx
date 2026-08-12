@@ -22,6 +22,7 @@ import Link from "next/link"
 import { Users, Check } from "lucide-react"
 import { patchSubmissionFormData, type Submission } from "@/lib/submissions"
 import { getBusinessUnit, businessUnitLabel } from "@/lib/reviewWorkflow"
+import { getTenant } from "@/lib/tenant"
 import {
   clusterDuplicates,
   getRationalization,
@@ -72,7 +73,7 @@ export function RationalizationPanel({ submissions }: { submissions: Submission[
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <h2 className="text-sm font-semibold text-uspto-gray-text flex items-center gap-2">
           <Users className="w-4 h-4" />
-          Cross-bureau rationalization
+          Cross-{getTenant().tierLabels.unit.toLowerCase()} rationalization
         </h2>
         <span className="text-xs text-muted-foreground">
           {clusters.length} duplicate cluster{clusters.length === 1 ? "" : "s"} · {decidedCount} rationalized

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { GLOSSARY, GLOSSARY_TERM_KEYS, getGlossary, type GlossaryTermKey } from "@/lib/glossary"
 import { doc } from "@/lib/tenant/doc"
-import type { TenantConfig } from "@/lib/tenant"
+import { ALL_TENANTS, type TenantConfig } from "@/lib/tenant"
 
 const es2 = {
   ...doc,
@@ -94,22 +94,47 @@ describe("GLOSSARY", () => {
     }
   })
 
-  it("leaves every non-tier entry byte-identical across tenants", () => {
+  it("leaves every tenant-neutral entry byte-identical across tenants", () => {
     const commerce = getGlossary(doc)
     const other = getGlossary(es2)
-    const tierKeys = new Set<string>(["crossBureauRationalization", "awaitingBureauSignOff"])
+    // Entries that legitimately resolve org vocabulary: the two tier entries
+    // (ISS-3) and the three that name the inventory or the mandating
+    // authority (ISS-8). Everything else describes a concept that reads the
+    // same for every org and must not drift.
+    const tenantVarying = new Set<string>([
+      "crossBureauRationalization",
+      "awaitingBureauSignOff",
+      "ombReportability",
+      "consolidatedIndividualReporting",
+      "highImpactDetermination",
+    ])
     for (const key of GLOSSARY_TERM_KEYS) {
-      if (tierKeys.has(key)) continue
+      if (tenantVarying.has(key)) continue
       expect(other[key], key).toEqual(commerce[key])
     }
   })
 
-  it("is tenant-neutral (no hardcoded tenant/org names)", () => {
+  it("never names another org — only the tenant's own vocabulary reaches a definition", () => {
+    // Since ISS-8 a definition may name the tenant's own mandating authority
+    // (`riskFramework.label`, e.g. USPTO's "DoC / OMB AI risk management"), so
+    // the tenant's own vocabulary is stripped before the check — what must
+    // never appear is somebody else's.
     const tenantNames = ["USPTO", "DoW", "DoC", "Commerce", "Keystone", "LaunchPad"]
-    for (const key of GLOSSARY_TERM_KEYS) {
-      const entry = GLOSSARY[key]
-      for (const name of tenantNames) {
-        expect(entry.definition.includes(name), `${key} definition should not mention "${name}"`).toBe(false)
+    for (const tenant of ALL_TENANTS) {
+      const own = [
+        tenant.riskFramework.label,
+        tenant.orgName,
+        tenant.shortName,
+        tenant.productName,
+        tenant.inventoryLabel,
+        tenant.inventoryShortLabel,
+      ].filter(Boolean)
+      const g = getGlossary(tenant)
+      for (const key of GLOSSARY_TERM_KEYS) {
+        const stripped = own.reduce((acc, word) => acc.split(word).join(""), g[key].definition)
+        for (const name of tenantNames) {
+          expect(stripped.includes(name), `${tenant.id}: ${key} definition names "${name}"`).toBe(false)
+        }
       }
     }
   })

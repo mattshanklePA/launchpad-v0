@@ -40,7 +40,11 @@ const reviewAssist = {
 }
 
 describe("DecisionHeader", () => {
-  it("shows a loading state and a neutral primary action while the assistant is still reading", () => {
+  // ISS-8 item 11. Before the recommendation resolves this card used to assert
+  // "Nothing is blocking approval right now." next to a primary Approve
+  // button — on a submission the assistant is about to recommend rejecting,
+  // that is the opposite of the truth for as long as the call takes.
+  it("says nothing affirmative and offers no approval action while the assistant is still reading", () => {
     const onApprove = vi.fn()
     const el = render(
       <DecisionHeader
@@ -53,9 +57,25 @@ describe("DecisionHeader", () => {
         onResolveBlocker={vi.fn()}
       />,
     )
-    expect(el.textContent).toContain("Reading the submission")
-    const button = Array.from(el.querySelectorAll("button")).find((b) => b.textContent?.trim() === "Approve")
-    expect(button).toBeTruthy()
+    expect(el.textContent).toContain("Plumb is reviewing this submission")
+    expect(el.textContent).not.toContain("Nothing is blocking approval")
+    expect(el.textContent).not.toMatch(/Approve/)
+    expect(Array.from(el.querySelectorAll("button")).some((b) => /approve/i.test(b.textContent ?? ""))).toBe(false)
+  })
+
+  it("restores the approval action the moment a verdict exists", () => {
+    const el = render(
+      <DecisionHeader
+        assistantName="Plumb"
+        assisting={false}
+        assist={approveAssist}
+        blockingText={null}
+        busy={false}
+        onApprove={vi.fn()}
+        onResolveBlocker={vi.fn()}
+      />,
+    )
+    expect(Array.from(el.querySelectorAll("button")).some((b) => /approve/i.test(b.textContent ?? ""))).toBe(true)
   })
 
   it("offers \"Approve as recommended\" and calls onApprove when the assistant recommends approving and nothing blocks it", () => {
