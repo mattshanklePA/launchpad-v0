@@ -14,6 +14,7 @@ import { getTenant } from "@/lib/tenant"
 import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
 import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
 import { scoutFieldsForStep, draftFieldFallback } from "@/lib/scoutFieldPlan"
+import { buildSubmissionContext, buildQuestionModeGuidance } from "@/lib/scoutPrompt"
 
 type Message = {
   role: "user" | "assistant"
@@ -46,62 +47,9 @@ WRITING STYLE — avoid the patterns that make text read as AI-generated. This a
 - No em dashes. Use a period, comma, colon, or parentheses instead.
 Write plainly and specifically. Vary sentence length. Use concrete nouns and the submitter's own facts instead of abstraction.`
 
-// ============================================================
-// SUBMISSION CONTEXT BUILDER
-// Compiles the submitter's responses from previous steps so the
-// co-pilot has full context when coaching on the current step.
-// ============================================================
-function buildSubmissionContext(formData: FormData, currentStep: number): string {
-  const lines: string[] = []
-
-  if (formData.submitterRole || formData.submitterOffice) {
-    const role = (formData.submitterRole || "unspecified role").replace(/_/g, " ")
-    const office = formData.submitterOffice ? formData.submitterOffice.toUpperCase() : "unspecified office"
-    lines.push(`- Submitter is a ${role} in ${office}`)
-  }
-  if (formData.useCaseTitle) {
-    lines.push(`- Idea title: "${formData.useCaseTitle}"`)
-  }
-  if (formData.useCaseDescription) {
-    lines.push(`- Idea description: ${formData.useCaseDescription}`)
-  }
-  // Step 2 is the merged Problem & Target Users step — surface BOTH the
-  // problem definition and the target user context once it's been touched.
-  if (
-    currentStep > 2 &&
-    (formData.problemDefinition || formData.coreProblem || formData.targetUserSummary || formData.targetUserContext)
-  ) {
-    if (formData.problemDefinition || formData.coreProblem) {
-      lines.push(`- Problem (from Step 2): ${formData.problemDefinition || formData.coreProblem}`)
-    }
-    if (formData.targetUserSummary || formData.targetUserContext) {
-      lines.push(`- Target users (from Step 2): ${formData.targetUserSummary || formData.targetUserContext}`)
-    }
-  }
-  // Step 3 is the merged Proposed Solution + Expected Benefits step.
-  if (
-    currentStep > 3 &&
-    (formData.solutionSummary || formData.proposedSolution || formData.userValue || formData.businessValue)
-  ) {
-    if (formData.solutionSummary || formData.proposedSolution) {
-      lines.push(`- Proposed solution (from Step 3): ${formData.solutionSummary || formData.proposedSolution}`)
-    }
-    if (formData.userValue) {
-      lines.push(`- Expected user benefit (from Step 3): ${formData.userValue}`)
-    }
-    if (formData.businessValue) {
-      lines.push(`- Expected business benefit (from Step 3): ${formData.businessValue}`)
-    }
-  }
-  if (currentStep > 4 && formData.dependencies) {
-    lines.push(`- Technical constraints (from Step 4): ${formData.dependencies}`)
-  }
-
-  if (lines.length === 0) {
-    return `(No prior context — this is the submitter's first ${TENANT.assistantName} interaction.)`
-  }
-  return lines.join("\n")
-}
+// The submission-context block and the QUESTION MODE section moved to
+// lib/scoutPrompt.ts so they can be unit-tested — this file is "use server"
+// and outside the vitest include globs.
 
 // ============================================================
 // STEP-SPECIFIC RUBRICS
@@ -561,7 +509,7 @@ export async function validateAndRefineInput(
 
   const currentField = getInputFieldForStep(step)
   const userInput = currentField ? (formData[currentField] as string) : ""
-  const submissionContext = buildSubmissionContext(formData, step)
+  const submissionContext = buildSubmissionContext(formData, step, TENANT)
   const assistantTurns = conversationHistory.filter((m) => m.role === "assistant").length
 
   // Which FormData fields Scout drafts for this step (lib/scoutFieldPlan.ts),
@@ -614,7 +562,7 @@ export async function validateAndRefineInput(
           .array(
             z.object({
               label: z.string().describe("Short clickable option label (3-12 words)."),
-              isRecommended: z.boolean().describe("True only for the single most contextually likely option based on SUBMISSION CONTEXT, otherwise false."),
+              isRecommended: z.boolean().describe("True only for the single most contextually likely option based on SUBMISSION CONTEXT, otherwise false. Always false when the question asks for a quantity, volume, frequency, duration, headcount, cost, or any other fact only the submitter can know."),
             }),
           )
           .describe(
@@ -656,17 +604,7 @@ EACH RESPONSE IS EITHER mode="question" OR mode="scaffold". You decide based on:
 - If turns so far is ≥3 OR the most recent user message in history is "I have enough, give me the scaffold" → produce mode="scaffold"
 - If the submitter's draft text is already substantive and well-grounded → you may skip directly to mode="scaffold"
 
-— QUESTION MODE —
-Ask ONE specific question that ONLY the submitter can answer from their own observation, role, or organization.
-
-Provide a 1-sentence rationale explaining why this question matters in strategic terms.
-
-Provide 4-5 options. Structure them like this:
-- 2-3 specific likely answers (vary the user group based on what the submission actually says — examiners, IT staff, OGC attorneys, applicants, the public, contract admins, etc. — do NOT default to "examiners")
-- Then: "Other (let me type my own)"
-- Then: "I have enough, give me the scaffold"
-
-Mark exactly ONE option as isRecommended=true if SUBMISSION CONTEXT suggests an obvious starting point. Otherwise mark none as recommended.
+${buildQuestionModeGuidance(TENANT)}
 
 — SCAFFOLD MODE —
 Synthesize the submitter's selections and draft text into a paste-ready draft for EACH of this step's output fields (listed under "fields" in the schema — draft every one, even if some end up mostly bracketed placeholders).
