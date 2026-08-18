@@ -219,6 +219,23 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
           </tbody>
         </table>
       </div>
+      {/* What the badge colors mean. Same classes the cells above use, so the
+          swatches are the badges themselves rather than a second palette; an
+          expanded OfficeRollup reuses those classes and reads off this line. */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <Badge className="bg-red-100 text-red-800 border-red-300">&nbsp;</Badge>
+          High-impact
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">&nbsp;</Badge>
+          Needs review or possible duplicate
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">&nbsp;</Badge>
+          Consolidated into one {inventoryShort} entry
+        </span>
+      </div>
     </div>
   )
 }

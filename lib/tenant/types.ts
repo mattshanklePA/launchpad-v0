@@ -106,6 +106,13 @@ export type TenantConfig = {
   // Optional: when unset, the existing default list renders unchanged.
   heroPreviewItems?: HeroPreviewItem[]
 
+  // Which KPI cards the dashboard strip renders, by `KpiCardData.id`. When set,
+  // `buildKpiCards` returns only the cards whose id is in this list, in the
+  // list's order; when unset, every card the tenant qualifies for renders, as
+  // today. A card left out is not computed differently and is not removed from
+  // the Action Center or the roll-up — it is only not drawn in the strip.
+  dashboardKpiCardIds?: string[]
+
   // Org taxonomy (USPTO "business unit" -> DoW "command")
   unit: { label: string; options: UnitOption[] }
 
