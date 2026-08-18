@@ -54,10 +54,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Toggle } from "@/components/ui/toggle"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { StatusPill } from "@/components/ui/status-pill"
 import { PlumbMark } from "@/components/branding/plumb-mark"
-import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
-import { cn } from "@/lib/utils"
 import { Check, ShieldCheck } from "lucide-react"
 
 type FieldKind = "text" | "textarea" | "date" | "select" | "radio" | "multiselect"
@@ -248,12 +246,9 @@ export function GovernanceCapturePanel({
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`gov-${spec.key}`}>{label}</Label>
                   {proposal && (
-                    <Badge
-                      variant="outline"
-                      className={cn("font-mono text-[9px] uppercase tracking-[0.06em]", isOverride ? STATUS_BADGE_CLASS.attention : STATUS_BADGE_CLASS.neutral)}
-                    >
+                    <StatusPill status={isOverride ? "attention" : "neutral"}>
                       {isOverride ? "overridden" : `${assistantName} proposed`}
-                    </Badge>
+                    </StatusPill>
                   )}
                 </div>
 

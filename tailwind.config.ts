@@ -18,11 +18,26 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
+        // `border`/`foreground` DEFAULTs are unchanged (still the shadcn
+        // --border/--foreground HSL tokens); `subtle`/`strong`/`faint` are
+        // additive — direct Tailwind handles for the Keystone DS's own
+        // --border-subtle/--border-strong/--text-faint hairline tokens
+        // (app/styles/keystone/colors.css), which raw hex resolve rather
+        // than HSL so they're referenced without the hsl() wrapper. RD-0
+        // (issue #201) adds these for the shell top bar; later RD issues
+        // reuse them (`border-border-subtle`, `text-foreground-faint`).
+        border: {
+          DEFAULT: "hsl(var(--border))",
+          subtle: "var(--border-subtle)",
+          strong: "var(--border-strong)",
+        },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        foreground: {
+          DEFAULT: "hsl(var(--foreground))",
+          faint: "var(--text-faint)",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

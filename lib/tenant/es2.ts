@@ -38,6 +38,7 @@ export const es2: TenantConfig = {
   productName: "Keystone",
   assistantName: "Plumb",
   logoSubtitle: "AI Use Case Governance",
+  sidebarTagline: "AI use case governance",
   heroHeadline: "Move fast on AI without losing the record.",
   heroSubtitle:
     "One front door for AI ideas across the enterprise. Capture an idea in two minutes, let reviewers complete the governance record, and keep an inventory you can hand your chain of command on demand.",

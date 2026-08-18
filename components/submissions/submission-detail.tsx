@@ -599,7 +599,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                     {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
                   </Badge>
                   {resolvedRmf.isProposal && (
-                    <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">proposed · awaiting reviewer</Badge>
+                    <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] bg-muted text-muted-foreground">proposed · awaiting reviewer</Badge>
                   )}
                 </div>
                 {resolvedRmf.review && (
@@ -832,7 +832,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                 <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   <GlossaryTerm term="nistAiRmf">NIST AI RMF</GlossaryTerm> breakdown
                 </div>
-                <GlossaryTerm term="coveredPartialGap" className="text-[11px] text-muted-foreground">
+                <GlossaryTerm term="coveredPartialGap" className="text-[13px] text-muted-foreground">
                   covered / partial / gap
                 </GlossaryTerm>
               </div>
@@ -861,7 +861,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               <div className="flex items-center gap-2">
                 <Copy className="w-4 h-4 text-attention-foreground" />
                 <span className="font-medium text-sm">Similar use cases</span>
-                <GlossaryTerm term="tokenOverlapMatch" className="text-[10px] text-muted-foreground">
+                <GlossaryTerm term="tokenOverlapMatch" className="text-[13px] text-muted-foreground">
                   token-overlap match
                 </GlossaryTerm>
               </div>
@@ -918,7 +918,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
         {comments.map((c) => (
           <div key={c.id} className="flex gap-2">
-            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[11px] font-medium flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[13px] font-medium flex-shrink-0">
               {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}
             </div>
             <div>

@@ -69,9 +69,10 @@ export function DepartmentDashboard() {
 
   return (
     <DashboardShell baseScope={baseScope} hierarchy={hierarchy} selection={selection} onSelect={setSelection} breadcrumb={currentScopeLabel}>
+      <div className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{tenant.tierLabels.department} Dashboard</h1>
+          <h1 className="ks-page-title text-foreground">{tenant.tierLabels.department} Dashboard</h1>
           <p className="text-sm text-muted-foreground">{currentScopeLabel}</p>
         </div>
         <AdminToolsSection session={session} />
@@ -135,8 +136,9 @@ export function DepartmentDashboard() {
       <DecisionCenterLink />
 
       <div className="space-y-2">
-        <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Key metrics</h2>
+        <h2 className="ks-microlabel">Key metrics</h2>
         <KpiCardGrid cards={kpiCards} drilldown={kpiDrilldown} />
+      </div>
       </div>
     </DashboardShell>
   )

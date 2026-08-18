@@ -34,7 +34,7 @@ export const ChecklistItem = forwardRef<
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span
-            className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground"
+            className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground"
             aria-hidden="true"
           >
             {index}
