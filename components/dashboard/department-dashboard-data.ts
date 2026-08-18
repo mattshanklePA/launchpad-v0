@@ -150,6 +150,13 @@ export function buildKpiCards(
     })
   }
 
+  // A tenant may pin its strip to a subset (ES2-15): filter and order by that
+  // list, after assembly, so every card is computed identically whether or not
+  // it renders. `getKpiDrilldown` and `buildActionItems` are unaffected — the
+  // Action Center rows for a card that is no longer drawn keep their lists.
+  const pinned = tenant.dashboardKpiCardIds
+  if (pinned) return pinned.map((id) => cards.find((c) => c.id === id)).filter((c): c is KpiCardData => !!c)
+
   return cards
 }
 

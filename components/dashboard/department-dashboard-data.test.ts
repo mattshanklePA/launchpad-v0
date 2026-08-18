@@ -12,7 +12,8 @@ import type { DashboardMetrics } from "@/lib/dashboard/metrics"
 import type { DashboardAction } from "@/lib/dashboard/actions"
 import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { ActionItem } from "./action-center-data"
-import type { TenantConfig } from "@/lib/tenant"
+import { ALL_TENANTS, type TenantConfig } from "@/lib/tenant"
+import { tenantHasBureauTier } from "@/lib/rationalization"
 import { GLOSSARY_TERM_KEYS } from "@/lib/glossary"
 
 const sendDashboardActionNotification = vi.hoisted(() => vi.fn())
@@ -279,6 +280,47 @@ describe("buildKpiCards", () => {
     expect(byId.signoff.glossary).toBe("awaitingBureauSignOff")
     expect(byId.duplicates.glossary).toBe("crossBureauRationalization")
   })
+
+  // ES2-15 A. `dashboardKpiCardIds` is a subtraction: the cards are assembled
+  // exactly as before and then filtered, so nothing about how a card is
+  // computed depends on whether it renders.
+  it("returns only the cards a tenant pins, in the pinned order", () => {
+    const pinned = { ...es2, dashboardKpiCardIds: ["duplicates", "pipeline"] } as unknown as TenantConfig
+    expect(buildKpiCards(baseMetrics(), true, true, pinned).map((c) => c.id)).toEqual(["duplicates", "pipeline"])
+  })
+
+  it("drops a pinned id the tenant does not qualify for", () => {
+    const pinned = { ...es2, dashboardKpiCardIds: ["pipeline", "rmf"] } as unknown as TenantConfig
+    expect(buildKpiCards(baseMetrics(), true, false, pinned).map((c) => c.id)).toEqual(["pipeline"])
+  })
+
+  // ES2-15 A4, tenant parity. Only es2 pins a strip; uspto, doc and dow must
+  // render exactly the strip they rendered before this issue. The lists are
+  // literal, not recomputed, so a later edit that changes another tenant's
+  // strip fails here rather than shipping.
+  const PRE_CHANGE_KPI_IDS: Record<string, string[]> = {
+    uspto: ["pipeline", "readiness", "high-impact", "omb-reportable"],
+    dow: ["pipeline", "readiness", "high-impact", "omb-reportable"],
+    doc: ["pipeline", "readiness", "high-impact", "omb-reportable", "signoff", "duplicates", "rmf"],
+  }
+
+  it("leaves every tenant without dashboardKpiCardIds rendering its pre-ES2-15 strip", () => {
+    const unset = ALL_TENANTS.filter((t) => !t.dashboardKpiCardIds)
+    expect(unset.map((t) => t.id).sort()).toEqual(["doc", "dow", "uspto"])
+    for (const tenant of unset) {
+      // The same three arguments both dashboard call sites pass.
+      const cards = buildKpiCards(baseMetrics(), tenantHasBureauTier(tenant), !!tenant.features.rmf, tenant)
+      expect(cards.map((c) => c.id), tenant.id).toEqual(PRE_CHANGE_KPI_IDS[tenant.id])
+    }
+  })
+
+  // ES2-15 A3: the two cards the demo clicks plus the two that carry the
+  // governance story.
+  it("renders the es2 strip as pipeline, duplicates, high-impact, rmf", () => {
+    const tenant = ALL_TENANTS.find((t) => t.id === "es2")!
+    const cards = buildKpiCards(baseMetrics(), tenantHasBureauTier(tenant), !!tenant.features.rmf, tenant)
+    expect(cards.map((c) => c.id)).toEqual(["pipeline", "duplicates", "high-impact", "rmf"])
+  })
 })
 
 describe("worklistSummaryLabel", () => {
@@ -458,6 +500,25 @@ describe("buildActionItems", () => {
     const signoff = items.find((i) => i.id === "signoff")!
     expect(signoff.onAction).toBeTypeOf("function")
     expect(signoff.drilldown).toBeUndefined()
+  })
+
+  // ES2-15 A2: es2 no longer renders the sign-off or inventory-reportable KPI
+  // cards, and the Action Center rows they duplicate must be untouched by that
+  // — same sign-off notifier wiring, same reportability drill-down (ES2-12).
+  it("keeps the es2 Action Center rows whose KPI cards ES2-15 stopped rendering", () => {
+    const tenant = ALL_TENANTS.find((t) => t.id === "es2")!
+    expect(tenant.dashboardKpiCardIds).not.toContain("signoff")
+    expect(tenant.dashboardKpiCardIds).not.toContain("omb-reportable")
+
+    const metrics = baseMetrics({
+      awaitingSignoff: { count: 2, total: 5 },
+      ombReportability: { reportable: 3, excluded: 0, review: 2, consolidated: 1, individual: 2 },
+    })
+    const drilldown = kpiDrilldown({ "omb-reportable": [drilldownItem("r1"), drilldownItem("r2"), drilldownItem("r3")] })
+    const items = buildActionItems(metrics, true, [dashboardAction({ kind: "signoff_nudge" })], tenant, drilldown)
+
+    expect(items.find((i) => i.id === "signoff")!.onAction).toBeTypeOf("function")
+    expect(items.find((i) => i.id === "omb-review")!.drilldown!.items).toEqual(drilldown["omb-reportable"])
   })
 
   // Callers that pass no drilldown (the CC-4 callers and every older test) get

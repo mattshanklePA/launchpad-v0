@@ -47,7 +47,7 @@ export function HealthGauge({ score, label, thresholds = DEFAULT_HEALTH_THRESHOL
         viewBox="0 0 100 60"
         className="w-full max-w-[180px]"
         role="img"
-        aria-label={`Pipeline health: ${Math.round(clamped)} out of 100, ${interpretation}`}
+        aria-label={`Decision readiness: ${Math.round(clamped)} out of 100, ${interpretation}`}
       >
         <path d="M 8 50 A 42 42 0 0 1 92 50" fill="none" strokeWidth="8" strokeLinecap="round" className="stroke-muted" />
         <path

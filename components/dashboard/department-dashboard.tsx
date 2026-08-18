@@ -25,7 +25,7 @@ import { getDashboardMetrics, scopedSubmissions } from "@/lib/dashboard/metrics"
 import { getKpiDrilldown } from "@/lib/dashboard/drilldown"
 import { getDashboardActions } from "@/lib/dashboard/actions"
 import { tenantHasBureauTier } from "@/lib/rationalization"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { KpiCardGrid } from "@/components/dashboard/kpi-card"
 import { HealthGauge } from "@/components/dashboard/health-gauge"
@@ -104,7 +104,10 @@ export function DepartmentDashboard() {
             </Card>
             <Card className="flex flex-col shadow-none">
               <CardHeader className="border-b px-4 py-3">
-                <CardTitle className="text-sm font-semibold">Pipeline health</CardTitle>
+                <CardTitle className="text-sm font-semibold">Decision readiness</CardTitle>
+                <CardDescription className="text-xs">
+                  Share of use cases ready for a decision. Ready counts in full, needs-work at half.
+                </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-1 items-center justify-center p-3">
                 <HealthGauge score={healthScore} />

@@ -130,6 +130,13 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     { label: "FMS case document summarization", status: "early" },
   ],
 
+  // The KPI strip, pinned (ES2-15). The two cards the demo drills into
+  // (pipeline, duplicates) plus the two that carry the governance story:
+  // high-impact determination and NIST AI RMF posture. `signoff` and
+  // `omb-reportable` still reach a reviewer as Action Center rows and roll-up
+  // columns; `readiness` still reaches them as the decision-readiness gauge.
+  dashboardKpiCardIds: ["pipeline", "duplicates", "high-impact", "rmf"],
+
   tierLabels: {
     department: "Enterprise",
     unit: "Program Office",

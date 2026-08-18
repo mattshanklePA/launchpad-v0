@@ -54,9 +54,14 @@ function baseMetrics(overrides: Partial<DashboardMetrics> = {}): DashboardMetric
 /** Every inventory-facing string a tenant produces from the data-shaped builders. */
 function inventoryStrings(tenant: TenantConfig): string[] {
   const out: string[] = []
+  // Swept unpinned: ES2-15 lets a tenant choose which KPI cards it draws
+  // (`dashboardKpiCardIds`), and this file is about the copy the builder
+  // writes — which has to be tenant-correct for every card the tenant
+  // qualifies for, whether or not that card is currently on screen.
+  const unpinned = { ...tenant, dashboardKpiCardIds: undefined }
   for (const bureauTier of [true, false]) {
     for (const rmf of [true, false]) {
-      out.push(...buildKpiCards(baseMetrics(), bureauTier, rmf, tenant).flatMap((c) => [c.label, c.subtitle ?? ""]))
+      out.push(...buildKpiCards(baseMetrics(), bureauTier, rmf, unpinned).flatMap((c) => [c.label, c.subtitle ?? ""]))
     }
     out.push(...buildActionItems(baseMetrics(), bureauTier, [], tenant).map((i) => i.title))
     out.push(...landingStrings(tenant, bureauTier))
@@ -109,7 +114,9 @@ describe("inventory vocabulary resolves from the tenant (ISS-7)", () => {
   })
 
   it("gives ES2 its own adjectival short form", () => {
-    const cards = buildKpiCards(baseMetrics(), true, true, es2)
+    // Unpinned, for the reason above: ES2-15 leaves `omb-reportable` out of
+    // es2's rendered strip, and the card's wording still has to be ES2's.
+    const cards = buildKpiCards(baseMetrics(), true, true, { ...es2, dashboardKpiCardIds: undefined })
     expect(cards.find((c) => c.id === "omb-reportable")?.label).toBe("Inventory reportable")
     // The KPI *id* is structural and must not follow the copy.
     expect(cards.map((c) => c.id)).toContain("omb-reportable")
