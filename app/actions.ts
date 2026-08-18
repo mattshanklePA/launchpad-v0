@@ -15,6 +15,8 @@ import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHa
 import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
 import { scoutFieldsForStep, draftFieldFallback } from "@/lib/scoutFieldPlan"
 import { buildSubmissionContext, buildQuestionModeGuidance } from "@/lib/scoutPrompt"
+import { readinessFallback } from "@/lib/readinessFallback"
+import type { ReadinessFinding } from "@/lib/readinessPresentation"
 
 type Message = {
   role: "user" | "assistant"
@@ -243,7 +245,7 @@ export async function assessReadiness(
   // brief omits dimensions whose backing fields were turned off so the model
   // does not score their absence as a gap. Optional for backward compatibility.
   enabledFields?: Record<string, boolean>,
-): Promise<{ readinessScore: "ready" | "needs_work" | "early_stage"; readinessSummary: string; executiveSummary: string }> {
+): Promise<{ readinessScore: "ready" | "needs_work" | "early_stage"; readinessSummary: string; executiveSummary: string; findings: ReadinessFinding[] }> {
   const on = (k: string) => !enabledFields || enabledFields[k] !== false
 
   const targetUser = formData.targetUserSummary || formData.targetUserContext || "[Not provided]"
@@ -300,6 +302,10 @@ export async function assessReadiness(
         readinessScore: z.enum(["ready", "needs_work", "early_stage"]).describe("Overall readiness rating for leadership review"),
         readinessSummary: z.string().describe("2-3 sentences explaining the rating and key gaps if any"),
         executiveSummary: z.string().describe("One paragraph executive brief of the idea for a 30-second review"),
+        findings: z.array(z.object({
+          step: z.enum(["2", "3", "5"]).describe("The intake step to fix: 2 = problem and audience, 3 = proposed solution and benefits, 5 = title and summary (Idea Overview)"),
+          message: z.string().describe("One sentence, imperative, naming the specific gap and what would close it"),
+        })).max(4).describe("Zero to four concrete gaps a submitter should close before a reviewer sees this. Empty when the rating is ready."),
       }),
       messages: [
         {
@@ -330,6 +336,9 @@ WEIGHTING — weigh these heavily in the rating, in roughly this order:
 2. SOLUTION SPECIFICITY — is the proposed AI/ML approach concrete enough that a reviewer could evaluate it, not just "we'll use AI"?
 3. EXPECTED BENEFIT CREDIBILITY — is the claimed user/business benefit plausible and reasonably specific, even if not yet quantified?
 
+FINDINGS — every finding must name the one intake step that closes it: "2" (the problem and who it affects), "3" (the proposed solution and the benefits expected from it), or "5" (the idea title and summary). Nothing else is a valid step, so never raise a gap the submitter cannot fix in one of those three.
+A finding must never restate a dimension listed under "Intentionally NOT Collected", and never ask for strategic alignment, feasibility/security, success metrics, or technical constraints. Return an empty array when the rating is "ready".
+
 Rate it as one of:
 - "ready" — The problem is specific and grounded, the solution is concrete, and the expected benefit is plausible and reasonably specific. A reviewer has enough to start vetting.
 - "needs_work" — The core idea has merit but 1-2 dimensions are vague or thin (e.g., problem is real but underspecified, or the expected benefit is just an adjective with no substance). Worth pursuing but needs a bit more detail before vetting.
@@ -354,15 +363,13 @@ The readinessSummary should be 2-3 sentences naming specific gaps rather than sm
       readinessScore: object.readinessScore,
       readinessSummary: object.readinessSummary,
       executiveSummary: object.executiveSummary,
+      // The schema constrains the step to a string enum so the model has to
+      // pick one of the three; callers get a number, same as MissingItem.step.
+      findings: object.findings.map((f) => ({ step: Number(f.step), message: f.message })),
     }
   } catch (error) {
     console.error("AI Gateway error for readiness assessment, falling back to mock:", error)
-    return {
-      readinessScore: "needs_work",
-      readinessSummary:
-        "This idea has a clear problem statement and target users, but the expected user and business benefit could use more specificity before a reviewer starts vetting it.",
-      executiveSummary: `"${formData.useCaseTitle || "Untitled Idea"}" proposes an AI-driven approach to improve operations for ${TENANT.shortName} staff. The idea targets a real operational pain point, but the expected benefit needs more detail before it's ready for a reviewer to vet.`,
-    }
+    return readinessFallback(formData)
   }
 }
 
