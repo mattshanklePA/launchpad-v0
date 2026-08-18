@@ -1,7 +1,8 @@
 name: Auto-merge Claude PRs
 
 # Turns on GitHub's native auto-merge for every PR the @claude loop opens
-# against `doc`. The PR then merges itself the moment the required CI check
+# against `doc` or, for issues labelled `base:redesign`, against the long-lived
+# `redesign` branch. The PR then merges itself the moment the required CI check
 # passes — a red build never merges. Enabling auto-merge with a fine-grained
 # PAT (QUEUE_TOKEN) rather than the default GITHUB_TOKEN is deliberate: the
 # eventual merge commit is attributed to the token owner, so the push to `doc`
@@ -17,9 +18,10 @@ on:
 
 jobs:
   enable-auto-merge:
-    # Only the loop's PRs into doc.
+    # Only the loop's PRs into doc or redesign.
     if: >
-      github.event.pull_request.base.ref == 'doc' &&
+      (github.event.pull_request.base.ref == 'doc' ||
+      github.event.pull_request.base.ref == 'redesign') &&
       startsWith(github.event.pull_request.head.ref, 'claude/')
     runs-on: ubuntu-latest
     steps:

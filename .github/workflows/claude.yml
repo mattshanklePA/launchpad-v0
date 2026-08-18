@@ -1,5 +1,9 @@
 name: Claude Code
 
+# The @claude loop. Base-branch convention: an issue carrying the label
+# `base:redesign` is built against the long-lived `redesign` branch; an issue
+# with no such label targets `doc`, exactly as before.
+
 on:
   issue_comment:
     types: [created]
@@ -60,6 +64,20 @@ jobs:
           NEXT_PUBLIC_TENANT: uspto
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Where Claude branches from and pushes back to. `github.event.issue`
+          # exists for both `issues` and `issue_comment` events; for the two
+          # PR-review events it is empty, so the expression yields `doc` — the
+          # current behavior, unchanged.
+          #
+          # No prose line is added telling Claude which base it is on. There
+          # is nowhere to put one in tag mode: `claude_args` carries tool
+          # policy, not context, and setting the action's `prompt:` input
+          # switches it out of tag mode into automation mode, which would stop
+          # the @claude trigger working. None is needed — every RD issue body
+          # carries the line `(Base branch: redesign.)`, which the agent reads
+          # as part of the issue. `base_branch` is the only change required.
+          base_branch: ${{ contains(github.event.issue.labels.*.name, 'base:redesign') && 'redesign' || 'doc' }}
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
