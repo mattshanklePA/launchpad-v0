@@ -37,7 +37,9 @@ export function Step1SubmitterInfo() {
               type="email"
               value={formData.submitterEmail}
               onChange={(e) => setFormData((prev) => ({ ...prev, submitterEmail: e.target.value }))}
-              placeholder="e.g., jane.doe@army.mil"
+              // Same defect as the sponsor field below, one row up: a hardcoded
+              // army.mil address on every non-DoW instance (ES2-11).
+              placeholder={`e.g., ${getTenant().loginEmailPlaceholder}`}
             />
           </div>
         )}
@@ -138,7 +140,9 @@ export function Step1SubmitterInfo() {
                   type="email"
                   value={formData.sponsorEmail}
                   onChange={(e) => setFormData((prev) => ({ ...prev, sponsorEmail: e.target.value }))}
-                  placeholder="e.g., jonathan.smith@uspto.gov"
+                  // Reuses the tenant's own example address (#186) rather than
+                  // hardcoding one org's domain on every other org's screen.
+                  placeholder={`e.g., ${getTenant().loginEmailPlaceholder}`}
                 />
               </div>
             )}

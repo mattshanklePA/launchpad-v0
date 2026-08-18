@@ -289,3 +289,24 @@ export function useFieldVisibility(formData: FormData): (fieldKey: keyof FormDat
     [formData],
   )
 }
+
+/**
+ * The note under the admin panel's Form Configuration heading, explaining
+ * which fields admin can't switch off.
+ *
+ * Composed here rather than inline in the JSX so it can be checked for every
+ * tenant. It used to read "…the AI risk questions {label} mandates are locked
+ * on by design", which needs the reader to supply a connector the sentence
+ * never had: on es2 it printed "…the AI risk questions DoW AI Ethical
+ * Principles + NIST AI RMF mandates are locked on by design" (ES2-11).
+ * "required by {label}" reads as English for a framework label of any shape,
+ * including the two that are conjunctions.
+ */
+export function formConfigLockedNote(tenant: TenantConfig = getTenant()): string {
+  return (
+    "Turn individual wizard fields on or off so the form captures exactly the data your " +
+    "organization needs — no more, no less. Hidden fields are also excluded from the " +
+    "readiness check on the final step. Core fields and the AI risk questions required by " +
+    `${tenant.riskFramework.label} are locked on by design.`
+  )
+}

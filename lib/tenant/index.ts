@@ -43,4 +43,15 @@ export function tenantHasBureauTier(): boolean {
   return getTenant().unit.options.some((o) => !!o.focusAreas?.length)
 }
 
+// Slug of the tenant's own product name, for files this deployment hands a
+// user (lib/pdfGenerator.ts's submission PDF). "LaunchPad" is USPTO's and
+// DoW's product name, not a universal one — hardcoding it named a Keystone
+// deployment's downloads after another org's product (ES2-11).
+export function tenantFilePrefix(tenant: TenantConfig): string {
+  return tenant.productName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
 export type { TenantConfig } from "./types"

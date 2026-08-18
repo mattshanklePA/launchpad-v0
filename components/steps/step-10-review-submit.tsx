@@ -34,10 +34,11 @@ const ALL_ROUTE_OPTIONS = [
 // and Success Metrics are no longer collected here, so they have no card.
 // Those fields stay in FormData and get filled in during vetting instead.
 //
-// Takes the tenant because Step 1's org-unit row is the tenant's own tier
-// vocabulary (`tierLabels.unit`), not fixed wizard copy — see
-// docs/ARCHITECTURE.md. Everything else here is wording that reads the same
-// for every org.
+// Takes the tenant because the org-unit rows are the tenant's own tier
+// vocabulary, not fixed wizard copy — Step 1's `tierLabels.unit` and Step 2's
+// `Affected ${tierLabels.unitPlural}` (ES2-11; the latter was hardcoded to
+// USPTO's "Affected Business Units"). See docs/ARCHITECTURE.md. Everything
+// else here is wording that reads the same for every org.
 const STEP_FIELDS = (tenant: TenantConfig): Record<number, Array<{ label: string; key: keyof FormData }>> => ({
   1: [
     { label: "Name", key: "submitterName" },
@@ -52,7 +53,7 @@ const STEP_FIELDS = (tenant: TenantConfig): Record<number, Array<{ label: string
   2: [
     { label: "Core Problem", key: "coreProblem" },
     { label: "Problem Impact", key: "problemImpact" },
-    { label: "Affected Business Units", key: "affectedBusinessUnits" },
+    { label: `Affected ${tenant.tierLabels.unitPlural}`, key: "affectedBusinessUnits" },
     { label: "Problem Type Tags", key: "problemType" },
     { label: "Target Audience", key: "targetAudience" },
     { label: "Users Impacted", key: "impactedUsersCount" },

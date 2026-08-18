@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { clearSubmissions } from "@/lib/submissions"
 import { FormConfigPanel } from "@/components/admin/form-config-panel"
+import { formConfigLockedNote } from "@/lib/formConfig"
 import { DataProvider, useDataProvider } from "@/components/data-provider"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { DecisionCenter } from "@/components/admin/decision-center"
@@ -1217,12 +1218,7 @@ function AdminPageInner() {
 
           <TabsContent value="formconfig" className="space-y-6">
             <h2 className="text-2xl font-bold">Form Configuration</h2>
-            <p className="text-sm text-muted-foreground -mt-4 max-w-3xl">
-              Turn individual wizard fields on or off so the form captures exactly the data your
-              organization needs — no more, no less. Hidden fields are also excluded from the
-              readiness check on the final step. Core fields and the AI risk questions{" "}
-              {tenant.riskFramework.label} mandates are locked on by design.
-            </p>
+            <p className="text-sm text-muted-foreground -mt-4 max-w-3xl">{formConfigLockedNote(tenant)}</p>
             <FormConfigPanel />
           </TabsContent>
 

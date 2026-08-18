@@ -106,9 +106,10 @@ function LoginForm() {
 
         <div className="mt-6 pt-4 border-t flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="w-3 h-3 flex-shrink-0 mt-0.5" />
-          <span>
-            Use your bureau account to sign in. Don&apos;t have credentials? Check the runbook for demo accounts.
-          </span>
+          {/* No org noun here: every tenant's own tier word ("Business Unit",
+              "Command", "Program Office") reads oddly on the sign-in screen,
+              and the tier isn't what the account belongs to anyway (ES2-11). */}
+          <span>Sign in with your organization account.</span>
         </div>
       </CardContent>
     </Card>

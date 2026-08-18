@@ -7,14 +7,50 @@ vi.mock("next/font/google", () => {
   return { Fraunces: font, Public_Sans: font }
 })
 
-import { ALL_TENANTS, type TenantConfig } from "@/lib/tenant"
+import { ALL_TENANTS, tenantFilePrefix, type TenantConfig } from "@/lib/tenant"
 import { doc } from "@/lib/tenant/doc"
+import { dow } from "@/lib/tenant/dow"
 import { es2 } from "@/lib/tenant/es2"
 import { uspto } from "@/lib/tenant/uspto"
 import { getIntakeTopics } from "@/lib/intakeFlow"
 import { getGlossary } from "@/lib/glossary"
 import { determineHighImpact } from "@/lib/highImpactDetermination"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
+import { formConfigLockedNote } from "@/lib/formConfig"
+
+const source = (f: string) => fs.readFileSync(path.join(process.cwd(), f), "utf8")
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+// The source-level half of the vocabulary scan, for copy that lives in inline
+// JSX and so can't be built as data. Scans DISPLAY TEXT only — quoted/template
+// literals and JSX text nodes — after stripping comments, `className`
+// attributes, and module specifiers, so a Tailwind class
+// (`text-uspto-gray-text`), an identifier (`bureau?: string`), or an import
+// path (`@/lib/bureauSignoff`) can't masquerade as a leak.
+function displayTextOf(src: string): string[] {
+  const code = src
+    .split("\n")
+    .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
+    // No `$` anchor — these files are CRLF and `.` does not match `\r`.
+    .map((line) => line.replace(/(^|[^:])\/\/.*/, "$1"))
+    .join("\n")
+    .replace(/className=(?:"[^"]*"|\{[^}]*\})/g, "")
+    // Module specifiers are paths, not copy. Added for ES2-11, whose swept
+    // files import `@/components/branding/launchpad-logo` and
+    // `@/lib/bureauSignoff` — both would otherwise read as leaks.
+    .replace(/\bfrom\s+(['"])[^'"]*\1/g, "")
+    .replace(/\bimport\s*\(\s*(['"])[^'"]*\1\s*\)/g, "")
+    .replace(/\bimport\s+(['"])[^'"]*\1/g, "")
+    .replace(/\brequire\(\s*(['"])[^'"]*\1\s*\)/g, "")
+
+  const out: string[] = []
+  for (const m of code.matchAll(/"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`]*)`/g)) {
+    out.push(m[1] ?? m[2] ?? m[3] ?? "")
+  }
+  // JSX text nodes: the run between a closing `>` and the next `<`.
+  for (const m of code.matchAll(/>([^<>{}]+)</g)) out.push(m[1])
+  return out.map((t) => t.trim()).filter(Boolean)
+}
 
 // ISS-8. A walkthrough of the deployed es2 instance found eight places where
 // another org's vocabulary, a raw enum, or a stale name reached a screen — each
@@ -59,7 +95,6 @@ describe("no screen renders a raw org code (ISS-8)", () => {
   it("never lets a code stand in for a label in the components that render one", () => {
     // `businessUnitLabel` is the single resolver; these are the two call sites
     // the walkthrough caught rendering the raw value instead.
-    const source = (f: string) => fs.readFileSync(path.join(process.cwd(), f), "utf8")
     expect(source("app/admin/page.tsx")).toContain("businessUnitLabel(bu)")
     expect(source("components/admin/decision-center.tsx")).toContain("businessUnitLabel(d.submitterOffice)")
     // …and neither still uppercases a raw code for display.
@@ -141,29 +176,6 @@ describe("no display string carries another org's vocabulary (ISS-8)", () => {
     expect(strip(`Affected ${es2.tierLabels.unitPlural}`, vocabulary)).not.toMatch(FORBIDDEN)
   })
 
-  // The source-level half, for copy that lives in inline JSX and so can't be
-  // built as data. Scans DISPLAY TEXT only — quoted/template literals and JSX
-  // text nodes — after stripping comments and `className` attributes, so a
-  // Tailwind class (`text-uspto-gray-text`) or an identifier
-  // (`bureau?: string`) can't masquerade as a leak.
-  function displayTextOf(source: string): string[] {
-    const code = source
-      .split("\n")
-      .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
-      // No `$` anchor — these files are CRLF and `.` does not match `\r`.
-      .map((line) => line.replace(/(^|[^:])\/\/.*/, "$1"))
-      .join("\n")
-      .replace(/className=(?:"[^"]*"|\{[^}]*\})/g, "")
-
-    const out: string[] = []
-    for (const m of code.matchAll(/"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|`([^`]*)`/g)) {
-      out.push(m[1] ?? m[2] ?? m[3] ?? "")
-    }
-    // JSX text nodes: the run between a closing `>` and the next `<`.
-    for (const m of code.matchAll(/>([^<>{}]+)</g)) out.push(m[1])
-    return out.map((t) => t.trim()).filter(Boolean)
-  }
-
   it("has no bare DoC, M-25-21, bureau, or business unit in the display text of the newly swept files", () => {
     const SWEPT = [
       "app/admin/page.tsx",
@@ -176,8 +188,7 @@ describe("no display string carries another org's vocabulary (ISS-8)", () => {
       "lib/glossary.ts",
     ]
     for (const file of SWEPT) {
-      const source = fs.readFileSync(path.join(process.cwd(), file), "utf8")
-      const offending = displayTextOf(source).filter((t) => FORBIDDEN.test(t))
+      const offending = displayTextOf(source(file)).filter((t) => FORBIDDEN.test(t))
       expect(offending, `${file}:\n${offending.join("\n")}`).toEqual([])
     }
   })
@@ -185,9 +196,11 @@ describe("no display string carries another org's vocabulary (ISS-8)", () => {
   it("would catch a leak in inline JSX — the extractor is not just returning nothing", () => {
     expect(displayTextOf("<span>Cross-bureau rationalization</span>")).toContain("Cross-bureau rationalization")
     expect(displayTextOf('const x = "Affected business unit(s)"')).toContain("Affected business unit(s)")
-    // …while class names and identifiers are excluded.
+    // …while class names, identifiers, and import paths are excluded.
     expect(displayTextOf('<h1 className="text-uspto-gray-text">Title</h1>')).toEqual(["Title"])
     expect(displayTextOf("function f(bureau?: string) {}")).toEqual([])
+    expect(displayTextOf('import { LaunchPadLogo } from "@/components/branding/launchpad-logo"')).toEqual([])
+    expect(displayTextOf('import { getBureauSignoff } from "@/lib/bureauSignoff"')).toEqual([])
   })
 })
 
@@ -247,5 +260,139 @@ describe("documented rendered-text changes (ISS-8)", () => {
     // The card heading comes from lib/fieldRegistry.ts's `Affected ${unitPlural}`.
     expect(getIntakeTopics(es2).find((t) => t.id === "affectedUnits")?.label).toBe("Affected Program Offices")
     expect(getIntakeTopics(doc).find((t) => t.id === "affectedUnits")?.label).toBe("Affected Bureaus")
+  })
+})
+
+// ── ES2-11: the 17 August walkthrough copy sweep ───────────────────────────
+//
+// Six user-facing strings, all on or next to the demo path. Same two classes
+// as ISS-8: another org's vocabulary reaching an es2 screen (the login hint's
+// "bureau", the sponsor placeholder's uspto.gov address, the PDF's
+// "launchpad-" filename prefix), and composed copy that only reads as English
+// for the tenant it was written for (the Form Config note, and the stacked
+// "{productName} {assistantName}" panel header that printed "Keystone Plumb").
+describe("no swept screen carries another org's vocabulary (ES2-11)", () => {
+  // "bureau" is DoC's tier noun, "uspto.gov" is USPTO's domain, and
+  // "launchpad-" is USPTO/DoW's product name used as a filename prefix. None
+  // of the three belongs in a string an es2 user reads. Driven off source
+  // rather than ALL_TENANTS because every one of these is inline copy.
+  const FORBIDDEN_ES2 = /\bbureaus?\b|uspto\.gov|launchpad-/i
+
+  const SWEPT = [
+    "app/actions.ts",
+    "app/admin/page.tsx",
+    "app/login/page.tsx",
+    "components/landing/hero-actions.tsx",
+    "components/launchpad/chat-panel.tsx",
+    "components/launchpad/conversational-intake.tsx",
+    "components/steps/step-1-submitter-info.tsx",
+    "components/steps/step-10-review-submit.tsx",
+    "components/submissions/submission-detail.tsx",
+    "lib/pdfGenerator.ts",
+  ]
+
+  it("has no bureau, uspto.gov, or launchpad- in the display text of the swept files", () => {
+    for (const file of SWEPT) {
+      const offending = displayTextOf(source(file)).filter((t) => FORBIDDEN_ES2.test(t))
+      expect(offending, `${file}:\n${offending.join("\n")}`).toEqual([])
+    }
+  })
+
+  it("would still catch each of the three — the pattern is not inert", () => {
+    expect(displayTextOf("<span>Use your bureau account to sign in.</span>")[0]).toMatch(FORBIDDEN_ES2)
+    expect(displayTextOf('placeholder="e.g., jonathan.smith@uspto.gov"')[0]).toMatch(FORBIDDEN_ES2)
+    expect(displayTextOf('doc.save(`launchpad-${slug}.pdf`)')[0]).toMatch(FORBIDDEN_ES2)
+  })
+
+  // Item 1. The login hint also pointed a real user at "the runbook for demo
+  // accounts" — demo scaffolding, not production copy.
+  it("drops the other org's tier noun and the demo-runbook pointer from the login hint", () => {
+    const src = source("app/login/page.tsx")
+    expect(src).not.toMatch(/runbook/i)
+    expect(src).not.toMatch(/demo accounts/i)
+  })
+
+  // Item 2. The assistant is Plumb; the product is Keystone. The panel header
+  // names the assistant alone.
+  it("renders the assistant's name alone in the assistant panel headers", () => {
+    // Only matches the JSX form `{tenant.productName} {tenant.assistantName}` —
+    // the template-literal form is `${tenant.productName} ...`, whose `$`
+    // breaks the run.
+    const stacked = /\{tenant\.productName\}\s+\{tenant\.assistantName\}/
+    for (const file of [
+      "components/launchpad/chat-panel.tsx",
+      "components/launchpad/conversational-intake.tsx",
+      "components/landing/hero-actions.tsx",
+    ]) {
+      expect(source(file), file).not.toMatch(stacked)
+    }
+    // …while the console error keeps it, where the product name is useful
+    // disambiguation rather than a rendered panel title.
+    expect(source("components/launchpad/chat-panel.tsx")).toContain(
+      "`${tenant.productName} ${tenant.assistantName} Error:`",
+    )
+  })
+
+  // Item 3. The sponsor email placeholder reuses the tenant's own example
+  // address instead of hardcoding one org's domain.
+  it("takes the sponsor email placeholder from the tenant", () => {
+    const src = source("components/steps/step-1-submitter-info.tsx")
+    expect(src).not.toMatch(/placeholder="[^"]*@[^"]*"/)
+    expect(src).toContain("loginEmailPlaceholder")
+  })
+
+  // Item 5. USPTO and DoW keep `launchpad-`; DoC and es2 get their own.
+  it("derives the submission PDF's filename prefix from the tenant's product name", () => {
+    expect(tenantFilePrefix(uspto)).toBe("launchpad")
+    expect(tenantFilePrefix(dow)).toBe("launchpad")
+    expect(tenantFilePrefix(doc)).toBe("keystone")
+    expect(tenantFilePrefix(es2)).toBe("keystone")
+    expect(source("lib/pdfGenerator.ts")).toContain("tenantFilePrefix(tenant)")
+  })
+
+  // Item 6. Three remaining "Affected Business Units" — USPTO's tier noun —
+  // resolved through `tierLabels.unitPlural`, the way #186 handled the intake
+  // hint.
+  it("resolves every remaining Affected Business Units through unitPlural", () => {
+    for (const file of [
+      "components/steps/step-10-review-submit.tsx",
+      "components/submissions/submission-detail.tsx",
+      "app/actions.ts",
+    ]) {
+      // Display text, not raw source — the comments in these files name the
+      // old string to explain what moved.
+      const offending = displayTextOf(source(file)).filter((t) => /[Aa]ffected [Bb]usiness [Uu]nits/.test(t))
+      expect(offending, `${file}:\n${offending.join("\n")}`).toEqual([])
+      expect(source(file), file).toMatch(/Affected \$\{(?:TENANT|tenant)\.tierLabels\.unitPlural\}/)
+    }
+  })
+})
+
+// ── Item 4: the Form Config sentence ───────────────────────────────────────
+//
+// It read "…the AI risk questions {label} mandates are locked on by design",
+// which on es2 printed "…the AI risk questions DoW AI Ethical Principles +
+// NIST AI RMF mandates are locked on by design" — a missing connector, and
+// nonsense to read. Built as data so it can be checked for every tenant.
+describe("the Form Config lock note reads as a sentence for every tenant (ES2-11)", () => {
+  it("never runs the framework label straight into 'mandates are locked'", () => {
+    for (const tenant of ALL_TENANTS) {
+      const note = formConfigLockedNote(tenant)
+      expect(note, tenant.id).toContain(tenant.riskFramework.label)
+      expect(note, tenant.id).not.toMatch(
+        new RegExp(`${escapeRe(tenant.riskFramework.label)}\s+mandates are locked`),
+      )
+      expect(note, tenant.id).toMatch(
+        new RegExp(
+          `Core fields and the AI risk questions required by ${escapeRe(tenant.riskFramework.label)} are locked on by design\.`,
+        ),
+      )
+    }
+  })
+
+  it("is what the Form Configuration tab renders, rather than a second copy inline", () => {
+    const src = source("app/admin/page.tsx")
+    expect(src).toContain("formConfigLockedNote(tenant)")
+    expect(src).not.toMatch(/mandates are locked on by design/)
   })
 })
