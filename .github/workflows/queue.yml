@@ -1,8 +1,10 @@
 name: Queue Orchestrator
 
-# The chain. After a PR auto-merges to `doc`, CI runs on the `doc` push; when
-# that CI run finishes successfully, this workflow finds the next queued story
-# and kicks its build by posting an "@claude" comment. That comment is posted
+# The chain. After a PR auto-merges to `doc` (or to `redesign`), CI runs on that
+# branch push; when that CI run finishes successfully, this workflow finds the
+# next queued story and kicks its build by posting an "@claude" comment. The
+# comment names the base the next story targets: `redesign` when its issue
+# carries the label `base:redesign`, otherwise `doc`. That comment is posted
 # with a fine-grained PAT (QUEUE_TOKEN), NOT the default GITHUB_TOKEN — an
 # event created by GITHUB_TOKEN will not trigger another workflow (GitHub's
 # recursion guard), so claude.yml would never fire and the chain would stall.
@@ -23,11 +25,12 @@ on:
 
 jobs:
   trigger-next:
-    # Only after a *successful* CI run on the doc branch (i.e. a merge landed).
+    # Only after a *successful* CI run on doc or redesign (i.e. a merge landed).
     # CI also runs on PR branches; those are filtered out by head_branch.
     if: >
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'doc'
+      (github.event.workflow_run.head_branch == 'doc' ||
+      github.event.workflow_run.head_branch == 'redesign')
     runs-on: ubuntu-latest
     steps:
       - name: Find and start the next queued story
@@ -41,8 +44,15 @@ jobs:
             echo "Queue empty — nothing to start."
             exit 0
           fi
-          echo "Starting next queued story: #$NEXT"
+          # Base branch by label: `base:redesign` -> redesign, otherwise doc.
+          LABELS=$(gh issue view "$NEXT" --repo "$REPO" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+          if printf '%s\n' "$LABELS" | grep -qx 'base:redesign'; then
+            BASE=redesign
+          else
+            BASE=doc
+          fi
+          echo "Starting next queued story: #$NEXT (base $BASE)"
           gh issue edit "$NEXT" --repo "$REPO" \
             --remove-label cc-queue --add-label cc-building
           gh issue comment "$NEXT" --repo "$REPO" \
-            --body "@claude Please build this and open a PR against \`doc\`."
+            --body "@claude Please build this and open a PR against \`$BASE\`."

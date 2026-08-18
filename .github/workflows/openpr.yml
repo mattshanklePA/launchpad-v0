@@ -1,8 +1,11 @@
 name: Open PR for Claude branches
 
-# Opens a PR against `doc` for any claude/issue-<n>-* branch the @claude loop
-# pushed but did not open a PR for (the action only leaves a "Create PR" link).
-# Without a PR, automerge.yml never fires and queue.yml never advances.
+# Opens a PR for any claude/issue-<n>-* branch the @claude loop pushed but did
+# not open a PR for (the action only leaves a "Create PR" link). Without a PR,
+# automerge.yml never fires and queue.yml never advances.
+#
+# Base-branch convention: issue #<n> labelled `base:redesign` gets its PR opened
+# against `redesign`; with no such label the base is `doc`, exactly as before.
 #
 # Hardened after the first version missed 2 of 3 stories:
 #  - Uses explicit --title/--body instead of `gh pr create --fill`. The old
@@ -74,9 +77,17 @@ jobs:
               continue
             fi
 
+            # Base branch by label: `base:redesign` -> redesign, otherwise doc.
+            LABELS=$(gh issue view "$N" --repo "$REPO" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+            if printf '%s\n' "$LABELS" | grep -qx 'base:redesign'; then
+              BASE=redesign
+            else
+              BASE=doc
+            fi
+
             TITLE=$(gh issue view "$N" --repo "$REPO" --json title --jq '.title' 2>/dev/null || echo "Command Center story #$N")
-            echo "Opening PR for issue #$N from $B"
-            gh pr create --repo "$REPO" --base doc --head "$B" \
+            echo "Opening PR for issue #$N from $B against $BASE"
+            gh pr create --repo "$REPO" --base "$BASE" --head "$B" \
               --title "$TITLE" --body "Closes #$N" \
-              || echo "Could not open PR for $B (maybe no diff vs doc) — skipping."
+              || echo "Could not open PR for $B (maybe no diff vs $BASE) — skipping."
           done

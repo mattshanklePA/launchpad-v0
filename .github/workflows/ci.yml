@@ -1,12 +1,14 @@
 name: CI
 
-# Run on PRs (feature branches) and on push to the canonical branch only.
+# Run on PRs (feature branches) and on push to the canonical branches only.
 # Running on every branch push AND on pull_request caused two competing CI runs
 # per PR (one could hang and block auto-merge). PRs are covered by pull_request;
-# doc is covered on push after merge.
+# doc is covered on push after merge. `redesign` is the long-lived base used by
+# issues labelled `base:redesign`, and is listed here so a merge into it runs
+# CI on the branch push — the event queue.yml listens for.
 on:
   push:
-    branches: [doc]
+    branches: [doc, redesign]
   pull_request:
 
 # Cancel an in-progress run when a newer commit arrives on the same ref.
