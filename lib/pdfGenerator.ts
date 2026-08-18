@@ -214,12 +214,20 @@ export function generateSubmissionPDF(formData: FormData) {
   section("Success Metrics", fmt(formData.metricsSummary || formData.successMetrics), rangeLabel(formData.timelineForResults, "mo timeline"))
   bullets("Key metrics tracked", formData.keyMetrics)
 
-  // Readiness banner
+  // Readiness banner. The concrete gaps go above the prose (ES2-14) — this is
+  // the artifact that leaves the room, so what to fix should be readable
+  // without parsing a paragraph. With no findings the banner is byte-identical
+  // to what it drew before.
   if (formData.readinessSummary && formData.readinessSummary.trim()) {
     if (y > pageH - 100) { doc.addPage(); y = margin + 20 }
     const c = readinessColor(formData.readinessScore)
-    const lines = doc.splitTextToSize(formData.readinessSummary, pageW - 2 * margin - 28)
-    const boxH = 36 + lines.length * 12
+    const wrapW = pageW - 2 * margin - 28
+    const findingLines: string[] = (formData.readinessFindings || [])
+      .filter((f) => f && typeof f.message === "string" && f.message.trim() !== "")
+      .flatMap((f) => doc.splitTextToSize(`Step ${f.step}: ${f.message.trim()}`, wrapW) as string[])
+    const lines = doc.splitTextToSize(formData.readinessSummary, wrapW)
+    const findingsH = findingLines.length ? findingLines.length * 12 + 8 : 0
+    const boxH = 36 + findingsH + lines.length * 12
     doc.setFillColor(...c)
     doc.rect(margin, y, 4, boxH, "F")
     doc.setFillColor(250, 250, 250)
@@ -231,7 +239,8 @@ export function generateSubmissionPDF(formData: FormData) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(10)
     doc.setTextColor(...TEXT)
-    doc.text(lines, margin + 14, y + 32)
+    if (findingLines.length) doc.text(findingLines, margin + 14, y + 32)
+    doc.text(lines, margin + 14, y + 32 + findingsH)
     y += boxH + 16
   }
 

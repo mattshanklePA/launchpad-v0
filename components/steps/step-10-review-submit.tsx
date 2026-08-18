@@ -9,11 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Label } from "../ui/label"
 import { Toggle } from "../ui/toggle"
 import { Textarea } from "../ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ShieldCheck, Loader2, ChevronDown, CheckCircle, AlertTriangle, AlertCircle, Send } from "lucide-react"
+import { ShieldCheck, Loader2 } from "lucide-react"
 import { assessReadiness } from "@/app/actions"
 import { SubmissionGate } from "@/components/steps/submission-gate"
+import { ReadinessResult } from "@/components/steps/readiness-result"
 import { isFieldVisible, getFormConfig } from "@/lib/formConfig"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 
@@ -88,7 +87,6 @@ export function Step10ReviewSubmit() {
   const { formData, setCurrentStep, setFormData } = useForm()
   const [isAssessing, setIsAssessing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showExecutiveSummary, setShowExecutiveSummary] = useState(false)
   const { toast } = useToast()
   const tenant = getTenant()
   const routeOptions = ALL_ROUTE_OPTIONS.filter((o) => o.value !== "rally" || tenant.features.rallyExport)
@@ -133,39 +131,12 @@ export function Step10ReviewSubmit() {
         readinessScore: result.readinessScore,
         readinessSummary: result.readinessSummary,
         executiveSummary: result.executiveSummary,
+        readinessFindings: result.findings,
       }))
     } catch (error) {
       console.error("Error assessing readiness:", error)
     } finally {
       setIsAssessing(false)
-    }
-  }
-
-  const getReadinessBadge = () => {
-    switch (formData.readinessScore) {
-      case "ready":
-        return (
-          <Badge className="bg-green-100 text-green-800 border-green-300 text-sm px-3 py-1">
-            <CheckCircle className="w-4 h-4 mr-1.5" />
-            Ready for Review
-          </Badge>
-        )
-      case "needs_work":
-        return (
-          <Badge className="bg-amber-100 text-amber-800 border-amber-300 text-sm px-3 py-1">
-            <AlertTriangle className="w-4 h-4 mr-1.5" />
-            Needs Work
-          </Badge>
-        )
-      case "early_stage":
-        return (
-          <Badge className="bg-red-100 text-red-800 border-red-300 text-sm px-3 py-1">
-            <AlertCircle className="w-4 h-4 mr-1.5" />
-            Early stage: keep refining
-          </Badge>
-        )
-      default:
-        return null
     }
   }
 
@@ -267,42 +238,16 @@ export function Step10ReviewSubmit() {
               )}
             </Button>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                {getReadinessBadge()}
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {formData.readinessSummary}
-              </p>
-              <Collapsible open={showExecutiveSummary} onOpenChange={setShowExecutiveSummary}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-between">
-                    Executive Summary (Preview)
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showExecutiveSummary ? "rotate-180" : ""}`} />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3">
-                  <div className="bg-muted/50 rounded-lg p-4 text-sm leading-relaxed border">
-                    {formData.executiveSummary}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleAssessReadiness}
-                disabled={isAssessing}
-              >
-                {isAssessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Re-evaluating...
-                  </>
-                ) : (
-                  "Re-assess Readiness"
-                )}
-              </Button>
-            </div>
+            <ReadinessResult
+              readinessScore={formData.readinessScore}
+              readinessSummary={formData.readinessSummary}
+              readinessFindings={formData.readinessFindings}
+              executiveSummary={formData.executiveSummary}
+              submitterOffice={formData.submitterOffice}
+              isAssessing={isAssessing}
+              onJumpToStep={(s) => setCurrentStep(s)}
+              onReassess={handleAssessReadiness}
+            />
           )}
         </CardContent>
       </Card>

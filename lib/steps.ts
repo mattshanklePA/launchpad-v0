@@ -267,6 +267,11 @@ export type FormData = {
   readinessScore: "ready" | "needs_work" | "early_stage" | ""
   readinessSummary: string
   executiveSummary: string
+  // The concrete gaps behind the rating, each pointing at the intake step that
+  // closes it (ES2-14). Stored in form_data JSON, so no migration; records
+  // written before ES2-14 simply have no key, and every consumer must read an
+  // absent value and `[]` the same way.
+  readinessFindings: { step: number; message: string }[]
 
   // Review workflow (stored in form_data for the demo — see lib/reviewWorkflow).
   reviewStatus?: "draft" | "submitted" | "in_review" | "needs_info" | "approved" | "rejected"
@@ -383,6 +388,7 @@ export const initialFormData: FormData = {
   readinessScore: "",
   readinessSummary: "",
   executiveSummary: "",
+  readinessFindings: [],
 }
 
 // Step title/prompt copy that names the organization is generated per-tenant

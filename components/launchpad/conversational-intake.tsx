@@ -233,8 +233,11 @@ export function ConversationalIntake() {
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
-      const readiness = await assessReadiness(formData, getFormConfig().enabled)
-      const finalData: FormData = { ...formData, ...readiness, intakeMode: "guided" }
+      // `findings` comes back under its own name from the action and is stored
+      // as `readinessFindings` (ES2-14); spreading the result whole would put
+      // it on the record under the wrong key.
+      const { findings, ...readiness } = await assessReadiness(formData, getFormConfig().enabled)
+      const finalData: FormData = { ...formData, ...readiness, readinessFindings: findings, intakeMode: "guided" }
       const saved = await saveSubmission(finalData)
       setSubmitted(true)
       resetForm()
