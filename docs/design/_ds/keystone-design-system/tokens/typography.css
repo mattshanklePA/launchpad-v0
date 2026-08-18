@@ -1,0 +1,43 @@
+:root {
+  /* Families */
+  --ks-font-head: "Chivo", "Archivo", system-ui, sans-serif;
+  --ks-font-body: "Hanken Grotesk", "Source Sans 3", sans-serif;
+  --ks-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Semantic aliases */
+  --font-display: var(--ks-font-head);
+  --font-heading: var(--ks-font-head);
+  --font-body:    var(--ks-font-body);
+  --font-label:   var(--ks-font-mono);
+  --font-mono:    var(--ks-font-mono);
+
+  /* Type scale (1.250 major-third, 16px base) */
+  --text-2xs: 11px;
+  --text-xs:  12px;
+  --text-sm:  14px;
+  --text-md:  16px;
+  --text-lg:  20px;
+  --text-xl:  25px;
+  --text-2xl: 31px;
+  --text-3xl: 39px;
+  --text-4xl: 49px;
+  --text-5xl: 61px;
+
+  /* Weights */
+  --fw-regular: 400; /* @kind other */
+  --fw-medium:  500; /* @kind other */
+  --fw-semibold:600; /* @kind other */
+  --fw-bold:    700; /* @kind other */
+  --fw-black:   900; /* @kind other */
+
+  /* Line heights */
+  --lh-tight:   1.1; /* @kind other */
+  --lh-snug:    1.25; /* @kind other */
+  --lh-normal:  1.5; /* @kind other */
+  --lh-relaxed: 1.65; /* @kind other */
+
+  /* Tracking */
+  --tracking-tight:  -0.02em; /* @kind other */
+  --tracking-normal: 0; /* @kind other */
+  --tracking-label:  0.08em; /* @kind other */
+}

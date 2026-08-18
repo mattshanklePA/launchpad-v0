@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/colors.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/typography.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/effects.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/styles.css">
+<script src="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #E9E6DE; }
+  a { color: var(--text-link); text-decoration: none; }
+  a:hover { color: var(--text-link-hover); text-decoration: underline; }
+</style>
+</helmet>
+
+<div style="font-family: var(--font-body); color: var(--text-body); padding: 56px; width: 1440px; display: flex; flex-direction: column; gap: 40px;">
+
+  <div style="max-width: 800px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);">Keystone redesign · 00 of 11</div>
+    <h1 style="font-family: var(--font-display); font-weight: 900; font-size: 36px; line-height: 1.06; letter-spacing: -0.025em; color: var(--text-strong); margin: 0;">Components sheet</h1>
+    <p style="font-size: 15px; line-height: 1.6; margin: 0; text-wrap: pretty;">Every screen is assembled from these pieces. Rule of the sheet: JetBrains Mono appears only in uppercase micro-labels and badges — every number and every sentence a person reads over Teams is Chivo or Hanken Grotesk.</p>
+  </div>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Type scale · survives 1440 over compressed video</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 26px 30px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: baseline; gap: 24px;"><span style="flex: 0 0 260px; font-size: 13px; color: var(--text-muted);">Page title · Chivo 900 · 30px</span><span style="font-family: var(--font-display); font-weight: 900; font-size: 30px; letter-spacing: -0.024em; color: var(--text-strong);">Three programs, one tool</span></div>
+      <div style="display: flex; align-items: baseline; gap: 24px;"><span style="flex: 0 0 260px; font-size: 13px; color: var(--text-muted);">Big number · Chivo 900 · 34px</span><span style="font-family: var(--font-display); font-weight: 900; font-size: 34px; letter-spacing: -0.03em; color: var(--text-strong);">15</span></div>
+      <div style="display: flex; align-items: baseline; gap: 24px;"><span style="flex: 0 0 260px; font-size: 13px; color: var(--text-muted);">Section head · Chivo 700 · 18px</span><span style="font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.012em; color: var(--text-strong);">Decision checklist</span></div>
+      <div style="display: flex; align-items: baseline; gap: 24px;"><span style="flex: 0 0 260px; font-size: 13px; color: var(--text-muted);">Body · Hanken 400 · 14.5px / 1.6</span><span style="font-size: 14.5px; line-height: 1.6;">Plumb reads the submission before a human does and flags what a reviewer would ask.</span></div>
+      <div style="display: flex; align-items: baseline; gap: 24px;"><span style="flex: 0 0 260px; font-size: 13px; color: var(--text-muted);">Meta · Hanken 400 · 13px, muted</span><span style="font-size: 13px; color: var(--text-muted);">Business Technology Solutions · Andre Duval · 17 Aug 2026</span></div>
+      <div style="display: flex; align-items: baseline; gap: 24px;"><span style="flex: 0 0 260px; font-size: 13px; color: var(--text-muted);">Micro-label · Mono 10px · uppercase only</span><span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Do this first</span></div>
+      <div style="font-size: 12.5px; color: var(--text-faint); border-top: 1px solid var(--border-subtle); padding-top: 12px;">Nothing readable below 13px. Mono never carries body copy or numbers.</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">KPI card · four statuses</div>
+    <div style="display: flex; gap: 14px;">
+      <div style="flex: 1; background: var(--surface-card); border: 1px solid var(--border-subtle); border-left: 3px solid var(--ks-alert); border-radius: var(--radius-md); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);">Duplicate clusters</span>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="alert" hint-size="70px,20px">At risk</x-import>
+        </div>
+        <div style="font-family: var(--font-display); font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: -0.03em; color: var(--text-strong);">1</div>
+        <div style="font-size: 13px; color: var(--text-muted);">May be the same effort, built twice</div>
+      </div>
+      <div style="flex: 1; background: var(--surface-card); border: 1px solid var(--border-subtle); border-left: 3px solid var(--ks-amber); border-radius: var(--radius-md); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);">RMF at risk</span>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="attention" hint-size="82px,20px">Attention</x-import>
+        </div>
+        <div style="font-family: var(--font-display); font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: -0.03em; color: var(--text-strong);">5</div>
+        <div style="font-size: 13px; color: var(--text-muted);">NIST AI RMF gap needs attention</div>
+      </div>
+      <div style="flex: 1; background: var(--surface-card); border: 1px solid var(--border-subtle); border-left: 3px solid var(--ks-limestone-dark); border-radius: var(--radius-md); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);">In pipeline</span>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="neutral" hint-size="68px,20px">Neutral</x-import>
+        </div>
+        <div style="font-family: var(--font-display); font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: -0.03em; color: var(--text-strong);">15</div>
+        <div style="font-size: 13px; color: var(--text-muted);">Total use cases in review</div>
+      </div>
+      <div style="flex: 1; background: var(--surface-card); border: 1px solid var(--border-subtle); border-left: 3px solid var(--ks-on-track); border-radius: var(--radius-md); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);">Ready to decide</span>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="on-track" hint-size="72px,20px">Healthy</x-import>
+        </div>
+        <div style="font-family: var(--font-display); font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: -0.03em; color: var(--text-strong);">3</div>
+        <div style="font-size: 13px; color: var(--text-muted);">Enough info for a decision</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Action Center row · severity dot, count, one action</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; max-width: 900px;">
+      <div style="display: flex; align-items: center; gap: 16px; padding: 15px 20px; border-bottom: 1px solid var(--border-subtle);" style-hover="background: var(--surface-canvas);">
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: var(--ks-alert); flex-shrink: 0;"></div>
+        <div style="flex: 1; min-width: 0; font-size: 14.5px; color: var(--text-strong);"><strong style="font-weight: 700;">1</strong> cross-office duplicate cluster pending rationalization</div>
+        <a href="#" style="font-size: 13px; font-weight: 600;">Rationalize</a>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; padding: 15px 20px; border-bottom: 1px solid var(--border-subtle);" style-hover="background: var(--surface-canvas);">
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: var(--ks-amber); flex-shrink: 0;"></div>
+        <div style="flex: 1; min-width: 0; font-size: 14.5px; color: var(--text-strong);"><strong style="font-weight: 700;">9</strong> submissions with no reviewer assigned</div>
+        <a href="#" style="font-size: 13px; font-weight: 600;">Assign</a>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; padding: 15px 20px;" style-hover="background: var(--surface-canvas);">
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: var(--ks-ink-300); flex-shrink: 0;"></div>
+        <div style="flex: 1; min-width: 0; font-size: 14.5px; color: var(--text-strong);"><strong style="font-weight: 700;">10</strong> submissions need an inventory reportability review</div>
+        <a href="#" style="font-size: 13px; font-weight: 600;">Review</a>
+      </div>
+    </div>
+    <div style="font-size: 12.5px; color: var(--text-faint);">Severity: red = blocks something, amber = needs a human soon, gray = routine. The count is bold Hanken, not mono.</div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Status badges · one set, replaces the mono chip zoo</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 22px 26px; display: flex; flex-direction: column; gap: 16px; max-width: 900px;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="on-track" hint-size="80px,22px">Approved</x-import>
+        <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="attention" hint-size="80px,22px">In review</x-import>
+        <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="attention" hint-size="90px,22px">Needs info</x-import>
+        <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="alert" hint-size="76px,22px">Rejected</x-import>
+        <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="neutral" hint-size="66px,22px">Draft</x-import>
+        <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.StatusPill" status="neutral" hint-size="86px,22px">Signed off</x-import>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+        <span style="font-size: 13px; color: var(--text-muted); margin-right: 4px;">Kind tags (not statuses):</span>
+        <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-pill); background: var(--surface-sunken); color: var(--text-body);">Idea</span>
+        <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-pill); background: var(--surface-sunken); color: var(--text-body);">High-impact</span>
+        <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--radius-pill); background: var(--surface-sunken); color: var(--text-body);">Advisory</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Disposition trio · undecided, approved, rejected</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 22px 26px; display: flex; flex-direction: column; gap: 18px; max-width: 900px;">
+      <div style="display: flex; align-items: center; gap: 24px;">
+        <span style="flex: 0 0 110px; font-size: 13px; color: var(--text-muted);">Undecided</span>
+        <div style="display: flex; gap: 10px;">
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="primary" size="md" hint-size="100px,40px">Approve</x-import>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="secondary" size="md" hint-size="120px,40px">Request info</x-import>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="ghost" size="md" hint-size="80px,40px">Reject</x-import>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 24px;">
+        <span style="flex: 0 0 110px; font-size: 13px; color: var(--text-muted);">Approved</span>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: var(--radius-sm); background: var(--ks-on-track); color: #fff; font-size: 14px; font-weight: 600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Approved</span>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="ghost" size="md" hint-size="80px,40px">Undo</x-import>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 24px;">
+        <span style="flex: 0 0 110px; font-size: 13px; color: var(--text-muted);">Rejected</span>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: var(--radius-sm); background: var(--ks-alert); color: #fff; font-size: 14px; font-weight: 600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>Rejected</span>
+          <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="secondary" size="md" hint-size="100px,40px">Approve</x-import>
+        </div>
+      </div>
+      <div style="font-size: 12.5px; color: var(--text-faint); border-top: 1px solid var(--border-subtle); padding-top: 12px;">The made decision becomes a filled state chip; the alternatives step back to outline/ghost. Reversible until sign-off.</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Drilldown row · behind every number</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; max-width: 900px;">
+      <div style="display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--border-subtle);" style-hover="background: var(--surface-canvas);">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 14.5px; font-weight: 600; color: var(--text-strong);">Supplier Past-Performance Risk Scoring Before Award</div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 1px;">Business Technology Solutions · in review</div>
+        </div>
+        <a href="#" style="font-size: 13px; font-weight: 600; flex-shrink: 0;">Open submission</a>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; padding: 14px 20px;" style-hover="background: var(--surface-canvas);">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 14.5px; font-weight: 600; color: var(--text-strong);">Vendor Past-Performance Risk Scoring</div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 1px;">Acquisition, Training and Readiness · duplicate cluster DC-04</div>
+        </div>
+        <a href="#" style="font-size: 13px; font-weight: 600; flex-shrink: 0;">Open cluster</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Form field · label, hint, requirement</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 22px 26px; display: flex; flex-direction: column; gap: 8px; max-width: 620px;">
+      <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Core Problem <span style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); font-weight: 400; margin-left: 6px;">required</span></label>
+      <div style="border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14.5px; line-height: 1.6; color: var(--text-strong);">Contract closeout files are checked by hand before archiving.</div>
+      <div style="font-size: 12.5px; color: var(--text-muted);">Two sentences is enough. Plumb will ask for the rest.</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Plumb · question bubble, answer options, waiting state</div>
+    <div style="display: flex; gap: 14px; align-items: flex-start;">
+      <div style="flex: 1; background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <img src="assets/plumb-assistant.svg" alt="Plumb" width="16" height="16" style="flex-shrink: 0;">
+          <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Plumb</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 15px 16px; border: 1px solid var(--ks-active-blue); border-radius: var(--radius-md);">
+          <div style="font-size: 14.5px; line-height: 1.55; color: var(--text-strong); text-wrap: pretty;">How many closeout files go through this a month?</div>
+          <div style="font-size: 12.5px; color: var(--text-muted);">Reviewers size the problem before anything else.</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <a href="#" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--ks-active-blue); font-size: 13px; color: var(--text-strong); font-weight: 600;" style-hover="background: var(--surface-canvas); text-decoration: none;">100–500<span style="font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ks-active-blue);">Recommended</span></a>
+            <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-body);" style-hover="border-color: var(--border-strong); text-decoration: none;">Under 100</a>
+            <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-body);" style-hover="border-color: var(--border-strong); text-decoration: none;">500+</a>
+            <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-muted);" style-hover="border-color: var(--border-strong); text-decoration: none;">Other…</a>
+          </div>
+          <div style="border-top: 1px solid var(--border-subtle); padding-top: 9px;"><a href="#" style="font-size: 13px;">I have enough — write the summary</a></div>
+        </div>
+      </div>
+      <div style="flex: 1; background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <img src="assets/plumb-assistant.svg" alt="Plumb" width="16" height="16" style="flex-shrink: 0;">
+            <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Plumb · reading</span>
+          </div>
+          <span style="font-size: 12.5px; color: var(--text-muted);">Step 2 of 4 · about 30 seconds</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px;">
+          <div style="display: flex; gap: 9px; align-items: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ks-on-track)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg><span style="color: var(--text-muted);">Read the submission</span></div>
+          <div style="display: flex; gap: 9px; align-items: center;"><div style="width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--ks-active-blue); flex-shrink: 0;"></div><span style="color: var(--text-strong); font-weight: 600;">Checking for similar use cases</span></div>
+          <div style="display: flex; gap: 9px; align-items: center; color: var(--text-faint);"><div style="width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--border-default); flex-shrink: 0;"></div>Drafting governance fields</div>
+          <div style="display: flex; gap: 9px; align-items: center; color: var(--text-faint);"><div style="width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--border-default); flex-shrink: 0;"></div>Writing the recommendation</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 7px; margin-top: 2px;">
+          <div style="height: 10px; border-radius: 3px; background: var(--surface-sunken); width: 92%;"></div>
+          <div style="height: 10px; border-radius: 3px; background: var(--surface-sunken); width: 78%;"></div>
+          <div style="height: 10px; border-radius: 3px; background: var(--surface-sunken); width: 85%;"></div>
+        </div>
+        <div style="font-size: 12.5px; color: var(--text-faint);">Staged progress, never a spinner. The rest of the page stays usable and nothing shifts when the result lands.</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Roll-up badge legend</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px 26px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; max-width: 900px; font-size: 13px;">
+      <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--ks-on-track);"></span>Approved</span>
+      <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--ks-amber);"></span>In review</span>
+      <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--ks-active-blue);"></span>Needs info</span>
+      <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--ks-alert);"></span>Rejected</span>
+      <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--ks-limestone-dark);"></span>Draft</span>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong);">Buttons</div>
+    <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 22px 26px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; max-width: 900px;">
+      <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="primary" size="md" hint-size="140px,40px">Primary action</x-import>
+      <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="secondary" size="md" hint-size="150px,40px">Secondary action</x-import>
+      <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="ghost" size="md" hint-size="100px,40px">Ghost</x-import>
+      <a href="#" style="font-size: 13px; font-weight: 600;">Link action</a>
+      <span style="border-left: 1px solid var(--border-subtle); padding-left: 14px; display: inline-flex;">
+        <a href="#" style="display: inline-block; text-align: center; padding: 11px 18px; background: var(--ks-chalk); color: var(--ks-basalt); font-size: 14px; font-weight: 600; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); border: 1px solid var(--border-default);" style-hover="background: #fff; text-decoration: none;" style-active="transform: translateY(1px); box-shadow: none;">On-dark chalk button</a>
+      </span>
+    </div>
+    <div style="font-size: 12.5px; color: var(--text-faint);">One primary per surface. The chalk button exists only inside raised-basalt header cards.</div>
+  </section>
+</div>
+</x-dc>
+</body>
+</html>
