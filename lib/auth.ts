@@ -23,16 +23,12 @@ export const PRIMARY_ADMIN_EMAIL = "matt.shankle@uspto.gov"
 
 export type Role = "admin" | "reviewer" | "submitter"
 
-export type JobRole =
-  | "patent_examiner"
-  | "trademark_examiner"
-  | "manager"
-  | "it_staff"
-  | "product_owner"
-  | "lead_product_owner"
-  | "developer"
-  | "other"
-  | ""
+// Job role from the active tenant's `getTenant().submitterRoles` (e.g.
+// "patent_examiner" for USPTO, "contracting_officer" for es2), or "" for not
+// set. A free string, like `businessUnit` below, rather than a per-tenant
+// union, since the set of valid values differs by tenant — a USPTO-shaped
+// union left es2 with no role it could store (ES2-13).
+export type JobRole = string
 
 // Bureau/business-unit code from the active tenant's `getTenant().unit.options`
 // (e.g. "patents" for USPTO, "census" for DoC). A free string, like `office`

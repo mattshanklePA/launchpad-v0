@@ -5,10 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CheckCircle, Rocket, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { PDFExportButton } from "@/components/steps/pdf-export-button"
+import { getTenant } from "@/lib/tenant"
 
 export function Step11ExportTracking() {
   const { formData, resetForm } = useForm()
   const router = useRouter()
+  // "View in Rally" only applies to tenants with a Rally integration
+  // (`TenantConfig.features.rallyExport` — on for USPTO, off for DoW, DoC and
+  // es2), the same flag step 10's route options respect. Rendering the button
+  // disabled still put another customer's connector on the screen every intake
+  // ends on (ES2-13).
+  const tenant = getTenant()
 
   const handleReturnToDashboard = () => {
     resetForm()
@@ -38,9 +45,11 @@ export function Step11ExportTracking() {
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-4 justify-center">
           <PDFExportButton formData={formData} variant="secondary" label="Download Submission as PDF" />
-          <Button disabled>
-            <Rocket className="mr-2 h-4 w-4" /> View in Rally
-          </Button>
+          {tenant.features.rallyExport && (
+            <Button disabled>
+              <Rocket className="mr-2 h-4 w-4" /> View in Rally
+            </Button>
+          )}
         </CardContent>
       </Card>
       <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">

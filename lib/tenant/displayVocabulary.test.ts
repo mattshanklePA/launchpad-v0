@@ -396,3 +396,101 @@ describe("the Form Config lock note reads as a sentence for every tenant (ES2-11
     expect(src).not.toMatch(/mandates are locked on by design/)
   })
 })
+
+// ── ES2-13: the Rally surfaces a tenant without the integration still saw ──
+//
+// `features.rallyExport` is off for doc, dow and es2, and step 10's route
+// options already respect it. Two surfaces did not: the "View in Rally" button
+// on the intake's last screen (Step11ExportTracking) and the "Rally
+// Integration Endpoint" field in Settings > Platform Configuration. Both are
+// simulated here rather than mounted — strip the JSX a false flag turns off,
+// then scan the display text that is left — because the Platform Configuration
+// card lives inside app/admin/page.tsx and cannot be mounted on its own.
+// Step 11 is additionally mounted for real in
+// components/steps/step-11-export-tracking.test.tsx.
+
+// Index just past the `}` that closes the block opening at `start`, ignoring
+// braces inside quoted strings.
+function endOfBlock(src: string, start: number): number {
+  let depth = 0
+  let quote = ""
+  for (let i = start; i < src.length; i++) {
+    const ch = src[i]
+    if (quote) {
+      if (ch === "\\") i++
+      else if (ch === quote) quote = ""
+      continue
+    }
+    if (ch === '"' || ch === "'" || ch === "`") quote = ch
+    else if (ch === "{") depth++
+    else if (ch === "}" && --depth === 0) return i + 1
+  }
+  throw new Error("unbalanced JSX block")
+}
+
+// What a tenant with `rallyExport: false` renders: the same source with every
+// `{tenant.features.rallyExport && ( … )}` block removed.
+function withoutRallyBlocks(src: string): string {
+  const gate = /\{\s*(?:tenant|getTenant\(\))\.features\.rallyExport\s*&&/
+  let out = src
+  for (;;) {
+    const m = gate.exec(out)
+    if (!m) return out
+    out = out.slice(0, m.index) + out.slice(endOfBlock(out, m.index))
+  }
+}
+
+// The Settings > Platform Configuration card, from its title to the end of the
+// card — the three fields and the Save button.
+function platformConfigurationCard(src: string): string {
+  const start = src.indexOf("<CardTitle>Platform Configuration</CardTitle>")
+  if (start < 0) throw new Error("no Platform Configuration card in app/admin/page.tsx")
+  return src.slice(start, src.indexOf("</Card>", start))
+}
+
+describe("no Rally surface renders on a tenant without the integration (ES2-13)", () => {
+  const RALLY = /rally/i
+  const step11 = source("components/steps/step-11-export-tracking.tsx")
+  const platformCard = platformConfigurationCard(source("app/admin/page.tsx"))
+  const rallyText = (src: string, rallyExport: boolean) =>
+    displayTextOf(rallyExport ? src : withoutRallyBlocks(src)).filter((t) => RALLY.test(t))
+
+  it("shows no Rally string on either surface, for every tenant with the flag off", () => {
+    const off = ALL_TENANTS.filter((t) => !t.features.rallyExport)
+    expect(off.map((t) => t.id).sort()).toEqual(["doc", "dow", "es2"])
+    for (const tenant of off) {
+      expect(rallyText(step11, false), `${tenant.id}: step 11`).toEqual([])
+      expect(rallyText(platformCard, false), `${tenant.id}: Platform Configuration`).toEqual([])
+    }
+  })
+
+  it("still shows both on uspto, whose integration is on", () => {
+    expect(uspto.features.rallyExport).toBe(true)
+    expect(rallyText(step11, true).join(" | ")).toMatch(RALLY)
+    expect(rallyText(platformCard, true).join(" | ")).toMatch(RALLY)
+  })
+
+  it("leaves the rest of the Platform Configuration card standing", () => {
+    const stripped = withoutRallyBlocks(platformCard)
+    const text = displayTextOf(stripped).join(" | ")
+    expect(text).toContain("Default Submission Timeout (days)")
+    expect(text).toContain("Save Settings")
+    // The model field's label is composed (`{tenant.assistantName} AI Model`),
+    // so it is not a bare display-text run — check it in the stripped source.
+    expect(stripped).toContain("{tenant.assistantName} AI Model")
+  })
+
+  it("removes the gated block and nothing else — the simulator is not inert", () => {
+    const sample = [
+      "<div>",
+      "  <Button>Keep me</Button>",
+      "  {tenant.features.rallyExport && (",
+      "    <Button disabled>View in Rally</Button>",
+      "  )}",
+      "  <Button>Keep me too</Button>",
+      "</div>",
+    ].join("\n")
+    expect(displayTextOf(sample)).toContain("View in Rally")
+    expect(displayTextOf(withoutRallyBlocks(sample))).toEqual(["Keep me", "Keep me too"])
+  })
+})

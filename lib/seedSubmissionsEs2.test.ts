@@ -290,17 +290,25 @@ describe("db/migrations/es2/0001_es2_users_seed.sql", () => {
     }
   })
 
+  // The job_role column between the password and business_unit was null for
+  // every row until ES2-13 populated it; these tests are about the scoping
+  // columns after it, so they match either. Job roles have their own block
+  // below.
+  const JOB = "(?:null|'\\w+')"
+
   it("carries one enterprise admin, one reviewer per program office, and a program-level reviewer", () => {
-    expect(sql).toMatch(/'admin', 'launchpad', null, null, null/)
+    expect(sql).toMatch(new RegExp(`'admin', 'launchpad', ${JOB}, null, null`))
     for (const unit of es2.unit.options.map((o) => o.value)) {
-      expect(sql, `no reviewer for ${unit}`).toMatch(new RegExp(`'reviewer', 'launchpad', null, '${unit}', null`))
+      expect(sql, `no reviewer for ${unit}`).toMatch(
+        new RegExp(`'reviewer', 'launchpad', ${JOB}, '${unit}', null`),
+      )
     }
     // AT&R program-level reviewer, scoped to one program under AT&R.
-    expect(sql).toMatch(/'reviewer', 'launchpad', null, 'atr', 'acws'/)
+    expect(sql).toMatch(new RegExp(`'reviewer', 'launchpad', ${JOB}, 'atr', 'acws'`))
   })
 
   it("uses only program-office and program codes the tenant declares", () => {
-    const units = sql.match(/'(?:admin|reviewer|submitter)', 'launchpad', null, '(\w+)'/g) ?? []
+    const units = sql.match(new RegExp(`'(?:admin|reviewer|submitter)', 'launchpad', ${JOB}, '(\\w+)'`, "g")) ?? []
     for (const m of units) {
       const unit = m.match(/'(\w+)'$/)![1]
       expect(unitValues.has(unit), `user seed references unknown program office "${unit}"`).toBe(true)
@@ -328,5 +336,107 @@ describe("no other org's vocabulary in the seed", () => {
     }
     // Department of War, never DoD.
     expect(text).not.toMatch(/\bDoD\b/)
+  })
+})
+
+// ─── ES2-13: the seed's job_role column ────────────────────────────────────
+//
+// It was null for every row, because the job-role dropdown was USPTO-shaped
+// and had no Army values to offer. Now that User Management reads the tenant's
+// own `submitterRoles`, the seed carries a real role for every account and
+// step 1 of intake can pre-fill it.
+describe("db/migrations/es2/0001_es2_users_seed.sql job roles (ES2-13)", () => {
+  const sql = fs.readFileSync(path.join(process.cwd(), "db/migrations/es2/0001_es2_users_seed.sql"), "utf8")
+  const roleValues = new Set(es2.submitterRoles.map((o) => o.value))
+
+  type SeedUser = { email: string; role: string; jobRole: string | null; unit: string | null; office: string | null }
+  const unquote = (v: string) => (v === "null" ? null : v.slice(1, -1))
+  const users: SeedUser[] = [
+    ...sql.matchAll(
+      /select '[^']+', '([^']+)', '[^']+', '(admin|reviewer|submitter)', 'launchpad', (null|'[^']*'), (null|'[^']*'), (null|'[^']*'), now\(\)/g,
+    ),
+  ].map((m) => ({
+    email: m[1],
+    role: m[2],
+    jobRole: unquote(m[3]),
+    unit: unquote(m[4]),
+    office: unquote(m[5]),
+  }))
+
+  it("parses all 15 seeded accounts", () => {
+    expect(users).toHaveLength(15)
+  })
+
+  it("gives every account a job_role from es2.ts's submitterRoles", () => {
+    for (const u of users) {
+      expect(u.jobRole, `${u.email} has no job_role`).not.toBeNull()
+      expect(roleValues.has(String(u.jobRole)), `${u.email}: job_role="${u.jobRole}"`).toBe(true)
+    }
+  })
+
+  it("submits Avery Lang as a contracting officer, which is what beat 3 shows", () => {
+    const avery = users.find((u) => u.email === "avery.lang@es2.demo")
+    expect(avery?.jobRole).toBe("contracting_officer")
+  })
+
+  // The guardrail: job_role is the only column ES2-13 touches. Avery's null
+  // business_unit is what puts her on the enterprise roll-up
+  // (lib/dashboard/scope.ts), and seeding a program office there would break
+  // the demo's first screen.
+  it("leaves every business_unit and office exactly as it was", () => {
+    const scoping = users.map((u) => `${u.email}:${u.unit}/${u.office}`).sort()
+    expect(scoping).toEqual(
+      [
+        "alan.brooks@es2.demo:atr/null",
+        "andre.duval@es2.demo:bts/null",
+        "avery.lang@es2.demo:null/null",
+        "dana.whitfield@es2.demo:atr/acws",
+        "derek.hsu@es2.demo:bts/null",
+        "jordan.pierce@es2.demo:hrfm/null",
+        "karen.udall@es2.demo:logfin/null",
+        "lena.okafor@es2.demo:atr/fmsaces",
+        "marcus.bell@es2.demo:atr/acws",
+        "maria.santos@es2.demo:cerp/null",
+        "nora.quist@es2.demo:atr/acws",
+        "priya.nair@es2.demo:atr/atis",
+        "renee.calder@es2.demo:hrfm/null",
+        "sofia.marquez@es2.demo:logfin/null",
+        "victor.hale@es2.demo:atr/digitalmarket",
+      ].sort(),
+    )
+  })
+
+  it("gives every program-office reviewer the same reviewing role", () => {
+    for (const u of users.filter((x) => x.role === "reviewer")) {
+      expect(u.jobRole, u.email).toBe("program_manager")
+    }
+  })
+
+  // The catch-up migration for the already-deployed instance. It has to be
+  // idempotent (`and job_role is null`) and agree with the base seed, or a
+  // hand-run in Supabase silently disagrees with a fresh deploy.
+  describe("0002_es2_job_roles.sql", () => {
+    const catchUp = fs.readFileSync(
+      path.join(process.cwd(), "db/migrations/es2/0002_es2_job_roles.sql"),
+      "utf8",
+    )
+    const updates = new Map(
+      [...catchUp.matchAll(/update users set job_role = '([^']+)' where email = '([^']+)' and job_role is null;/g)].map(
+        (m) => [m[2], m[1]],
+      ),
+    )
+
+    it("sets the same role the base seed does, for every seeded account", () => {
+      expect(updates.size).toBe(users.length)
+      for (const u of users) {
+        expect(updates.get(u.email), `${u.email} missing from the catch-up migration`).toBe(u.jobRole)
+      }
+    })
+
+    it("guards every update on job_role being null, so re-running is a no-op", () => {
+      const all = catchUp.match(/update users set job_role/g) ?? []
+      const guarded = catchUp.match(/and job_role is null;/g) ?? []
+      expect(all.length).toBe(guarded.length)
+    })
   })
 })

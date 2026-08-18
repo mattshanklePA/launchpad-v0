@@ -1239,10 +1239,12 @@ function AdminPageInner() {
                     <Label>{tenant.assistantName} AI Model</Label>
                     <Input defaultValue="claude-sonnet-4-5" className="mt-1" />
                   </div>
-                  <div>
-                    <Label>Rally Integration Endpoint</Label>
-                    <Input defaultValue="https://rally1.rallydev.com/..." className="mt-1" />
-                  </div>
+                  {tenant.features.rallyExport && (
+                    <div>
+                      <Label>Rally Integration Endpoint</Label>
+                      <Input defaultValue="https://rally1.rallydev.com/..." className="mt-1" />
+                    </div>
+                  )}
                   <Button>Save Settings</Button>
                 </CardContent>
               </Card>
