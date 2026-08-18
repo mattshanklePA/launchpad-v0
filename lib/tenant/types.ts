@@ -81,6 +81,27 @@ export type TenantConfig = {
   // a plain description for those that don't.
   minimumPracticesLabel: string
 
+  // Filename the inventory CSV downloads as (app/api/export/omb/route.ts).
+  // Explicit per tenant rather than hardcoded in the route, so an org that
+  // maintains an internal inventory does not hand its people a file named for
+  // another department's reporting mandate.
+  inventoryFileName: string
+
+  // Header labels for the export's two LaunchPad-added context columns.
+  // Optional: omit and the export emits OMB's published names ("Agency",
+  // "Bureau/Component"), which every tenant filing into OMB's public inventory
+  // must keep. Deliberately NOT routed through `tierLabels` — #3 is OMB's
+  // `agency_bureau` field and its name is OMB's, not the tenant's.
+  inventoryColumnLabels?: { agency: string; agencyBureau: string }
+
+  // The authority the consolidated department-level export row cites, and the
+  // opt-in signal that this tenant's inventory prose is its own. Omit and that
+  // row keeps OMB's wording word-for-word (bureau / bureaus / department, and
+  // OMB's widely-used commercial AI category guidance). Set it and the row's
+  // unit and department nouns resolve from `tierLabels` instead. See
+  // lib/ombExport.ts's ombExportContext().
+  inventoryAuthority?: string
+
   // Three illustrative rows in the landing page's Command Center preview.
   // Optional: when unset, the existing default list renders unchanged.
   heroPreviewItems?: HeroPreviewItem[]

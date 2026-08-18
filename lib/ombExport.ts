@@ -42,6 +42,20 @@ import { csvLine } from "@/lib/csv"
 export type OmbExportAgency = {
   shortName: string
   publicInquiryEmail: string
+  /** Header labels for the two LaunchPad-added context columns. Omit for OMB's published names. */
+  columnLabels?: { agency: string; agencyBureau: string }
+  /** Prose vocabulary for the consolidated department-level row. Omit for OMB's own wording. */
+  consolidation?: { unit: string; unitPlural: string; department: string; authority: string }
+}
+
+/** Structural subset of TenantConfig this module needs — keeps the module tenant-neutral (no tenant identity, no TenantConfig import). */
+export type InventoryTenant = {
+  shortName: string
+  publicInquiryEmail: string
+  inventoryFileName: string
+  inventoryColumnLabels?: { agency: string; agencyBureau: string }
+  inventoryAuthority?: string
+  tierLabels: { department: string; unit: string; unitPlural: string }
 }
 
 export const OMB_COLUMNS = [
@@ -82,6 +96,70 @@ export const OMB_COLUMNS = [
   "Reporting Mode", // not an OMB field — Individual/Consolidated (lib/ombConsolidation.ts)
   "Consolidated Category", // not an OMB field — lib/ombConsolidation.ts
 ] as const
+
+/**
+ * Default header labels for the two non-OMB context columns. These are OMB's
+ * own published field names (#3 is `agency_bureau`), NOT `tierLabels` — a
+ * tenant filing into OMB's public inventory must emit them whatever it calls
+ * its tiers on screen. A tenant maintaining an internal inventory to the same
+ * schema overrides them via `inventoryColumnLabels`.
+ */
+export const DEFAULT_INVENTORY_COLUMN_LABELS = { agency: "Agency", agencyBureau: "Bureau/Component" } as const
+
+/**
+ * Default prose vocabulary for the consolidated department-level row. Same
+ * reasoning: this sentence is OMB's, quoting OMB's own consolidation guidance,
+ * so it stays word-for-word for any tenant that has not declared an
+ * `inventoryAuthority` of its own.
+ */
+export const DEFAULT_CONSOLIDATION_VOCABULARY = {
+  unit: "bureau",
+  unitPlural: "bureaus",
+  department: "department",
+  authority: "OMB's widely-used commercial AI category guidance",
+} as const
+
+/** Index of the two substitutable context columns, derived so a column reorder can't desync them. */
+const AGENCY_COLUMN = OMB_COLUMNS.indexOf("Agency")
+const AGENCY_BUREAU_COLUMN = OMB_COLUMNS.indexOf("Bureau/Component")
+
+/**
+ * The header row for this export: OMB_COLUMNS with only the two LaunchPad-added
+ * context columns relabelled. Column order and count are untouched — every
+ * federal field name (#2-#34) is emitted exactly as OMB publishes it. Pure.
+ */
+export function inventoryColumns(agency: OmbExportAgency): string[] {
+  const labels = agency.columnLabels ?? DEFAULT_INVENTORY_COLUMN_LABELS
+  const columns: string[] = [...OMB_COLUMNS]
+  columns[AGENCY_COLUMN] = labels.agency
+  columns[AGENCY_BUREAU_COLUMN] = labels.agencyBureau
+  return columns
+}
+
+/**
+ * Resolves a tenant into this module's export context. `inventoryAuthority` is
+ * the opt-in: a tenant that declares one is maintaining its own inventory, so
+ * the consolidated row's unit and department nouns resolve from its
+ * `tierLabels` (lower-cased, since they land mid-sentence). A tenant that
+ * declares none keeps OMB's wording end to end — which is why DoC ("Bureau" /
+ * "Department") and USPTO ("Business Unit" / "Agency") export byte-identically
+ * to before despite having tier labels of their own. Pure.
+ */
+export function ombExportContext(tenant: InventoryTenant): OmbExportAgency {
+  return {
+    shortName: tenant.shortName,
+    publicInquiryEmail: tenant.publicInquiryEmail,
+    columnLabels: tenant.inventoryColumnLabels,
+    consolidation: tenant.inventoryAuthority
+      ? {
+          unit: tenant.tierLabels.unit.toLowerCase(),
+          unitPlural: tenant.tierLabels.unitPlural.toLowerCase(),
+          department: tenant.tierLabels.department.toLowerCase(),
+          authority: tenant.inventoryAuthority,
+        }
+      : undefined,
+  }
+}
 
 const YES_NO: Record<string, string> = { yes: "Yes", no: "No" }
 
@@ -280,13 +358,14 @@ function buildConsolidatedOmbRow(
   matches: Submission[],
   agency: OmbExportAgency,
 ): string[] {
-  const bureaus = Array.from(new Set(matches.map((s) => businessUnitLabel(getBusinessUnit(s))))).sort()
-  const bureauSummary = `${bureaus.length} bureau${bureaus.length === 1 ? "" : "s"}: ${bureaus.join(", ")}`
-  const problemSummary = `Reported once across the department per OMB's widely-used commercial AI category guidance — consolidates ${matches.length} bureau submission${matches.length === 1 ? "" : "s"} (${bureaus.join(", ")}) into this single department-level entry.`
+  const vocabulary = agency.consolidation ?? DEFAULT_CONSOLIDATION_VOCABULARY
+  const units = Array.from(new Set(matches.map((s) => businessUnitLabel(getBusinessUnit(s))))).sort()
+  const unitSummary = `${units.length} ${units.length === 1 ? vocabulary.unit : vocabulary.unitPlural}: ${units.join(", ")}`
+  const problemSummary = `Reported once across the ${vocabulary.department} per ${vocabulary.authority} — consolidates ${matches.length} ${vocabulary.unit} submission${matches.length === 1 ? "" : "s"} (${units.join(", ")}) into this single ${vocabulary.department}-level entry.`
   return [
     `${categoryLabel} (consolidated)`,
     agency.shortName,
-    bureauSummary,
+    unitSummary,
     agency.publicInquiryEmail,
     "No",
     "",
@@ -334,7 +413,7 @@ function buildConsolidatedOmbRow(
  * Pure — no I/O.
  */
 export function buildOmbCsv(submissions: Submission[], agency: OmbExportAgency): string {
-  const lines = [csvLine([...OMB_COLUMNS])]
+  const lines = [csvLine(inventoryColumns(agency))]
 
   const reportable = submissions.filter((s) => isPubliclyReportable(s.formData))
 

@@ -61,6 +61,7 @@ A serious AI idea names the federal priority and the Department mission it advan
   inventoryLabel: "OMB inventory",
   inventoryShortLabel: "OMB",
   minimumPracticesLabel: "M-25-21 minimum practices",
+  inventoryFileName: "omb-ai-use-case-inventory.csv",
 
   landingObjectives: [
     {

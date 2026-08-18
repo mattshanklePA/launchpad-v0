@@ -51,6 +51,7 @@ A serious AI idea names the specific priorities it advances, describes the mecha
   inventoryLabel: "OMB inventory",
   inventoryShortLabel: "OMB",
   minimumPracticesLabel: "M-25-21 minimum practices",
+  inventoryFileName: "omb-ai-use-case-inventory.csv",
 
   landingObjectives: [
     {

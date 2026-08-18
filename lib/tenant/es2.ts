@@ -92,6 +92,9 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
   inventoryLabel: "AI use case inventory",
   inventoryShortLabel: "Inventory",
   minimumPracticesLabel: "High-impact AI minimum practices",
+  inventoryFileName: "es2-ai-use-case-inventory.csv",
+  inventoryColumnLabels: { agency: "Organization", agencyBureau: "Program Office" },
+  inventoryAuthority: "the widely-used commercial AI category rule in the Department's internal inventory guidance",
 
   landingObjectives: [
     {
