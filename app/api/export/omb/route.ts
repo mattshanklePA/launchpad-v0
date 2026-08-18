@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
-import { buildOmbCsv } from "@/lib/ombExport"
+import { buildOmbCsv, ombExportContext } from "@/lib/ombExport"
 import { migrateFormData } from "@/lib/formDataMigrations"
 import { getTenant } from "@/lib/tenant"
 import type { Submission } from "@/lib/submissions"
@@ -40,12 +40,12 @@ export async function GET() {
 
     const submissions = (data || []).map((row) => fromRow(row as DbSubmissionRow))
     const tenant = getTenant()
-    const csv = buildOmbCsv(submissions, { shortName: tenant.shortName, publicInquiryEmail: tenant.publicInquiryEmail })
+    const csv = buildOmbCsv(submissions, ombExportContext(tenant))
 
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="omb-ai-use-case-inventory.csv"`,
+        "Content-Disposition": `attachment; filename="${tenant.inventoryFileName}"`,
         "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
       },
     })

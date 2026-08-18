@@ -63,6 +63,7 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
   inventoryLabel: "AI use case inventory",
   inventoryShortLabel: "Inventory",
   minimumPracticesLabel: "High-impact AI minimum practices",
+  inventoryFileName: "omb-ai-use-case-inventory.csv",
 
   landingObjectives: [
     {
