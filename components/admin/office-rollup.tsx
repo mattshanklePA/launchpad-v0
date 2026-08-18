@@ -33,7 +33,7 @@ export function OfficeRollup({
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            <tr className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
               <th className="text-left font-semibold py-1 pr-3">{tiers.subUnit}</th>
               {STATUS_ORDER.map((st) => (
                 <th key={st} className="text-center font-semibold px-2 py-1 whitespace-nowrap">

@@ -17,6 +17,37 @@
   }
 }
 
+/* Keystone type scale (00 Components Sheet.dc.html, RD-0 issue #201): mono
+   only for uppercase micro-labels and badges, everything readable in Chivo
+   (display) or Hanken (body) — nothing readable below 13px. */
+@layer components {
+  .ks-microlabel {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    @apply uppercase text-muted-foreground;
+  }
+  .ks-page-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 30px;
+    letter-spacing: -0.024em;
+  }
+  .ks-section-head {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.012em;
+  }
+  .ks-big-number {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+}
+
 @layer base {
   :root {
     /* Rebind the DS's font-family aliases to the self-hosted next/font
@@ -45,7 +76,7 @@
      *     shadcn wires `accent` to hover/selected menu backgrounds, and the
      *     guardrail is explicit that amber must never be a background wash.
      */
-    --background: 45 29% 97%;      /* --surface-canvas (--ks-chalk-light) */
+    --background: 45 27% 94%;      /* --surface-canvas (--ks-chalk, #F4F2EC) */
     --foreground: 210 18% 20%;     /* --text-strong (basalt / ink-900) */
     --card: 0 0% 100%;             /* --surface-card (white) */
     --card-foreground: 210 18% 20%;/* --text-strong */

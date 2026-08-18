@@ -320,7 +320,7 @@ export function DecisionCenter({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Heading className="text-2xl font-bold flex items-center gap-2">
+          <Heading className="ks-page-title flex items-center gap-2 text-foreground">
             <Gavel className="w-6 h-6" />
             Decision Center
           </Heading>

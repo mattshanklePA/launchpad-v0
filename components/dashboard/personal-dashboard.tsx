@@ -25,10 +25,11 @@ import { DRAFT_FORM_KEY_BASE, scopedDraftKey, migrateLegacyDraftKeys } from "@/l
 import { getTenant } from "@/lib/tenant"
 import { getDashboardScope } from "@/lib/dashboard/scope"
 import { scopedSubmissions } from "@/lib/dashboard/metrics"
-import { getStatus, getComments, STATUS_LABEL, statusBadgeClasses } from "@/lib/reviewWorkflow"
+import { getStatus, getComments, STATUS_LABEL } from "@/lib/reviewWorkflow"
+import { submissionStatusPillStatus } from "@/lib/submissionStatusPill"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { StatusPill } from "@/components/ui/status-pill"
 import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, ArrowRight, MessageSquare, FileText, Sparkles } from "lucide-react"
@@ -50,11 +51,7 @@ function detectDraft(): { title: string } | null {
 }
 
 function StatusBadge({ status }: { status: ReturnType<typeof getStatus> }) {
-  return (
-    <Badge variant="outline" className={statusBadgeClasses(status)}>
-      {STATUS_LABEL[status]}
-    </Badge>
-  )
+  return <StatusPill status={submissionStatusPillStatus(status)}>{STATUS_LABEL[status]}</StatusPill>
 }
 
 export function PersonalDashboard() {
@@ -83,9 +80,10 @@ export function PersonalDashboard() {
       breadcrumb="My ideas"
       tenant={tenant}
     >
+      <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">My ideas</h1>
+          <h1 className="ks-page-title text-foreground">My ideas</h1>
           <p className="text-sm text-muted-foreground">Track your AI ideas through review.</p>
         </div>
         <div className="flex gap-2">
@@ -142,9 +140,7 @@ export function PersonalDashboard() {
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium text-sm truncate">{draft.title}</span>
-                <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">
-                  Draft
-                </Badge>
+                <StatusPill status="neutral">Draft</StatusPill>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/submit?resume=1">Resume</Link>
@@ -186,6 +182,7 @@ export function PersonalDashboard() {
           </Card>
         )}
       </section>
+      </div>
     </DashboardShell>
   )
 }

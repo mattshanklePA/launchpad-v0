@@ -12,6 +12,7 @@ import { ChevronDown, ChevronRight, Building2, Landmark } from "lucide-react"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import type { OrgHierarchy } from "@/lib/dashboard/scope"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/ui/sidebar"
+import { SIDEBAR_ITEM_TEXT_CLASS } from "@/lib/layoutTokens"
 import { isBureauSelected, isOfficeSelected, type EntitySelection } from "./entity-tree-data"
 
 export type EntityTreeProps = {
@@ -35,7 +36,7 @@ export function EntityTree({ hierarchy, selected, onSelect, tenant = getTenant()
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton isActive={!selected} tooltip={tenant.orgName} onClick={() => onSelect?.(null)}>
+        <SidebarMenuButton isActive={!selected} tooltip={tenant.orgName} onClick={() => onSelect?.(null)} className={SIDEBAR_ITEM_TEXT_CLASS}>
           <Landmark />
           <span>{tenant.orgName}</span>
         </SidebarMenuButton>
@@ -52,6 +53,7 @@ export function EntityTree({ hierarchy, selected, onSelect, tenant = getTenant()
                 onSelect?.({ businessUnit: bureau.value })
                 if (hasOffices) toggle(bureau.value)
               }}
+              className={SIDEBAR_ITEM_TEXT_CLASS}
             >
               {hasOffices ? isExpanded ? <ChevronDown /> : <ChevronRight /> : <Building2 />}
               <span>{bureau.label}</span>
@@ -63,6 +65,7 @@ export function EntityTree({ hierarchy, selected, onSelect, tenant = getTenant()
                     <SidebarMenuSubButton
                       isActive={isOfficeSelected(bureau, office.value, selected)}
                       onClick={() => onSelect?.({ businessUnit: bureau.value, office: office.value })}
+                      className={SIDEBAR_ITEM_TEXT_CLASS}
                     >
                       <Building2 />
                       <span>{office.label}</span>

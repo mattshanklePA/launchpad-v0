@@ -15,20 +15,22 @@
 import Link from "next/link"
 import { User } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
-import { getStatus, getAssigneeName, STATUS_ORDER, STATUS_LABEL, statusBadgeClasses } from "@/lib/reviewWorkflow"
-import { Badge } from "@/components/ui/badge"
+import { getStatus, getAssigneeName, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
+import { submissionStatusPillStatus } from "@/lib/submissionStatusPill"
+import { StatusPill } from "@/components/ui/status-pill"
+import type { KeystoneStatus } from "@/lib/statusTokens"
 import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 
-function readinessChip(score?: string): { cls: string; label: string } {
+function readinessChip(score?: string): { status: KeystoneStatus; label: string } {
   switch (score) {
     case "ready":
-      return { cls: "bg-green-100 text-green-700", label: "Ready" }
+      return { status: "healthy", label: "Ready" }
     case "needs_work":
-      return { cls: "bg-amber-100 text-amber-700", label: "Needs work" }
+      return { status: "attention", label: "Needs work" }
     case "early_stage":
-      return { cls: "bg-gray-100 text-gray-500", label: "Early" }
+      return { status: "neutral", label: "Early" }
     default:
-      return { cls: "bg-gray-100 text-gray-500", label: "Not assessed" }
+      return { status: "neutral", label: "Not assessed" }
   }
 }
 
@@ -46,9 +48,9 @@ function QueueCard({ s }: { s: Submission }) {
       <div className="mt-1 truncate text-xs text-muted-foreground">{submitter}</div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <LifecycleBadge submission={s} />
-        <div className={`inline-block rounded px-1.5 py-0.5 text-[10px] ${r.cls}`}>{r.label}</div>
+        <StatusPill status={r.status}>{r.label}</StatusPill>
       </div>
-      <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+      <div className="mt-1.5 flex items-center gap-1 text-[13px] text-muted-foreground">
         <User className="h-3 w-3" />
         {assignee || "Unassigned"}
       </div>
@@ -66,9 +68,7 @@ export function QueueBoard({ submissions }: { submissions: Submission[] }) {
         return (
           <div key={st} className="w-64 shrink-0">
             <div className="mb-2 flex items-center justify-between px-1">
-              <Badge variant="outline" className={statusBadgeClasses(st)}>
-                {STATUS_LABEL[st]}
-              </Badge>
+              <StatusPill status={submissionStatusPillStatus(st)}>{STATUS_LABEL[st]}</StatusPill>
               <span className="text-xs font-medium text-muted-foreground">{items.length}</span>
             </div>
             <div className="min-h-[120px] space-y-2 rounded-lg bg-muted/40 p-2">

@@ -74,19 +74,19 @@ function BaseballCard({ item }: { item: KpiDrilldownEntry }) {
         {item.title}
       </p>
       <div className="mt-1 flex flex-wrap items-center gap-1">
-        <Badge variant="outline" className="rounded px-1.5 py-0 text-[10px] font-normal">
+        <Badge variant="outline" className="rounded px-1.5 py-0 font-mono text-[10px] uppercase tracking-[0.06em] font-normal">
           {item.bureauLabel}
         </Badge>
-        <Badge variant="outline" className="rounded px-1.5 py-0 text-[10px] font-normal">
+        <Badge variant="outline" className="rounded px-1.5 py-0 font-mono text-[10px] uppercase tracking-[0.06em] font-normal">
           {item.stage}
         </Badge>
         {memberCount && (
-          <Badge variant="outline" className="rounded px-1.5 py-0 text-[10px] font-normal">
+          <Badge variant="outline" className="rounded px-1.5 py-0 font-mono text-[10px] uppercase tracking-[0.06em] font-normal">
             {memberCount}
           </Badge>
         )}
       </div>
-      <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{item.cardField}</p>
+      <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">{item.cardField}</p>
     </div>
   )
 }
@@ -114,7 +114,7 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
               </>
             )}
             {badge && (
-              <Badge variant="outline" className="rounded px-1.5 py-0 text-[10px] font-normal">
+              <Badge variant="outline" className="rounded px-1.5 py-0 font-mono text-[10px] uppercase tracking-[0.06em] font-normal">
                 {badge}
               </Badge>
             )}
@@ -205,9 +205,9 @@ function KpiCardBody({ value, delta, status, subtitle }: Pick<KpiCardData, "valu
       >
         {value}
       </p>
-      {subtitle && <p className="text-[10px] leading-snug text-muted-foreground">{subtitle}</p>}
+      {subtitle && <p className="text-[13px] leading-snug text-muted-foreground">{subtitle}</p>}
       {delta && TrendIcon && (
-        <p className={cn("flex items-center gap-1 text-[11px] font-medium", kpiTrendTextClass(delta.direction))}>
+        <p className={cn("flex items-center gap-1 text-[13px] font-medium", kpiTrendTextClass(delta.direction))}>
           <TrendIcon className="h-3 w-3" />
           {delta.value}
         </p>

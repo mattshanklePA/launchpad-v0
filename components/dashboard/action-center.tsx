@@ -16,12 +16,12 @@
 import { useState } from "react"
 import { AlertTriangle, Info, Loader2, OctagonAlert, type LucideIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { StatusPill } from "@/components/ui/status-pill"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
-import { STATUS_BADGE_CLASS, STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
+import { STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
 import { DrilldownDialogContent } from "./kpi-card"
 import { sortActionItemsBySeverity, type ActionItem, type ActionSeverity } from "./action-center-data"
 
@@ -103,9 +103,7 @@ export function ActionCenter({ items, title = "Action Center" }: { items: Action
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS[SEVERITY_KEYSTONE[severity]])}>
-                      {SEVERITY_LABEL[severity]}
-                    </Badge>
+                    <StatusPill status={SEVERITY_KEYSTONE[severity]}>{SEVERITY_LABEL[severity]}</StatusPill>
                   </div>
                   {item.description && <p className="mt-0.5 text-xs text-muted-foreground">{item.description}</p>}
                 </div>

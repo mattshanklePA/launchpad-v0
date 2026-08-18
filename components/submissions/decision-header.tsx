@@ -11,11 +11,12 @@
 import { useState } from "react"
 import { ChevronDown, Loader2, ShieldCheck, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { StatusPill } from "@/components/ui/status-pill"
+import { KindTag } from "@/components/ui/kind-tag"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
-import { STATUS_BADGE_CLASS, STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
+import { STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
 import type { assistReviewer } from "@/app/actions"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
@@ -63,16 +64,16 @@ export function DecisionHeader({
         <h2 id="decision-heading" className="text-sm font-semibold">
           {assistantName}&apos;s recommendation
         </h2>
-        <Badge variant="outline" className="gap-1 text-[10px] bg-muted text-muted-foreground">
+        <KindTag>
           <GlossaryTerm term="advisory">Advisory</GlossaryTerm>
-        </Badge>
+        </KindTag>
       </div>
 
       {!assisting && assist && (
         <div className="flex flex-wrap items-start gap-2">
-          <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", STATUS_BADGE_CLASS[DISPOSITION_KEYSTONE[assist.suggestedDisposition]])}>
+          <StatusPill status={DISPOSITION_KEYSTONE[assist.suggestedDisposition]}>
             {DISPOSITION_LABEL[assist.suggestedDisposition]}
-          </Badge>
+          </StatusPill>
           <p className="text-sm leading-relaxed">{assist.verdict}</p>
         </div>
       )}

@@ -2,13 +2,10 @@
    .claude/skills/tokens/colors.css (the authoritative DS source; see
    .claude/skills/readme.md). Keep in sync by hand if that file changes.
 
-   NOTE: --ks-chalk-light and the --surface-canvas repoint below are the one
-   deliberate divergence from the current .claude/skills/tokens/colors.css —
-   the sandbox this change was authored in could not write under
-   .claude/skills/, so the DS source still points --surface-canvas at
-   --ks-chalk. A maintainer should apply the same two-line change there
-   (add --ks-chalk-light: #FAF9F6; repoint --surface-canvas to it) so the DS
-   file stays the single source of truth going forward. */
+   --ks-chalk-light is kept defined for parity with the DS export but is not
+   referenced anywhere in this app — --surface-canvas resolves to --ks-chalk,
+   matching docs/design/_ds/keystone-design-system/tokens/colors.css and
+   every Keystone redesign mock (RD-0, issue #201). */
 :root {
   /* ── Base palette ─────────────────────────────────── */
   --ks-basalt:        #2A333C; /* primary dark · surfaces, text */
@@ -42,7 +39,7 @@
   --text-link:       var(--ks-active-blue);
   --text-link-hover: var(--ks-active-blue-dark);
 
-  --surface-canvas:  var(--ks-chalk-light);
+  --surface-canvas:  var(--ks-chalk);
   --surface-card:    var(--ks-white);
   --surface-sunken:  var(--ks-limestone);
   --surface-inverse: var(--ks-basalt);
