@@ -127,7 +127,7 @@ function buildStepInputs(
         `--- PROBLEM ---`,
         ["coreProblem", "Core problem (textarea)"],
         ["problemImpact", "Problem impact (textarea)"],
-        ["affectedBusinessUnits", "Affected business units"],
+        ["affectedBusinessUnits", `Affected ${TENANT.tierLabels.unitPlural}`],
         ["problemType", "Problem type tags"],
         `--- TARGET USERS ---`,
         ["targetAudience", "Target audience"],

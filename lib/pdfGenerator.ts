@@ -5,7 +5,7 @@
 
 import { jsPDF } from "jspdf"
 import { getSubmitterRoleLabels, type FormData } from "@/lib/steps"
-import { getTenant, getOrgNameForUnit } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit, tenantFilePrefix } from "@/lib/tenant"
 
 const USPTO_BLUE_PRIMARY: [number, number, number] = [53, 94, 147]
 const USPTO_BLUE_SECONDARY: [number, number, number] = [37, 66, 103]
@@ -254,5 +254,5 @@ export function generateSubmissionPDF(formData: FormData) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60)
-  doc.save(`launchpad-${slug || "submission"}.pdf`)
+  doc.save(`${tenantFilePrefix(tenant)}-${slug || "submission"}.pdf`)
 }

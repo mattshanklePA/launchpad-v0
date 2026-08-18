@@ -891,7 +891,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>
         {([
           [
-            "Affected business units",
+            `Affected ${tenant.tierLabels.unitPlural}`,
             (fd.affectedBusinessUnits || [])
               .map((v) => tenant.affectedSystems.find((o) => o.value === v)?.label || v)
               .join(", "),

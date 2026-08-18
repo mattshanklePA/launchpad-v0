@@ -195,7 +195,7 @@ export function AIdChatPanel({ step, onApplySuggestion }: LaunchPadChatPanelProp
           <div className="flex items-center justify-between p-3 border-b flex-shrink-0">
             <h3 className="font-semibold text-lg flex items-center gap-2">
               <PlumbMark className="h-6 w-6" />
-              {tenant.productName} {tenant.assistantName}
+              {tenant.assistantName}
             </h3>
             <Tooltip>
               <TooltipTrigger asChild>

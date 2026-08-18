@@ -265,9 +265,7 @@ export function ConversationalIntake() {
             <div className="flex flex-col rounded-lg border bg-white shadow-sm h-[calc(100vh-14rem)] min-h-[480px]">
               <div className="flex items-center gap-2 p-3 border-b flex-shrink-0">
                 <PlumbMark className="h-6 w-6" />
-                <h2 className="font-semibold text-lg">
-                  {tenant.productName} {tenant.assistantName}
-                </h2>
+                <h2 className="font-semibold text-lg">{tenant.assistantName}</h2>
               </div>
 
               <ScrollArea className="flex-1 p-4">

@@ -98,7 +98,11 @@ export function HeroActions() {
               <li className="flex gap-3">
                 <Bot className="h-5 w-5 flex-shrink-0 text-uspto-blue-primary mt-0.5" />
                 <div>
-                  <p className="font-semibold">2. Refine with {tenant.productName} {tenant.assistantName}</p>
+                  {/* Assistant name alone, same as the in-app panel headers.
+                      The product name belongs on this page and already carries
+                      the card — "How {productName} works", above — so stacking
+                      it here only re-prints it as "Keystone Plumb" (ES2-11). */}
+                  <p className="font-semibold">2. Refine with {tenant.assistantName}</p>
                   <p className="text-sm text-muted-foreground">
                     {tenant.assistantName} asks focused questions to sharpen value, strategic alignment, and feasibility —
                     it never invents facts.
