@@ -28,26 +28,23 @@ import {
   type BusinessUnit,
 } from "@/lib/auth"
 import { useDataProvider } from "@/components/data-provider"
-import { getTenant } from "@/lib/tenant"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth"
 import { businessUnitLabel, officeLabel } from "@/lib/reviewWorkflow"
 
-// Job role is USPTO-shaped and not yet tenant-configurable; bureau/office
-// below are tenant-aware via getTenant().unit.options.
-const JOB_ROLE_OPTIONS: { value: JobRole; label: string }[] = [
-  { value: "", label: "Not set" },
-  { value: "patent_examiner", label: "Patent Examiner" },
-  { value: "trademark_examiner", label: "Trademark Examiner" },
-  { value: "manager", label: "Manager" },
-  { value: "it_staff", label: "IT Staff" },
-  { value: "product_owner", label: "Product Owner" },
-  { value: "lead_product_owner", label: "Lead Product Owner" },
-  { value: "developer", label: "Developer" },
-  { value: "other", label: "Other" },
-]
+// Job roles come from the active tenant's `submitterRoles` — the same list
+// step 1 of intake offers — with "Not set" prepended for an unset column.
+// Was a hardcoded USPTO-shaped list, which left a tenant like es2 with no
+// role an admin could assign and no role step 1 could pre-fill (ES2-13).
+// Bureau/office below are tenant-aware the same way, via
+// getTenant().unit.options.
+// Exported for user-management.test.ts.
+export function jobRoleOptions(tenant: TenantConfig = getTenant()): { value: JobRole; label: string }[] {
+  return [{ value: "", label: "Not set" }, ...tenant.submitterRoles]
+}
 
 function jobRoleLabel(v?: JobRole): string {
-  return JOB_ROLE_OPTIONS.find((o) => o.value === (v || ""))?.label || "—"
+  return jobRoleOptions().find((o) => o.value === (v || ""))?.label || "—"
 }
 
 function roleBadge(role: Role) {
@@ -260,7 +257,7 @@ export function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {JOB_ROLE_OPTIONS.map((o) => (
+                    {jobRoleOptions().map((o) => (
                       <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
                         {o.label}
                       </SelectItem>
@@ -386,7 +383,7 @@ export function UserManagement() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {JOB_ROLE_OPTIONS.map((o) => (
+                        {jobRoleOptions().map((o) => (
                           <SelectItem key={o.value || "_none"} value={o.value || "_none"}>
                             {o.label}
                           </SelectItem>
