@@ -10,6 +10,7 @@ import {
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
 import type { DashboardAction } from "@/lib/dashboard/actions"
+import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { ActionItem } from "./action-center-data"
 import type { TenantConfig } from "@/lib/tenant"
 import { GLOSSARY_TERM_KEYS } from "@/lib/glossary"
@@ -28,6 +29,27 @@ function dashboardAction(overrides: Partial<DashboardAction>): DashboardAction {
     severity: "critical",
     message: "message",
     canAutoSend: true,
+    ...overrides,
+  }
+}
+
+function drilldownItem(id: string): KpiDrilldownItem {
+  return { id, title: `Idea ${id}`, bureau: "noaa", bureauLabel: "NOAA", stage: "In review", cardField: "Pending" }
+}
+
+function drilldownCluster(id: string): DuplicateClusterDrilldownItem {
+  return { ...drilldownItem(id), memberIds: [id, `${id}-b`] }
+}
+
+function kpiDrilldown(overrides: Partial<KpiDrilldown> = {}): KpiDrilldown {
+  return {
+    pipeline: [],
+    readiness: [],
+    "high-impact": [],
+    "omb-reportable": [],
+    signoff: [],
+    duplicates: [],
+    rmf: [],
     ...overrides,
   }
 }
@@ -344,12 +366,11 @@ describe("buildActionItems", () => {
     expect(signoff.onAction).toBeUndefined()
   })
 
-  it("adds a needs-info item wired to notify, only when dashboardActions has one", () => {
+  it("adds a needs-info item, only when dashboardActions has one", () => {
     expect(buildActionItems(baseMetrics(), true)).not.toContainEqual(expect.objectContaining({ id: "needs-info" }))
     const items = buildActionItems(baseMetrics(), true, [dashboardAction({ kind: "needs_info", canAutoSend: false })])
     const needsInfo = items.find((i) => i.id === "needs-info")!
     expect(needsInfo).toMatchObject({ title: "1 submission waiting on submitter follow-up", actionLabel: "Request info" })
-    expect(needsInfo.onAction).toBeTypeOf("function")
   })
 
   it("adds an informational unassigned item with no wired button", () => {
@@ -379,12 +400,75 @@ describe("buildActionItems", () => {
     expect(outcome.description).toMatch(/assign one from Pipeline/)
   })
 
-  it("resolves the request-info action to a 'drafted' outcome — never auto-sent", async () => {
-    sendDashboardActionNotification.mockResolvedValueOnce({ sent: false, count: 0 })
-    const items = buildActionItems(baseMetrics(), true, [dashboardAction({ kind: "needs_info", canAutoSend: false })])
-    const outcome = await items.find((i) => i.id === "needs-info")!.onAction!()
-    expect(outcome.status).toBe("drafted")
-    expect(outcome.description).toMatch(/aren't sent over Slack/)
+  // ES2-12 B. `canAutoSend` is always false for needs_info (lib/dashboard/actions.ts),
+  // so the wired button could only ever toast "Drafted, not sent" and tell the
+  // reviewer to go open the submission. The drill-down takes them there instead.
+  it("gives the needs-info item a drilldown of its submissions and no onAction", () => {
+    const items = buildActionItems(
+      baseMetrics(),
+      true,
+      [
+        dashboardAction({ id: "n1", kind: "needs_info", submissionId: "s1", submissionTitle: "Coastal flood model", canAutoSend: false }),
+        dashboardAction({ id: "n2", kind: "needs_info", submissionId: "s2", submissionTitle: "Storm surge model", canAutoSend: false }),
+      ],
+      doc,
+      kpiDrilldown(),
+    )
+    const needsInfo = items.find((i) => i.id === "needs-info")!
+    expect(needsInfo.onAction).toBeUndefined()
+    expect(needsInfo.drilldown!.items.map((i) => i.id)).toEqual(["s1", "s2"])
+    expect(needsInfo.drilldown!.items.map((i) => i.title)).toEqual(["Coastal flood model", "Storm surge model"])
+  })
+
+  it("attaches the duplicates and inventory-reportability KPI lists to their Action Center items", () => {
+    const metrics = baseMetrics({
+      crossBureauDuplicates: { clusterCount: 2, pendingCount: 2 },
+      ombReportability: { reportable: 3, excluded: 0, review: 2, consolidated: 1, individual: 2 },
+    })
+    const drilldown = kpiDrilldown({
+      duplicates: [drilldownCluster("c1"), drilldownCluster("c2")],
+      "omb-reportable": [drilldownItem("r1"), drilldownItem("r2"), drilldownItem("r3")],
+    })
+    const items = buildActionItems(metrics, true, [], doc, drilldown)
+    expect(items.find((i) => i.id === "duplicates")!.drilldown!.items).toEqual(drilldown.duplicates)
+    expect(items.find((i) => i.id === "omb-review")!.drilldown!.items).toEqual(drilldown["omb-reportable"])
+  })
+
+  it("gives the unassigned item an Assign button backed by its own submissions", () => {
+    const items = buildActionItems(
+      baseMetrics(),
+      true,
+      [
+        dashboardAction({ id: "u1", kind: "unassigned", submissionId: "s7", submissionTitle: "Permit triage", canAutoSend: false }),
+      ],
+      doc,
+      kpiDrilldown(),
+    )
+    const unassigned = items.find((i) => i.id === "unassigned")!
+    expect(unassigned.actionLabel).toBe("Assign")
+    expect(unassigned.onAction).toBeUndefined()
+    expect(unassigned.drilldown!.items).toEqual([
+      expect.objectContaining({ id: "s7", title: "Permit triage", bureauLabel: "NOAA" }),
+    ])
+  })
+
+  it("keeps the sign-off nudge wired to its notifier rather than a drilldown", () => {
+    const metrics = baseMetrics({ awaitingSignoff: { count: 1, total: 5 } })
+    const items = buildActionItems(metrics, true, [dashboardAction({ kind: "signoff_nudge" })], doc, kpiDrilldown())
+    const signoff = items.find((i) => i.id === "signoff")!
+    expect(signoff.onAction).toBeTypeOf("function")
+    expect(signoff.drilldown).toBeUndefined()
+  })
+
+  // Callers that pass no drilldown (the CC-4 callers and every older test) get
+  // items with no drilldown — and therefore, per action-center.tsx, no button.
+  it("attaches no drilldown when the caller passes none", () => {
+    const metrics = baseMetrics({
+      crossBureauDuplicates: { clusterCount: 1, pendingCount: 1 },
+      ombReportability: { reportable: 1, excluded: 0, review: 1, consolidated: 0, individual: 1 },
+    })
+    const items = buildActionItems(metrics, true, [dashboardAction({ kind: "needs_info", canAutoSend: false })], doc)
+    for (const item of items) expect(item.drilldown).toBeUndefined()
   })
 })
 

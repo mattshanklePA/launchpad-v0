@@ -65,11 +65,12 @@ import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { RationalizationPanel } from "@/components/admin/rationalization-panel"
 import { DecisionHeader } from "@/components/submissions/decision-header"
 import { ChecklistItem } from "@/components/submissions/checklist-item"
+import { DispositionControls } from "@/components/submissions/disposition-controls"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import {
-  ArrowLeft, ArrowRight, Check, X, MessageSquare, ShieldCheck, AlertTriangle, Copy, ChevronDown,
+  ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
 
 type Assist = Awaited<ReturnType<typeof assistReviewer>>
@@ -501,17 +502,14 @@ export function SubmissionDetail({ id }: { id: string }) {
               statusClassName={statusBadgeClasses(status)}
               highlighted={highlightedItem === "dispose"}
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <Button onClick={() => setStatus("approved")} disabled={busy || !!blockReason} title={blockReason}>
-                  <Check className="w-4 h-4 mr-1.5" />Approve
-                </Button>
-                <Button variant="outline" onClick={() => document.getElementById("comment-box")?.focus()} disabled={busy}>
-                  <MessageSquare className="w-4 h-4 mr-1.5" />Request info
-                </Button>
-                <Button variant="outline" onClick={() => setStatus("rejected")} disabled={busy}>
-                  <X className="w-4 h-4 mr-1.5" />Reject
-                </Button>
-              </div>
+              <DispositionControls
+                status={status}
+                busy={busy}
+                blockReason={blockReason}
+                onApprove={() => setStatus("approved")}
+                onRequestInfo={() => document.getElementById("comment-box")?.focus()}
+                onReject={() => setStatus("rejected")}
+              />
               {blockReason && (
                 <p className="flex items-center gap-1.5 text-xs text-attention-foreground">
                   <AlertTriangle className="w-3.5 h-3.5 flex-none" />

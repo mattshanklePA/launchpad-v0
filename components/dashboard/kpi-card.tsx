@@ -134,6 +134,35 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
 }
 
 /**
+ * The click-through drill-down list — the dialog body a KPI card opens, and
+ * (ES2-12 B) the one an Action Center row opens too. Extracted so the Action
+ * Center's buttons navigate to the same list the matching KPI card already
+ * shows rather than growing a second, divergent one. Caller supplies the
+ * surrounding `<Dialog>`; this is only its `DialogContent`.
+ */
+export function DrilldownDialogContent({ label, items }: { label: string; items: KpiDrilldownEntry[] }) {
+  return (
+    <DialogContent className="max-h-[80vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>{label}</DialogTitle>
+        <DialogDescription>
+          {items.length} item{items.length === 1 ? "" : "s"}
+        </DialogDescription>
+      </DialogHeader>
+      {items.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">Nothing here right now.</p>
+      ) : (
+        <ul className="min-w-0 space-y-2">
+          {items.map((item) => (
+            <DrilldownRow key={item.id} item={item} />
+          ))}
+        </ul>
+      )}
+    </DialogContent>
+  )
+}
+
+/**
  * The label row, deliberately kept outside the card's clickable button below —
  * its glossary "?" (`GlossaryTerm`) renders its own `<button>`, and a `<button>`
  * can't validly nest another interactive control, so it can't live inside the
@@ -245,23 +274,7 @@ export function KpiCard({
           )}
         </HoverCard>
 
-        <DialogContent className="max-h-[80vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{label}</DialogTitle>
-            <DialogDescription>
-              {items.length} item{items.length === 1 ? "" : "s"}
-            </DialogDescription>
-          </DialogHeader>
-          {items.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Nothing here right now.</p>
-          ) : (
-            <ul className="min-w-0 space-y-2">
-              {items.map((item) => (
-                <DrilldownRow key={item.id} item={item} />
-              ))}
-            </ul>
-          )}
-        </DialogContent>
+        <DrilldownDialogContent label={label} items={items} />
       </Dialog>
     </Card>
   )

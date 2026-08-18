@@ -9,9 +9,11 @@ import type { DashboardScope } from "@/lib/dashboard/scope"
 import { isLevelAllowed } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
 import type { DashboardAction } from "@/lib/dashboard/actions"
+import type { KpiDrilldown, KpiDrilldownItem } from "@/lib/dashboard/drilldown"
+import { STATUS_LABEL } from "@/lib/reviewWorkflow"
 import { sendDashboardActionNotification } from "@/app/dashboard-actions"
 import type { KpiCardData } from "./kpi-card-data"
-import type { ActionItem, ActionOutcome } from "./action-center-data"
+import type { ActionDrilldown, ActionItem, ActionOutcome } from "./action-center-data"
 import type { EntitySelection } from "./entity-tree-data"
 
 /**
@@ -155,8 +157,9 @@ export function buildKpiCards(
  * Sends (or, per the guard, drafts) a batch of same-kind dashboard actions
  * through the one Notifier wiring (app/dashboard-actions.ts ->
  * lib/notifier.ts) and turns the result into the toast copy ActionCenter
- * shows. Both wired buttons (sign-off nudge, request info) call this same
- * function — the guard that decides whether anything actually sends lives in
+ * shows. The sign-off nudge is the only caller left (ES2-12 B retired the
+ * request-info wiring, which `canAutoSend` could never let send) — the guard
+ * that decides whether anything actually sends lives in
  * lib/dashboard/actions.ts's `canAutoSend`, not here.
  */
 async function notifyDashboardActions(actions: DashboardAction[], draftReason: string): Promise<ActionOutcome> {
@@ -167,19 +170,46 @@ async function notifyDashboardActions(actions: DashboardAction[], draftReason: s
 }
 
 /**
- * Executive Action Center items — the KPI-card-driven summaries (duplicates,
- * OMB review) stay informational, unchanged from CC-4. `dashboardActions`
- * (lib/dashboard/actions.ts, CC-5) adds the two wired items — sign-off nudge
- * and request info — plus an informational unassigned-submissions item; all
- * three are `[]`/absent when there's nothing of that kind in scope. Passing
- * no `dashboardActions` (the CC-4 callers, and every existing test) reproduces
- * the prior inert-item behavior exactly.
+ * Turns a batch of same-kind `DashboardAction`s into KPI-drill-down rows, so
+ * the two Action Center items with no KPI card of their own (unassigned,
+ * needs-info) can open the same dialog the card-backed items do. `stage` and
+ * `cardField` are the kind's own fixed vocabulary — a `DashboardAction`
+ * carries no lifecycle status of its own, and every action in one of these
+ * batches is in that kind by construction.
+ */
+function actionsAsDrilldownItems(actions: DashboardAction[], stage: string, cardField: string): KpiDrilldownItem[] {
+  return actions.map((a) => ({
+    id: a.submissionId,
+    title: a.submissionTitle,
+    bureau: a.bureau,
+    bureauLabel: a.bureauLabel,
+    stage,
+    cardField,
+  }))
+}
+
+/** `undefined` (-> no button) when the caller passed no drill-down, so the CC-4 callers degrade cleanly. */
+function actionDrilldown(label: string, items: KpiDrilldownItem[] | undefined): ActionDrilldown | undefined {
+  return items ? { label, items } : undefined
+}
+
+/**
+ * Executive Action Center items. Every item that isn't a real, sendable
+ * notification now opens the list of records behind its own count (ES2-12 B):
+ * `drilldown` (the `getKpiDrilldown` lists the KPI cards already use, passed
+ * through by the dashboard callers) makes the button a drill-down trigger,
+ * and an item with neither `drilldown` nor `onAction` renders no button at
+ * all. `dashboardActions` (lib/dashboard/actions.ts, CC-5) supplies the
+ * unassigned and needs-info items and keeps the one genuinely wired action,
+ * the sign-off nudge, on `onAction`. Passing no `dashboardActions`/`drilldown`
+ * (the CC-4 callers, and the older tests) yields buttonless items.
  */
 export function buildActionItems(
   metrics: DashboardMetrics,
   bureauTier: boolean,
   dashboardActions: DashboardAction[] = [],
   tenant: TenantConfig = getTenant(),
+  drilldown?: KpiDrilldown,
 ): ActionItem[] {
   const items: ActionItem[] = []
   const tiers = tenant.tierLabels
@@ -191,6 +221,9 @@ export function buildActionItems(
       title: `${n} cross-${tiers.unit.toLowerCase()} duplicate cluster${n === 1 ? "" : "s"} pending rationalization`,
       severity: "critical",
       actionLabel: "Rationalize",
+      // The same clusters the Duplicates KPI card opens — each row's "Open
+      // cluster" link is the path the rationalization walkthrough already uses.
+      drilldown: actionDrilldown(`Cross-${tiers.unit.toLowerCase()} duplicate clusters`, drilldown?.duplicates),
     })
   }
 
@@ -221,11 +254,15 @@ export function buildActionItems(
       title: `${n} submission${n === 1 ? "" : "s"} waiting on submitter follow-up`,
       severity: "warning",
       actionLabel: "Request info",
-      onAction: () =>
-        notifyDashboardActions(
-          needsInfoActions,
-          "Reminders to a submitter aren't sent over Slack — open the submission and use Request info to message them directly.",
-        ),
+      // Not wired to the Notifier: `canAutoSend` is false for every needs_info
+      // action (lib/dashboard/actions.ts — there is no channel to a submitter
+      // outside the product), so the button could only ever toast "Drafted,
+      // not sent" and tell the reviewer to open the submission. The drill-down
+      // takes them straight there instead. No send behavior is lost.
+      drilldown: actionDrilldown(
+        "Waiting on submitter follow-up",
+        drilldown && actionsAsDrilldownItems(needsInfoActions, STATUS_LABEL.needs_info, "Waiting on submitter"),
+      ),
     })
   }
 
@@ -236,6 +273,13 @@ export function buildActionItems(
       id: "unassigned",
       title: `${n} submission${n === 1 ? "" : "s"} with no reviewer assigned`,
       severity: "warning",
+      // "Assign" over "Review": assigning a reviewer is the thing that clears
+      // this item, and it happens on the submission the drill-down opens.
+      actionLabel: "Assign",
+      drilldown: actionDrilldown(
+        "No reviewer assigned",
+        drilldown && actionsAsDrilldownItems(unassignedActions, "Unassigned", "No reviewer assigned"),
+      ),
     })
   }
 
@@ -246,6 +290,11 @@ export function buildActionItems(
       title: `${n} submission${n === 1 ? " needs" : "s need"} an ${tenant.inventoryShortLabel} reportability review`,
       severity: "info",
       actionLabel: "Review",
+      // The inventory-reportable KPI card's own list. Its length is the
+      // `reportable` count, not the `review` count in this item's title — the
+      // dialog states its own count, and this is the list a reportability
+      // review is conducted against.
+      drilldown: actionDrilldown(`${tenant.inventoryShortLabel} reportable`, drilldown?.["omb-reportable"]),
     })
   }
 
