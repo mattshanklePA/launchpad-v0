@@ -1,20 +1,28 @@
 "use client"
 
 // Executive Action Center — a scoped list of surfaced action items with a
-// call-to-action button per item. Presentation only: an item without an
-// `onAction` (e.g. purely informational) renders a disabled button; an item
-// with one gets a pending spinner while it resolves and a success/failure
-// toast after (CC-5), matching the app's existing async-action pattern (e.g.
-// the Reset Demo Data button, app/admin/page.tsx).
+// call-to-action button per item. Presentation only. Three shapes, and no
+// fourth (ES2-12 B):
+//   - `drilldown` -> the button opens the KPI drill-down dialog listing the
+//     records behind the count (`DrilldownDialogContent`, kpi-card.tsx), each
+//     row linking to its submission. The same list the matching KPI card
+//     opens — one mechanism, not two.
+//   - `onAction` -> a pending spinner while it resolves and a success/failure
+//     toast after (CC-5), matching the app's existing async-action pattern
+//     (e.g. the Reset Demo Data button, app/admin/page.tsx).
+//   - neither -> NO button. This row used to render a disabled one, which
+//     told the reviewer there was something to click when nothing was wired.
 
 import { useState } from "react"
 import { AlertTriangle, Info, Loader2, OctagonAlert, type LucideIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS, STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
+import { DrilldownDialogContent } from "./kpi-card"
 import { sortActionItemsBySeverity, type ActionItem, type ActionSeverity } from "./action-center-data"
 
 const SEVERITY_ICON: Record<ActionSeverity, LucideIcon> = {
@@ -102,9 +110,20 @@ export function ActionCenter({ items, title = "Action Center" }: { items: Action
                   {item.description && <p className="mt-0.5 text-xs text-muted-foreground">{item.description}</p>}
                 </div>
               </div>
-              <Button size="sm" variant="outline" disabled={!item.onAction || pending} onClick={() => runAction(item)}>
-                {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : item.actionLabel || "Review"}
-              </Button>
+              {item.drilldown ? (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      {item.actionLabel || "Review"}
+                    </Button>
+                  </DialogTrigger>
+                  <DrilldownDialogContent label={item.drilldown.label} items={item.drilldown.items} />
+                </Dialog>
+              ) : item.onAction ? (
+                <Button size="sm" variant="outline" disabled={pending} onClick={() => runAction(item)}>
+                  {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : item.actionLabel || "Review"}
+                </Button>
+              ) : null}
             </div>
           )
         })}
