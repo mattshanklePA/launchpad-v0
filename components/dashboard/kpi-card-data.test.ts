@@ -130,7 +130,7 @@ describe("kpiDrilldownEntryHref", () => {
     expect(kpiDrilldownEntryHref(item("abc"))).toBe("/submissions/abc")
   })
 
-  it("links a cluster entry to its lead submission (id is already the lead's)", () => {
-    expect(kpiDrilldownEntryHref(cluster("lead-1", ["lead-1", "member-2"]))).toBe("/submissions/lead-1")
+  it("links a cluster entry to its dedicated cluster page (RD-4), id is already the cluster's", () => {
+    expect(kpiDrilldownEntryHref(cluster("lead-1", ["lead-1", "member-2"]))).toBe("/clusters/lead-1")
   })
 })

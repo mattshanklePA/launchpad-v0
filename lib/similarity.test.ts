@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
-import { similarity, findSimilar } from "@/lib/similarity"
+import { similarity, findSimilar, clusterSignals } from "@/lib/similarity"
 import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
+import { doc } from "@/lib/tenant/doc"
 import type { Submission } from "@/lib/submissions"
 
 function mkSub(id: string, businessUnit: string, text: Partial<{
@@ -106,5 +107,71 @@ describe("findSimilar", () => {
   it("excludes the target submission itself even at a zero threshold", () => {
     const ids = findSimilar(target, pool, { threshold: 0, limit: 10 }).map((m) => m.submission.id)
     expect(ids).not.toContain("target")
+  })
+})
+
+describe("clusterSignals", () => {
+  function member(id: string, overrides: Partial<Submission["formData"]>): Submission {
+    return {
+      id,
+      submittedAt: new Date(0).toISOString(),
+      businessUnit: "nist",
+      formData: {
+        useCaseTitle: "",
+        coreProblem: "",
+        proposedSolution: "",
+        useCaseDescription: "",
+        submitterOffice: "nist",
+        ...overrides,
+      } as any,
+    }
+  }
+
+  it("returns five rows, each a percentage in [0, 100]", () => {
+    const a = member("a", { proposedSolution: "alpha bravo charlie" })
+    const b = member("b", { proposedSolution: "alpha bravo delta" })
+    const rows = clusterSignals([a, b], doc)
+    expect(rows.map((r) => r.label)).toEqual([
+      "Solution approach",
+      "Problem statement",
+      "Users and context",
+      "Affected areas",
+      "Benefits",
+    ])
+    for (const row of rows) {
+      expect(row.score).toBeGreaterThanOrEqual(0)
+      expect(row.score).toBeLessThanOrEqual(100)
+    }
+  })
+
+  it("scores the solution-approach field's Jaccard overlap and names its top shared terms for a known pair", () => {
+    const a = member("a", { proposedSolution: "Scores vendor risk from CPARS history for contracting officers." })
+    const b = member("b", { proposedSolution: "Scores vendor risk from CPARS records for supply planners." })
+    const [solutionRow] = clusterSignals([a, b], doc)
+    // tokenize()'s stemming: "scores" -> "scor", "cpars" -> "cpar" (its normalize()
+    // strips a trailing "es"/"s" before this module ever sees the token).
+    // Set A = {scor, vendor, risk, cpar, history, contract, officer} (7)
+    // Set B = {scor, vendor, risk, cpar, record, supply, planner} (7)
+    // Shared = {scor, vendor, risk, cpar} (4) -> Jaccard = 4 / (7+7-4) = 0.4
+    expect(solutionRow.score).toBe(40)
+    expect(solutionRow.topTerms).toEqual(["cpar", "risk", "scor"])
+  })
+
+  it("is empty-safe: [] topTerms and 0 score for fields with nothing in common", () => {
+    const a = member("a", { userValue: "alpha bravo charlie", businessValue: "" })
+    const b = member("b", { userValue: "delta echo foxtrot", businessValue: "" })
+    const benefitsRow = clusterSignals([a, b], doc).find((r) => r.label === "Benefits")!
+    expect(benefitsRow.score).toBe(0)
+    expect(benefitsRow.topTerms).toEqual([])
+  })
+
+  it("averages pairwise across every member, not just the first two", () => {
+    const a = member("a", { proposedSolution: "alpha bravo charlie delta" })
+    const b = member("b", { proposedSolution: "alpha bravo echo foxtrot" })
+    const c = member("c", { proposedSolution: "golf hotel india juliet" }) // shares nothing with a or b
+    const [solutionRow] = clusterSignals([a, b, c], doc)
+    // Pairs: a-b share {alpha, bravo} out of 4+4-2=6 -> 0.333; a-c and b-c share nothing -> 0.
+    // Average of the three pairs = 0.333/3 = 0.111 -> 11%.
+    expect(solutionRow.score).toBe(11)
   })
 })
