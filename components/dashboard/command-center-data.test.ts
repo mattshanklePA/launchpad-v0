@@ -9,6 +9,7 @@ import {
   rowItems,
   submissionStatusKeystone,
   scopedSubmissionRow,
+  uniqueSlugTail,
 } from "./command-center-data"
 import type { DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { ActionItem } from "./action-center-data"
@@ -50,6 +51,21 @@ describe("splitLabelCode", () => {
 
   it("returns a null code when the label has no parenthetical", () => {
     expect(splitLabelCode("Digital Market")).toEqual({ code: null, name: "Digital Market" })
+  })
+})
+
+describe("uniqueSlugTail", () => {
+  it("drops the tenant and unit prefix, uppercasing what's left", () => {
+    expect(uniqueSlugTail("es2-acws-source-selection-scoring")).toBe("SOURCE-SELECTION-SCORING")
+  })
+
+  it("gives two submissions in the same unit different identifiers", () => {
+    expect(uniqueSlugTail("es2-acws-source-selection-scoring")).not.toBe(uniqueSlugTail("es2-acws-clause-recommendation"))
+  })
+
+  it("falls back to the full id, uppercased, when there aren't three segments to drop from", () => {
+    expect(uniqueSlugTail("abc")).toBe("ABC")
+    expect(uniqueSlugTail("abc-def")).toBe("ABC-DEF")
   })
 })
 

@@ -36,7 +36,7 @@ export function Step4TechnicalConstraints() {
           <Field
             label="Any known technical constraints?"
             htmlFor="dependencies"
-            hint="Quick notes only — dependencies, blockers, or integration realities we should know about. No need to self-assess feasibility or security; reviewers cover that during vetting."
+            hint="Quick notes only: dependencies, blockers, or integration realities we should know about. No need to self-assess feasibility or security; reviewers cover that during vetting."
           >
             <Textarea
               id="dependencies"

@@ -376,7 +376,7 @@ export function AIdChatPanel({ step, onApplySuggestion, summaryField }: LaunchPa
                 onClick={() => handleOptionClick(enoughOption.label)}
                 className="text-[13px] font-semibold text-primary hover:underline disabled:opacity-50"
               >
-                I have enough — write the summary
+                I have enough, write the summary
               </button>
             </div>
           )}

@@ -12,7 +12,7 @@ import { Sparkles } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
 import { computeRiskProfile, type RiskLevel } from "@/lib/riskProfile"
-import { resolveRmfProfile } from "@/lib/rmfProfileReview"
+import { resolveRmfProfile, type ResolvedRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant } from "@/lib/tenant"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import { formatKeystoneDate, splitLabelCode } from "@/components/dashboard/command-center-data"
@@ -118,6 +118,16 @@ export function prettyEnum(v: string | string[] | undefined): string {
   return ENUM_LABELS[v] || v
 }
 
+// The card's one-line RMF status — three states driven purely by
+// `resolveRmfProfile`'s existing resolution (no new review logic): no review
+// record yet, a reviewer confirmed the proposed profile, or a reviewer
+// overrode it. Mirrors submission-detail.tsx's `rmfStatusLabel` for the
+// reviewer detail page, restated for the card's shorter slot.
+export function rmfCardLabel(resolved: ResolvedRmfProfile): string {
+  if (!resolved.review) return "RMF profile not confirmed"
+  return resolved.review.decision === "overridden" ? "RMF overridden by reviewer" : "RMF confirmed"
+}
+
 type DecisionCardProps = {
   submission: Submission
   selected: boolean
@@ -195,9 +205,7 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
 
       <div className="mt-auto flex items-center justify-between gap-2.5 pt-0.5">
         {rmfEnabled && resolvedRmf ? (
-          <p className="text-[13px] text-muted-foreground">
-            {resolvedRmf.isProposal ? "RMF proposed · awaiting reviewer" : "RMF confirmed"}
-          </p>
+          <p className="text-[13px] text-muted-foreground">{rmfCardLabel(resolvedRmf)}</p>
         ) : (
           <span />
         )}
@@ -284,8 +292,12 @@ export function DecisionCenter({
       <div className="flex flex-col gap-3 rounded-md bg-keystone-basalt600 px-7 py-6 text-white shadow-sm md:flex-row md:items-end md:justify-between">
         <div className="flex flex-col gap-2">
           <Heading className="ks-page-title text-white">Decision Center</Heading>
-          <p className="text-[14.5px] text-white">{countLead}</p>
-          <p className="text-[13px] text-white/72">Each cleared vetting. Pick two to four to compare, or decide from the cards.</p>
+          {count > 0 && (
+            <>
+              <p className="text-[14.5px] text-white">{countLead}</p>
+              <p className="text-[13px] text-white/72">Each cleared vetting. Pick two to four to compare, or decide from the cards.</p>
+            </>
+          )}
         </div>
         {count > 0 && (
           <div className="flex shrink-0 items-center gap-3.5 pb-0.5">
@@ -297,15 +309,16 @@ export function DecisionCenter({
         )}
       </div>
 
-      {/* Empty state */}
+      {/* Empty state — nothing has been approved yet, so say that plainly
+          rather than the count line ("0 candidates await...") or a generic
+          "no submissions" message that predates the approval gate. */}
       {count === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
             <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <h3 className="font-semibold text-lg">No submissions awaiting decision</h3>
+            <h3 className="font-semibold text-lg">Nothing is waiting on a funding decision.</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-              When ideas are submitted through the wizard, they will appear here for executive review. Up to the last
-              5 submissions are retained.
+              Use cases arrive here once a reviewer approves them.
             </p>
           </CardContent>
         </Card>

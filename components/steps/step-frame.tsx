@@ -13,6 +13,7 @@ import { useForm } from "@/context/form-context"
 import { getFormSteps, getPhaseForStep, getSubmitterRoleLabels, type FormData } from "@/lib/steps"
 import { getProgressModel, getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { getTenant } from "@/lib/tenant"
+import { shortBusinessUnitLabel } from "@/components/dashboard/command-center-data"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
@@ -71,7 +72,10 @@ export function StepHeader({ onSwitchToGuided }: { onSwitchToGuided?: () => void
 
   const doneCount = WIZARD_STEPS.filter((s) => s !== currentStep && isStepComplete(s)).length
   const roleLabel = getSubmitterRoleLabels()[formData.submitterRole as string]
-  const unitLabel = getTenant().unit.options.find((o) => o.value === formData.submitterOffice)?.label
+  // Short form ("AT&R"), not the tenant's full option label ("Acquisition,
+  // Training and Readiness (AT&R)") — the long form wrapped to two lines in
+  // this chrome-width slot and pushed the Edit link out of alignment.
+  const unitLabel = formData.submitterOffice ? shortBusinessUnitLabel(formData.submitterOffice) : undefined
   const { title, subtitle } = wizardHeaderCopy(currentStep, formData, stepInfo)
 
   return (

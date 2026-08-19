@@ -24,6 +24,7 @@ afterEach(() => {
   root = null
   mockUseForm.mockReset()
   setCurrentStep.mockReset()
+  delete process.env.NEXT_PUBLIC_TENANT
 })
 
 function render(ui: ReactElement) {
@@ -87,6 +88,50 @@ describe("StepHeader", () => {
     mockUseForm.mockReturnValue({ currentStep: 6, setCurrentStep, formData: { ...initialFormData } })
     const step6 = render(<StepHeader />)
     expect(step6.textContent).toContain("Get Plumb's read before you submit.")
+  })
+
+  // Issue #213 item 6: an optional step (Technical Constraints, step 4) used
+  // to count as done as soon as it was visited, with no content — the header
+  // then disagreed with Review & Submit's own recap. `isStepComplete` now
+  // reuses the same has-content rule for both (lib/wizardRecap.ts).
+  it("reads '0 of 6 done' with no completed segment on a fresh, unvisited form", () => {
+    mockUseForm.mockReturnValue({ currentStep: 1, setCurrentStep, formData: { ...initialFormData } })
+    const el = render(<StepHeader />)
+
+    expect(el.textContent).toContain("0 of 6 done")
+    const segments = Array.from(el.querySelectorAll('[role="img"] > div'))
+    expect(segments.length).toBe(6)
+    expect(segments.some((s) => s.className.includes("bg-healthy"))).toBe(false)
+  })
+
+  it("counts the optional Technical Constraints step as done once it has content, not merely visited", () => {
+    mockUseForm.mockReturnValue({
+      currentStep: 1,
+      setCurrentStep,
+      formData: { ...initialFormData, dependencies: "Needs access to the authoritative records system." },
+    })
+    const el = render(<StepHeader />)
+
+    expect(el.textContent).toContain("1 of 6 done")
+    const segments = Array.from(el.querySelectorAll('[role="img"] > div'))
+    expect(segments[3].className).toContain("bg-healthy") // step 4, zero-indexed
+  })
+
+  // Issue #213 item 7: the header printed the tenant's full option label
+  // ("Acquisition, Training and Readiness (AT&R)"), which wrapped to two
+  // lines and pushed the Edit link out of alignment. It should print the
+  // short parenthetical form instead, same as decision-center.tsx's card meta.
+  it("uses the tenant's short unit label in the header, not the full option label", () => {
+    process.env.NEXT_PUBLIC_TENANT = "es2"
+    mockUseForm.mockReturnValue({
+      currentStep: 2,
+      setCurrentStep,
+      formData: { ...initialFormData, submitterName: "Jane Doe", submitterOffice: "atr" },
+    })
+    const el = render(<StepHeader />)
+
+    expect(el.textContent).toContain("AT&R")
+    expect(el.textContent).not.toContain("Acquisition, Training and Readiness")
   })
 })
 

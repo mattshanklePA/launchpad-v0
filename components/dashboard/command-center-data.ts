@@ -62,6 +62,23 @@ export function shortBusinessUnitLabel(unit: string): string {
   return splitLabelCode(label).code ?? label
 }
 
+/**
+ * The reviewer-header eyebrow's per-record identifier — every submission id
+ * in this codebase (seed and live) is `{prefix}-{unit}-{rest...}` (e.g.
+ * `es2-acws-source-selection-scoring`, `sub-<ts>-<rand>`); this drops the
+ * first two hyphen-separated segments (the tenant/seed prefix and the unit
+ * code — already shown elsewhere on the card) and uppercases what's left, so
+ * two records in the same unit never print the same string. A plain
+ * `id.slice(0, N)` doesn't have that property: it's a shared prefix for
+ * every record in the unit, not a per-record identifier. Falls back to the
+ * full id, uppercased, for an id with fewer than three segments.
+ */
+export function uniqueSlugTail(id: string): string {
+  const parts = id.split("-")
+  const tail = parts.length > 2 ? parts.slice(2).join("-") : id
+  return tail.toUpperCase()
+}
+
 export type HeroCluster = {
   headline: string
   body: string

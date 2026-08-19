@@ -18,6 +18,7 @@ import { isFieldVisible, getFormConfig } from "@/lib/formConfig"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { Field, StepCard, StepFooterShell, pillToggleClass } from "@/components/steps/step-frame"
 import { STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
+import { hasFieldContent, NO_REQUIRED_FIELDS_STEPS } from "@/lib/wizardRecap"
 
 // "Export to Rally" only applies to tenants with a Rally integration
 // (`TenantConfig.features.rallyExport` — on for USPTO, off for DoW/DoC).
@@ -85,16 +86,6 @@ const STEP_FIELDS = (tenant: TenantConfig): Record<number, Array<{ label: string
     { label: "Withhold from Public Reporting?", key: "isWithheld" },
   ],
 })
-
-function hasFieldContent(value: unknown): boolean {
-  if (Array.isArray(value)) return value.length > 0
-  if (typeof value === "boolean") return true
-  return Boolean(value && String(value).trim())
-}
-
-// Optional-only step (Technical Constraints) never blocks submission, so it
-// never shows "answers short" — it's either got a note or it doesn't.
-const NO_REQUIRED_FIELDS_STEPS = new Set([4])
 
 function recapStatus(
   step: number,
@@ -301,7 +292,7 @@ export function Step10ReviewSubmit() {
         )}
 
         <p className="text-[13px] text-muted-foreground">
-          {passedChecks} of {readiness.totalChecks} checks passed
+          {passedChecks} of {readiness.totalChecks} required fields complete
         </p>
 
         {deterministicMissing.length > 0 && (
@@ -334,6 +325,7 @@ export function Step10ReviewSubmit() {
             isAssessing={isAssessing}
             onJumpToStep={(s) => setCurrentStep(s)}
             onReassess={handleAssessReadiness}
+            chrome={false}
           />
         ) : deterministicMissing.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing is blocking this — assess it for a quality read too.</p>

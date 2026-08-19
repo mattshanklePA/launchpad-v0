@@ -92,13 +92,18 @@ export function FormContainer({ onSwitchToGuided }: { onSwitchToGuided?: () => v
         </div>
       )}
       <div className="mx-auto flex max-w-[880px] flex-col gap-[22px] px-4 pb-6 pt-8">
+        {/* mode="wait" holds the outgoing step's exit animation on screen
+            before mounting the next one — never two steps' content on screen
+            at once — so the total swap is exit + enter, sequential. At the
+            previous 0.25s/0.25s this could read as a stall; 0.08s/0.08s keeps
+            the sequential total (160ms) under the 200ms budget. */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.08 }}
             className="flex flex-col gap-[22px]"
           >
             <StepHeader onSwitchToGuided={onSwitchToGuided} />

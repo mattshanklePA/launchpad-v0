@@ -45,8 +45,13 @@ export function ClusterHeader({
     ? `Decided · ${decision.decision === "consolidated" ? "consolidated" : "kept separate"} by ${decision.decidedBy} on ${formatKeystoneDate(decision.decidedAt)}`
     : `Rationalization pending · ${matchPct}% match`
 
+  // Same count word as the title (spellCount), not the numeral — a "Three ...
+  // one problem" title followed by an "All 3 were flagged ... or 3 efforts"
+  // explanation read as two disagreeing counts on the same card. The match
+  // percentage below is genuinely numeric data and stays a digit.
+  const countWord = spellCount(count).toLowerCase()
   const title = `${spellCount(count)} use cases, one problem`
-  const explanation = `All ${count} ${shortDescription(members, tenant)}. Decide whether they are one effort with a lead, or ${count} efforts that stay separate. Neither choice touches the submissions themselves.`
+  const explanation = `All ${countWord} ${shortDescription(members, tenant)}. Decide whether they are one effort with a lead, or ${countWord} efforts that stay separate. Neither choice touches the submissions themselves.`
 
   return (
     <div className="space-y-2.5 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm">
