@@ -10,7 +10,7 @@
 import type { TenantConfig } from "@/lib/tenant"
 import type { DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { Submission } from "@/lib/submissions"
-import { getStatus, STATUS_LABEL, type SubmissionStatus } from "@/lib/reviewWorkflow"
+import { getStatus, STATUS_LABEL, businessUnitLabel, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import { clusterHref } from "@/lib/rationalization"
 import { kpiDrilldownEntryHref } from "./kpi-card-data"
 import type { ActionItem } from "./action-center-data"
@@ -49,6 +49,17 @@ export function formatKeystoneDate(iso: string): string {
 export function splitLabelCode(label: string): { code: string | null; name: string } {
   const m = label.match(/^(.*\S)\s*\(([^()]+)\)\s*$/)
   return m ? { code: m[2], name: m[1] } : { code: null, name: label }
+}
+
+/** Truncates a use-case title to `max` characters with an ellipsis — reviewer detail's breadcrumb and header eyebrow (issue #206) use it in place of an ES-#### id, since submissions have no such id (see `docs/design/handoff/DIVERGENCES.md`). */
+export function truncateTitle(title: string, max = 40): string {
+  return title.length > max ? `${title.slice(0, max - 1).trimEnd()}…` : title
+}
+
+/** A business-unit code's short label ("AT&R") for a chrome-width slot — same parenthetical-abbreviation extraction as dashboard-shell.tsx's `sessionBusinessUnitShortLabel`, keyed off a raw unit code (e.g. a submission's business unit, or a bureau sign-off's `bureau`) instead of a session. */
+export function shortBusinessUnitLabel(unit: string): string {
+  const label = businessUnitLabel(unit)
+  return splitLabelCode(label).code ?? label
 }
 
 export type HeroCluster = {

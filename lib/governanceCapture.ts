@@ -23,6 +23,22 @@ import type { FormData } from "@/lib/steps"
 import type { Submission } from "@/lib/submissions"
 import { GOVERNANCE_FIELD_KEYS } from "@/lib/submissionReadiness"
 import { isFieldVisible } from "@/lib/formConfig"
+import {
+  YES_NO_OPTIONS,
+  STAGE_OF_DEVELOPMENT_OPTIONS,
+  HIGH_IMPACT_OPTIONS,
+  TOPIC_AREA_OPTIONS,
+  AI_CLASSIFICATION_OPTIONS,
+  HAS_ATO_OPTIONS,
+  SYSTEM_SOURCE_OPTIONS,
+  DEMOGRAPHIC_FEATURE_OPTIONS,
+  MIN_PRACTICE_STATUS_OPTIONS,
+  INDEPENDENT_REVIEW_OPTIONS,
+  FAILSAFE_OPTIONS,
+  APPEAL_OPTIONS,
+  PUBLIC_CONSULTATION_OPTIONS,
+  type FieldOption,
+} from "@/lib/governanceFieldOptions"
 
 export { GOVERNANCE_FIELD_KEYS }
 
@@ -48,6 +64,11 @@ export type GovernanceFieldReviewEntry = {
   // `proposedOverall` snapshot.
   proposedValue: GovernanceFieldValue
   finalValue: GovernanceFieldValue
+  // Scout's stated reason for the proposal, snapshotted alongside it — empty
+  // when Scout had no proposal for this field at all. Lets a reviewer-detail
+  // summary (issue #206) show "why Plumb proposed this" for a field without
+  // re-running the draft.
+  rationale: string
 }
 
 export type GovernanceCaptureReview = {
@@ -101,11 +122,67 @@ export function buildGovernanceCapturePatch(
     fieldPatch[field] = finalValue
     const proposedValue = draft[field]?.value
     const decision: GovernanceFieldDecision = valuesEqual(proposedValue, finalValue) ? "confirmed" : "overridden"
-    entries.push({ field, decision, proposedValue: proposedValue ?? finalValue, finalValue })
+    entries.push({
+      field,
+      decision,
+      proposedValue: proposedValue ?? finalValue,
+      finalValue,
+      rationale: draft[field]?.rationale ?? "",
+    })
   }
 
   return {
     ...fieldPatch,
     governanceCaptureReview: { entries, ...opts } satisfies GovernanceCaptureReview,
   }
+}
+
+/** "{k} drafted by Plumb, {j} confirmed by the reviewer" counts (reviewer-detail issue #206) — "drafted by Plumb" is a field the reviewer kept as proposed, "confirmed by the reviewer" is one they entered or overrode themselves. The single source of truth for this split; callers should read it from here rather than recounting `entries`. */
+export function governanceCaptureCounts(review: GovernanceCaptureReview | undefined): { draftedByPlumb: number; confirmedByReviewer: number } {
+  const entries = review?.entries ?? []
+  return {
+    draftedByPlumb: entries.filter((e) => e.decision === "confirmed").length,
+    confirmedByReviewer: entries.filter((e) => e.decision === "overridden").length,
+  }
+}
+
+// Field -> option list, for mapping a stored enum code (`pre_deployment`,
+// `high_impact`, `in_progress`, ...) to its display label. Mirrors
+// governance-capture-panel.tsx's per-field `kind`/`options` pairing
+// (CAPTURE_FIELD_SPECS) but keeps only what a pure label lookup needs, so it
+// can be shared by any reviewer-detail summary without importing the "use
+// client" panel component.
+const GOVERNANCE_FIELD_OPTIONS: Partial<Record<string, FieldOption[]>> = {
+  stageOfDevelopment: STAGE_OF_DEVELOPMENT_OPTIONS,
+  highImpact: HIGH_IMPACT_OPTIONS,
+  topicArea: TOPIC_AREA_OPTIONS,
+  aiClassification: AI_CLASSIFICATION_OPTIONS,
+  disseminatesToPublic: YES_NO_OPTIONS,
+  scalable: YES_NO_OPTIONS,
+  hasATO: HAS_ATO_OPTIONS,
+  systemSource: SYSTEM_SOURCE_OPTIONS,
+  hasPii: YES_NO_OPTIONS,
+  demographicFeatures: DEMOGRAPHIC_FEATURE_OPTIONS,
+  customCode: YES_NO_OPTIONS,
+  preDeploymentTesting: MIN_PRACTICE_STATUS_OPTIONS,
+  aiImpactAssessmentCompleted: MIN_PRACTICE_STATUS_OPTIONS,
+  independentReviewConducted: INDEPENDENT_REVIEW_OPTIONS,
+  ongoingMonitoringPlan: MIN_PRACTICE_STATUS_OPTIONS,
+  operatorTrainingEstablished: MIN_PRACTICE_STATUS_OPTIONS,
+  failSafeMechanism: FAILSAFE_OPTIONS,
+  humanOversightAppeal: APPEAL_OPTIONS,
+  publicConsultationSteps: PUBLIC_CONSULTATION_OPTIONS,
+}
+
+/**
+ * A governance field's stored value(s) as display label(s) — e.g.
+ * `"pre_deployment"` -> `"Pre-deployment (development or acquisition)"` — so
+ * "Plumb proposes: …" lines never leak the raw stored code. Falls back to the
+ * raw value for a field with no registered option list (free-text fields).
+ */
+export function governanceFieldValueLabel(field: string, value: GovernanceFieldValue): string {
+  const options = GOVERNANCE_FIELD_OPTIONS[field]
+  const labelFor = (v: string) => options?.find((o) => o.value === v)?.label ?? v
+  if (Array.isArray(value)) return value.length ? value.map(labelFor).join(", ") : "(none)"
+  return value ? labelFor(value) : "(blank)"
 }

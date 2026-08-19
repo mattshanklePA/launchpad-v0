@@ -5,7 +5,10 @@ import {
   getGovernanceCaptureReview,
   applicableGovernanceFields,
   buildGovernanceCapturePatch,
+  governanceCaptureCounts,
+  governanceFieldValueLabel,
   type GovernanceFieldDraft,
+  type GovernanceCaptureReview,
 } from "@/lib/governanceCapture"
 
 function sub(formData: Partial<FormData> = {}): Submission {
@@ -83,7 +86,13 @@ describe("buildGovernanceCapturePatch", () => {
     expect(patch.stageOfDevelopment).toBe("pre_deployment")
     const review = patch.governanceCaptureReview as any
     expect(review.entries).toEqual([
-      { field: "stageOfDevelopment", decision: "confirmed", proposedValue: "pre_deployment", finalValue: "pre_deployment" },
+      {
+        field: "stageOfDevelopment",
+        decision: "confirmed",
+        proposedValue: "pre_deployment",
+        finalValue: "pre_deployment",
+        rationale: "Still in vetting.",
+      },
     ])
     expect(review.byName).toBe("Dana")
   })
@@ -101,6 +110,7 @@ describe("buildGovernanceCapturePatch", () => {
       decision: "overridden",
       proposedValue: "not_high_impact",
       finalValue: "high_impact",
+      rationale: "No high-impact factors selected.",
     })
   })
 
@@ -126,6 +136,49 @@ describe("buildGovernanceCapturePatch", () => {
       decision: "overridden",
       proposedValue: "Case Management System",
       finalValue: "Case Management System",
+      rationale: "",
     })
+  })
+})
+
+describe("governanceCaptureCounts", () => {
+  it("counts confirmed entries as drafted-by-Plumb and overridden entries as confirmed-by-reviewer", () => {
+    const review: GovernanceCaptureReview = {
+      entries: [
+        { field: "a", decision: "confirmed", proposedValue: "x", finalValue: "x", rationale: "r" },
+        { field: "b", decision: "confirmed", proposedValue: "y", finalValue: "y", rationale: "r" },
+        { field: "c", decision: "overridden", proposedValue: "z", finalValue: "w", rationale: "" },
+      ],
+      byName: "Dana",
+      byEmail: "dana@census.gov",
+      at: "2026-02-01",
+    }
+    expect(governanceCaptureCounts(review)).toEqual({ draftedByPlumb: 2, confirmedByReviewer: 1 })
+  })
+
+  it("is all zero when there's no review yet", () => {
+    expect(governanceCaptureCounts(undefined)).toEqual({ draftedByPlumb: 0, confirmedByReviewer: 0 })
+  })
+})
+
+describe("governanceFieldValueLabel", () => {
+  it("maps a stored enum code to its display label", () => {
+    expect(governanceFieldValueLabel("stageOfDevelopment", "pre_deployment")).not.toContain("_")
+    expect(governanceFieldValueLabel("highImpact", "high_impact")).not.toContain("_")
+    expect(governanceFieldValueLabel("hasATO", "in_progress")).not.toContain("_")
+  })
+
+  it("joins array values by their labels", () => {
+    const label = governanceFieldValueLabel("demographicFeatures", ["none"])
+    expect(label).not.toContain("_")
+  })
+
+  it("falls back to the raw value for a field with no registered options (free text)", () => {
+    expect(governanceFieldValueLabel("atoSystemName", "Case Management System")).toBe("Case Management System")
+  })
+
+  it("renders placeholders for empty values instead of blank strings", () => {
+    expect(governanceFieldValueLabel("stageOfDevelopment", "")).toBe("(blank)")
+    expect(governanceFieldValueLabel("demographicFeatures", [])).toBe("(none)")
   })
 })
