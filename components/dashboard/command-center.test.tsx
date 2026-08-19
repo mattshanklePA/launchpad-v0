@@ -45,6 +45,7 @@ let scopedTotal = 0
 let enterpriseTotal = 15
 let scopedDrilldown: KpiDrilldown = emptyDrilldown
 let scopedSubmissionsFixture: Submission[] = []
+let dashboardActionsFixture: { kind: string; id: string }[] = []
 
 vi.mock("@/lib/dashboard/metrics", () => ({
   getDashboardMetrics: (scope: DashboardScope) => emptyMetrics(scope, scope.level === "department" ? enterpriseTotal : scopedTotal),
@@ -52,7 +53,7 @@ vi.mock("@/lib/dashboard/metrics", () => ({
 }))
 
 vi.mock("@/lib/dashboard/drilldown", () => ({ getKpiDrilldown: () => scopedDrilldown }))
-vi.mock("@/lib/dashboard/actions", () => ({ getDashboardActions: () => [] }))
+vi.mock("@/lib/dashboard/actions", () => ({ getDashboardActions: () => dashboardActionsFixture }))
 vi.mock("@/lib/rationalization", () => ({
   tenantHasBureauTier: () => true,
   clusterDuplicates: () => [],
@@ -86,6 +87,7 @@ beforeEach(() => {
   enterpriseTotal = 15
   scopedDrilldown = emptyDrilldown
   scopedSubmissionsFixture = []
+  dashboardActionsFixture = []
 })
 
 afterEach(() => {
@@ -240,5 +242,39 @@ describe("CommandCenter scoped view", () => {
     scopedActionItems = [{ id: "duplicates", title: "1 cross-bureau duplicate cluster pending rationalization", severity: "critical" }]
     const el = renderCommandCenter(bureauScope)
     expect(el.textContent).not.toContain("Do this first")
+  })
+})
+
+describe("CommandCenter Plumb line (RD-8, issue #218)", () => {
+  it("says something is blocked at a scoped view with a critical item, even with no hero card", () => {
+    scopedActionItems = [
+      { id: "duplicates", title: "1 cross-bureau duplicate cluster pending rationalization", severity: "critical" },
+      { id: "unassigned", title: "5 submissions with no reviewer assigned", severity: "warning" },
+    ]
+    dashboardActionsFixture = Array.from({ length: 5 }, (_, i) => ({ kind: "unassigned", id: `u${i}` }))
+    const el = renderCommandCenter(bureauScope)
+    expect(el.textContent).not.toContain("Nothing is blocked")
+    expect(el.textContent).toContain("The cluster is the only thing blocking approvals this week")
+  })
+
+  it("says nothing is blocked at a scoped view with no critical item", () => {
+    scopedActionItems = [{ id: "unassigned", title: "1 submission with no reviewer assigned", severity: "warning" }]
+    dashboardActionsFixture = [{ kind: "unassigned", id: "u1" }]
+    const el = renderCommandCenter(bureauScope)
+    expect(el.textContent).toContain("Nothing is blocked. 1 item wants a reviewer")
+  })
+
+  it("reads the reviewer count from the same 'unassigned' actions the 'no reviewer assigned' row counts, not every warning-severity item summed", () => {
+    // 5 unassigned, plus other unrelated warning-severity items (signoff,
+    // needs-info) that must not inflate the Plumb line's own count.
+    scopedActionItems = [
+      { id: "unassigned", title: "5 submissions with no reviewer assigned", severity: "warning" },
+      { id: "signoff", title: "2 approved use cases awaiting bureau sign-off", severity: "warning" },
+      { id: "needs-info", title: "1 submission waiting on submitter follow-up", severity: "warning" },
+    ]
+    dashboardActionsFixture = Array.from({ length: 5 }, (_, i) => ({ kind: "unassigned", id: `u${i}` }))
+    const el = renderCommandCenter(bureauScope)
+    expect(el.textContent).toContain("5 items want a reviewer")
+    expect(el.textContent).not.toContain("8 items want a reviewer")
   })
 })

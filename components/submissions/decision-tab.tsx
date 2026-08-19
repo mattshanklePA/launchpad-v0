@@ -27,12 +27,12 @@ const DISPOSITION_GERUND: Record<Assist["suggestedDisposition"], string> = {
   request_info: "requesting more info",
 }
 
-/** "Plumb recommended {x}; the reviewer's decision agrees / decided otherwise." — null while there's no assist read to compare against. Deterministic: driven only by whether `suggestedDisposition` matches the recorded `decision`. */
+/** "Plumb recommended {x}; the reviewer's decision agrees." / "...; the reviewer decided otherwise." — null while there's no assist read to compare against. Deterministic: driven only by whether `suggestedDisposition` matches the recorded `decision`. */
 export function plumbAgreementSentence(assist: Assist | null, decision: "approved" | "rejected"): string | null {
   if (!assist) return null
   const agrees = (decision === "approved" && assist.suggestedDisposition === "approve")
     || (decision === "rejected" && assist.suggestedDisposition === "reject")
-  return `Plumb recommended ${DISPOSITION_GERUND[assist.suggestedDisposition]}; the reviewer's decision ${agrees ? "agrees" : "decided otherwise"}.`
+  return `Plumb recommended ${DISPOSITION_GERUND[assist.suggestedDisposition]}; ${agrees ? "the reviewer's decision agrees" : "the reviewer decided otherwise"}.`
 }
 
 export function DecisionTab({

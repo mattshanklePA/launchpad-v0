@@ -20,6 +20,7 @@
 // own.
 
 import type { FormData } from "@/lib/steps"
+import type { Submission } from "@/lib/submissions"
 
 export type ConsolidationStatus = "Consolidated" | "Individual"
 
@@ -209,4 +210,19 @@ export function determineConsolidation(fd: ConsolidationInputs): ConsolidationRe
   }
 
   return { status: "Individual", reason: NO_MATCH_REASON }
+}
+
+/**
+ * How many distinct entries a set of submissions consolidates to in the
+ * tenant's inventory — every individually-reported submission counts once,
+ * plus one entry per distinct matched category among the consolidated ones.
+ * The single source of truth for "consolidates to N ... entries" (issue
+ * #218): BureauRollup's own summary line and the /rollup page's meta line
+ * both read this instead of recomputing it, so they can't disagree.
+ */
+export function consolidatedReportableEntryCount(submissions: Submission[]): number {
+  const results = submissions.map((s) => determineConsolidation(s.formData))
+  const consolidated = results.filter((r) => r.status === "Consolidated")
+  const categoryCount = new Set(consolidated.map((r) => r.category)).size
+  return submissions.length - consolidated.length + categoryCount
 }

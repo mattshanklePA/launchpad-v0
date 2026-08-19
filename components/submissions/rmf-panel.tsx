@@ -61,7 +61,7 @@ export function RmfPanel({
       {!overriding ? (
         <div className="flex flex-wrap items-center gap-2 border-t pt-2">
           <span className="text-sm text-muted-foreground">
-            {resolvedRmf.review ? "Reviewer decision:" : "Proposed — confirm or override:"}
+            {resolvedRmf.review ? "Reviewer decision:" : "Proposed, confirm or override:"}
           </span>
           <Button size="sm" disabled={busy} onClick={onConfirm}>
             <Check className="w-3.5 h-3.5 mr-1.5" />Confirm

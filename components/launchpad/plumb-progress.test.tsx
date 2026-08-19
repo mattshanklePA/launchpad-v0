@@ -49,4 +49,9 @@ describe("PlumbProgress", () => {
     const el = render(<PlumbProgress assistantName="Plumb" governanceDone={false} recommendationDone={false} />)
     expect(el.firstElementChild?.className).toContain(PLUMB_PROGRESS_MIN_HEIGHT_CLASS)
   })
+
+  it("never renders the fixed-height-slot implementer note as reviewer-facing copy (RD-8, issue #218)", () => {
+    const el = render(<PlumbProgress assistantName="Plumb" governanceDone={false} recommendationDone={false} />)
+    expect(el.textContent).not.toContain("nothing shifts")
+  })
 })

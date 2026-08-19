@@ -4,8 +4,11 @@ import type { Submission } from "@/lib/submissions"
 import {
   getGovernanceCaptureReview,
   applicableGovernanceFields,
+  applicableGovernanceFieldsForDisplay,
   buildGovernanceCapturePatch,
   governanceCaptureCounts,
+  governanceFieldCounts,
+  governanceFieldCountsSentence,
   governanceFieldValueLabel,
   type GovernanceFieldDraft,
   type GovernanceCaptureReview,
@@ -158,6 +161,70 @@ describe("governanceCaptureCounts", () => {
 
   it("is all zero when there's no review yet", () => {
     expect(governanceCaptureCounts(undefined)).toEqual({ draftedByPlumb: 0, confirmedByReviewer: 0 })
+  })
+})
+
+describe("applicableGovernanceFieldsForDisplay", () => {
+  it("matches applicableGovernanceFields when there is no draft yet", () => {
+    expect(applicableGovernanceFieldsForDisplay(initialFormData, null)).toEqual(applicableGovernanceFields(initialFormData))
+  })
+
+  it("unlocks stage-gated fields via a draft proposal fd doesn't have a real value for yet", () => {
+    const draft: GovernanceFieldDraft = {
+      stageOfDevelopment: { value: "deployed", rationale: "Proposed from the idea's description." },
+    }
+    const fields = applicableGovernanceFieldsForDisplay(initialFormData, draft)
+    expect(fields).toContain("hasATO")
+    expect(fields).toContain("hasPii")
+  })
+
+  it("prefers fd's own value over the draft's when both exist", () => {
+    const draft: GovernanceFieldDraft = {
+      stageOfDevelopment: { value: "deployed", rationale: "..." },
+    }
+    const fields = applicableGovernanceFieldsForDisplay({ ...initialFormData, stageOfDevelopment: "pre_deployment" }, draft)
+    expect(fields).not.toContain("hasATO") // fd says pre_deployment, not deployed — fd wins over the draft
+  })
+})
+
+describe("governanceFieldCounts", () => {
+  const applicable = ["stageOfDevelopment", "highImpact", "topicArea", "atoSystemName"] as (keyof FormData)[]
+  const draft: GovernanceFieldDraft = {
+    stageOfDevelopment: { value: "pre_deployment", rationale: "r" },
+    highImpact: { value: "not_high_impact", rationale: "r" },
+    topicArea: { value: "benefits", rationale: "r" },
+  }
+
+  it("counts every applicable field with a live proposal as drafted by Plumb, whether or not a reviewer has acted on it", () => {
+    const counts = governanceFieldCounts(applicable, draft, undefined)
+    expect(counts).toEqual({ applicableCount: 4, draftedByPlumb: 3, confirmedByReviewer: 0 })
+  })
+
+  it("counts confirmed-by-reviewer from saved review entries, independent of whether Plumb proposed the field", () => {
+    const review: GovernanceCaptureReview = {
+      entries: [
+        { field: "stageOfDevelopment", decision: "confirmed", proposedValue: "pre_deployment", finalValue: "pre_deployment", rationale: "r" },
+        { field: "atoSystemName", decision: "overridden", proposedValue: "", finalValue: "Case Management System", rationale: "" },
+      ],
+      byName: "Dana",
+      byEmail: "dana@census.gov",
+      at: "2026-02-01",
+    }
+    const counts = governanceFieldCounts(applicable, draft, review)
+    expect(counts).toEqual({ applicableCount: 4, draftedByPlumb: 3, confirmedByReviewer: 2 })
+  })
+
+  it("is never stuck at zero drafted when proposals exist, even with no saved review", () => {
+    const counts = governanceFieldCounts(applicable, draft, undefined)
+    expect(counts.draftedByPlumb).toBeGreaterThan(0)
+  })
+})
+
+describe("governanceFieldCountsSentence", () => {
+  it("renders the N fields / k drafted / j confirmed sentence from counts", () => {
+    expect(governanceFieldCountsSentence({ applicableCount: 6, draftedByPlumb: 3, confirmedByReviewer: 1 }, "Plumb")).toBe(
+      "All 6 fields · 3 drafted by Plumb, 1 confirmed by the reviewer.",
+    )
   })
 })
 

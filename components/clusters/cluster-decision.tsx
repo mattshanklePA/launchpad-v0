@@ -13,6 +13,7 @@ import type { Submission } from "@/lib/submissions"
 import { getSession } from "@/lib/auth"
 import type { RationalizationCluster, RationalizationDecision, Rationalization } from "@/lib/rationalization"
 import { applyRationalizationDecision, undoRationalizationDecision } from "@/lib/rationalizationActions"
+import { spellCount } from "@/components/dashboard/command-center-data"
 
 export function ClusterDecision({
   cluster,
@@ -81,7 +82,7 @@ export function ClusterDecision({
   return (
     <div className="flex flex-col items-start gap-4 rounded-md border border-border-subtle bg-card p-5 shadow-sm sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
-        <p className="text-[14.5px] font-bold text-foreground">Your call. Either choice clears the block on all {count}.</p>
+        <p className="text-[14.5px] font-bold text-foreground">Your call. Either choice clears the block on all {spellCount(count).toLowerCase()}.</p>
         <p className="mt-0.5 text-[13px] text-muted-foreground">
           Keeping them separate records the overlap and leaves each program office its own approval. Consolidating makes{" "}
           {leadTitle} the lead and links the other{otherCount === 1 ? "" : "s"} beneath it.

@@ -32,7 +32,7 @@ export function resolveDrillScope(base: DashboardScope, selection: EntitySelecti
     : { level: "bureau", businessUnit: selection.businessUnit }
 }
 
-/** Human-readable label for the currently-viewed scope (department name, bureau, or bureau — office). */
+/** Human-readable label for the currently-viewed scope (department name, bureau, or bureau, office). */
 export function scopeLabel(scope: DashboardScope, tenant: TenantConfig): string {
   switch (scope.level) {
     case "department":
@@ -45,7 +45,7 @@ export function scopeLabel(scope: DashboardScope, tenant: TenantConfig): string 
     case "office": {
       const bureau = tenant.unit.options.find((o) => o.value === scope.businessUnit)
       const office = bureau?.offices?.find((o) => o.value === scope.office)
-      return `${bureau?.label || scope.businessUnit} — ${office?.label || scope.office}`
+      return `${bureau?.label || scope.businessUnit}, ${office?.label || scope.office}`
     }
   }
 }
@@ -81,7 +81,7 @@ export function buildKpiCards(
       value: pipelineStatus.total,
       status: "neutral",
       glossary: "inPipeline",
-      subtitle: "Total use cases in review",
+      subtitle: "Every use case in this view",
     },
     {
       id: "readiness",
