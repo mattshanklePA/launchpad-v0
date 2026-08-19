@@ -192,6 +192,10 @@ describe("/clusters/[id]", () => {
     const buttons = Array.from(el.querySelectorAll("button")).map((b) => b.textContent)
     expect(buttons).toContain("Keep separate and link")
     expect(buttons).toContain("Consolidate into lead")
+
+    // Decision footer (RD-8, issue #218 item 10): spells the count out too.
+    expect(el.textContent).toContain("Either choice clears the block on all three.")
+    expect(el.textContent).not.toContain("on all 3.")
   })
 
   it("clicking 'Keep separate and link' writes the same patch RationalizationPanel writes, to every member", async () => {

@@ -430,7 +430,7 @@ export function getFormSteps(submitterOffice?: string | null): FormStep[] {
       step: 5,
       name: "Idea Overview",
       title: "Name & Summarize Your Idea",
-      prompt: `${assistantName} drafted a title and summary from everything you entered — review and refine.`,
+      prompt: `${assistantName} drafted a title and summary from everything you entered: review and refine.`,
     },
     {
       step: 6,

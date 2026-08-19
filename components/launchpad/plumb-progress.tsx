@@ -124,7 +124,6 @@ export function PlumbProgress({
           <div className="h-[11px] w-[94%] animate-pulse rounded bg-muted" />
           <div className="h-[11px] w-[76%] animate-pulse rounded bg-muted" />
           <div className="h-[11px] w-[86%] animate-pulse rounded bg-muted" />
-          <p className="mt-0.5 text-[12.5px] text-foreground-faint">Its read lands here at this exact size — nothing shifts.</p>
         </div>
       </div>
     </div>

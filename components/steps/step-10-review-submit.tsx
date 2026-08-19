@@ -95,7 +95,9 @@ function recapStatus(
 ): { label: string; status: KeystoneStatus } {
   const anyContent = fields.some(({ key }) => hasFieldContent(formData[key]))
   if (NO_REQUIRED_FIELDS_STEPS.has(step)) {
-    return anyContent ? { label: "Noted", status: "healthy" } : { label: "Not started", status: "neutral" }
+    // Nothing here is required, so a blank optional step is not a gap — it
+    // reads "Optional" (issue #218), not "Not started" under a warning icon.
+    return anyContent ? { label: "Noted", status: "healthy" } : { label: "Optional", status: "neutral" }
   }
   if (missingCountForStep === 0) return { label: "Complete", status: "healthy" }
   if (!anyContent) return { label: "Not started", status: "attention" }
@@ -257,6 +259,19 @@ export function Step10ReviewSubmit() {
 
   const showSubmitNowHint = readiness.canSubmit && formData.readinessScore === "needs_work"
 
+  // "Close the items below, then submit." names the deterministic gate's own
+  // bullet list — showing it once that list is empty falsely implies
+  // something is still blocking submission (issue #218). Plumb's quality
+  // read can still say "needs_work" (it grades quality, not completeness),
+  // so once nothing required is missing the heading and its suggestion count
+  // read as advisory instead of blocking.
+  const gateClear = deterministicMissing.length === 0
+  const suggestionCount = (formData.readinessFindings || []).length
+  const verdictHeading =
+    formData.readinessScore === "needs_work" && gateClear
+      ? "Nothing is blocking submission."
+      : readinessVerdictSentence(formData.readinessScore)
+
   return (
     <>
       <StepCard className={`border-l-[3px] ${STATUS_BORDER_L_CLASS[verdictStatus || "attention"]}`}>
@@ -288,7 +303,15 @@ export function Step10ReviewSubmit() {
         </div>
 
         {formData.readinessScore && (
-          <p className="ks-section-head text-foreground">{readinessVerdictSentence(formData.readinessScore)}</p>
+          <>
+            <p className="ks-section-head text-foreground">{verdictHeading}</p>
+            {formData.readinessScore === "needs_work" && gateClear && (
+              <p className="text-[13px] text-muted-foreground">
+                {tenant.assistantName} has {suggestionCount} suggestion{suggestionCount === 1 ? "" : "s"}. You can act
+                on {suggestionCount === 1 ? "it" : "them"} or submit as-is.
+              </p>
+            )}
+          </>
         )}
 
         <p className="text-[13px] text-muted-foreground">
@@ -347,6 +370,8 @@ export function Step10ReviewSubmit() {
                   <div className="flex items-center gap-3.5 px-[18px] py-3.5">
                     {status === "healthy" ? (
                       <Check className="h-3.5 w-3.5 flex-shrink-0 text-healthy" strokeWidth={2.4} />
+                    ) : status === "neutral" ? (
+                      <span className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
                     ) : (
                       <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-attention" strokeWidth={1.9} />
                     )}

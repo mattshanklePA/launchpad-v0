@@ -12,6 +12,7 @@
 import { Button } from "@/components/ui/button"
 import { ProcessHeaderCard } from "@/components/submissions/review-process"
 import { PlumbProgress } from "@/components/launchpad/plumb-progress"
+import { uniqueSlugTail } from "@/components/dashboard/command-center-data"
 
 export function ReviewProcessLoading({
   submissionId,
@@ -33,7 +34,7 @@ export function ReviewProcessLoading({
   return (
     <div className="flex flex-col gap-[18px]">
       <ProcessHeaderCard
-        eyebrow={`Review · ${submissionId.slice(0, 8)} · just submitted`}
+        eyebrow={`Review · ${uniqueSlugTail(submissionId)} · just submitted`}
         title={`${assistantName} reads it before you do`}
         lead={`Up to 35 seconds. It checks for duplicates, drafts the governance fields, and writes an advisory recommendation.`}
         stepIndex={null}

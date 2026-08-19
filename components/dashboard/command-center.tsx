@@ -134,8 +134,17 @@ export function CommandCenter({
       })
     : []
 
-  const warningCount = actionItems.filter((i) => i.severity === "warning").length
-  const plumb = plumbLine(!!hero, warningCount)
+  // Plumb's line must derive from this same scope's own action rows, not
+  // from `hero` (an enterprise-only rendering decision, RD-1) or from every
+  // warning-severity item lumped together — issue #218's office-level bug
+  // was a scoped view with a real blocked cluster still reading "Nothing is
+  // blocked" (because `hero` is forced null when scoped) and a "wants a
+  // reviewer" count that didn't match the "no reviewer assigned" row (because
+  // it summed every warning item — signoff nudges, needs-info — instead of
+  // just unassigned ones).
+  const hasCriticalItem = actionItems.some((i) => i.severity === "critical")
+  const wantsReviewerCount = dashboardActions.filter((a) => a.kind === "unassigned").length
+  const plumb = plumbLine(hasCriticalItem, wantsReviewerCount)
 
   return (
     <div className="flex flex-col gap-[22px] lg:flex-row lg:items-start">

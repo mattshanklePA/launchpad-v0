@@ -117,7 +117,7 @@ describe("Step10ReviewSubmit — vetting readiness + submit gate (RD-2)", () => 
   // verdict pill, the verdict sentence, and the Re-assess control — each
   // should appear exactly once now that ReadinessResult renders with
   // chrome={false} here.
-  it("renders the verdict pill, verdict sentence, and a Re-assess control exactly once after an assessment", () => {
+  it("renders the verdict pill and a Re-assess control exactly once after an assessment", () => {
     const { el } = mount({
       readinessScore: "needs_work",
       readinessSummary: "The problem is grounded but benefit isn't quantified.",
@@ -128,12 +128,52 @@ describe("Step10ReviewSubmit — vetting readiness + submit gate (RD-2)", () => 
     const needsWorkNodes = Array.from(el.querySelectorAll("span")).filter((n) => n.textContent === "Needs work")
     expect(needsWorkNodes.length).toBe(1)
 
-    const verdictSentenceMatches = (el.textContent!.match(/Close the items below, then submit\./g) || []).length
-    expect(verdictSentenceMatches).toBe(1)
-
     const reassessButtons = Array.from(el.querySelectorAll("button")).filter((b) => /re-assess/i.test(b.textContent || ""))
     expect(reassessButtons.length).toBe(1)
     expect(reassessButtons[0].textContent).toContain("Re-assess")
+  })
+
+  // RD-8 (issue #218): Plumb's "needs_work" verdict is a QUALITY read, not a
+  // completeness one — the COMPLETE fixture has nothing deterministically
+  // missing, so showing "Close the items below, then submit." claimed a
+  // blocker that doesn't exist. The heading (and its suggestion-count
+  // subline) must say so only when the deterministic gate is actually clear;
+  // it still reads "Close the items below, then submit." when something
+  // required really is missing.
+  it("says nothing is blocking submission when Plumb reads needs_work but the deterministic gate is clear", () => {
+    const { el } = mount({
+      readinessScore: "needs_work",
+      readinessSummary: "The problem is grounded but benefit isn't quantified.",
+      executiveSummary: "An anomaly model would flag incomplete files.",
+      readinessFindings: [{ step: 3, message: "Quantify the expected benefit." }],
+    })
+
+    expect(el.textContent).toContain("Nothing is blocking submission.")
+    expect(el.textContent).not.toContain("Close the items below, then submit.")
+    expect(el.textContent).toContain("Scout has 1 suggestion. You can act on it or submit as-is.")
+  })
+
+  it("keeps 'Close the items below, then submit.' when Plumb reads needs_work and something required is actually missing", () => {
+    const { el } = mount({
+      readinessScore: "needs_work",
+      useCaseDescription: "",
+      readinessSummary: "The problem is grounded but benefit isn't quantified.",
+      executiveSummary: "An anomaly model would flag incomplete files.",
+      readinessFindings: [],
+    })
+
+    expect(el.textContent).toContain("Close the items below, then submit.")
+    expect(el.textContent).not.toContain("Nothing is blocking submission.")
+  })
+
+  it("renders the optional Technical Constraints step as 'Optional', muted, with no warning icon, when untouched", () => {
+    const { el } = mount({ readinessScore: "ready" })
+
+    const row = Array.from(el.querySelectorAll("span")).find((n) => n.textContent === "Step 4 · Technical Constraints")!
+    const rowContainer = row.parentElement!
+    expect(rowContainer.textContent).toContain("Optional")
+    expect(rowContainer.textContent).not.toContain("Not started")
+    expect(rowContainer.querySelector("svg.lucide-alert-circle")).toBeNull()
   })
 
   it("keeps the recap rows collapsed by default and expands one on click", () => {
