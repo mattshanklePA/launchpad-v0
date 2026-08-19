@@ -41,8 +41,9 @@ function furthestAlongMemberId(members: Submission[]): string | null {
   }).id
 }
 
-/** A member gets at most one derived tag — "Furthest along" wins a tie over "Oldest". */
-function derivedTag(id: string, oldestId: string | null, furthestId: string | null): string | null {
+/** A member gets at most one derived tag — "This one" (RD-6, issue #207: the submission the reviewer is currently on) outranks "Furthest along", which outranks "Oldest". */
+function derivedTag(id: string, oldestId: string | null, furthestId: string | null, currentSubmissionId?: string): string | null {
+  if (id === currentSubmissionId) return "This one"
   if (id === furthestId) return "Furthest along"
   if (id === oldestId) return "Oldest"
   return null
@@ -116,11 +117,14 @@ export function ClusterMembers({
   currentLeadId,
   decided,
   onSelectLead,
+  currentSubmissionId,
 }: {
   members: Submission[]
   currentLeadId: string
   decided: boolean
   onSelectLead: (id: string) => void
+  /** The submission the reviewer is currently viewing (RD-6, issue #207 step 1) — tagged "This one" instead of "Oldest"/"Furthest along". Omit outside the reviewer-detail process; the dedicated cluster page doesn't set it. */
+  currentSubmissionId?: string
 }) {
   const oldestId = oldestMemberId(members)
   const furthestId = furthestAlongMemberId(members)
@@ -138,7 +142,7 @@ export function ClusterMembers({
           member={member}
           isLead={member.id === currentLeadId}
           decided={decided}
-          tag={derivedTag(member.id, oldestId, furthestId)}
+          tag={derivedTag(member.id, oldestId, furthestId, currentSubmissionId)}
           onSelectLead={onSelectLead}
         />
       ))}

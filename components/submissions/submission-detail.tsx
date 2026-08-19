@@ -20,8 +20,6 @@ import {
   businessUnitLabel,
   visibleSubmissions,
   getLifecycleStage,
-  STATUS_LABEL,
-  statusBadgeClasses,
 } from "@/lib/reviewWorkflow"
 import { findSimilar } from "@/lib/similarity"
 import { determineReportability, type ReportabilityStatus } from "@/lib/ombReportability"
@@ -43,7 +41,7 @@ import {
   departmentFinalApprovalEnabled,
   type SignoffDecision,
 } from "@/lib/bureauSignoff"
-import { assistReviewer } from "@/app/actions"
+import { assistReviewer, draftGovernanceFields } from "@/app/actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import {
@@ -67,13 +65,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { RationalizationPanel } from "@/components/admin/rationalization-panel"
-import { DecisionHeader } from "@/components/submissions/decision-header"
 import { ChecklistItem } from "@/components/submissions/checklist-item"
-import { DispositionControls } from "@/components/submissions/disposition-controls"
 import { DecisionTab } from "@/components/submissions/decision-tab"
 import { ComplianceGrid, type ComplianceGridItem } from "@/components/submissions/compliance-grid"
 import { ReviewerHeader } from "@/components/submissions/reviewer-header"
 import { ReviewerRail } from "@/components/submissions/reviewer-rail"
+import { ReviewProcess } from "@/components/submissions/review-process"
+import { ReviewProcessRail } from "@/components/submissions/review-process-rail"
+import { ReviewProcessLoading } from "@/components/submissions/review-process-loading"
+import { buildReviewSteps, defaultReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
@@ -89,12 +89,6 @@ const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
   high_impact: "High-impact",
   presumed_not_high_impact: "Presumed, but not high-impact",
   not_high_impact: "Not high-impact",
-}
-
-const HIGH_IMPACT_BADGE_CLASS: Record<string, string> = {
-  high_impact: STATUS_BADGE_CLASS.alert,
-  presumed_not_high_impact: STATUS_BADGE_CLASS.attention,
-  not_high_impact: STATUS_BADGE_CLASS.neutral,
 }
 
 // Underline-tab styling (mock 07 Reviewer Detail - Decided.dc.html, DIVERGENCES.md
@@ -172,8 +166,16 @@ export function SubmissionDetail({ id }: { id: string }) {
   const [governanceExpanded, setGovernanceExpanded] = useState(false)
   const [highlightedItem, setHighlightedItem] = useState<"dispose" | "rationalization" | null>(null)
   const [tab, setTab] = useState("decision")
+  // RD-6 (issue #207): the guided review process's current step + escape
+  // hatch out of the pre-resolution loading page. `currentStepKey` stays
+  // null until the reviewer navigates — the render path falls back to
+  // `defaultReviewStep` (the first unsettled step) rather than syncing it
+  // via an effect, so there's nothing to keep in sync.
+  const [currentStepKey, setCurrentStepKey] = useState<ReviewStepKey | null>(null)
+  const [forceShowSteps, setForceShowSteps] = useState(false)
+  const [governanceDraftReady, setGovernanceDraftReady] = useState(false)
   const ranRef = useRef(false)
-  const disposeRef = useRef<HTMLLIElement>(null)
+  const govDraftRanRef = useRef(false)
   const rationalizationRef = useRef<HTMLLIElement>(null)
 
   const session = typeof window !== "undefined" ? getSession() : null
@@ -208,6 +210,17 @@ export function SubmissionDetail({ id }: { id: string }) {
     assistReviewer(sub.formData)
       .then(setAssist)
       .finally(() => setAssisting(false))
+  }, [sub, isReviewer])
+
+  // RD-6 (issue #207): drives PlumbProgress's "drafting governance fields"
+  // stage on the pre-resolution loading page independently of
+  // GovernanceCapturePanel's own draft call (step 4 hasn't mounted yet while
+  // loading) — read-only, the draft itself is discarded here and re-fetched
+  // by the panel once the reviewer actually reaches step 4.
+  useEffect(() => {
+    if (!sub || govDraftRanRef.current || !isReviewer) return
+    govDraftRanRef.current = true
+    draftGovernanceFields(sub.formData).finally(() => setGovernanceDraftReady(true))
   }, [sub, isReviewer])
 
   // When a reviewer opens a still-"submitted" idea, move it into review.
@@ -301,19 +314,6 @@ export function SubmissionDetail({ id }: { id: string }) {
     ? allSubmissions.find((s) => s.id === rationalizationDecision.leadSubmissionId)
     : undefined
 
-  // Zone 1 (Decision header): "what's blocking approval" is either the hard
-  // rationalization gate (the only thing that actually disables Approve
-  // below), or — when nothing hard-blocks it — the assistant not recommending
-  // approval, which routes the reviewer to the checklist instead of a
-  // one-click approve. Advisory only: neither branch changes any
-  // determination, it only decides which existing action is primary.
-  const aiWantsReview = !!assist && assist.suggestedDisposition !== "approve"
-  const blockingText = blockReason
-    ? blockReason
-    : aiWantsReview
-      ? `${tenant.assistantName} flagged gaps to probe before approving — see the decision checklist below.`
-      : null
-
   // Governance-field capture (issue #161) — the OMB 34-field inventory,
   // M-25-21 minimum-practice block, and RMF inputs that issue #160 moved out
   // of idea intake into a vetting-stage checklist item here.
@@ -335,22 +335,42 @@ export function SubmissionDetail({ id }: { id: string }) {
   const { draftedByPlumb, confirmedByReviewer } = governanceCaptureCounts(governanceReview)
   const governanceExamples = (governanceReview?.entries || []).filter((e) => e.rationale).slice(0, 2)
 
-  let checklistIndex = 0
-  const disposeIndex = ++checklistIndex
-  const highImpactIndex = ++checklistIndex
-  const governanceIndex = ++checklistIndex
-  const rmfIndex = resolvedRmf ? ++checklistIndex : null
-  const rationalizationIndex = cluster ? ++checklistIndex : null
+  // Only the rationalization item still needs a running index — it's the
+  // sole survivor of the old checklist's dynamic numbering now that RD-6
+  // (issue #207) replaced the rest with the guided process below; the
+  // governance tab's other items (still shown for decided records) use
+  // literal numbers (1 · high-impact, 2 · complete the use case, 3 · RMF).
+  // Same numbers the old running counter produced: dispose(1) + highImpact(2)
+  // + governance(3) + rmf(4, if present) precede this one.
+  const rationalizationIndex = cluster ? (resolvedRmf ? 5 : 4) : null
 
-  const focusChecklistItem = (key: "dispose" | "rationalization") => {
-    const target = key === "dispose" ? disposeRef.current : rationalizationRef.current
-    target?.scrollIntoView({ behavior: "smooth", block: "center" })
-    target?.focus()
-    setHighlightedItem(key)
-    window.setTimeout(() => {
-      setHighlightedItem((cur) => (cur === key ? null : cur))
-    }, 2000)
+  // RD-6 (issue #207): "review is a process" — the guided in-review process
+  // that replaces this branch's body for a reviewer viewing an undecided
+  // record (below). Step applicability/settledness reuses exactly the same
+  // values the checklist above reads — no new determinations, no change to
+  // canApprove/blockReason/the RMF review logic.
+  const reviewSteps = buildReviewSteps({
+    hasCluster: !!cluster,
+    clusterSettled: !blockReason,
+    highImpactSettled: !!fd.highImpact,
+    rmfEnabled,
+    rmfSettled: !!resolvedRmf?.review,
+    governanceSettled: governanceComplete,
+    dispositionSettled: status === "needs_info",
+  })
+  const currentReviewStepKey = currentStepKey ?? defaultReviewStep(reviewSteps)
+  const navigateToStep = (key: ReviewStepKey) => {
+    setForceShowSteps(true)
+    setCurrentStepKey(key)
   }
+  // Gated on `assisting` alone (mock 09's "the process page mounts before
+  // the read resolves") — everything the steps themselves need (cluster,
+  // determinations, governance fields) is derived from the record, not from
+  // Plumb's advisory read, so there's nothing else to block on. The escape
+  // hatch (`forceShowSteps`, wired to "Read the submission" in
+  // ReviewProcessLoading and to the rail's step rows) lets a reviewer start
+  // working the steps immediately, per "you don't have to wait."
+  const awaitingPlumb = isReviewer && !decided && assisting && !forceShowSteps
 
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
@@ -520,6 +540,63 @@ export function SubmissionDetail({ id }: { id: string }) {
       <div className={cn(PRIMARY_COLUMN_CLASS, "min-w-0 flex-1 space-y-[18px]")}>
         <Link href="/home" className="text-sm text-uspto-blue-primary hover:underline"><ArrowLeft className="w-4 h-4 inline mr-1" />Back</Link>
 
+        {isReviewer && !decided ? (
+          awaitingPlumb ? (
+            <ReviewProcessLoading
+              submissionId={sub.id}
+              totalSteps={reviewSteps.length}
+              reviewerName={session?.name || "Reviewer"}
+              assistantName={tenant.assistantName}
+              governanceDone={governanceDraftReady}
+              recommendationDone={!assisting}
+              onSkipToSteps={() => setForceShowSteps(true)}
+            />
+          ) : (
+            <ReviewProcess
+              submission={sub}
+              tenant={tenant}
+              status={status}
+              reviewerName={session?.name || "Reviewer"}
+              busy={busy}
+              setBusy={setBusy}
+              assistantName={tenant.assistantName}
+              steps={reviewSteps}
+              currentStepKey={currentReviewStepKey}
+              onNavigateStep={navigateToStep}
+              cluster={cluster}
+              clusterAllMembers={clusterSubmissionsForPanel}
+              rationalizationDecision={rationalizationDecision}
+              onClusterDecided={reload}
+              fd={fd}
+              highImpactRec={highImpactRec}
+              onSetHighImpact={setHighImpact}
+              resolvedRmf={resolvedRmf}
+              rmfOverriding={rmfOverriding}
+              setRmfOverriding={setRmfOverriding}
+              rmfOverrideNote={rmfOverrideNote}
+              setRmfOverrideNote={setRmfOverrideNote}
+              onConfirmRmf={confirmRmfProfile}
+              onOverrideRmf={overrideRmfProfile}
+              governanceApplicableCount={governanceApplicable.length}
+              draftedByPlumb={draftedByPlumb}
+              confirmedByReviewer={confirmedByReviewer}
+              byName={session?.name || session?.email || "Reviewer"}
+              byEmail={session?.email || ""}
+              onGovernanceSaved={reload}
+              blockReason={blockReason}
+              onApprove={() => setStatus("approved")}
+              onRequestInfo={() => document.getElementById("comment-box")?.focus()}
+              onReject={() => setStatus("rejected")}
+              comment={comment}
+              onCommentChange={setComment}
+              onSend={() => postComment("needs_info")}
+              sendDisabled={busy || !comment.trim()}
+              onDraftWithPlumb={() => assist?.draftRequestInfo && setComment(assist.draftRequestInfo)}
+              draftDisabled={busy || assisting}
+            />
+          )
+        ) : (
+          <>
         <ReviewerHeader
           slugTail={sub.id.slice(0, 8)}
           lifecycleStage={getLifecycleStage(sub)}
@@ -610,235 +687,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               // this body with the guided in-review process; until then
               // nothing here is lost or duplicative-by-omission).
               <>
-                {isReviewer && (
-                  <DecisionHeader
-                    assistantName={tenant.assistantName}
-                    assisting={assisting}
-                    assist={assist}
-                    blockingText={blockingText}
-                    busy={busy}
-                    onApprove={() => setStatus("approved")}
-                    onResolveBlocker={() => focusChecklistItem(blockReason ? "rationalization" : "dispose")}
-                  />
-                )}
-
-                {isReviewer && (
-                  <section aria-labelledby="checklist-heading" className="space-y-3">
-                    <h2 id="checklist-heading" className="text-sm font-semibold text-foreground">
-                      Decision checklist
-                    </h2>
-                    <ol className="space-y-3">
-                      <ChecklistItem
-                        ref={disposeRef}
-                        index={disposeIndex}
-                        title="Disposition"
-                        statusLabel={STATUS_LABEL[status]}
-                        statusClassName={statusBadgeClasses(status)}
-                        highlighted={highlightedItem === "dispose"}
-                      >
-                        <DispositionControls
-                          status={status}
-                          busy={busy}
-                          blockReason={blockReason}
-                          onApprove={() => setStatus("approved")}
-                          onRequestInfo={() => document.getElementById("comment-box")?.focus()}
-                          onReject={() => setStatus("rejected")}
-                        />
-                        {blockReason && (
-                          <p className="flex items-center gap-1.5 text-xs text-attention-foreground">
-                            <AlertTriangle className="w-3.5 h-3.5 flex-none" />
-                            {blockReason}
-                          </p>
-                        )}
-                      </ChecklistItem>
-
-                      <ChecklistItem
-                        index={highImpactIndex}
-                        title={<GlossaryTerm term="highImpactDetermination">High-impact determination</GlossaryTerm>}
-                        statusLabel={fd.highImpact ? HIGH_IMPACT_BADGE_LABELS[fd.highImpact] || "Not yet set" : "Not yet set"}
-                        statusClassName={fd.highImpact ? HIGH_IMPACT_BADGE_CLASS[fd.highImpact] : STATUS_BADGE_CLASS.attention}
-                      >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Recommended:</span>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "font-mono text-[10px] uppercase tracking-[0.06em]",
-                              highImpactRec.recommendation === "yes" ? STATUS_BADGE_CLASS.alert : STATUS_BADGE_CLASS.neutral,
-                            )}
-                          >
-                            {highImpactRec.recommendation === "yes" ? "High-impact" : "Not high-impact"}
-                          </Badge>
-                        </div>
-                        <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-                          {highImpactRec.reasons.map((r, i) => (
-                            <li key={i}>{r}</li>
-                          ))}
-                        </ul>
-                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-                          <span className="text-sm text-muted-foreground">Reviewer determination:</span>
-                          <Button
-                            size="sm"
-                            variant={fd.highImpact === "high_impact" ? "default" : "outline"}
-                            disabled={busy}
-                            onClick={() => setHighImpact("high_impact")}
-                          >
-                            High-impact
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={fd.highImpact === "presumed_not_high_impact" ? "default" : "outline"}
-                            disabled={busy}
-                            onClick={() => setHighImpact("presumed_not_high_impact")}
-                          >
-                            Presumed, but not high-impact
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={fd.highImpact === "not_high_impact" ? "default" : "outline"}
-                            disabled={busy}
-                            onClick={() => setHighImpact("not_high_impact")}
-                          >
-                            Not high-impact
-                          </Button>
-                        </div>
-                      </ChecklistItem>
-
-                      <ChecklistItem
-                        index={governanceIndex}
-                        title="Complete the use case"
-                        statusLabel={governanceStatusLabel}
-                        statusClassName={governanceStatusClass}
-                      >
-                        <GovernanceCapturePanel
-                          submission={sub}
-                          assistantName={tenant.assistantName}
-                          byName={session?.name || session?.email || "Reviewer"}
-                          byEmail={session?.email || ""}
-                          busy={busy}
-                          setBusy={setBusy}
-                          onSaved={reload}
-                        />
-                      </ChecklistItem>
-
-                      {resolvedRmf && rmfIndex && (
-                        <ChecklistItem
-                          index={rmfIndex}
-                          title={<GlossaryTerm term="nistAiRmf">NIST AI RMF</GlossaryTerm>}
-                          statusLabel={rmfStatusLabel}
-                          statusClassName={rmfStatusClass}
-                        >
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", rmfBadgeClass(resolvedRmf.effectiveOverall))} title={resolvedRmf.profile.rationale}>
-                              {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
-                            </Badge>
-                            {resolvedRmf.isProposal && (
-                              <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] bg-muted text-muted-foreground">proposed · awaiting reviewer</Badge>
-                            )}
-                          </div>
-                          {resolvedRmf.review && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              {resolvedRmf.review.decision === "overridden"
-                                ? `Overridden to "${RMF_OVERALL_LABELS[resolvedRmf.review.overriddenOverall || resolvedRmf.review.proposedOverall]}" (proposed "${RMF_OVERALL_LABELS[resolvedRmf.review.proposedOverall]}")`
-                                : "Confirmed as proposed"}
-                              {" "}by {resolvedRmf.review.byName}, {new Date(resolvedRmf.review.at).toLocaleDateString()}
-                              {resolvedRmf.review.notes ? ` — "${resolvedRmf.review.notes}"` : ""}
-                            </p>
-                          )}
-                          {!rmfOverriding ? (
-                            <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-                              <span className="text-sm text-muted-foreground">
-                                {resolvedRmf.review ? "Reviewer decision:" : "Proposed — confirm or override:"}
-                              </span>
-                              <Button size="sm" disabled={busy} onClick={confirmRmfProfile}>
-                                <Check className="w-3.5 h-3.5 mr-1.5" />Confirm
-                              </Button>
-                              <Button size="sm" variant="outline" disabled={busy} onClick={() => setRmfOverriding(true)}>
-                                Override
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-2 pt-2 border-t">
-                              <span className="text-sm text-muted-foreground">Set the overall RMF level:</span>
-                              <div className="flex flex-wrap gap-2">
-                                {(Object.keys(RMF_OVERALL_LABELS) as RmfRiskLevel[]).map((level) => (
-                                  <Button
-                                    key={level}
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={busy}
-                                    onClick={() => overrideRmfProfile(level)}
-                                  >
-                                    {RMF_OVERALL_LABELS[level]}
-                                  </Button>
-                                ))}
-                              </div>
-                              <Textarea
-                                value={rmfOverrideNote}
-                                onChange={(e) => setRmfOverrideNote(e.target.value)}
-                                placeholder="Reason for override (optional)..."
-                                rows={2}
-                              />
-                              <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRmfOverriding(false)}>
-                                Cancel
-                              </Button>
-                            </div>
-                          )}
-                        </ChecklistItem>
-                      )}
-
-                      {cluster && rationalizationIndex && (
-                        <ChecklistItem
-                          ref={rationalizationRef}
-                          index={rationalizationIndex}
-                          title={
-                            <GlossaryTerm term="crossBureauRationalization">
-                              Cross-{tiers.unit.toLowerCase()} rationalization
-                            </GlossaryTerm>
-                          }
-                          statusLabel={rationalizationStatusLabel}
-                          statusClassName={rationalizationStatusClass}
-                          highlighted={highlightedItem === "rationalization"}
-                        >
-                          <p className="text-sm text-muted-foreground">
-                            {blockReason
-                              ? `This use case closely matches work filed under another ${tiers.unit.toLowerCase()}.`
-                              : rationalizationDecision?.decision === "consolidated"
-                                ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}.`
-                                : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${new Date(rationalizationDecision.decidedAt).toLocaleDateString()}` : ""}.`}
-                          </p>
-                          <ul className="space-y-1.5">
-                            {clusterMembers.map((m) => (
-                              <li key={m.id} className="text-sm flex items-center justify-between gap-3">
-                                <Link href={`/submissions/${m.id}`} className="text-uspto-blue-primary hover:underline truncate">
-                                  {m.formData.useCaseTitle || "Untitled idea"}
-                                </Link>
-                                <span className="text-xs text-muted-foreground whitespace-nowrap">{businessUnitLabel(getBusinessUnit(m))}</span>
-                              </li>
-                            ))}
-                          </ul>
-                          {blockReason && (
-                            isDeptViewer ? (
-                              <div className="pt-2 border-t">
-                                <RationalizationPanel submissions={clusterSubmissionsForPanel} />
-                              </div>
-                            ) : (
-                              <Link
-                                href="/home"
-                                className="inline-flex items-center gap-1 pt-1 text-sm font-medium text-uspto-blue-primary hover:underline"
-                              >
-                                Resolve in the Rationalization panel
-                                <ArrowRight className="h-3.5 w-3.5" />
-                              </Link>
-                            )
-                          )}
-                        </ChecklistItem>
-                      )}
-                    </ol>
-                  </section>
-                )}
-
+                {/* This branch only ever renders for a submitter viewing their own undecided submission — a reviewer takes the `isReviewer && !decided` branch above (RD-6, issue #207's guided process) instead, so nothing reviewer-only belongs here. */}
                 <div className="rounded-lg border bg-card p-4 space-y-3">
                   <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>
                   {([
@@ -1324,10 +1173,39 @@ export function SubmissionDetail({ id }: { id: string }) {
             </div>
           </TabsContent>
         </Tabs>
+          </>
+        )}
       </div>
 
       <div className="w-full shrink-0 lg:w-[300px]">
-        <ReviewerRail submission={sub} tenant={tenant} activity={activity} />
+        {isReviewer && !decided ? (
+          <ReviewProcessRail
+            submission={sub}
+            tenant={tenant}
+            activity={activity}
+            lifecycleStage={getLifecycleStage(sub)}
+            title={fd.useCaseTitle || "Untitled idea"}
+            unitLabel={businessUnitLabel(getBusinessUnit(sub))}
+            submitterName={fd.submitterName || "Anonymous"}
+            submittedAt={sub.submittedAt}
+            steps={reviewSteps}
+            currentStepKey={currentReviewStepKey}
+            onNavigateStep={navigateToStep}
+            awaitingPlumb={awaitingPlumb}
+            draftedByPlumb={draftedByPlumb}
+            assistantName={tenant.assistantName}
+            busy={busy}
+            onReject={() => setStatus("rejected")}
+            comment={comment}
+            onCommentChange={setComment}
+            onSend={() => postComment("needs_info")}
+            sendDisabled={busy || !comment.trim()}
+            onDraftWithPlumb={() => assist?.draftRequestInfo && setComment(assist.draftRequestInfo)}
+            draftDisabled={busy || assisting}
+          />
+        ) : (
+          <ReviewerRail submission={sub} tenant={tenant} activity={activity} />
+        )}
       </div>
     </div>
   )
