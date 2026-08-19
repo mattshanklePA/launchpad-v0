@@ -102,11 +102,38 @@ describe("Step10ReviewSubmit — vetting readiness + submit gate (RD-2)", () => 
     expect(el.textContent).toContain("You can submit now. Expect a request for the missing answers.")
   })
 
-  it("shows 'N of M checks passed' matching getSubmissionReadiness", () => {
+  // Renamed from "shows 'N of M checks passed'": the deterministic count is
+  // required-field completeness, not Plumb's quality verdict, and printing it
+  // as "checks passed" directly above a NEEDS WORK verdict read as a
+  // contradiction (issue #213 item 4).
+  it("shows 'N of M required fields complete' matching getSubmissionReadiness", () => {
     const { el, formData } = mount({ readinessScore: "ready" })
     const readiness = getSubmissionReadiness(formData)
     const passed = readiness.totalChecks - readiness.missing.length
-    expect(el.textContent).toContain(`${passed} of ${readiness.totalChecks} checks passed`)
+    expect(el.textContent).toContain(`${passed} of ${readiness.totalChecks} required fields complete`)
+  })
+
+  // Item 3: composing ReadinessResult inside this card used to duplicate the
+  // verdict pill, the verdict sentence, and the Re-assess control — each
+  // should appear exactly once now that ReadinessResult renders with
+  // chrome={false} here.
+  it("renders the verdict pill, verdict sentence, and a Re-assess control exactly once after an assessment", () => {
+    const { el } = mount({
+      readinessScore: "needs_work",
+      readinessSummary: "The problem is grounded but benefit isn't quantified.",
+      executiveSummary: "An anomaly model would flag incomplete files.",
+      readinessFindings: [],
+    })
+
+    const needsWorkNodes = Array.from(el.querySelectorAll("span")).filter((n) => n.textContent === "Needs work")
+    expect(needsWorkNodes.length).toBe(1)
+
+    const verdictSentenceMatches = (el.textContent!.match(/Close the items below, then submit\./g) || []).length
+    expect(verdictSentenceMatches).toBe(1)
+
+    const reassessButtons = Array.from(el.querySelectorAll("button")).filter((b) => /re-assess/i.test(b.textContent || ""))
+    expect(reassessButtons.length).toBe(1)
+    expect(reassessButtons[0].textContent).toContain("Re-assess")
   })
 
   it("keeps the recap rows collapsed by default and expands one on click", () => {

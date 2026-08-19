@@ -37,11 +37,15 @@ function render(ui: ReactElement) {
   return container
 }
 
+// status: "approved" — ComparisonView, like DecisionCenter, only ever
+// receives submissions that already cleared lib/decisionCenter's status gate
+// (issue #213 item 1). ComparisonView doesn't filter by status itself, so
+// this doesn't change any assertion below — column counts are unaffected.
 function buildSubmission(id: string, overrides: Partial<FormData>): Submission {
   return {
     id,
     submittedAt: "2026-08-18T00:00:00.000Z",
-    status: "submitted",
+    status: "approved",
     formData: {
       ...initialFormData,
       useCaseTitle: `Use case ${id}`,

@@ -61,7 +61,7 @@ export function ReviewerHeader({
     <div className="flex flex-col items-start justify-between gap-8 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm sm:flex-row">
       <div className="min-w-0 flex-1 space-y-2">
         <p className="ks-microlabel text-keystone-amberLight">
-          Use case {slugTail} · {LIFECYCLE_STAGE_LABEL[lifecycleStage]}
+          {slugTail} · {LIFECYCLE_STAGE_LABEL[lifecycleStage]}
         </p>
         <h1 className="max-w-[26ch] font-heading text-[27px] font-black leading-[1.12] tracking-[-0.022em] text-white">{title}</h1>
         <p className="text-[13.5px] text-white/72">{meta}</p>

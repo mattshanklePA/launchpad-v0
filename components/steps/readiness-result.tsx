@@ -32,6 +32,12 @@ type Props = {
   isAssessing: boolean
   onJumpToStep: (step: number) => void
   onReassess: () => void
+  // False when composed inside a card that already renders its own verdict
+  // pill, verdict sentence, and Re-assess control (step-10-review-submit.tsx's
+  // vetting readiness card) — hides this panel's own copies of those three so
+  // the merged card never shows each one twice. Defaults to true for every
+  // other caller, which gets the panel's full chrome.
+  chrome?: boolean
 }
 
 function readinessBadge(score: Props["readinessScore"]) {
@@ -71,16 +77,19 @@ export function ReadinessResult({
   isAssessing,
   onJumpToStep,
   onReassess,
+  chrome = true,
 }: Props) {
   const [showExecutiveSummary, setShowExecutiveSummary] = useState(false)
   const findings = readinessFindings || []
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        {readinessBadge(readinessScore)}
-        <span className="text-sm">{readinessVerdictSentence(readinessScore)}</span>
-      </div>
+      {chrome && (
+        <div className="flex items-center gap-3 flex-wrap">
+          {readinessBadge(readinessScore)}
+          <span className="text-sm">{readinessVerdictSentence(readinessScore)}</span>
+        </div>
+      )}
 
       {findings.length > 0 ? (
         <ul className="space-y-2">
@@ -123,16 +132,18 @@ export function ReadinessResult({
         </CollapsibleContent>
       </Collapsible>
 
-      <Button variant="ghost" size="sm" onClick={onReassess} disabled={isAssessing}>
-        {isAssessing ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Re-evaluating...
-          </>
-        ) : (
-          "Re-assess Readiness"
-        )}
-      </Button>
+      {chrome && (
+        <Button variant="ghost" size="sm" onClick={onReassess} disabled={isAssessing}>
+          {isAssessing ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Re-evaluating...
+            </>
+          ) : (
+            "Re-assess Readiness"
+          )}
+        </Button>
+      )}
     </div>
   )
 }

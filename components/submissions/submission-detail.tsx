@@ -78,7 +78,7 @@ import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
-import { formatKeystoneDate, shortBusinessUnitLabel } from "@/components/dashboard/command-center-data"
+import { formatKeystoneDate, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
@@ -598,7 +598,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         ) : (
           <>
         <ReviewerHeader
-          slugTail={sub.id.slice(0, 8)}
+          slugTail={uniqueSlugTail(sub.id)}
           lifecycleStage={getLifecycleStage(sub)}
           title={fd.useCaseTitle || "Untitled idea"}
           unitLabel={businessUnitLabel(getBusinessUnit(sub))}

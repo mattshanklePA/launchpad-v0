@@ -171,6 +171,13 @@ describe("/clusters/[id]", () => {
     expect(el.textContent).toContain("Three use cases, one problem")
     expect(el.textContent).toContain("Rationalization pending")
 
+    // Header (issue #213 item 10): the explanation spells the count out too,
+    // the same word the title derives — not the digit ("All 3 ... or 3
+    // efforts" read as a second, disagreeing count on the same card).
+    expect(el.textContent).toContain("All three were flagged")
+    expect(el.textContent).toContain("or three efforts that stay separate")
+    expect(el.textContent).not.toMatch(/All 3 |or 3 efforts/)
+
     // Members (item 5): all three titles present, lead (m1, the smallest id) first.
     const titles = Array.from(el.querySelectorAll(".font-heading")).map((n) => n.textContent)
     const m1Index = titles.findIndex((t) => t === "Supplier Past-Performance Risk Scoring Before Award")

@@ -126,7 +126,7 @@ export function Step3SolutionBenefits() {
         {benefitsSectionVisible && (
           <div className="flex flex-col gap-5 border-t border-border-subtle pt-5">
             <p className="text-[12.5px] text-muted-foreground">
-              What you expect this to deliver — reviewers will confirm the actual value and impact during vetting.
+              What you expect this to deliver: reviewers will confirm the actual value and impact during vetting.
             </p>
 
             {isVisible("userValue") && (

@@ -13,9 +13,11 @@ import {
   readinessPillLabel,
   riskKeystoneStatus,
   riskPillLabel,
+  rmfCardLabel,
 } from "./decision-center"
 import { initialFormData, type FormData } from "@/lib/steps"
 import type { Submission } from "@/lib/submissions"
+import type { ResolvedRmfProfile } from "@/lib/rmfProfileReview"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -37,11 +39,16 @@ function render(ui: ReactElement) {
   return container
 }
 
+// status: "approved" — DecisionCenter itself only ever receives submissions
+// that have already cleared lib/decisionCenter's status gate (issue #213
+// item 1); these fixtures render the component directly, bypassing that
+// gate, so the status field doesn't drive any assertion below, but it should
+// still reflect what the component is actually handed in production.
 function buildSubmission(id: string, overrides: Partial<FormData>, submittedAt = "2026-08-18T00:00:00.000Z"): Submission {
   return {
     id,
     submittedAt,
-    status: "submitted",
+    status: "approved",
     formData: {
       ...initialFormData,
       useCaseTitle: `Use case ${id}`,
@@ -78,10 +85,22 @@ describe("DecisionCenter header", () => {
     expect(el.textContent).toContain("3 candidates await a funding decision")
   })
 
-  it("uses plural copy for zero candidates and shows the empty state", () => {
+  // Renamed from "uses plural copy for zero candidates and shows the empty
+  // state": issue #213 item 1 replaced the zero-candidate copy — the count
+  // line no longer renders at all (there's nothing to count), and the empty
+  // state says plainly that nothing is waiting, rather than a generic
+  // "No submissions awaiting decision" that predates the approval gate.
+  it("hides the count line and shows the plain empty state for zero candidates", () => {
     const el = render(<DecisionCenter submissions={[]} />)
-    expect(el.textContent).toContain("0 candidates await a funding decision")
-    expect(el.textContent).toContain("No submissions awaiting decision")
+    expect(el.textContent).not.toContain("candidates await a funding decision")
+    expect(el.textContent).not.toContain("candidate awaits a funding decision")
+    expect(el.textContent).toContain("Nothing is waiting on a funding decision.")
+    expect(el.textContent).toContain("Use cases arrive here once a reviewer approves them.")
+  })
+
+  it("hides the Compare control for zero candidates", () => {
+    const el = render(<DecisionCenter submissions={[]} />)
+    expect(Array.from(el.querySelectorAll("button")).some((b) => b.textContent === "Compare selected")).toBe(false)
   })
 })
 
@@ -155,6 +174,47 @@ describe("DecisionCenter compare selection", () => {
     act(() => compareButton.dispatchEvent(new MouseEvent("click", { bubbles: true })))
     expect(el.textContent).toContain("Decision Center · compare")
     expect(el.textContent).toContain("Back to candidates")
+  })
+})
+
+// Issue #213 item 2: the card used to collapse three RMF states into two
+// strings ("RMF proposed · awaiting reviewer" / "RMF confirmed"), so an
+// approved card could still claim a reviewer was awaited, and "confirmed"
+// and "overridden" read identically. Driven purely by resolveRmfProfile's
+// existing resolution — no new review logic.
+describe("rmfCardLabel", () => {
+  const baseProfile = { overall: "on_track", rationale: "", flags: [], functions: {} } as unknown as ResolvedRmfProfile["profile"]
+
+  it("reads 'RMF profile not confirmed' when no review record exists yet", () => {
+    const resolved: ResolvedRmfProfile = { profile: baseProfile, effectiveOverall: "on_track", review: undefined, isProposal: true }
+    expect(rmfCardLabel(resolved)).toBe("RMF profile not confirmed")
+  })
+
+  it("reads 'RMF confirmed' when a review exists with no override", () => {
+    const resolved: ResolvedRmfProfile = {
+      profile: baseProfile,
+      effectiveOverall: "on_track",
+      review: { decision: "confirmed", proposedOverall: "on_track", byName: "Jane Doe", byEmail: "jane@example.gov", at: "2026-08-18T00:00:00.000Z" },
+      isProposal: false,
+    }
+    expect(rmfCardLabel(resolved)).toBe("RMF confirmed")
+  })
+
+  it("reads 'RMF overridden by reviewer' when a review exists with an override", () => {
+    const resolved: ResolvedRmfProfile = {
+      profile: baseProfile,
+      effectiveOverall: "at_risk",
+      review: {
+        decision: "overridden",
+        proposedOverall: "on_track",
+        overriddenOverall: "at_risk",
+        byName: "Jane Doe",
+        byEmail: "jane@example.gov",
+        at: "2026-08-18T00:00:00.000Z",
+      },
+      isProposal: false,
+    }
+    expect(rmfCardLabel(resolved)).toBe("RMF overridden by reviewer")
   })
 })
 

@@ -117,7 +117,7 @@ describe("AIdChatPanel — Plumb inline thread (RD-2)", () => {
     expect(el.textContent).toContain(Q2.rationale)
     expect(el.textContent).toContain("Recommended")
     expect(() => buttonNamed(el, "Other (let me type my own)")).not.toThrow()
-    expect(el.textContent).toContain("I have enough — write the summary")
+    expect(el.textContent).toContain("I have enough, write the summary")
 
     expect(el.textContent).toContain("1 answered")
   })
@@ -140,7 +140,7 @@ describe("AIdChatPanel — Plumb inline thread (RD-2)", () => {
     await click(buttonNamed(el, "Help Me with the Problem"))
 
     validateAndRefineInput.mockResolvedValueOnce(SCAFFOLD)
-    await click(buttonNamed(el, "I have enough — write the summary"))
+    await click(buttonNamed(el, "I have enough, write the summary"))
 
     expect(el.textContent).toContain("draft · not applied yet")
     expect(el.querySelector("mark")?.textContent).toBe("[INSERT number]")

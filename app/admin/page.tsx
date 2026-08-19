@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState, useEffect } from "react"
+import { Fragment, useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { getSession, hasAdminAccess, isAdmin, logout, ensureSeeded, type Session } from "@/lib/auth"
 import { UserManagement } from "@/components/admin/user-management"
@@ -46,6 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { getFocusAreasForUnit } from "@/lib/strategicFocusAreas"
 import { getStatus, STATUS_ORDER, STATUS_LABEL, visibleSubmissions, businessUnitLabel } from "@/lib/reviewWorkflow"
+import { decisionCenterCandidates } from "@/lib/decisionCenter"
 
 // Real USPTO strategic objectives:
 //   - 2022-2026 Strategic Plan — 5 agency-wide goals
@@ -482,6 +483,17 @@ function AdminPageInner() {
     return acc
   }, {})
   const totalSubmissions = submissions.length
+
+  // The "submitted" tab embeds DecisionCenter, which — like the standalone
+  // /decisions page — only ever shows candidates a reviewer has approved
+  // (lib/decisionCenter's decisionCenterCandidates). `submissions` above
+  // stays the full scoped set: the funnel/pipeline/table views on this page
+  // need every status, not just approved.
+  const decisionCenterSubmissions = useMemo(() => {
+    if (!session) return []
+    const viewer = { role: session.role, email: session.email, businessUnit: session.businessUnit, office: session.office }
+    return decisionCenterCandidates(submissions, viewer)
+  }, [submissions, session])
   const approvedCount = statusCounts.approved || 0
   const rejectedCount = statusCounts.rejected || 0
   const decidedCount = approvedCount + rejectedCount
@@ -1137,7 +1149,7 @@ function AdminPageInner() {
           </TabsContent>
 
           <TabsContent value="submitted" className="space-y-6">
-            <DecisionCenter submissions={submissions} />
+            <DecisionCenter submissions={decisionCenterSubmissions} />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
