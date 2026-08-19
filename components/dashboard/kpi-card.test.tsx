@@ -41,8 +41,8 @@ describe("KpiCard", () => {
   })
 
   it("shows the subtitle alongside the value", () => {
-    const el = render(<KpiCard id="pipeline" label="In pipeline" value={5} subtitle="Total use cases in review" />)
-    expect(el.textContent).toContain("Total use cases in review")
+    const el = render(<KpiCard id="pipeline" label="In pipeline" value={5} subtitle="Every use case in this view" />)
+    expect(el.textContent).toContain("Every use case in this view")
   })
 
   it("keeps the formal label visible on the tooltip trigger", () => {

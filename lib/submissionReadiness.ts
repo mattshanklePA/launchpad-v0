@@ -277,10 +277,13 @@ export type ProgressModel = {
    * Whether a given step is fully complete. Content steps (1-5) with required
    * fields are complete when none of them are missing; a step with no
    * required fields (`NO_REQUIRED_FIELDS_STEPS`) is complete once it has any
-   * content instead — it can never appear in `missingSteps`, so "nothing
-   * missing" would otherwise be true before the step is ever visited. The
-   * review step (6) is complete only when the whole submission can be
-   * submitted.
+   * content, OR once every required step elsewhere already clears the gate
+   * (`canSubmit`) — it can never appear in `missingSteps`, so "nothing
+   * missing" would otherwise be true before the step is ever visited, but an
+   * optional step left untouched is not an outstanding gap either once
+   * there's nothing left to close (issue #218: the step count must not read
+   * an optional, harmless blank as "not done"). The review step (6) is
+   * complete only when the whole submission can be submitted.
    */
   isStepComplete: (step: number) => boolean
 }
@@ -290,7 +293,7 @@ export function getProgressModel(formData: FormData): ProgressModel {
   const missingSteps = new Set<number>(missing.map((m) => m.step))
   const isStepComplete = (step: number): boolean => {
     if (step >= 6) return canSubmit // review / final step
-    if (NO_REQUIRED_FIELDS_STEPS.has(step)) return isOptionalStepDone(step, formData)
+    if (NO_REQUIRED_FIELDS_STEPS.has(step)) return isOptionalStepDone(step, formData) || canSubmit
     return !missingSteps.has(step)
   }
   return { missingSteps, canSubmit, isStepComplete }

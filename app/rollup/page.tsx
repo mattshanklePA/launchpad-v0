@@ -20,9 +20,11 @@ import { getDashboardScope, getHierarchy } from "@/lib/dashboard/scope"
 import { getDashboardMetrics, scopedSubmissions } from "@/lib/dashboard/metrics"
 import { getKpiDrilldown } from "@/lib/dashboard/drilldown"
 import { tenantHasBureauTier } from "@/lib/rationalization"
+import { consolidatedReportableEntryCount } from "@/lib/ombConsolidation"
 import { buildKpiCards, buildActionItems } from "@/components/dashboard/department-dashboard-data"
 import { kpiDrilldownEntryHref } from "@/components/dashboard/kpi-card-data"
 import { formatKeystoneDate } from "@/components/dashboard/command-center-data"
+import { determineConsolidation } from "@/lib/ombConsolidation"
 import { BureauRollup } from "@/components/admin/bureau-rollup"
 import { ApprovalTransparency } from "@/components/admin/approval-transparency"
 import { RationalizationPanel } from "@/components/admin/rationalization-panel"
@@ -43,6 +45,10 @@ function RollupPageInner() {
   const bureauTier = tenantHasBureauTier(tenant)
 
   const submissions = scopedSubmissions(scope, allSubmissions)
+  // Same reportable-entry count BureauRollup's own summary line renders
+  // below, so the two can't disagree (issue #218).
+  const reportableEntries = consolidatedReportableEntryCount(submissions)
+  const hasConsolidated = submissions.some((s) => determineConsolidation(s.formData).status === "Consolidated")
   const kpiDrilldown = getKpiDrilldown(scope, allSubmissions, tenant)
   const metrics = getDashboardMetrics(scope, allSubmissions, tenant)
   const actionItems = buildActionItems(metrics, bureauTier, [], tenant, kpiDrilldown)
@@ -58,8 +64,11 @@ function RollupPageInner() {
             <h1 className="ks-page-title text-white">{tenant.unit.label} roll-up</h1>
             <p className="text-[13.5px] text-white/72">Every use case, by {tenant.unit.label.toLowerCase()} and status</p>
             <p className="text-[13.5px] text-white/72">
-              {submissions.length} use case{submissions.length === 1 ? "" : "s"} · consolidates to the {tenant.inventoryShortLabel} inventory
-              count · as of {formatKeystoneDate(new Date().toISOString())}
+              {submissions.length} use case{submissions.length === 1 ? "" : "s"}
+              {hasConsolidated
+                ? ` · consolidates to ${reportableEntries} ${tenant.inventoryShortLabel} reportable ${reportableEntries === 1 ? "entry" : "entries"}`
+                : ""}
+              {" · as of "}{formatKeystoneDate(new Date().toISOString())}
             </p>
           </div>
           <Button asChild variant="secondary" className="shrink-0">

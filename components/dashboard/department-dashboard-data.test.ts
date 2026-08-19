@@ -175,8 +175,10 @@ describe("scopeLabel", () => {
   })
 
   it("labels office scope with bureau and office", () => {
+    // RD-8 (issue #218): a comma, not an em dash — the em dash sweep covers
+    // this separator too.
     expect(scopeLabel({ level: "office", businessUnit: "census", office: "demo" }, doc)).toBe(
-      "U.S. Census Bureau — Demographic Programs",
+      "U.S. Census Bureau, Demographic Programs",
     )
   })
 
@@ -193,6 +195,14 @@ describe("buildKpiCards", () => {
   it("includes the core cards for every tenant", () => {
     const cards = buildKpiCards(baseMetrics(), false)
     expect(cards.map((c) => c.id)).toEqual(["pipeline", "readiness", "high-impact", "omb-reportable"])
+  })
+
+  it("labels the pipeline card's subtitle with what it actually counts, not 'in review' (RD-8, issue #218)", () => {
+    // pipelineStatus.total is every submission in scope regardless of
+    // status — the subtitle must not claim a narrower "in review" set.
+    const pipeline = buildKpiCards(baseMetrics(), false).find((c) => c.id === "pipeline")
+    expect(pipeline?.subtitle).toBe("Every use case in this view")
+    expect(pipeline?.subtitle).not.toMatch(/in review/i)
   })
 
   it("appends sign-off and duplicate cards only for bureau-tier tenants", () => {

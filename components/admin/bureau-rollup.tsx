@@ -13,7 +13,7 @@ import type { Submission } from "@/lib/submissions"
 import { getStatus, getBusinessUnit, businessUnitLabel, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
 import { hasCrossBureauMatch, crossBureauDuplicateCount } from "@/lib/crossBureauDuplicates"
 import { determineReportability } from "@/lib/ombReportability"
-import { determineConsolidation } from "@/lib/ombConsolidation"
+import { determineConsolidation, consolidatedReportableEntryCount } from "@/lib/ombConsolidation"
 import { officesForBureau } from "@/lib/officeRollup"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { signoffProgress } from "@/lib/bureauSignoff"
@@ -70,10 +70,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const consolidatedFor = (unit: string) =>
     submissions.filter((s) => getBusinessUnit(s) === unit && isConsolidated(s)).length
   const grandConsolidated = submissions.filter(isConsolidated).length
-  const consolidatedCategoryCount = new Set(
-    submissions.map((s) => determineConsolidation(s.formData)).filter((c) => c.status === "Consolidated").map((c) => c.category),
-  ).size
-  const reportableEntries = submissions.length - grandConsolidated + consolidatedCategoryCount
+  const reportableEntries = consolidatedReportableEntryCount(submissions)
 
   // Sign-off coverage: of a bureau's use cases, how many have a recorded
   // bureau sign-off (approved-with-signoff — see lib/bureauSignoff.ts's

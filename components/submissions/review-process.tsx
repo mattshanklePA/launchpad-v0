@@ -31,6 +31,7 @@ import type { RmfRiskLevel } from "@/lib/nistRmf"
 import type { RationalizationCluster, Rationalization } from "@/lib/rationalization"
 import { nextReviewStep, previousReviewStep, type ReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { PLUMB_PROGRESS_MIN_HEIGHT_CLASS } from "@/components/launchpad/plumb-progress"
+import { spellCount, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import { cn } from "@/lib/utils"
 
 export const STEP_TITLE: Record<ReviewStepKey, string> = {
@@ -51,7 +52,7 @@ export const STEP_RAIL_LABEL: Record<ReviewStepKey, string> = {
 }
 
 function stepTitle(key: ReviewStepKey, clusterCount: number): string {
-  return STEP_TITLE[key].replace("{n}", String(clusterCount))
+  return STEP_TITLE[key].replace("{n}", spellCount(clusterCount).toLowerCase())
 }
 
 export type ReviewProcessProps = {
@@ -132,7 +133,7 @@ export function ProcessHeaderCard({
         <p className="text-[14px] leading-[1.55] text-white/72">{lead}</p>
       </div>
       <div className="flex w-full shrink-0 flex-col gap-2 sm:w-[240px]">
-        <span className="ks-microlabel text-white/55">Step {stepIndex ?? "—"} of {totalSteps}</span>
+        <span className="ks-microlabel text-white/55">{stepIndex === null ? "Reading" : `Step ${stepIndex} of ${totalSteps}`}</span>
         <div className="flex gap-[5px]">
           {Array.from({ length: totalSteps }, (_, i) => (
             <div key={i} className={cn("h-1 flex-1 rounded-sm", i + 1 === stepIndex ? "bg-white/90" : "bg-white/18")} />
@@ -161,13 +162,14 @@ export function ReviewProcess(props: ReviewProcessProps) {
   const current = steps.find((s) => s.key === currentStepKey) ?? steps[0]
   const totalSteps = steps.length
   const clusterCount = cluster?.memberIds.length ?? 0
-  const eyebrow = `Review · ${submission.id.slice(0, 8)} · step ${current.index} of ${totalSteps}${blockReason ? " · blocks approval on step 1" : ""}`
+  const eyebrow = `Review · ${uniqueSlugTail(submission.id)} · step ${current.index} of ${totalSteps}${blockReason ? " · blocks approval on step 1" : ""}`
 
+  const clusterOfficeCount = cluster?.bureaus.length ?? 0
   const leads: Record<ReviewStepKey, string> = {
-    cluster: `${cluster?.bureaus.length ?? 0} ${tenant.tierLabels.unitPlural.toLowerCase()} are pursuing overlapping work. Nothing in the cluster can be approved until you consolidate it or mark it keep-separate.`,
+    cluster: `${spellCount(clusterOfficeCount)} ${tenant.tierLabels.unitPlural.toLowerCase()} are pursuing overlapping work. Nothing in the cluster can be approved until you consolidate it or mark it keep-separate.`,
     high_impact: `Confirm or override ${assistantName}'s high-impact read — it determines which minimum practices apply.`,
     rmf: `Confirm the proposed RMF profile, or override it with a reason.`,
-    governance: `Complete or confirm every applicable inventory field — ${assistantName} has drafted what it can.`,
+    governance: `Complete or confirm every applicable inventory field: ${assistantName} has drafted what it can.`,
     disposition: `Every answer up to here is reversible until sign-off; this one moves the record forward.`,
   }
 

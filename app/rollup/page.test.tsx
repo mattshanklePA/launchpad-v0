@@ -27,7 +27,8 @@ vi.mock("@/components/data-provider", () => ({
   useDataProvider: () => ({ loaded: true }),
 }))
 
-vi.mock("@/lib/submissions", () => ({ getSubmissions: () => [] }))
+let submissions: unknown[] = []
+vi.mock("@/lib/submissions", () => ({ getSubmissions: () => submissions }))
 
 vi.mock("@/components/dashboard/dashboard-shell", () => ({
   DashboardShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -53,6 +54,7 @@ let root: Root | null = null
 beforeEach(() => {
   mockSession = null
   replaced = null
+  submissions = []
 })
 
 afterEach(() => {
@@ -97,5 +99,38 @@ describe("/rollup", () => {
     const el = render(<RollupPage />)
     expect(replaced).toBeNull()
     expect(el.querySelector('[data-testid="bureau-rollup"]')).not.toBeNull()
+  })
+
+  it("meta line reports the real consolidated count, not the words 'inventory count' (RD-8, issue #218)", () => {
+    mockSession = { userId: "u1", email: "admin@x.gov", name: "Admin", role: "admin", loggedInAt: new Date().toISOString() }
+    const codeGenFormData = {
+      useCaseTitle: "Dev Copilot",
+      coreProblem: "Engineers spend too long writing boilerplate code.",
+      solutionSummary: "An AI coding assistant that helps generate code from natural-language prompts.",
+      highImpact: "not_high_impact",
+    }
+    submissions = [
+      { id: "s1", formData: codeGenFormData },
+      { id: "s2", formData: { ...codeGenFormData, useCaseTitle: "Dev Copilot 2" } },
+      { id: "s3", formData: { useCaseTitle: "Patent Triage Assistant", coreProblem: "Examiners spend too long triaging incoming patent applications.", highImpact: "not_high_impact" } },
+    ]
+    const el = render(<RollupPage />)
+    expect(el.textContent).toContain("3 use cases")
+    // Two "code generation" matches consolidate to one entry, plus the one
+    // individually-reported submission — 2 reportable entries, same number
+    // BureauRollup's own summary line computes.
+    expect(el.textContent).toContain("consolidates to 2 OMB reportable entries")
+    expect(el.textContent).not.toContain("the OMB inventory count")
+    expect(el.textContent).not.toContain("inventory count")
+  })
+
+  it("omits the consolidation clause entirely when nothing on the page consolidates", () => {
+    mockSession = { userId: "u1", email: "admin@x.gov", name: "Admin", role: "admin", loggedInAt: new Date().toISOString() }
+    submissions = [
+      { id: "s1", formData: { useCaseTitle: "Patent Triage Assistant", coreProblem: "Examiners spend too long triaging incoming patent applications.", highImpact: "not_high_impact" } },
+    ]
+    const el = render(<RollupPage />)
+    expect(el.textContent).toContain("1 use case")
+    expect(el.textContent).not.toContain("consolidates to")
   })
 })

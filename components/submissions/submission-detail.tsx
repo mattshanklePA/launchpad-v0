@@ -54,7 +54,15 @@ import {
   type RmfRiskLevel,
 } from "@/lib/nistRmf"
 import { resolveRmfProfile, buildRmfProfileReviewPatch } from "@/lib/rmfProfileReview"
-import { applicableGovernanceFields, getGovernanceCaptureReview, governanceCaptureCounts, governanceFieldValueLabel } from "@/lib/governanceCapture"
+import {
+  applicableGovernanceFields,
+  applicableGovernanceFieldsForDisplay,
+  getGovernanceCaptureReview,
+  governanceFieldCounts,
+  governanceFieldCountsSentence,
+  governanceFieldValueLabel,
+  type GovernanceFieldDraft,
+} from "@/lib/governanceCapture"
 import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { buildActivity } from "@/lib/activity"
 import { GovernanceCapturePanel } from "@/components/submissions/governance-capture-panel"
@@ -173,7 +181,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   // via an effect, so there's nothing to keep in sync.
   const [currentStepKey, setCurrentStepKey] = useState<ReviewStepKey | null>(null)
   const [forceShowSteps, setForceShowSteps] = useState(false)
-  const [governanceDraftReady, setGovernanceDraftReady] = useState(false)
+  const [governanceDraft, setGovernanceDraft] = useState<GovernanceFieldDraft | null>(null)
   const ranRef = useRef(false)
   const govDraftRanRef = useRef(false)
   const rationalizationRef = useRef<HTMLLIElement>(null)
@@ -215,12 +223,13 @@ export function SubmissionDetail({ id }: { id: string }) {
   // RD-6 (issue #207): drives PlumbProgress's "drafting governance fields"
   // stage on the pre-resolution loading page independently of
   // GovernanceCapturePanel's own draft call (step 4 hasn't mounted yet while
-  // loading) — read-only, the draft itself is discarded here and re-fetched
-  // by the panel once the reviewer actually reaches step 4.
+  // loading). The panel re-drafts again once the reviewer actually reaches
+  // step 4 (its own inputs are unchanged, issue #218) — this copy is only
+  // read for the "N drafted by Plumb" counts shown before that panel mounts.
   useEffect(() => {
     if (!sub || govDraftRanRef.current || !isReviewer) return
     govDraftRanRef.current = true
-    draftGovernanceFields(sub.formData).finally(() => setGovernanceDraftReady(true))
+    draftGovernanceFields(sub.formData).then(setGovernanceDraft)
   }, [sub, isReviewer])
 
   // When a reviewer opens a still-"submitted" idea, move it into review.
@@ -332,7 +341,13 @@ export function SubmissionDetail({ id }: { id: string }) {
     ? STATUS_BADGE_CLASS.healthy
     : STATUS_BADGE_CLASS.attention
   const governanceReview = getGovernanceCaptureReview(sub)
-  const { draftedByPlumb, confirmedByReviewer } = governanceCaptureCounts(governanceReview)
+  // Display counts for the "All N fields · k drafted by Plumb, j confirmed by
+  // the reviewer" sentence (step 4 header, rail, and this tab) — a distinct
+  // question from governanceApplicable/governanceComplete above, so it uses
+  // its own draft-aware denominator (issue #218).
+  const governanceDisplayApplicable = applicableGovernanceFieldsForDisplay(fd, governanceDraft)
+  const governanceCounts = governanceFieldCounts(governanceDisplayApplicable, governanceDraft, governanceReview)
+  const { draftedByPlumb, confirmedByReviewer } = governanceCounts
   const governanceExamples = (governanceReview?.entries || []).filter((e) => e.rationale).slice(0, 2)
 
   // Only the rationalization item still needs a running index — it's the
@@ -547,7 +562,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               totalSteps={reviewSteps.length}
               reviewerName={session?.name || "Reviewer"}
               assistantName={tenant.assistantName}
-              governanceDone={governanceDraftReady}
+              governanceDone={governanceDraft !== null}
               recommendationDone={!assisting}
               onSkipToSteps={() => setForceShowSteps(true)}
             />
@@ -577,7 +592,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               setRmfOverrideNote={setRmfOverrideNote}
               onConfirmRmf={confirmRmfProfile}
               onOverrideRmf={overrideRmfProfile}
-              governanceApplicableCount={governanceApplicable.length}
+              governanceApplicableCount={governanceDisplayApplicable.length}
               draftedByPlumb={draftedByPlumb}
               confirmedByReviewer={confirmedByReviewer}
               byName={session?.name || session?.email || "Reviewer"}
@@ -804,11 +819,11 @@ export function SubmissionDetail({ id }: { id: string }) {
                     <div className="flex items-baseline justify-between gap-4">
                       <span className="ks-microlabel">2 · Complete the use case</span>
                       <button type="button" className="text-[13px] font-semibold text-primary hover:underline" onClick={() => setGovernanceExpanded((v) => !v)}>
-                        All {governanceApplicable.length} fields
+                        All {governanceDisplayApplicable.length} fields
                       </button>
                     </div>
                     <p className="text-[13px] text-muted-foreground">
-                      All {governanceApplicable.length} fields · {draftedByPlumb} drafted by {tenant.assistantName}, {confirmedByReviewer} confirmed by the reviewer.
+                      {governanceFieldCountsSentence(governanceCounts, tenant.assistantName)}
                       {governanceExamples.length > 0 ? " Two examples:" : ""}
                     </p>
                     {governanceExamples.map((entry) => (
@@ -872,7 +887,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                       {!rmfOverriding ? (
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           <span className="text-sm text-muted-foreground">
-                            {resolvedRmf.review ? "Reviewer decision:" : "Proposed — confirm or override:"}
+                            {resolvedRmf.review ? "Reviewer decision:" : "Proposed, confirm or override:"}
                           </span>
                           <Button size="sm" disabled={busy} onClick={confirmRmfProfile}>
                             <Check className="w-3.5 h-3.5 mr-1.5" />Confirm

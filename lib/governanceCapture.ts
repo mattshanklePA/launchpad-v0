@@ -146,6 +146,65 @@ export function governanceCaptureCounts(review: GovernanceCaptureReview | undefi
   }
 }
 
+/**
+ * Fields applicable given `fd`, resolving conditional visibility (`showWhen`)
+ * against Scout's draft-proposed values for anything `fd` doesn't already have
+ * a real value for — mirrors GovernanceCapturePanel's own `values` seeding
+ * (a field stays uncounted only because a proposal hasn't been saved yet
+ * would otherwise undercount siblings the panel already unlocks and renders).
+ * Falls back to plain `applicableGovernanceFields(fd)` when there's no draft
+ * yet (e.g. before it resolves).
+ */
+export function applicableGovernanceFieldsForDisplay(fd: FormData, draft: GovernanceFieldDraft | null | undefined): (keyof FormData)[] {
+  if (!draft) return applicableGovernanceFields(fd)
+  const overrides: Partial<Record<string, GovernanceFieldValue>> = {}
+  for (const key of GOVERNANCE_FIELD_KEYS) {
+    const existing = fd[key] as GovernanceFieldValue | undefined
+    const hasExisting = Array.isArray(existing) ? existing.length > 0 : !!existing
+    const proposed = draft[key as string]?.value
+    if (!hasExisting && proposed !== undefined) overrides[key as string] = proposed
+  }
+  const merged: FormData = { ...fd, ...(overrides as Partial<FormData>) }
+  return GOVERNANCE_FIELD_KEYS.filter((f) => isFieldVisible(f, merged))
+}
+
+/**
+ * The one place that counts governance fields for display — the step 4
+ * header, the review rail's progress line, and a decided record's Governance
+ * record tab all render "All {N} fields · {k} drafted by Plumb, {j} confirmed
+ * by the reviewer" and must agree, so all three call this instead of
+ * recounting (issue #218). `applicable` is normally
+ * `applicableGovernanceFieldsForDisplay(fd, draft)`.
+ *
+ * A field is "drafted by Plumb" whenever it carries a live proposal — this is
+ * exactly what GovernanceCapturePanel tags PLUMB PROPOSED, whether or not a
+ * reviewer has acted on it yet. A field is "confirmed by the reviewer" once
+ * the reviewer has a saved decision for it (confirmed as drafted, or
+ * overridden) — independent of whether Plumb had a proposal for that field at
+ * all.
+ */
+export function governanceFieldCounts(
+  applicable: (keyof FormData)[],
+  draft: GovernanceFieldDraft | null | undefined,
+  review: GovernanceCaptureReview | undefined,
+): { applicableCount: number; draftedByPlumb: number; confirmedByReviewer: number } {
+  const reviewedFields = new Set((review?.entries ?? []).map((e) => e.field))
+  return {
+    applicableCount: applicable.length,
+    draftedByPlumb: applicable.filter((f) => draft?.[f as string]?.value !== undefined).length,
+    confirmedByReviewer: applicable.filter((f) => reviewedFields.has(f as string)).length,
+  }
+}
+
+/** The shared "All {N} fields · {k} drafted by Plumb, {j} confirmed by the reviewer" sentence, rendered identically at the step 4 header and the Governance record tab (issue #218). */
+export function governanceFieldCountsSentence(
+  counts: { applicableCount: number; draftedByPlumb: number; confirmedByReviewer: number },
+  assistantName: string,
+): string {
+  const { applicableCount, draftedByPlumb, confirmedByReviewer } = counts
+  return `All ${applicableCount} fields · ${draftedByPlumb} drafted by ${assistantName}, ${confirmedByReviewer} confirmed by the reviewer.`
+}
+
 // Field -> option list, for mapping a stored enum code (`pre_deployment`,
 // `high_impact`, `in_progress`, ...) to its display label. Mirrors
 // governance-capture-panel.tsx's per-field `kind`/`options` pairing

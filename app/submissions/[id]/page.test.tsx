@@ -67,9 +67,10 @@ let assistResult = {
   suggestedDisposition: "reject" as "approve" | "reject" | "request_info",
   draftRequestInfo: "Can you share more detail?",
 }
+let governanceDraftResult: Record<string, { value: string; rationale: string }> = {}
 vi.mock("@/app/actions", () => ({
   assistReviewer: () => Promise.resolve(assistResult),
-  draftGovernanceFields: () => Promise.resolve({}),
+  draftGovernanceFields: () => Promise.resolve(governanceDraftResult),
 }))
 
 vi.mock("@/app/systemConnector-actions", () => ({
@@ -119,6 +120,7 @@ beforeEach(() => {
     draftRequestInfo: "Can you share more detail?",
   }
   submissions = []
+  governanceDraftResult = {}
 })
 
 afterEach(() => {
@@ -226,18 +228,30 @@ describe("/submissions/[id] — decided record", () => {
 
     assistResult = { ...assistResult, suggestedDisposition: "approve" }
     el = await flush(render(<SubmissionDetailPage />))
-    expect(el.textContent).toContain("the reviewer's decision decided otherwise")
+    // RD-8 (issue #218): the disagree branch names "the reviewer", not "the
+    // reviewer's decision" — the agree branch's subject spliced into the
+    // wrong half of the sentence.
+    expect(el.textContent).toContain("the reviewer decided otherwise")
+    expect(el.textContent).not.toContain("the reviewer's decision decided otherwise")
   })
 
   it("opens the Governance record tab on ?tab=governance and shows the drafted/confirmed counts and the compliance 2x2, with no raw enum code leaking", async () => {
     window.history.pushState({}, "", "/submissions/s1?tab=governance")
+    // RD-8 (issue #218): "drafted by Plumb" now reflects Plumb's live proposal
+    // (this record's fresh redraft), not the saved review's decision labels —
+    // all three fields still carry a proposal here, and all three have a
+    // saved reviewer decision (2 confirmed, 1 overridden).
+    governanceDraftResult = {
+      stageOfDevelopment: { value: "pre_deployment", rationale: "Still moving through vetting." },
+      aiClassification: { value: "classical_predictive_ml", rationale: "Scores structured history." },
+      highImpact: { value: "not_high_impact", rationale: "No high-impact factors selected." },
+    }
     submissions = [submission({ id: "s1", status: "rejected", stageOfDevelopment: "pre_deployment", ...REJECTED_DECIDED })]
     const el = await flush(render(<SubmissionDetailPage />))
 
     expect(el.textContent).toContain("Decision checklist")
-    // 2 confirmed ("drafted by Plumb") + 1 overridden ("confirmed by the reviewer").
-    expect(el.textContent).toContain("2 drafted by Plumb")
-    expect(el.textContent).toContain("1 confirmed by the reviewer")
+    expect(el.textContent).toContain("3 drafted by Plumb")
+    expect(el.textContent).toContain("3 confirmed by the reviewer")
 
     // Compliance 2x2.
     expect(el.textContent).toContain("Compliance")
@@ -330,7 +344,8 @@ describe("/submissions/[id] — undecided (in-review) record — cluster blocks 
 
     expect(el.textContent).toContain("Step 1 of 5")
     expect(el.textContent).toContain("blocks approval on step 1")
-    expect(el.textContent).toContain("Is this one effort, or 2?")
+    // RD-8 (issue #218): the count is spelled out, matching the cluster page's own title.
+    expect(el.textContent).toContain("Is this one effort, or two?")
     // ClusterMembers + ClusterDecision render.
     const buttons = Array.from(el.querySelectorAll("button")).map((b) => b.textContent)
     expect(buttons).toContain("Keep separate and link")
@@ -355,5 +370,75 @@ describe("/submissions/[id] — undecided (in-review) record — cluster blocks 
     expect(el.textContent).toContain("Back to step 1")
 
     if (mockSession) mockSession.businessUnit = priorBusinessUnit
+  })
+})
+
+describe("/submissions/[id] — governance field counts (RD-8, issue #218)", () => {
+  it("counts drafted-by-Plumb fields from Plumb's live proposal, non-zero even before any reviewer save", async () => {
+    governanceDraftResult = {
+      stageOfDevelopment: { value: "pre_deployment", rationale: "Still moving through vetting." },
+      highImpact: { value: "not_high_impact", rationale: "No high-impact factors selected." },
+    }
+    submissions = [submission({ id: "s1", status: "in_review" })]
+    const el = await flush(render(<SubmissionDetailPage />))
+
+    const govRow = Array.from(el.querySelectorAll("button")).find((b) => b.textContent?.startsWith("Inventory fields"))!
+    act(() => govRow.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+    await flush(el)
+
+    expect(el.textContent).toContain("Are the inventory fields right?")
+    // Step 4 header: non-zero drafted, zero confirmed — nothing saved yet.
+    expect(el.textContent).toContain("2 drafted by Plumb, 0 confirmed by the reviewer")
+    // The rail's shorter line agrees with the header's count.
+    expect(el.textContent).toContain("Inventory fields · 2 drafted by Plumb")
+  })
+})
+
+describe("/submissions/[id] — Plumb loading header (RD-8, issue #218)", () => {
+  it("does not render a bare dash for the step count while Plumb's read is loading", async () => {
+    submissions = [submission({ id: "s1", status: "in_review" })]
+    const el = render(<SubmissionDetailPage />)
+    expect(el.textContent).toContain("just submitted")
+    const microlabels = Array.from(el.querySelectorAll(".ks-microlabel")).map((n) => n.textContent)
+    expect(microlabels).toContain("Reading")
+    expect(microlabels.some((t) => t?.includes("—"))).toBe(false)
+    // Let the in-flight assist/draft promises settle before teardown unmounts.
+    await flush(el)
+  })
+})
+
+describe("/submissions/[id] — review header identifier (RD-8, issue #218)", () => {
+  it("uses the same non-truncated, hyphen-free identifier on the undecided review header and the decided header, for the same submission", async () => {
+    paramsId = "sub-atr-clause-recommendation"
+    submissions = [submission({ id: "sub-atr-clause-recommendation", status: "in_review" })]
+    let el = await flush(render(<SubmissionDetailPage />))
+    expect(el.textContent).toContain("CLAUSE-RECOMMENDATION")
+    expect(el.textContent).not.toContain("SUB-ATR-")
+    act(() => root!.unmount())
+    container!.remove()
+    root = null
+    container = null
+
+    submissions = [submission({ id: "sub-atr-clause-recommendation", status: "rejected", ...REJECTED_DECIDED })]
+    el = await flush(render(<SubmissionDetailPage />))
+    expect(el.textContent).toContain("CLAUSE-RECOMMENDATION")
+    expect(el.textContent).not.toContain("SUB-ATR-")
+  })
+
+  it("differs between two records in the same office", async () => {
+    paramsId = "sub-atr-clause-recommendation"
+    submissions = [submission({ id: "sub-atr-clause-recommendation", status: "in_review" })]
+    let el = await flush(render(<SubmissionDetailPage />))
+    expect(el.textContent).toContain("CLAUSE-RECOMMENDATION")
+    act(() => root!.unmount())
+    container!.remove()
+    root = null
+    container = null
+
+    paramsId = "sub-atr-vendor-scoring"
+    submissions = [submission({ id: "sub-atr-vendor-scoring", status: "in_review" })]
+    el = await flush(render(<SubmissionDetailPage />))
+    expect(el.textContent).toContain("VENDOR-SCORING")
+    expect(el.textContent).not.toContain("CLAUSE-RECOMMENDATION")
   })
 })

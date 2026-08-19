@@ -117,6 +117,37 @@ describe("StepHeader", () => {
     expect(segments[3].className).toContain("bg-healthy") // step 4, zero-indexed
   })
 
+  // RD-8 (issue #218): once everything else clears the submit gate, a blank
+  // optional step is not an outstanding gap either — it must not drag the
+  // count down from what it would read if Technical Constraints didn't exist.
+  it("reads '5 of 6 done' when every other step is complete and the optional step is still untouched", () => {
+    const complete = {
+      ...initialFormData,
+      submitterName: "Jane Doe",
+      submitterEmail: "jane@example.gov",
+      submitterRole: "role-a",
+      submitterOffice: "unit-a",
+      coreProblem: "Contract closeout files are checked by hand.",
+      affectedBusinessUnits: ["unit-a"],
+      targetAudience: "audience-a",
+      impactedUsersCount: "50_500",
+      targetUserContext: "Contract specialists at field offices.",
+      proposedSolution: "An anomaly model flags likely-incomplete files.",
+      userValue: "Fewer files reopened after audit.",
+      businessValue: "Fewer audit findings per quarter.",
+      useCaseTitle: "AI-Assisted Closeout Review",
+      useCaseDescription: "Flags incomplete contract closeout files before archiving.",
+      isWithheld: "no",
+      readinessScore: "ready",
+    }
+    mockUseForm.mockReturnValue({ currentStep: 1, setCurrentStep, formData: complete })
+    const el = render(<StepHeader />)
+
+    expect(el.textContent).toContain("5 of 6 done")
+    const segments = Array.from(el.querySelectorAll('[role="img"] > div'))
+    expect(segments[3].className).toContain("bg-healthy") // step 4, zero-indexed — untouched but not a gap
+  })
+
   // Issue #213 item 7: the header printed the tenant's full option label
   // ("Acquisition, Training and Readiness (AT&R)"), which wrapped to two
   // lines and pushed the Edit link out of alignment. It should print the
