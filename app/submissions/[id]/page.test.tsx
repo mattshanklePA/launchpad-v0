@@ -10,6 +10,7 @@ import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { initialFormData, type FormData } from "@/lib/steps"
 import type { Submission } from "@/lib/submissions"
+import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 
 let paramsId = "s1"
 let lastReplacedUrl = ""
@@ -277,18 +278,82 @@ describe("/submissions/[id] — tenants without a bureau tier (no decision attri
   })
 })
 
-describe("/submissions/[id] — undecided (in-review) record", () => {
-  it("labels the first tab 'Review' and keeps today's disposition controls, checklist, and conversation intact", async () => {
+describe("/submissions/[id] — undecided (in-review) record — RD-6 guided process (issue #207)", () => {
+  it("hides the RD-5 tabs and opens the guided process on the first unsettled step, with the rail's early exits available", async () => {
     submissions = [submission({ id: "s1", status: "in_review" })]
     const el = await flush(render(<SubmissionDetailPage />))
 
-    const tabLabels = Array.from(el.querySelectorAll('[role="tab"]')).map((t) => t.textContent)
-    expect(tabLabels.some((t) => t?.includes("Review"))).toBe(true)
-    expect(tabLabels.some((t) => t === "The decision")).toBe(false)
+    // Tabs are hidden while a reviewer is in the process — they return once decided.
+    const tabLabels = Array.from(el.querySelectorAll('[role="tab"]'))
+    expect(tabLabels.length).toBe(0)
 
-    expect(el.textContent).toContain("Decision checklist")
+    // No cluster (only one submission on record) and no highImpact set yet:
+    // the process opens on the first unsettled step, high-impact determination.
+    expect(el.textContent).toContain("Is this high-impact AI?")
+    expect(el.textContent).toContain("Step 1 of 4")
+
+    // The rail's always-visible early exits, and its "Approve at step 4" note.
     const buttons = Array.from(el.querySelectorAll("button")).map((b) => b.textContent)
-    expect(buttons).toContain("Approve")
+    expect(buttons).toContain("Request info")
     expect(buttons).toContain("Reject")
+    expect(el.textContent).toContain("Approve at step 4")
+    // Approve itself only appears once the reviewer reaches the last step.
+    expect(buttons.some((b) => b === "Approve")).toBe(false)
+  })
+
+  it("lets a reviewer jump straight to the disposition step from the rail and see Approve there", async () => {
+    submissions = [submission({ id: "s1", status: "in_review" })]
+    const el = await flush(render(<SubmissionDetailPage />))
+
+    const dispositionRow = Array.from(el.querySelectorAll("button")).find((b) => b.textContent?.includes("Approve, request info, or reject"))!
+    act(() => dispositionRow.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+
+    expect(el.textContent).toContain("Approve, request info, or reject")
+    const approveButton = Array.from(el.querySelectorAll("button")).find((b) => b.textContent === "Approve") as HTMLButtonElement
+    expect(approveButton).toBeTruthy()
+    // No cluster on this submission — canApprove — so Approve is enabled.
+    expect(approveButton.disabled).toBe(false)
+  })
+})
+
+describe("/submissions/[id] — undecided (in-review) record — cluster blocks step 1 (RD-6)", () => {
+  it("shows a 5-step process starting on the cluster step, blocking approval, using the golden DoC cross-bureau pair", async () => {
+    // A department-level viewer (no bureau scope) sees both sides of the
+    // cross-bureau cluster — same access rule app/clusters/[id]/page.test.tsx
+    // relies on for this exact fixture pair.
+    const priorBusinessUnit = mockSession?.businessUnit
+    if (mockSession) mockSession.businessUnit = undefined
+    paramsId = "doc-census-survey-assistant"
+    submissions = docSeedSubmissions
+
+    const el = await flush(render(<SubmissionDetailPage />))
+
+    expect(el.textContent).toContain("Step 1 of 5")
+    expect(el.textContent).toContain("blocks approval on step 1")
+    expect(el.textContent).toContain("Is this one effort, or 2?")
+    // ClusterMembers + ClusterDecision render.
+    const buttons = Array.from(el.querySelectorAll("button")).map((b) => b.textContent)
+    expect(buttons).toContain("Keep separate and link")
+    expect(buttons).toContain("Consolidate into lead")
+
+    if (mockSession) mockSession.businessUnit = priorBusinessUnit
+  })
+
+  it("disables Approve with the block reason at step 5 while the cluster is pending", async () => {
+    const priorBusinessUnit = mockSession?.businessUnit
+    if (mockSession) mockSession.businessUnit = undefined
+    paramsId = "doc-census-survey-assistant"
+    submissions = docSeedSubmissions
+
+    const el = await flush(render(<SubmissionDetailPage />))
+    const dispositionRow = Array.from(el.querySelectorAll("button")).find((b) => b.textContent?.includes("Approve, request info, or reject"))!
+    act(() => dispositionRow.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+
+    const approveButton = Array.from(el.querySelectorAll("button")).find((b) => b.textContent === "Approve") as HTMLButtonElement
+    expect(approveButton.disabled).toBe(true)
+    expect(el.textContent).toContain("Rationalization pending")
+    expect(el.textContent).toContain("Back to step 1")
+
+    if (mockSession) mockSession.businessUnit = priorBusinessUnit
   })
 })

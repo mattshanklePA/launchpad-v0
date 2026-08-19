@@ -2,17 +2,25 @@
 
 // RD-4 "Plumb recommends" card (mock A2 Cluster) — an advisory
 // keep-separate/consolidate read on the cluster, drawn from app/cluster-actions.ts's
-// assessCluster. Exported so RD-6 (issue #206) can reuse it as the reviewer
+// assessCluster. Exported so RD-6 (issue #207) can reuse it as the reviewer
 // path's step-1 recommendation. Loading state is a two-line skeleton, never a
-// spinner — the RD-6 staged-progress pattern isn't built yet (see the issue).
+// spinner.
+//
+// `compact` (RD-6, mock `08 Reviewer Detail - Rationalization.dc.html`) is
+// the reviewer-process step 1's one-line form: the headline inline with a
+// "See the N signals" disclosure that renders ClusterSignals in place,
+// instead of the full reasons/tradeoff card the dedicated cluster page uses.
 
 import { useEffect, useRef, useState } from "react"
 import { KindTag } from "@/components/ui/kind-tag"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { PlumbMark } from "@/components/branding/plumb-mark"
+import { ClusterSignals } from "@/components/clusters/cluster-signals"
 import type { Submission } from "@/lib/submissions"
+import { clusterSignals } from "@/lib/similarity"
 import { assessCluster } from "@/app/cluster-actions"
 import type { ClusterAssessment } from "@/lib/clusterFallback"
+import { cn } from "@/lib/utils"
 
 function ClusterRecommendationSkeleton() {
   return (
@@ -29,8 +37,21 @@ function ClusterRecommendationSkeleton() {
   )
 }
 
-export function PlumbClusterRecommendation({ members, className }: { members: Submission[]; className?: string }) {
+export function PlumbClusterRecommendation({
+  members,
+  className,
+  compact,
+  maxSimilarity,
+}: {
+  members: Submission[]
+  className?: string
+  /** RD-6 (issue #207) step 1's one-line form — headline + a signals disclosure, no reasons/tradeoff. */
+  compact?: boolean
+  /** Required for `compact` — ClusterSignals' "% overall" header (RationalizationCluster.maxSimilarity). */
+  maxSimilarity?: number
+}) {
   const [assessment, setAssessment] = useState<ClusterAssessment | null>(null)
+  const [signalsOpen, setSignalsOpen] = useState(false)
   const ranRef = useRef<string | null>(null)
 
   // Keyed by member ids, not just a mount-once ref — a different cluster
@@ -48,6 +69,26 @@ export function PlumbClusterRecommendation({ members, className }: { members: Su
 
   if (!assessment) {
     return <ClusterRecommendationSkeleton />
+  }
+
+  if (compact) {
+    const signalCount = clusterSignals(members).length
+    return (
+      <div className={cn("flex flex-col gap-3", className)}>
+        <div className="flex items-start gap-2.5 rounded-md bg-muted p-3.5">
+          <PlumbMark className="mt-0.5 h-[17px] w-[17px] shrink-0" />
+          <p className="text-[14px] leading-[1.6]">
+            <span className="ks-microlabel mr-1.5 align-middle text-muted-foreground">Plumb</span>
+            <strong className="font-semibold text-foreground">{assessment.headline}</strong>{" "}
+            {assessment.reasons[0]}{" "}
+            <button type="button" className="ml-1 text-[13px] font-semibold text-primary hover:underline" onClick={() => setSignalsOpen((v) => !v)}>
+              {signalsOpen ? "Hide the signals" : `See the ${signalCount} signals`}
+            </button>
+          </p>
+        </div>
+        {signalsOpen && <ClusterSignals members={members} maxSimilarity={maxSimilarity ?? 0} />}
+      </div>
+    )
   }
 
   return (
