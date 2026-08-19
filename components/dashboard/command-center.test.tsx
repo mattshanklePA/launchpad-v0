@@ -56,7 +56,9 @@ vi.mock("@/lib/dashboard/actions", () => ({ getDashboardActions: () => [] }))
 vi.mock("@/lib/rationalization", () => ({
   tenantHasBureauTier: () => true,
   clusterDuplicates: () => [],
+  clusterForSubmission: () => undefined,
   isRationalizationPending: () => false,
+  clusterHref: (id: string) => `/clusters/${id}`,
 }))
 vi.mock("@/lib/decisionCenter", () => ({ decisionCenterCandidates: () => [] }))
 

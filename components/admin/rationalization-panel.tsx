@@ -20,16 +20,16 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Users, Check } from "lucide-react"
-import { patchSubmissionFormData, type Submission } from "@/lib/submissions"
+import type { Submission } from "@/lib/submissions"
 import { getBusinessUnit, businessUnitLabel } from "@/lib/reviewWorkflow"
 import { getTenant } from "@/lib/tenant"
 import {
   clusterDuplicates,
   getRationalization,
-  buildRationalizationPatch,
   type RationalizationCluster,
   type RationalizationDecision,
 } from "@/lib/rationalization"
+import { applyRationalizationDecision } from "@/lib/rationalizationActions"
 import { getSession } from "@/lib/auth"
 import { useDataProvider } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
@@ -58,12 +58,11 @@ export function RationalizationPanel({ submissions }: { submissions: Submission[
     const session = getSession()
     const leadSubmissionId = decision === "consolidated" ? leadChoice[cluster.id] || cluster.memberIds[0] : undefined
     setBusyClusterId(cluster.id)
-    const patch = buildRationalizationPatch(cluster, decision, {
+    await applyRationalizationDecision(cluster, decision, {
       leadSubmissionId,
       decidedBy: session?.name || session?.email || "Reviewer",
       decidedAt: new Date().toISOString(),
     })
-    await Promise.all(cluster.memberIds.map((id) => patchSubmissionFormData(id, patch)))
     await refetchSubmissions()
     setBusyClusterId(null)
   }

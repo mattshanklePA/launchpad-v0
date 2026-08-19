@@ -35,7 +35,7 @@ import { getKpiDrilldown } from "@/lib/dashboard/drilldown"
 import { getDashboardActions } from "@/lib/dashboard/actions"
 import { plumbLine } from "@/lib/dashboard/plumbLine"
 import { decisionCenterCandidates } from "@/lib/decisionCenter"
-import { tenantHasBureauTier, clusterDuplicates, isRationalizationPending } from "@/lib/rationalization"
+import { tenantHasBureauTier, clusterDuplicates, clusterForSubmission, isRationalizationPending } from "@/lib/rationalization"
 import { buildKpiCards, buildActionItems, scopeLabel, worklistSummaryLabel } from "./department-dashboard-data"
 import { KpiRailList } from "./kpi-card"
 import { ActionCenter } from "./action-center"
@@ -127,7 +127,11 @@ export function CommandCenter({
   // reads "Blocked" instead of their raw status.
   const clusters = clusterDuplicates(submissions, tenant)
   const scopedRows = scoped
-    ? scopedSubmissions(scope, submissions).map((s) => scopedSubmissionRow(s, isRationalizationPending(s, clusters)))
+    ? scopedSubmissions(scope, submissions).map((s) => {
+        const cluster = clusterForSubmission(s, clusters)
+        const pending = cluster && isRationalizationPending(s, clusters)
+        return scopedSubmissionRow(s, pending ? cluster.id : undefined)
+      })
     : []
 
   const warningCount = actionItems.filter((i) => i.severity === "warning").length

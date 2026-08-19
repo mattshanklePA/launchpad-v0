@@ -11,6 +11,7 @@ import type { TenantConfig } from "@/lib/tenant"
 import type { DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, STATUS_LABEL, type SubmissionStatus } from "@/lib/reviewWorkflow"
+import { clusterHref } from "@/lib/rationalization"
 import { kpiDrilldownEntryHref } from "./kpi-card-data"
 import type { ActionItem } from "./action-center-data"
 import type { KeystoneStatus } from "@/lib/statusTokens"
@@ -87,7 +88,10 @@ export function buildHeroCluster(
     body,
     officeLabels,
     href: kpiDrilldownEntryHref(lead),
-    hint: "Opens the lead submission with the cluster panel.",
+    // Mock copy (docs/design/Home - Command Center.dc.html, 01 Dashboard -
+    // Action Center.dc.html): the mock's fixed "three" made general for any
+    // member count.
+    hint: `Opens the ${spellCount(memberCount).toLowerCase()} use cases side by side. Nothing is merged until you choose.`,
   }
 }
 
@@ -134,8 +138,12 @@ export type ScopedSubmissionRow = {
  * cluster set the caller already computed (e.g. `clusterDuplicates` +
  * `isRationalizationPending`, lib/rationalization.ts — the same building
  * blocks `lib/dashboard/metrics.ts` uses, just not re-deriving its summary).
+ * A pending member's "Open" opens its dedicated cluster page (RD-4) instead
+ * of its own submission — the cluster, not the submission, is what's
+ * blocking it.
  */
-export function scopedSubmissionRow(s: Submission, pendingClusterMember: boolean): ScopedSubmissionRow {
+export function scopedSubmissionRow(s: Submission, pendingClusterId: string | undefined): ScopedSubmissionRow {
+  const pendingClusterMember = !!pendingClusterId
   const submitterName = String((s.formData as Record<string, unknown>)?.submitterName || "").trim() || "Unknown submitter"
   const meta = pendingClusterMember
     ? `${submitterName} · in duplicate cluster`
@@ -147,6 +155,6 @@ export function scopedSubmissionRow(s: Submission, pendingClusterMember: boolean
     meta,
     statusLabel: pendingClusterMember ? "Blocked" : STATUS_LABEL[status],
     statusKeystone: pendingClusterMember ? "alert" : submissionStatusKeystone(status),
-    href: `/submissions/${s.id}`,
+    href: pendingClusterId ? clusterHref(pendingClusterId) : `/submissions/${s.id}`,
   }
 }

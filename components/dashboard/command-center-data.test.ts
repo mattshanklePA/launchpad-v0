@@ -73,8 +73,9 @@ describe("buildHeroCluster", () => {
     )
     expect(hero?.headline).toBe("Three program offices are building Supplier Past-Performance Risk Scoring.")
     expect(hero?.officeLabels).toEqual(["Business Technology Solutions", "Acquisition, Training and Readiness", "Logistics & Finance"])
-    expect(hero?.href).toBe("/submissions/lead-1")
+    expect(hero?.href).toBe("/clusters/lead-1")
     expect(hero?.body).toMatch(/^One duplicate cluster is pending rationalization\./)
+    expect(hero?.hint).toBe("Opens the three use cases side by side. Nothing is merged until you choose.")
   })
 
   it("uses the first cluster for the headline and states the total count in the body when more than one is pending", () => {
@@ -134,17 +135,19 @@ describe("scopedSubmissionRow", () => {
     }
   }
 
-  it("shows the submitted date when the submission is not a pending cluster member", () => {
-    const row = scopedSubmissionRow(submission(), false)
+  it("shows the submitted date and links to the submission when not a pending cluster member", () => {
+    const row = scopedSubmissionRow(submission(), undefined)
     expect(row.meta).toBe("Avery Lang · submitted 18 Aug 2026")
     expect(row.statusLabel).toBe("In review")
     expect(row.statusKeystone).toBe("attention")
+    expect(row.href).toBe("/submissions/s1")
   })
 
-  it("shows 'in duplicate cluster' and forces a Blocked/alert pill for a pending cluster member", () => {
-    const row = scopedSubmissionRow(submission(), true)
+  it("shows 'in duplicate cluster', forces a Blocked/alert pill, and links to the cluster page for a pending cluster member", () => {
+    const row = scopedSubmissionRow(submission(), "s1")
     expect(row.meta).toBe("Avery Lang · in duplicate cluster")
     expect(row.statusLabel).toBe("Blocked")
     expect(row.statusKeystone).toBe("alert")
+    expect(row.href).toBe("/clusters/s1")
   })
 })
