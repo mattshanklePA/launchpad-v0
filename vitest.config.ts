@@ -20,6 +20,8 @@ export default defineConfig({
       "context/**/*.test.tsx",
       "hooks/**/*.test.ts",
       "hooks/**/*.test.tsx",
+      "app/**/*.test.ts",
+      "app/**/*.test.tsx",
     ],
   },
   resolve: {

@@ -29,11 +29,9 @@ function entry(id: string, title: string): KpiDrilldownItem {
   return { id, title, bureau: "noaa", bureauLabel: "NOAA", stage: "In review", cardField: "Pending" }
 }
 
-/** The row whose title text matches — Action Center rows are the direct children of the card body. */
+/** The row whose title text matches. */
 function rowFor(el: HTMLElement, title: string): HTMLElement {
-  const row = Array.from(el.querySelectorAll("div")).find(
-    (d) => d.className.includes("border-l-4") && (d.textContent ?? "").includes(title),
-  )
+  const row = Array.from(el.querySelectorAll("[data-action-row]")).find((d) => (d.textContent ?? "").includes(title))
   if (!row) throw new Error(`no Action Center row titled ${title}`)
   return row as HTMLElement
 }

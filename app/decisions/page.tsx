@@ -6,7 +6,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { DecisionCenter } from "@/components/admin/decision-center"
 import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
-import { visibleSubmissions } from "@/lib/reviewWorkflow"
+import { decisionCenterCandidates } from "@/lib/decisionCenter"
 import { getSession } from "@/lib/auth"
 import { getDashboardScope } from "@/lib/dashboard/scope"
 
@@ -18,7 +18,7 @@ function DecisionsPageInner() {
     if (loaded) {
       const s = getSession()
       const viewer = s ? { role: s.role, email: s.email, businessUnit: s.businessUnit, office: s.office } : null
-      setSubmissions(visibleSubmissions(getSubmissions(), viewer))
+      setSubmissions(decisionCenterCandidates(getSubmissions(), viewer))
     }
   }, [loaded])
 

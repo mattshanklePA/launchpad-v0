@@ -27,6 +27,10 @@ interface FormContextType {
   showResumePrompt: boolean
   continueDraft: () => void
   startNewForm: () => void
+  // Timestamp (ms) of the last successful draft persist to localStorage, or
+  // null before the first write — drives the wizard footer's "Saved a moment
+  // ago" hint (components/steps/step-frame.tsx).
+  lastSavedAt: number | null
 }
 
 // Draft storage is namespaced per signed-in user (see lib/draftStorage.ts) so
@@ -188,11 +192,14 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   const [showResumePrompt, setShowResumePrompt] = useState(false)
   const [pendingResumeStep, setPendingResumeStep] = useState<number | null>(null)
 
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
+
   // Persist on every change
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(storageKeyForm(), JSON.stringify(formData))
+        setLastSavedAt(Date.now())
       } catch (error) {
         console.error("Failed to persist form data:", error)
       }
@@ -353,6 +360,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         showResumePrompt,
         continueDraft,
         startNewForm,
+        lastSavedAt,
       }}
     >
       {children}

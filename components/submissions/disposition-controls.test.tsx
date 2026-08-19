@@ -153,6 +153,44 @@ describe("DispositionControls", () => {
     }
   })
 
+  it("renders the decided outcome as a filled chip (not a button) when chipStyle is set", () => {
+    const el = render(
+      <DispositionControls
+        status="rejected"
+        busy={false}
+        blockReason={undefined}
+        chipStyle
+        onApprove={vi.fn()}
+        onRequestInfo={vi.fn()}
+        onReject={vi.fn()}
+      />,
+    )
+    // The decided outcome is a <span>, not a clickable button.
+    expect(Array.from(el.querySelectorAll("button")).some((b) => /^Rejected$/.test(b.textContent?.trim() ?? ""))).toBe(false)
+    const chip = Array.from(el.querySelectorAll("span")).find((s) => s.textContent?.includes("Rejected"))!
+    expect(chip.className).toContain("bg-alert")
+    // The alternative action is still available, reversible.
+    const approve = buttonNamed(el, /Approve/)
+    expect(approve.disabled).toBe(false)
+    act(() => approve.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+  })
+
+  it("chipStyle has no effect while undecided — the plain trio still renders", () => {
+    const el = render(
+      <DispositionControls
+        status="in_review"
+        busy={false}
+        blockReason={undefined}
+        chipStyle
+        onApprove={vi.fn()}
+        onRequestInfo={vi.fn()}
+        onReject={vi.fn()}
+      />,
+    )
+    expect(isDefaultVariant(buttonNamed(el, /Approve/))).toBe(true)
+    expect(isOutlineVariant(buttonNamed(el, /Reject/))).toBe(true)
+  })
+
   it("leaves Request info outlined regardless of the recorded decision", () => {
     for (const status of ["approved", "rejected", "in_review"] as const) {
       const el = render(

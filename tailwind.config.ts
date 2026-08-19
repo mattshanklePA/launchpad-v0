@@ -18,11 +18,26 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
+        // `border`/`foreground` DEFAULTs are unchanged (still the shadcn
+        // --border/--foreground HSL tokens); `subtle`/`strong`/`faint` are
+        // additive — direct Tailwind handles for the Keystone DS's own
+        // --border-subtle/--border-strong/--text-faint hairline tokens
+        // (app/styles/keystone/colors.css), which raw hex resolve rather
+        // than HSL so they're referenced without the hsl() wrapper. RD-0
+        // (issue #201) adds these for the shell top bar; later RD issues
+        // reuse them (`border-border-subtle`, `text-foreground-faint`).
+        border: {
+          DEFAULT: "hsl(var(--border))",
+          subtle: "var(--border-subtle)",
+          strong: "var(--border-strong)",
+        },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        foreground: {
+          DEFAULT: "hsl(var(--foreground))",
+          faint: "var(--text-faint)",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -115,6 +130,11 @@ const config: Config = {
         // its color/type token wiring is superseded.
         keystone: {
           basalt: "#2A333C",
+          // Raised basalt (--ks-basalt-600, app/styles/keystone/colors.css) —
+          // the hero/scoped-banner card background (RD-1, issue #202); no
+          // prior tailwind handle existed since RD-0 never needed a basalt
+          // surface lighter than the base --ks-basalt.
+          basalt600: "#3B4650",
           activeBlue: "#0086CA",
           amber: "#C77D3A",
           amberLight: "#DCA061",

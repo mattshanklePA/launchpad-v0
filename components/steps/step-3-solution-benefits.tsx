@@ -8,11 +8,14 @@
 // (`implementationComplexity`, `userTimeSavings`, `costSavings`) are gone;
 // value and impact are a Scout/reviewer determination, made during vetting.
 // The fields themselves stay in FormData, just no longer collected at intake.
+//
+// RD-2 (issue #203): same inline-Plumb treatment as step 2 (see
+// step-3-problem-and-users.tsx) — the panel moves below the fields and gets
+// the step's own summary field (`solutionSummary`).
 
 import { useState } from "react"
 import { usePersistentDisclosure } from "@/hooks/use-persistent-disclosure"
 import { useForm } from "@/context/form-context"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Toggle } from "@/components/ui/toggle"
 import { AIdChatPanel } from "@/components/launchpad/chat-panel"
@@ -22,7 +25,7 @@ import { Input } from "@/components/ui/input"
 import TextareaAutosize from "react-textarea-autosize"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
-import { OptionRadioGroup } from "@/components/launchpad/option-radio-group"
+import { Field, StepCard, pillToggleClass, segmentClass } from "./step-frame"
 
 const MAX_FEATURES = 3
 
@@ -31,6 +34,11 @@ const improvementOptions = [
   { value: "better_accuracy", label: "Better accuracy" },
   { value: "reduced_frustration", label: "Reduced frustration" },
   { value: "other", label: "Other" },
+]
+
+const deliveryAudienceOptions = [
+  { value: "internal", label: "Internal — for our own staff" },
+  { value: "external", label: "External — customer/public-facing" },
 ]
 
 function getBenefitOptions(orgName: string) {
@@ -81,199 +89,169 @@ export function Step3SolutionBenefits() {
   }
 
   return (
-    <div className="grid lg:grid-cols-12 gap-10">
-      <div className="lg:col-span-7">
-        <div className="space-y-10">
-          {/* ─── THE SOLUTION ─── */}
-          <div className="space-y-6">
-            {isVisible("proposedSolution") && (
-              <div className="space-y-2">
-                <Label htmlFor="proposedSolution" className="text-base font-semibold text-uspto-gray-text">
-                  Describe your proposed solution
-                </Label>
+    <>
+      <StepCard>
+        {isVisible("proposedSolution") && (
+          <Field label="Describe your proposed solution" htmlFor="proposedSolution" required>
+            <Textarea
+              id="proposedSolution"
+              value={formData.proposedSolution}
+              onChange={(e) => setFormData((prev) => ({ ...prev, proposedSolution: e.target.value }))}
+              placeholder="Provide a short narrative of your solution."
+              rows={4}
+              className="text-[15px]"
+            />
+          </Field>
+        )}
+
+        {isVisible("deliveryAudience") && (
+          <Field label="Is this solution internal or external facing?">
+            <div role="radiogroup" aria-label="Is this solution internal or external facing?" className="flex overflow-hidden rounded-md border border-border-subtle">
+              {deliveryAudienceOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={formData.deliveryAudience === opt.value}
+                  onClick={() => setFormData((prev) => ({ ...prev, deliveryAudience: opt.value as any }))}
+                  className={segmentClass(formData.deliveryAudience === opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+        )}
+
+        {benefitsSectionVisible && (
+          <div className="flex flex-col gap-5 border-t border-border-subtle pt-5">
+            <p className="text-[12.5px] text-muted-foreground">
+              What you expect this to deliver: reviewers will confirm the actual value and impact during vetting.
+            </p>
+
+            {isVisible("userValue") && (
+              <Field label="What benefits will users gain?" htmlFor="userValue" required>
                 <Textarea
-                  id="proposedSolution"
-                  value={formData.proposedSolution}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, proposedSolution: e.target.value }))}
-                  placeholder="Provide a short narrative of your solution."
-                  rows={4}
-                  className="text-base"
+                  id="userValue"
+                  value={formData.userValue}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, userValue: e.target.value }))}
+                  placeholder="Describe the primary benefits for the end user."
+                  rows={3}
+                  className="text-[15px]"
                 />
-              </div>
+              </Field>
             )}
 
-            {isVisible("solutionSummary") && (
-              <div className="space-y-2">
-                <Label htmlFor="solutionSummary" className="text-base font-semibold text-uspto-gray-text">
-                  Solution Summary
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  AI-generated refined summary of your proposed solution. Open {tenant.assistantName} to draft or refine.
-                </p>
-                <TextareaAutosize
-                  id="solutionSummary"
-                  value={formData.solutionSummary || ""}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, solutionSummary: e.target.value }))}
-                  placeholder="AI-generated summary will appear here..."
-                  minRows={3}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+            {isVisible("businessValue") && (
+              <Field label="What is the expected business impact?" htmlFor="businessValue" required>
+                <Textarea
+                  id="businessValue"
+                  value={formData.businessValue}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, businessValue: e.target.value }))}
+                  placeholder="Describe the impact on the agency."
+                  rows={3}
+                  className="text-[15px]"
                 />
-              </div>
+              </Field>
             )}
+          </div>
+        )}
 
-            {isVisible("deliveryAudience") && (
-              <div className="space-y-2">
-                <Label htmlFor="deliveryAudience">Is this solution internal or external facing?</Label>
-                <OptionRadioGroup
-                  ariaLabel="Is this solution internal or external facing?"
-                  value={formData.deliveryAudience}
-                  onChange={(value) => setFormData((prev) => ({ ...prev, deliveryAudience: value as any }))}
-                  options={[
-                    { value: "internal", label: "Internal — for our own staff" },
-                    { value: "external", label: "External — customer/public-facing" },
-                  ]}
-                />
+        {optionalVisible && (
+          <div className="border-t border-border-subtle pt-5">
+            <button
+              type="button"
+              onClick={() => setShowOptional((v) => !v)}
+              className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+              aria-expanded={showOptional}
+            >
+              {showOptional ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              {showOptional ? "Hide optional detail" : "Add optional detail"}
+            </button>
+
+            {showOptional && (
+              <div className="mt-4 flex flex-col gap-5">
+                {isVisible("keyFunctionality") && (
+                  <Field label="Key functionality (top 3 features)">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newFeature}
+                        onChange={(e) => setNewFeature(e.target.value)}
+                        placeholder="Add a feature..."
+                        disabled={(formData.keyFunctionality || []).length >= MAX_FEATURES}
+                      />
+                      <Button onClick={handleAddFeature} disabled={(formData.keyFunctionality || []).length >= MAX_FEATURES}>
+                        Add
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {(formData.keyFunctionality || []).map((feature) => (
+                        <div
+                          key={feature}
+                          className="flex items-center gap-1 bg-muted text-muted-foreground rounded-full pl-3 pr-1 py-1 text-sm"
+                        >
+                          <span>{feature}</span>
+                          <button onClick={() => handleRemoveFeature(feature)} className="rounded-full hover:bg-background">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </Field>
+                )}
+
+                {isVisible("otherUserImprovements") && (
+                  <Field label="Other measurable improvements">
+                    <div className="flex flex-wrap gap-2">
+                      {improvementOptions.map((option) => (
+                        <Toggle
+                          key={option.value}
+                          pressed={formData.otherUserImprovements.includes(option.value)}
+                          onPressedChange={() => handleImprovementToggle(option.value)}
+                          className={pillToggleClass}
+                        >
+                          {option.label}
+                        </Toggle>
+                      ))}
+                    </div>
+                  </Field>
+                )}
+
+                {isVisible("strategicBenefit") && (
+                  <Field label="Strategic benefit">
+                    <div className="flex flex-wrap gap-2">
+                      {benefitOptions.map((option) => (
+                        <Toggle
+                          key={option.value}
+                          pressed={formData.strategicBenefit.includes(option.value)}
+                          onPressedChange={() => handleBenefitToggle(option.value)}
+                          className={pillToggleClass}
+                        >
+                          {option.label}
+                        </Toggle>
+                      ))}
+                    </div>
+                  </Field>
+                )}
               </div>
             )}
           </div>
+        )}
+      </StepCard>
 
-          {/* ─── EXPECTED BENEFITS — the submitter's expectation, not a determination ─── */}
-          {benefitsSectionVisible && (
-            <div className="space-y-6 border-t pt-8">
-              <div>
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Expected Benefits
-                </h3>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  What you expect this to deliver — reviewers will confirm the actual value and impact during vetting.
-                </p>
-              </div>
-
-              {isVisible("userValue") && (
-                <div className="space-y-2">
-                  <Label htmlFor="userValue" className="text-base font-semibold text-uspto-gray-text">
-                    What benefits will users gain?
-                  </Label>
-                  <Textarea
-                    id="userValue"
-                    value={formData.userValue}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, userValue: e.target.value }))}
-                    placeholder="Describe the primary benefits for the end user."
-                    rows={3}
-                    className="text-base"
-                  />
-                </div>
-              )}
-
-              {isVisible("businessValue") && (
-                <div className="space-y-2">
-                  <Label htmlFor="businessValue" className="text-base font-semibold text-uspto-gray-text">
-                    What is the expected business impact?
-                  </Label>
-                  <Textarea
-                    id="businessValue"
-                    value={formData.businessValue}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, businessValue: e.target.value }))}
-                    placeholder="Describe the impact on the agency."
-                    rows={3}
-                    className="text-base"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ─── OPTIONAL DETAIL (progressive disclosure) ─── */}
-          {optionalVisible && (
-            <div className="border-t pt-6">
-              <button
-                type="button"
-                onClick={() => setShowOptional((v) => !v)}
-                className="flex items-center gap-1.5 text-sm font-medium text-uspto-blue-primary hover:underline"
-                aria-expanded={showOptional}
-              >
-                {showOptional ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                {showOptional ? "Hide optional detail" : "Add optional detail"}
-              </button>
-
-              {showOptional && (
-                <div className="mt-5 space-y-6">
-                  {isVisible("keyFunctionality") && (
-                    <div className="space-y-2">
-                      <Label>Key functionality (top 3 features)</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={newFeature}
-                          onChange={(e) => setNewFeature(e.target.value)}
-                          placeholder="Add a feature..."
-                          disabled={(formData.keyFunctionality || []).length >= MAX_FEATURES}
-                        />
-                        <Button onClick={handleAddFeature} disabled={(formData.keyFunctionality || []).length >= MAX_FEATURES}>
-                          Add
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {(formData.keyFunctionality || []).map((feature) => (
-                          <div
-                            key={feature}
-                            className="flex items-center gap-1 bg-muted text-muted-foreground rounded-full pl-3 pr-1 py-1 text-sm"
-                          >
-                            <span>{feature}</span>
-                            <button onClick={() => handleRemoveFeature(feature)} className="rounded-full hover:bg-background">
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {isVisible("otherUserImprovements") && (
-                    <div className="space-y-2">
-                      <Label>Other measurable improvements</Label>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {improvementOptions.map((option) => (
-                          <Toggle
-                            key={option.value}
-                            pressed={formData.otherUserImprovements.includes(option.value)}
-                            onPressedChange={() => handleImprovementToggle(option.value)}
-                            variant="outline"
-                            className="rounded-full px-3 py-1 text-sm h-auto"
-                          >
-                            {option.label}
-                          </Toggle>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {isVisible("strategicBenefit") && (
-                    <div className="space-y-2">
-                      <Label>Strategic benefit</Label>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {benefitOptions.map((option) => (
-                          <Toggle
-                            key={option.value}
-                            pressed={formData.strategicBenefit.includes(option.value)}
-                            onPressedChange={() => handleBenefitToggle(option.value)}
-                            variant="outline"
-                            className="rounded-full px-3 py-1 text-sm h-auto"
-                          >
-                            {option.label}
-                          </Toggle>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="lg:col-span-5 flex flex-col">
-        <AIdChatPanel step={3} onApplySuggestion={handleSuggestion} />
-      </div>
-    </div>
+      <AIdChatPanel
+        step={3}
+        onApplySuggestion={handleSuggestion}
+        summaryField={
+          isVisible("solutionSummary")
+            ? {
+                key: "solutionSummary",
+                label: "Solution Summary",
+                hint: `${tenant.assistantName} writes the field reviewers read. You edit every word after.`,
+              }
+            : undefined
+        }
+      />
+    </>
   )
 }

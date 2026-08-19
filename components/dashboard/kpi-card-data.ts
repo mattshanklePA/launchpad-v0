@@ -5,6 +5,7 @@
 import type { KpiDrilldown, KpiDrilldownItem, DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { GlossaryTermKey } from "@/lib/glossary"
 import { STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
+import { clusterHref } from "@/lib/rationalization"
 
 export type KpiTrendDirection = "up" | "down" | "flat"
 export type KpiStatus = "neutral" | "good" | "warning" | "critical"
@@ -131,12 +132,30 @@ export function presentCardField(item: KpiDrilldownEntry): CardFieldPresentation
 }
 
 /**
- * Read-only detail route a drill-down entry's "Open" link should point at.
- * A duplicate cluster's `id` is already its lead submission's id (`toItem(lead, ...)`
- * in lib/dashboard/drilldown.ts), and that submission's own detail page renders
- * the cross-bureau rationalization section for the whole cluster — so every
- * entry, cluster or not, resolves to the same `/submissions/{id}` shape.
+ * Read-only detail route a drill-down entry's "Open" link should point at —
+ * a duplicate cluster (RD-4) opens its own dedicated `/clusters/{id}` screen
+ * (`item.id` is already the cluster's id, `toItem(lead, ...)` in
+ * lib/dashboard/drilldown.ts), every other entry opens its submission detail.
  */
 export function kpiDrilldownEntryHref(item: KpiDrilldownEntry): string {
-  return `/submissions/${item.id}`
+  return isDuplicateClusterEntry(item) ? clusterHref(item.id) : `/submissions/${item.id}`
+}
+
+// Drill-down dialog footer hint (RD-1, mock 04) — one quiet line under the
+// list explaining when the count will move, keyed by KpiCardData id (and the
+// Action Center's own "duplicates"/"omb-review" ids, which open the same
+// dialog — see action-center.tsx). `default` covers every id without one of
+// its own.
+const DRILLDOWN_FOOTER_HINT: Record<string, string> = {
+  duplicates: "Either choice on the cluster page clears the block.",
+  "omb-reportable": "Counts refresh as reviewers record assessments.",
+  "omb-review": "Counts refresh as reviewers record assessments.",
+  reportability: "Counts refresh as reviewers record assessments.",
+  signoff: "Approved use cases appear here until their office confirms.",
+}
+const DEFAULT_DRILLDOWN_FOOTER_HINT = "Counts refresh as reviewers record decisions."
+
+/** The drill-down dialog's footer hint for a metric id — `DEFAULT_DRILLDOWN_FOOTER_HINT` for any id without its own. */
+export function drilldownFooterHint(id: string): string {
+  return DRILLDOWN_FOOTER_HINT[id] ?? DEFAULT_DRILLDOWN_FOOTER_HINT
 }

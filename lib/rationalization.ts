@@ -194,3 +194,22 @@ export function buildRationalizationPatch(
     },
   }
 }
+
+/**
+ * Builds the patch that reverses a cluster decision ("Undo decision") — an
+ * `undefined` value for the key. `patchSubmissionFormData`'s adapter
+ * (lib/adapters/default/supabaseStore.ts) spreads this over the existing
+ * `form_data` then `JSON.stringify`s the result before sending it, and
+ * `JSON.stringify` drops object keys whose value is `undefined` — so this
+ * clears `rationalization` entirely rather than writing a tombstone value,
+ * and `getRationalization`/`isRationalizationPending` see the cluster as
+ * pending again.
+ */
+export function clearRationalizationPatch(): Record<string, unknown> {
+  return { rationalization: undefined }
+}
+
+/** Route for the dedicated duplicate-cluster page (RD-4). `id` is a `RationalizationCluster.id`. */
+export function clusterHref(id: string): string {
+  return `/clusters/${id}`
+}

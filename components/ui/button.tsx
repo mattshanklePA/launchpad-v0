@@ -14,10 +14,20 @@ const buttonVariants = cva(
           'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         outline:
           'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        // Keystone components sheet's secondary (00 Components Sheet.dc.html):
+        // a limestone-bordered white button with basalt text — not a filled
+        // basalt button. The sheet has no filled-basalt button on light
+        // surfaces (RD-0, issue #201); that treatment is now `chalk`, and is
+        // only for basalt hero cards.
         secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'border border-border bg-card text-foreground hover:bg-muted',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
+        // On-dark chalk button (00 Components Sheet.dc.html) — chalk surface,
+        // basalt text. Only for use inside basalt hero cards (RD-1); never on
+        // a light/chalk-canvas surface, where it would be invisible.
+        chalk:
+          'border border-border bg-keystone-chalk text-foreground shadow-sm hover:bg-white',
       },
       size: {
         default: 'h-10 px-4 py-2',

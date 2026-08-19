@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/colors.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/typography.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/tokens/effects.css">
+<link rel="stylesheet" href="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/styles.css">
+<script src="_ds/keystone-design-system-37ff679f-93ba-40e5-9dd8-c784daa6a8e2/_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: #E9E6DE; }
+  a { color: var(--text-link); text-decoration: none; }
+  a:hover { color: var(--text-link-hover); text-decoration: underline; }
+</style>
+</helmet>
+
+<div style="font-family: var(--font-body); color: var(--text-body); padding: 56px 56px 96px; display: flex; flex-direction: column; gap: 56px; width: 1552px;">
+
+  <div style="max-width: 760px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);">Intake · combined treatment</div>
+    <h1 style="font-family: var(--font-display); font-weight: 900; font-size: 36px; line-height: 1.06; letter-spacing: -0.025em; color: var(--text-strong); margin: 0;">Basalt header + inline thread</h1>
+    <p style="font-size: 16px; line-height: 1.6; margin: 0; text-wrap: pretty;">Variant 1's header and Variant 2's Plumb thread, with two fixes for the header-against-nav clash: <a href="#3a">3a</a> insets the header as a card so it never touches the dark rail; <a href="#3b">3b</a> uses the same inset geometry in the lighter raised basalt.</p>
+  </div>
+
+  <section id="3a" style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; align-items: baseline; gap: 14px;">
+      <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong); background: var(--surface-sunken); padding: 3px 8px; border-radius: var(--radius-sm);">3a · Inset header card</span>
+      <span style="font-size: 14px; color: var(--text-muted);">Header floats on chalk — clear air between it and the nav</span>
+    </div>
+
+    <div data-screen-label="3a Inset header" style="width: 1440px; background: var(--surface-canvas); border: 1px solid var(--border-default); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); display: flex; align-items: stretch;">
+
+      <div style="width: 200px; flex: 0 0 200px; background: var(--surface-nav); color: var(--text-on-dark); padding: 18px 0 20px; display: flex; flex-direction: column; gap: 18px;">
+        <div style="padding: 0 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 9px;">
+          <img src="assets/mark-amber.svg" alt="" width="30" height="30" style="flex-shrink: 0;">
+          <div>
+            <img src="assets/logo-wordmark.svg" alt="Keystone" width="90" height="21" style="display: block; filter: invert(1) brightness(2);">
+            <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(244,242,236,0.5); margin-top: 3px;">AI use case governance</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.4); padding: 0 8px 6px;">Workspace</div>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.10); color: #fff; font-size: 12.5px; line-height: 1.35; font-weight: 600;" style-hover="text-decoration: none;">Submit an idea</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Decision Center</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.4); padding: 0 8px 6px;">Organization</div>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Enterprise Software and Services</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.10); color: #fff; font-size: 12.5px; line-height: 1.35; font-weight: 600;" style-hover="text-decoration: none;">Acquisition, Training and Readiness (AT&amp;R)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Human Resources &amp; Force Management (HR-FM)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Logistics &amp; Finance (LOG-FIN)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Business Technology Solutions (BTS)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Consolidated ERP (C-ERP)</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.4); padding: 0 8px 6px;">My view</div>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Personal</a>
+        </div>
+      </div>
+
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 28px; height: 52px; background: var(--surface-card); border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; color: var(--text-faint); margin-right: 4px;"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+            <a href="#" style="font-weight: 600;">Command Center</a><span style="color: var(--text-faint);">/</span><span style="color: var(--text-strong); font-weight: 600;">Submit an idea</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-body);">
+            <a href="#" title="Home" style="display: inline-flex; color: var(--text-muted);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3l9 7.2V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"></path></svg></a>
+            <span style="position: relative; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-strong); cursor: pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Avery Lang<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><path d="m6 9 6 6 6-6"></path></svg>
+              <span style="position: absolute; top: 34px; right: 0; width: 248px; background: var(--surface-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 6px; display: flex; flex-direction: column; z-index: 20; font-weight: 400;">
+                <span style="padding: 9px 11px 8px; border-bottom: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 1px;">
+                  <span style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Avery Lang</span>
+                  <span style="font-size: 12px; color: var(--text-muted);">Contracting Officer · AT&amp;R</span>
+                </span>
+                <span style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); padding: 10px 11px 5px;">Admin</span>
+                <a href="#" style="padding: 8px 11px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">Form configuration</a>
+                <a href="#" style="padding: 8px 11px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">User management</a>
+                <a href="#" style="padding: 8px 11px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">Demo data</a>
+                <a href="#" style="padding: 8px 11px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">Export AI use case inventory</a>
+                <a href="#" style="padding: 8px 11px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">Export approval report</a>
+                <span style="border-top: 1px solid var(--border-subtle); margin-top: 5px; padding-top: 5px; display: flex; flex-direction: column;">
+                  <a href="#" style="padding: 8px 11px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">Sign out</a>
+                </span>
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div style="flex: 1; padding: 26px 0 0;">
+          <div style="width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px;">
+
+            <div style="background: var(--ks-basalt); color: var(--text-on-dark); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 24px 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px;">
+              <div style="display: flex; flex-direction: column; gap: 8px; max-width: 460px;">
+                <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ks-amber-light);">Step 2 of 6 · Business Problem &amp; Opportunity</div>
+                <h1 style="font-family: var(--font-display); font-weight: 900; font-size: 30px; line-height: 1.08; letter-spacing: -0.024em; color: #fff; margin: 0;">What is broken today?</h1>
+                <p style="font-size: 14px; line-height: 1.55; margin: 0; color: rgba(244,242,236,0.72); text-wrap: pretty;">Write it roughly. Plumb asks what a reviewer would ask, then writes the summary when you say so.</p>
+              </div>
+              <div style="flex: 0 0 260px; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px;">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                  <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.55);">Phase 2 of 3</span>
+                  <span style="font-family: var(--font-mono); font-size: 11px; color: rgba(244,242,236,0.75);">2 of 6 done</span>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: var(--ks-on-track);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: var(--ks-amber);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: var(--ks-on-track);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18);"></div>
+                </div>
+                <div style="font-size: 12px; color: rgba(244,242,236,0.55);">Avery Lang · AT&amp;R <a href="#" style="color: rgba(244,242,236,0.85); margin-left: 6px;">Edit</a></div>
+              </div>
+            </div>
+
+            <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 24px 26px; display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Core Problem <span style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); font-weight: 400; margin-left: 6px;">required</span></label>
+                <div style="border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 15px; line-height: 1.6; color: var(--text-strong);">Contract closeout files are checked by hand before archiving, so completeness errors surface during the audit rather than beforehand.</div>
+              </div>
+              <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 7px;">
+                  <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Target Audience</label>
+                  <div style="border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; color: var(--text-strong); display: flex; align-items: center; justify-content: space-between;">Contract Specialist
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                  </div>
+                </div>
+                <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 7px;">
+                  <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Impacted Users Count</label>
+                  <div style="display: flex; gap: 0; border: 1px solid var(--border-default); border-radius: var(--radius-sm); overflow: hidden;">
+                    <a href="#" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">Under 10</a>
+                    <a href="#" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; color: var(--text-body); border-left: 1px solid var(--border-default);" style-hover="background: var(--surface-canvas); text-decoration: none;">10–50</a>
+                    <div style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; background: var(--ks-basalt); color: var(--text-on-dark); border-left: 1px solid var(--border-default);">50–500</div>
+                    <a href="#" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; color: var(--text-body); border-left: 1px solid var(--border-default);" style-hover="background: var(--surface-canvas); text-decoration: none;">500+</a>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Affected Business Units</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <span style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--ks-basalt); background: var(--ks-basalt); color: var(--text-on-dark); font-size: 13px;">Contract writing &amp; administration</span>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Training management &amp; delivery</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Security cooperation / FMS</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">IT acquisition &amp; marketplace</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Logistics &amp; finance</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Cross-program</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Other</a>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0; padding: 0 4px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <img src="assets/plumb-assistant.svg" alt="Plumb" width="16" height="16" style="flex-shrink: 0;">
+                  <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Plumb's follow-ups</span>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint);">2 of 3 answered</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; border-left: 2px solid var(--ks-limestone-dark); padding-left: 18px; margin-left: 7px;">
+                <div style="font-size: 14px; line-height: 1.55; color: var(--text-muted); padding: 4px 0;">How many closeout files go through this a month?</div>
+                <div style="font-size: 14.5px; color: var(--text-strong); font-weight: 600; padding: 0 0 12px;">100–500</div>
+                <div style="font-size: 14px; line-height: 1.55; color: var(--text-muted); padding: 4px 0;">What happens when the audit finds an error?</div>
+                <div style="font-size: 14.5px; color: var(--text-strong); font-weight: 600; padding: 0 0 12px;">The file is reopened and re-certified — about half a day of specialist time.</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border: 1px solid var(--ks-active-blue); border-radius: var(--radius-md); background: var(--surface-card); margin-top: 8px;">
+                <div style="font-size: 15px; line-height: 1.55; color: var(--text-strong); text-wrap: pretty;">Last one: are the errors concentrated in certain file types, or spread evenly?</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-body);" style-hover="border-color: var(--border-strong); text-decoration: none;">Concentrated</a>
+                  <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-body);" style-hover="border-color: var(--border-strong); text-decoration: none;">Spread evenly</a>
+                  <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-muted);" style-hover="border-color: var(--border-strong); text-decoration: none;">Not sure</a>
+                </div>
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px; font-size: 12.5px; color: var(--text-faint);">Or type your own answer</div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; background: var(--surface-card); border: 1px solid var(--border-subtle); border-left: 3px solid var(--ks-active-blue); border-radius: var(--radius-md); margin-bottom: 30px;">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Refined Problem &amp; Users Summary</span>
+                <span style="font-size: 12.5px; color: var(--text-muted);">Plumb writes the field reviewers read. You edit every word after.</span>
+              </div>
+              <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="primary" size="md" hint-size="230px,40px">Have Plumb write the summary</x-import>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); background: var(--surface-card); padding: 18px 0;">
+          <div style="width: 880px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+            <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="ghost" size="md" hint-size="110px,40px">Previous</x-import>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <span style="font-size: 12px; color: var(--text-faint);">Saved a moment ago</span>
+              <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="secondary" size="md" hint-size="200px,40px">Next: Proposed Solution</x-import>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="3b" style="display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; align-items: baseline; gap: 14px;">
+      <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-strong); background: var(--surface-sunken); padding: 3px 8px; border-radius: var(--radius-sm);">3b · Raised-basalt card</span>
+      <span style="font-size: 14px; color: var(--text-muted);">The 3b color on the 3a geometry — lighter raised basalt, inset so it never touches the nav</span>
+    </div>
+
+    <div data-screen-label="3b Full-bleed header" style="width: 1440px; background: var(--surface-canvas); border: 1px solid var(--border-default); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); display: flex; align-items: stretch;">
+
+      <div style="width: 200px; flex: 0 0 200px; background: var(--surface-nav); color: var(--text-on-dark); padding: 18px 0 20px; display: flex; flex-direction: column; gap: 18px;">
+        <div style="padding: 0 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 9px;">
+          <img src="assets/mark-amber.svg" alt="" width="30" height="30" style="flex-shrink: 0;">
+          <div>
+            <img src="assets/logo-wordmark.svg" alt="Keystone" width="90" height="21" style="display: block; filter: invert(1) brightness(2);">
+            <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(244,242,236,0.5); margin-top: 3px;">AI use case governance</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.4); padding: 0 8px 6px;">Workspace</div>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.10); color: #fff; font-size: 12.5px; line-height: 1.35; font-weight: 600;" style-hover="text-decoration: none;">Submit an idea</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Decision Center</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.4); padding: 0 8px 6px;">Organization</div>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Enterprise Software and Services</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.10); color: #fff; font-size: 12.5px; line-height: 1.35; font-weight: 600;" style-hover="text-decoration: none;">Acquisition, Training and Readiness (AT&amp;R)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Human Resources &amp; Force Management (HR-FM)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Logistics &amp; Finance (LOG-FIN)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Business Technology Solutions (BTS)</a>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Consolidated ERP (C-ERP)</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px;">
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.4); padding: 0 8px 6px;">My view</div>
+          <a href="#" style="padding: 8px; border-radius: var(--radius-sm); color: rgba(244,242,236,0.78); font-size: 12.5px; line-height: 1.35;" style-hover="background: rgba(255,255,255,0.06); text-decoration: none;">Personal</a>
+        </div>
+      </div>
+
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 28px; height: 52px; background: var(--surface-card); border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; color: var(--text-faint); margin-right: 4px;"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+            <a href="#" style="font-weight: 600;">Command Center</a><span style="color: var(--text-faint);">/</span><span style="color: var(--text-strong); font-weight: 600;">Submit an idea</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-body);">
+            <a href="#" title="Home" style="display: inline-flex; color: var(--text-muted);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3l9 7.2V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"></path></svg></a>
+            <span style="display: inline-flex; align-items: center; gap: 6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Avery Lang</span>
+          </div>
+        </div>
+
+        <div style="flex: 1; padding: 26px 0 0;">
+          <div style="width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px;">
+
+            <div style="background: var(--ks-basalt-600); color: var(--text-on-dark); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 24px 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 32px;">
+              <div style="display: flex; flex-direction: column; gap: 8px; max-width: 460px;">
+                <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ks-amber-light);">Step 2 of 6 · Business Problem &amp; Opportunity</div>
+                <h1 style="font-family: var(--font-display); font-weight: 900; font-size: 30px; line-height: 1.08; letter-spacing: -0.024em; color: #fff; margin: 0;">What is broken today?</h1>
+                <p style="font-size: 14px; line-height: 1.55; margin: 0; color: rgba(244,242,236,0.72); text-wrap: pretty;">Write it roughly. Plumb asks what a reviewer would ask, then writes the summary when you say so.</p>
+              </div>
+              <div style="flex: 0 0 260px; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px;">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                  <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(244,242,236,0.55);">Phase 2 of 3</span>
+                  <span style="font-family: var(--font-mono); font-size: 11px; color: rgba(244,242,236,0.75);">2 of 6 done</span>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: var(--ks-on-track);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: var(--ks-amber);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: var(--ks-on-track);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18);"></div>
+                  <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18);"></div>
+                </div>
+                <div style="font-size: 12px; color: rgba(244,242,236,0.55);">Avery Lang · AT&amp;R <a href="#" style="color: rgba(244,242,236,0.85); margin-left: 6px;">Edit</a></div>
+              </div>
+            </div>
+
+            <div style="background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 24px 26px; display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Core Problem <span style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); font-weight: 400; margin-left: 6px;">required</span></label>
+                <div style="border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 15px; line-height: 1.6; color: var(--text-strong);">Contract closeout files are checked by hand before archiving, so completeness errors surface during the audit rather than beforehand.</div>
+              </div>
+              <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 7px;">
+                  <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Target Audience</label>
+                  <div style="border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; color: var(--text-strong); display: flex; align-items: center; justify-content: space-between;">Contract Specialist
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                  </div>
+                </div>
+                <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 7px;">
+                  <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Impacted Users Count</label>
+                  <div style="display: flex; gap: 0; border: 1px solid var(--border-default); border-radius: var(--radius-sm); overflow: hidden;">
+                    <a href="#" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; color: var(--text-body);" style-hover="background: var(--surface-canvas); text-decoration: none;">Under 10</a>
+                    <a href="#" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; color: var(--text-body); border-left: 1px solid var(--border-default);" style-hover="background: var(--surface-canvas); text-decoration: none;">10–50</a>
+                    <div style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; background: var(--ks-basalt); color: var(--text-on-dark); border-left: 1px solid var(--border-default);">50–500</div>
+                    <a href="#" style="flex: 1; text-align: center; padding: 10px 0; font-size: 13px; color: var(--text-body); border-left: 1px solid var(--border-default);" style-hover="background: var(--surface-canvas); text-decoration: none;">500+</a>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Affected Business Units</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <span style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--ks-basalt); background: var(--ks-basalt); color: var(--text-on-dark); font-size: 13px;">Contract writing &amp; administration</span>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Training management &amp; delivery</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Security cooperation / FMS</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">IT acquisition &amp; marketplace</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Logistics &amp; finance</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Cross-program</a>
+                  <a href="#" style="padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); color: var(--text-body); font-size: 13px;" style-hover="border-color: var(--border-strong); text-decoration: none;">Other</a>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0; padding: 0 4px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <img src="assets/plumb-assistant.svg" alt="Plumb" width="16" height="16" style="flex-shrink: 0;">
+                  <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Plumb's follow-ups</span>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint);">2 of 3 answered</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; border-left: 2px solid var(--ks-limestone-dark); padding-left: 18px; margin-left: 7px;">
+                <div style="font-size: 14px; line-height: 1.55; color: var(--text-muted); padding: 4px 0;">How many closeout files go through this a month?</div>
+                <div style="font-size: 14.5px; color: var(--text-strong); font-weight: 600; padding: 0 0 12px;">100–500</div>
+                <div style="font-size: 14px; line-height: 1.55; color: var(--text-muted); padding: 4px 0;">What happens when the audit finds an error?</div>
+                <div style="font-size: 14.5px; color: var(--text-strong); font-weight: 600; padding: 0 0 12px;">The file is reopened and re-certified — about half a day of specialist time.</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border: 1px solid var(--ks-active-blue); border-radius: var(--radius-md); background: var(--surface-card); margin-top: 8px;">
+                <div style="font-size: 15px; line-height: 1.55; color: var(--text-strong); text-wrap: pretty;">Last one: are the errors concentrated in certain file types, or spread evenly?</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-body);" style-hover="border-color: var(--border-strong); text-decoration: none;">Concentrated</a>
+                  <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-body);" style-hover="border-color: var(--border-strong); text-decoration: none;">Spread evenly</a>
+                  <a href="#" style="padding: 6px 13px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); font-size: 13px; color: var(--text-muted);" style-hover="border-color: var(--border-strong); text-decoration: none;">Not sure</a>
+                </div>
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px; font-size: 12.5px; color: var(--text-faint);">Or type your own answer</div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; background: var(--surface-card); border: 1px solid var(--border-subtle); border-left: 3px solid var(--ks-active-blue); border-radius: var(--radius-md); margin-bottom: 30px;">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 13.5px; font-weight: 600; color: var(--text-strong);">Refined Problem &amp; Users Summary</span>
+                <span style="font-size: 12.5px; color: var(--text-muted);">Plumb writes the field reviewers read. You edit every word after.</span>
+              </div>
+              <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="primary" size="md" hint-size="230px,40px">Have Plumb write the summary</x-import>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-subtle); background: var(--surface-card); padding: 18px 0;">
+          <div style="width: 880px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+            <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="ghost" size="md" hint-size="110px,40px">Previous</x-import>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <span style="font-size: 12px; color: var(--text-faint);">Saved a moment ago</span>
+              <x-import component-from-global-scope="KeystoneDesignSystem_37ff67.Button" variant="secondary" size="md" hint-size="200px,40px">Next: Proposed Solution</x-import>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+</body>
+</html>

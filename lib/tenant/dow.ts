@@ -8,6 +8,7 @@ export const dow: TenantConfig = {
   productName: "LaunchPad",
   assistantName: "Scout",
   logoSubtitle: "Department of War AI Use Case Platform",
+  sidebarTagline: "AI use case governance",
   heroHeadline: "The governable front door for AI across the Department of War",
   heroSubtitle:
     "One place to turn AI ideas into vetted, decision-ready use cases, so leaders can fund the strongest ones and catch responsible-AI risks early.",

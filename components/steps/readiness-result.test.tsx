@@ -120,4 +120,16 @@ describe("ReadinessResult", () => {
     click(all[all.length - 1])
     expect(onReassess).toHaveBeenCalledTimes(1)
   })
+
+  // chrome={false} (issue #213 item 3): the panel's own verdict badge/sentence
+  // row and its own Re-assess Readiness button drop out, since the composing
+  // card (step-10-review-submit.tsx) already renders both itself. Findings,
+  // Detailed analysis, and Executive Summary stay — nothing else duplicates them.
+  it("drops the verdict row and the Re-assess button when chrome is false", () => {
+    const el = renderResult({ chrome: false })
+    expect(el.textContent).not.toContain("Close the items below, then submit.")
+    expect(Array.from(el.querySelectorAll("button")).some((b) => /re-assess/i.test(b.textContent || ""))).toBe(false)
+    expect(el.textContent).toContain("Detailed analysis")
+    expect(el.textContent).toContain("Executive Summary (Preview)")
+  })
 })

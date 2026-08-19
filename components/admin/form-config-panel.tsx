@@ -229,37 +229,37 @@ export function FormConfigPanel() {
                             {field.locked && (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] bg-uspto-blue-primary/10 border-uspto-blue-primary/30 text-uspto-blue-primary"
+                                className="font-mono text-[10px] uppercase tracking-[0.06em] bg-uspto-blue-primary/10 border-uspto-blue-primary/30 text-uspto-blue-primary"
                               >
                                 <Lock className="h-2.5 w-2.5 mr-1" />
                                 Locked
                               </Badge>
                             )}
                             {level === "omb" && (
-                              <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
+                              <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] bg-amber-50 border-amber-300 text-amber-800">
                                 <Landmark className="h-2.5 w-2.5 mr-1" />
                                 {inventoryShort}
                               </Badge>
                             )}
                             {level === "department" && (
-                              <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
+                              <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] bg-amber-50 border-amber-300 text-amber-800">
                                 <Building2 className="h-2.5 w-2.5 mr-1" />
                                 {tiers.department}
                               </Badge>
                             )}
                             {mandatoryOverride && (
-                              <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-300 text-amber-800">
+                              <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] bg-amber-50 border-amber-300 text-amber-800">
                                 <Lock className="h-2.5 w-2.5 mr-1" />
                                 Mandatory (all {unitPluralLower})
                               </Badge>
                             )}
                             {owningBureauLabel && (
-                              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                              <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
                                 {owningBureauLabel} only
                               </Badge>
                             )}
                             {!field.locked && !mandatory && !enabled && (
-                              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                              <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] text-muted-foreground">
                                 Hidden from wizard
                               </Badge>
                             )}
@@ -289,7 +289,7 @@ export function FormConfigPanel() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 px-2 text-[10px] text-muted-foreground"
+                              className="h-6 px-2 text-[13px] text-muted-foreground"
                               onClick={() => handleToggleMandatory(field, !mandatoryOverride)}
                             >
                               {mandatoryOverride ? "Unmark mandatory" : `Mark mandatory for all ${unitPluralLower}`}

@@ -13,6 +13,8 @@ import {
   canApprove,
   rationalizationBlockReason,
   buildRationalizationPatch,
+  clearRationalizationPatch,
+  clusterHref,
   type RationalizationCluster,
 } from "@/lib/rationalization"
 
@@ -237,5 +239,18 @@ describe("getRationalization / buildRationalizationPatch", () => {
       decidedAt: "2026-01-01T00:00:00.000Z",
     })
     expect(patch.rationalization.leadSubmissionId).toBeUndefined()
+  })
+
+  it("clearRationalizationPatch sets rationalization to undefined, which JSON.stringify drops (RD-4 Undo decision)", () => {
+    const patch = clearRationalizationPatch()
+    expect(patch).toHaveProperty("rationalization")
+    expect(patch.rationalization).toBeUndefined()
+    expect(JSON.parse(JSON.stringify(patch))).toEqual({})
+  })
+})
+
+describe("clusterHref", () => {
+  it("routes to the dedicated duplicate-cluster page (RD-4)", () => {
+    expect(clusterHref("doc-census-survey-assistant")).toBe("/clusters/doc-census-survey-assistant")
   })
 })

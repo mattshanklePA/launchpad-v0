@@ -35,6 +35,10 @@ export type TenantConfig = {
   productName: string        // wordmark, e.g. "LaunchPad"
   assistantName: string      // in-app AI assistant's name, e.g. "Scout"
   logoSubtitle: string       // under the wordmark
+  // Mono micro-label under the product name in the Keystone shell sidebar
+  // (RD-0, issue #201) — e.g. "AI use case governance". Optional: a tenant
+  // that omits it keeps the pre-redesign LaunchPadLogo header instead.
+  sidebarTagline?: string
   heroHeadline: string
   heroSubtitle: string
   // Optional hero background image (a path under public/, e.g. "/hero-dow.jpg").

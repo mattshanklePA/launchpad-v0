@@ -1,65 +1,76 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { StatusPill } from "@/components/ui/status-pill"
 import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import {
-  Scale,
-  Gavel,
-  CheckCircle,
-  AlertTriangle,
-  AlertCircle,
-  Users,
-  Clock,
-  DollarSign,
-  TrendingUp,
-  Shield,
-  Target,
-  Sparkles,
-} from "lucide-react"
+import { Sparkles } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { ComparisonView } from "@/components/admin/comparison-view"
-import { computeRiskProfile, riskBadgeClass } from "@/lib/riskProfile"
-import { rmfBadgeClass, RMF_OVERALL_LABELS } from "@/lib/nistRmf"
-import { resolveRmfProfile } from "@/lib/rmfProfileReview"
+import { computeRiskProfile, type RiskLevel } from "@/lib/riskProfile"
+import { resolveRmfProfile, type ResolvedRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant } from "@/lib/tenant"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
+import { formatKeystoneDate, splitLabelCode } from "@/components/dashboard/command-center-data"
+import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
+import type { KeystoneStatus } from "@/lib/statusTokens"
 
 // Higher rank sorts first in the Decision Center list; unassessed drafts (rank 0)
 // always trail the fully-assessed candidates. Mirrors the ranking used for the
 // AI comparison briefing in app/admin/compare-actions.ts.
 const READINESS_RANK: Record<string, number> = { ready: 3, needs_work: 2, early_stage: 1 }
 
-function readinessBadge(score: string | undefined) {
-  switch (score) {
-    case "ready":
-      return (
-        <Badge className="bg-green-100 text-green-800 border-green-300">
-          <CheckCircle className="w-3 h-3 mr-1" /> Ready
-        </Badge>
-      )
-    case "needs_work":
-      return (
-        <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-          <AlertTriangle className="w-3 h-3 mr-1" /> Needs Work
-        </Badge>
-      )
-    case "early_stage":
-      return (
-        <Badge className="bg-red-100 text-red-800 border-red-300">
-          <AlertCircle className="w-3 h-3 mr-1" /> Early Stage
-        </Badge>
-      )
-    default:
-      return <Badge variant="outline">Not Assessed</Badge>
-  }
+// Keystone status + pill copy for a submission's readiness score — restyled
+// from the old green/amber/red Badge onto the shared StatusPill vocabulary
+// (RD-3, issue #204). Same three assessed states plus "not yet assessed";
+// no change to which state a given readinessScore resolves to.
+const READINESS_KEYSTONE: Record<string, KeystoneStatus> = {
+  ready: "healthy",
+  needs_work: "attention",
+  early_stage: "alert",
+}
+const READINESS_LABEL: Record<string, string> = {
+  ready: "Ready",
+  needs_work: "Needs work",
+  early_stage: "Early stage",
 }
 
-function fmt(v: string | string[] | undefined): string {
+export function readinessKeystoneStatus(score: string | undefined): KeystoneStatus {
+  return READINESS_KEYSTONE[score || ""] || "neutral"
+}
+export function readinessPillLabel(score: string | undefined): string {
+  return READINESS_LABEL[score || ""] || "Not assessed"
+}
+
+// Same restyle for lib/riskProfile.ts's RiskLevel — the mock's card badges
+// read "Low risk" / "Med risk" / "High risk", shorter than RiskProfile's own
+// "Low Risk" / "Medium Risk" / "High Risk" prose labels, so this is a
+// display-only relabeling on top of the existing risk resolution.
+const RISK_KEYSTONE: Record<RiskLevel, KeystoneStatus> = {
+  low: "healthy",
+  medium: "attention",
+  high: "alert",
+  unknown: "neutral",
+}
+const RISK_LABEL: Record<RiskLevel, string> = {
+  low: "Low risk",
+  medium: "Med risk",
+  high: "High risk",
+  unknown: "Risk unassessed",
+}
+
+export function riskKeystoneStatus(level: RiskLevel): KeystoneStatus {
+  return RISK_KEYSTONE[level]
+}
+export function riskPillLabel(level: RiskLevel): string {
+  return RISK_LABEL[level]
+}
+
+export function fmt(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : "—"
   return v && v.trim() !== "" ? v : "—"
 }
@@ -101,18 +112,20 @@ const ENUM_LABELS: Record<string, string> = {
   no: "No",
 }
 
-function prettyEnum(v: string | string[] | undefined): string {
+export function prettyEnum(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v.length > 0 ? v.map((x) => ENUM_LABELS[x] || x).join(", ") : "—"
   if (!v || v.trim() === "") return "—"
   return ENUM_LABELS[v] || v
 }
 
-function dateLabel(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString()
-  } catch {
-    return iso
-  }
+// The card's one-line RMF status — three states driven purely by
+// `resolveRmfProfile`'s existing resolution (no new review logic): no review
+// record yet, a reviewer confirmed the proposed profile, or a reviewer
+// overrode it. Mirrors submission-detail.tsx's `rmfStatusLabel` for the
+// reviewer detail page, restated for the card's shorter slot.
+export function rmfCardLabel(resolved: ResolvedRmfProfile): string {
+  if (!resolved.review) return "RMF profile not confirmed"
+  return resolved.review.decision === "overridden" ? "RMF overridden by reviewer" : "RMF confirmed"
 }
 
 type DecisionCardProps = {
@@ -127,140 +140,80 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
   const checkboxId = `compare-${submission.id}`
   const disabled = !selected && selectionLimitReached
   const rmfEnabled = !!getTenant().features.rmf
+  const risk = computeRiskProfile(d)
+  const resolvedRmf = rmfEnabled ? resolveRmfProfile(submission) : null
+  // "AT&R", not lib/reviewWorkflow's full option label ("Acquisition,
+  // Training and Readiness (AT&R)") — the mock's card meta is the short form.
+  const unitLabel = d.submitterOffice ? businessUnitLabel(d.submitterOffice) : "—"
+  const unitShort = d.submitterOffice ? splitLabelCode(unitLabel).code ?? unitLabel : "—"
+
+  const stats: Array<{ label: string; value: string }> = [
+    { label: "Users", value: prettyEnum(d.impactedUsersCount) },
+    { label: "Time saved", value: prettyEnum(d.userTimeSavings) },
+    { label: "Cost saved", value: prettyEnum(d.costSavings) },
+    { label: "Complexity", value: prettyEnum(d.implementationComplexity) },
+    { label: "Timeline", value: prettyEnum(d.timelineForResults) },
+  ]
 
   return (
-    <Card className={`transition-colors ${selected ? "border-2 border-primary bg-primary/5" : ""}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <CardTitle className="text-lg">{d.useCaseTitle || "Untitled idea"}</CardTitle>
-              <LifecycleBadge submission={submission} />
-            </div>
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-              <span>{fmt(d.submitterName)}</span>
-              <span>·</span>
-              <span>{d.submitterOffice ? businessUnitLabel(d.submitterOffice) : "—"}</span>
-              <span>·</span>
-              <span>Submitted {dateLabel(submission.submittedAt)}</span>
-            </div>
+    <div className="flex flex-col gap-3.5 rounded-md border border-border-subtle bg-card p-[22px] md:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <LifecycleBadge submission={submission} />
+            <StatusPill status={readinessKeystoneStatus(d.readinessScore)}>{readinessPillLabel(d.readinessScore)}</StatusPill>
+            <StatusPill status={riskKeystoneStatus(risk.level)} className="whitespace-nowrap">
+              {riskPillLabel(risk.level)}
+            </StatusPill>
           </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {(() => {
-              const risk = computeRiskProfile(d)
-              return (
-                <Badge
-                  className={riskBadgeClass(risk.level)}
-                  title={`${risk.rationale}${risk.flags.length > 0 ? ` — ${risk.flags.join(", ")}` : ""}`}
-                >
-                  <Shield className="w-3 h-3 mr-1" />
-                  {risk.label}
-                </Badge>
-              )
-            })()}
-            {rmfEnabled && (() => {
-              const resolved = resolveRmfProfile(submission)
-              const rmf = resolved.profile
-              return (
-                <Badge
-                  className={rmfBadgeClass(resolved.effectiveOverall)}
-                  title={`${resolved.isProposal ? "Proposed — awaiting reviewer confirmation. " : ""}${rmf.rationale}${rmf.flags.length > 0 ? ` — ${rmf.flags.join(", ")}` : ""}`}
-                >
-                  <Scale className="w-3 h-3 mr-1" />
-                  {RMF_OVERALL_LABELS[resolved.effectiveOverall]}
-                  {resolved.isProposal ? " (proposed)" : ""}
-                </Badge>
-              )
-            })()}
-            {readinessBadge(d.readinessScore)}
-            <div
-              className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 ${
-                selected ? "border-primary bg-primary/10" : "border-input"
-              }`}
-              title={disabled ? "Maximum of 4 candidates selected" : selected ? "Remove from comparison" : "Select for comparison"}
-            >
-              <Checkbox
-                id={checkboxId}
-                checked={selected}
-                disabled={disabled}
-                onCheckedChange={() => onToggleSelect(submission.id)}
-              />
-              <Label
-                htmlFor={checkboxId}
-                className={`text-sm ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-              >
-                Compare
-              </Label>
-            </div>
-          </div>
+          <p className="font-heading text-[18px] font-bold leading-[1.25] text-foreground">
+            {d.useCaseTitle || "Untitled idea"}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {fmt(d.submitterName)} · {unitShort} · {formatKeystoneDate(submission.submittedAt)}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Executive summary */}
-        {d.executiveSummary && d.executiveSummary.trim() !== "" && (
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-              Executive Summary
-            </p>
-            <p className="text-sm leading-relaxed">{d.executiveSummary}</p>
+        <Label
+          htmlFor={checkboxId}
+          className={`flex shrink-0 items-center gap-1.5 text-[12.5px] font-normal text-foreground ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+          title={disabled ? "Maximum of 4 candidates selected" : selected ? "Remove from comparison" : "Select for comparison"}
+        >
+          <Checkbox id={checkboxId} checked={selected} disabled={disabled} onCheckedChange={() => onToggleSelect(submission.id)} />
+          Compare
+        </Label>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 border-y border-border-subtle py-3 sm:grid-cols-5">
+        {stats.map((s) => (
+          <div key={s.label} className="flex flex-col gap-0.5">
+            <p className="ks-microlabel">{s.label}</p>
+            <p className="text-[15px] font-semibold text-foreground">{s.value}</p>
           </div>
+        ))}
+      </div>
+
+      <div className="grid gap-3 text-[13px] leading-[1.55] sm:grid-cols-2">
+        <div>
+          <p className="text-[13px] font-semibold text-foreground">Strategic alignment</p>
+          <p className="text-[14px] text-foreground">{fmt(d.alignmentSummary || d.relevantOkrs)}</p>
+        </div>
+        <div>
+          <p className="text-[13px] font-semibold text-foreground">Feasibility</p>
+          <p className="text-[14px] text-foreground">{fmt(d.feasibilitySummary || d.dependencies)}</p>
+        </div>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-2.5 pt-0.5">
+        {rmfEnabled && resolvedRmf ? (
+          <p className="text-[13px] text-muted-foreground">{rmfCardLabel(resolvedRmf)}</p>
+        ) : (
+          <span />
         )}
-
-        {/* Quick stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2 border-t">
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Users className="w-3 h-3" /> Users
-            </p>
-            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.impactedUsersCount)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Time savings
-            </p>
-            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.userTimeSavings)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <DollarSign className="w-3 h-3" /> Cost savings
-            </p>
-            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.costSavings)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Shield className="w-3 h-3" /> Complexity
-            </p>
-            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.implementationComplexity)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> Timeline
-            </p>
-            <p className="text-sm font-medium mt-0.5">{prettyEnum(d.timelineForResults)}</p>
-          </div>
-        </div>
-
-        {/* Strategic + feasibility */}
-        <div className="grid md:grid-cols-2 gap-3 pt-2 border-t">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1 mb-1">
-              <Target className="w-3 h-3" /> Strategic alignment
-            </p>
-            <p className="text-sm leading-relaxed">
-              {fmt(d.alignmentSummary || d.relevantOkrs)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1 mb-1">
-              <Shield className="w-3 h-3" /> Feasibility
-            </p>
-            <p className="text-sm leading-relaxed">
-              {fmt(d.feasibilitySummary || d.dependencies)}
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        <Link href={`/submissions/${submission.id}`} className="text-[13px] font-semibold text-primary hover:underline">
+          Open submission
+        </Link>
+      </div>
+    </div>
   )
 }
 
@@ -316,78 +269,64 @@ export function DecisionCenter({
 
   const selectedSubmissions = readyForDecision.filter((s) => selectedForCompare.has(s.id))
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Heading className="text-2xl font-bold flex items-center gap-2">
-            <Gavel className="w-6 h-6" />
-            Decision Center
-          </Heading>
-          <p className="text-sm text-muted-foreground mt-1">
-            Submissions awaiting executive review for funding decisions. Select 2–4 candidates to compare side-by-side.
-          </p>
-        </div>
-        <Badge variant="outline" className="text-sm">
-          {readyForDecision.length} awaiting review
-        </Badge>
+  if (showComparison && selectedSubmissions.length >= 2) {
+    return (
+      <div className={`${PRIMARY_COLUMN_CLASS} space-y-5`}>
+        <ComparisonView submissions={selectedSubmissions} onClose={clearSelect} Heading={Heading} />
       </div>
+    )
+  }
 
-      {/* Persistent compare control — always visible so the primary action is never hidden */}
-      {readyForDecision.length > 0 && !showComparison && (
-        <div
-          className={`flex items-center justify-between p-3 rounded-lg border-2 ${
-            selectedForCompare.size > 0 ? "border-primary/40 bg-primary/5" : "border-dashed border-input"
-          }`}
-        >
-          <p className="text-sm">
-            {selectedForCompare.size === 0 && (
-              <>Check <span className="font-semibold">Compare</span> on 2–4 candidates below to compare them side-by-side.</>
-            )}
-            {selectedForCompare.size > 0 && (
-              <>
-                <span className="font-semibold">{selectedForCompare.size}</span> selected for comparison
-                {selectedForCompare.size === 1 && ", pick 1 more to compare"}
-                {selectedForCompare.size >= 4 && " (max 4)"}
-              </>
-            )}
-          </p>
-          <div className="flex gap-2">
-            {selectedForCompare.size > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearSelect}>
-                Clear
-              </Button>
-            )}
-            <Button size="sm" onClick={() => setShowComparison(true)} disabled={selectedForCompare.size < 2}>
-              <Scale className="w-4 h-4 mr-2" />
-              Compare{selectedForCompare.size > 0 ? ` ${selectedForCompare.size}` : ""}
+  const count = readyForDecision.length
+  const countLead = count === 1 ? "1 candidate awaits a funding decision" : `${count} candidates await a funding decision`
+  const selectedCount = selectedForCompare.size
+  const selectionMeta =
+    selectedCount === 1
+      ? `${selectedCount} selected · pick 1 more to compare`
+      : selectedCount >= 4
+        ? `${selectedCount} selected · max 4`
+        : `${selectedCount} selected`
+
+  return (
+    <div className={`${PRIMARY_COLUMN_CLASS} space-y-5`}>
+      <div className="flex flex-col gap-3 rounded-md bg-keystone-basalt600 px-7 py-6 text-white shadow-sm md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-2">
+          <Heading className="ks-page-title text-white">Decision Center</Heading>
+          {count > 0 && (
+            <>
+              <p className="text-[14.5px] text-white">{countLead}</p>
+              <p className="text-[13px] text-white/72">Each cleared vetting. Pick two to four to compare, or decide from the cards.</p>
+            </>
+          )}
+        </div>
+        {count > 0 && (
+          <div className="flex shrink-0 items-center gap-3.5 pb-0.5">
+            <span className="font-mono text-[12.5px] text-white/55">{selectionMeta}</span>
+            <Button variant="chalk" onClick={() => setShowComparison(true)} disabled={selectedCount < 2}>
+              Compare selected
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Comparison view */}
-      {showComparison && selectedSubmissions.length >= 2 && (
-        <ComparisonView submissions={selectedSubmissions} onClose={clearSelect} />
-      )}
-
-      {/* Empty state */}
-      {readyForDecision.length === 0 && (
+      {/* Empty state — nothing has been approved yet, so say that plainly
+          rather than the count line ("0 candidates await...") or a generic
+          "no submissions" message that predates the approval gate. */}
+      {count === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
             <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <h3 className="font-semibold text-lg">No submissions awaiting decision</h3>
+            <h3 className="font-semibold text-lg">Nothing is waiting on a funding decision.</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-              When ideas are submitted through the wizard, they will appear here for executive review. Up to the last
-              5 submissions are retained.
+              Use cases arrive here once a reviewer approves them.
             </p>
           </CardContent>
         </Card>
       )}
 
       {/* At-a-glance cards */}
-      {readyForDecision.length > 0 && (
-        <div className="grid gap-4">
+      {count > 0 && (
+        <div className="flex flex-col gap-3.5">
           {readyForDecision.map((s) => (
             <DecisionCard
               key={s.id}

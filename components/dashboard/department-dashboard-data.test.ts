@@ -333,11 +333,20 @@ describe("worklistSummaryLabel", () => {
   })
 
   it("singularizes a single item", () => {
-    expect(worklistSummaryLabel([item("a")])).toBe("Today: 1 item needs you.")
+    expect(worklistSummaryLabel([item("a")])).toBe("Today: 1 item needs you")
   })
 
   it("pluralizes multiple items", () => {
-    expect(worklistSummaryLabel([item("a"), item("b"), item("c")])).toBe("Today: 3 items need you.")
+    expect(worklistSummaryLabel([item("a"), item("b"), item("c")])).toBe("Today: 3 items need you")
+  })
+
+  it("appends 'here' for a scoped (bureau/office) view", () => {
+    expect(worklistSummaryLabel([item("a")], true)).toBe("Today: 1 item needs you here")
+    expect(worklistSummaryLabel([item("a"), item("b")], true)).toBe("Today: 2 items need you here")
+  })
+
+  it("keeps the same all-clear sentence regardless of scope", () => {
+    expect(worklistSummaryLabel([], true)).toBe("Today: nothing needs you right now.")
   })
 })
 
