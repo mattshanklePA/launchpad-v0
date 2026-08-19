@@ -4,17 +4,20 @@ import { useForm } from "@/context/form-context"
 import { getFormSteps, getSubmitterRoleLabels, type FormData } from "@/lib/steps"
 import { saveSubmission } from "@/lib/submissions"
 import { useToast } from "@/components/ui/use-toast"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Label } from "../ui/label"
-import { Toggle } from "../ui/toggle"
-import { Textarea } from "../ui/textarea"
-import { ShieldCheck, Loader2 } from "lucide-react"
+import { Toggle } from "@/components/ui/toggle"
+import { Textarea } from "@/components/ui/textarea"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { StatusPill } from "@/components/ui/status-pill"
+import { ShieldCheck, Loader2, Check, AlertCircle, ChevronRight } from "lucide-react"
 import { assessReadiness } from "@/app/actions"
-import { SubmissionGate } from "@/components/steps/submission-gate"
 import { ReadinessResult } from "@/components/steps/readiness-result"
+import { getSubmissionReadiness } from "@/lib/submissionReadiness"
+import { readinessVerdictSentence } from "@/lib/readinessPresentation"
 import { isFieldVisible, getFormConfig } from "@/lib/formConfig"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { Field, StepCard, StepFooterShell, pillToggleClass } from "@/components/steps/step-frame"
+import { STATUS_BORDER_L_CLASS, type KeystoneStatus } from "@/lib/statusTokens"
 
 // "Export to Rally" only applies to tenants with a Rally integration
 // (`TenantConfig.features.rallyExport` — on for USPTO, off for DoW/DoC).
@@ -24,7 +27,7 @@ const ALL_ROUTE_OPTIONS = [
   { value: "draft", label: "Save as Draft (continue later)" },
 ]
 
-// Explicit per-step field map for the review cards. Replaces an older
+// Explicit per-step field map for the review recap. Replaces an older
 // crude "filter formData keys by first word of step name" that silently
 // dropped entire steps (e.g. Step 2's fields don't contain the word "idea").
 //
@@ -83,6 +86,31 @@ const STEP_FIELDS = (tenant: TenantConfig): Record<number, Array<{ label: string
   ],
 })
 
+function hasFieldContent(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === "boolean") return true
+  return Boolean(value && String(value).trim())
+}
+
+// Optional-only step (Technical Constraints) never blocks submission, so it
+// never shows "answers short" — it's either got a note or it doesn't.
+const NO_REQUIRED_FIELDS_STEPS = new Set([4])
+
+function recapStatus(
+  step: number,
+  formData: FormData,
+  missingCountForStep: number,
+  fields: Array<{ label: string; key: keyof FormData }>,
+): { label: string; status: KeystoneStatus } {
+  const anyContent = fields.some(({ key }) => hasFieldContent(formData[key]))
+  if (NO_REQUIRED_FIELDS_STEPS.has(step)) {
+    return anyContent ? { label: "Noted", status: "healthy" } : { label: "Not started", status: "neutral" }
+  }
+  if (missingCountForStep === 0) return { label: "Complete", status: "healthy" }
+  if (!anyContent) return { label: "Not started", status: "attention" }
+  return { label: `${missingCountForStep} answer${missingCountForStep === 1 ? "" : "s"} short`, status: "attention" }
+}
+
 export function Step10ReviewSubmit() {
   const { formData, setCurrentStep, setFormData } = useForm()
   const [isAssessing, setIsAssessing] = useState(false)
@@ -90,6 +118,8 @@ export function Step10ReviewSubmit() {
   const { toast } = useToast()
   const tenant = getTenant()
   const routeOptions = ALL_ROUTE_OPTIONS.filter((o) => o.value !== "rally" || tenant.features.rallyExport)
+  const readiness = getSubmissionReadiness(formData)
+  const passedChecks = readiness.totalChecks - readiness.missing.length
 
   const handleRouteToggle = (item: string) => {
     const currentItems = formData.routeTo || []
@@ -120,6 +150,13 @@ export function Step10ReviewSubmit() {
       })
       setIsSubmitting(false)
     }
+  }
+
+  // The draft already autosaves continuously (context/form-context.tsx
+  // persists to localStorage on every change) — this button just confirms
+  // that to the submitter and sends them back rather than through Submit.
+  const handleSaveDraft = () => {
+    toast({ title: "Draft saved", description: "Pick up where you left off any time from this browser." })
   }
 
   const handleAssessReadiness = async () => {
@@ -205,120 +242,202 @@ export function Step10ReviewSubmit() {
     return value ? prettify(value) : <span className="text-muted-foreground">Not provided</span>
   }
 
+  // Deterministic gate findings — grouped by whether the step has any
+  // content yet, same source (`getSubmissionReadiness`) the wizard footer's
+  // "still needed" hint and the old SubmissionGate card used.
+  const deterministicMissing = readiness.missing.filter((m) => m.step >= 1 && m.step <= 6)
+
+  const verdictStatus: KeystoneStatus | null =
+    formData.readinessScore === "ready"
+      ? "healthy"
+      : formData.readinessScore === "needs_work"
+        ? "attention"
+        : formData.readinessScore === "early_stage"
+          ? "alert"
+          : null
+  const verdictLabel =
+    formData.readinessScore === "ready"
+      ? "Ready"
+      : formData.readinessScore === "needs_work"
+        ? "Needs work"
+        : formData.readinessScore === "early_stage"
+          ? "Early stage"
+          : null
+
+  const showSubmitNowHint = readiness.canSubmit && formData.readinessScore === "needs_work"
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Readiness Assessment Section */}
-      <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5" />
-            Vetting Readiness Check
-          </CardTitle>
-          <CardDescription>
-            Before submitting, get an AI assessment of whether your idea is ready for leadership review.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!formData.readinessScore ? (
-            <Button 
-              onClick={handleAssessReadiness} 
-              disabled={isAssessing}
-              className="w-full sm:w-auto"
-            >
+    <>
+      <StepCard className={`border-l-[3px] ${STATUS_BORDER_L_CLASS[verdictStatus || "attention"]}`}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+              Vetting readiness
+            </span>
+            {verdictStatus && verdictLabel && <StatusPill status={verdictStatus}>{verdictLabel}</StatusPill>}
+          </div>
+          {formData.readinessScore ? (
+            <Button variant="link" size="sm" className="h-auto p-0" onClick={handleAssessReadiness} disabled={isAssessing}>
+              {isAssessing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
+              Re-assess
+            </Button>
+          ) : (
+            <Button size="sm" onClick={handleAssessReadiness} disabled={isAssessing}>
               {isAssessing ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Evaluating your idea...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Evaluating…
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-4 h-4 mr-2" />
-                  Assess Vetting Readiness
+                  <ShieldCheck className="w-4 h-4 mr-2" /> Assess
                 </>
               )}
             </Button>
-          ) : (
-            <ReadinessResult
-              readinessScore={formData.readinessScore}
-              readinessSummary={formData.readinessSummary}
-              readinessFindings={formData.readinessFindings}
-              executiveSummary={formData.executiveSummary}
-              submitterOffice={formData.submitterOffice}
-              isAssessing={isAssessing}
-              onJumpToStep={(s) => setCurrentStep(s)}
-              onReassess={handleAssessReadiness}
-            />
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {getFormSteps(formData.submitterOffice).slice(0, 5).map((step) => {
-        // Filter STEP_FIELDS to only the fields currently enabled in the
-        // admin Form Configuration. If a step has zero enabled fields, hide
-        // its review card entirely.
-        const fields = (STEP_FIELDS(tenant)[step.step] || []).filter(({ key }) => isFieldVisible(key, formData))
-        if (fields.length === 0) return null
-        return (
-          <Card key={step.step}>
-            <CardHeader className="bg-muted/50 flex-row items-center justify-between py-3 px-4">
-              <CardTitle className="text-base">
-                Step {step.step}: {step.title}
-              </CardTitle>
-              <Button variant="link" size="sm" onClick={() => setCurrentStep(step.step)}>
-                Edit
-              </Button>
-            </CardHeader>
-            <CardContent className="p-4 text-sm">
-              <dl className="space-y-2">
-                {fields.map(({ label, key }) => (
-                  <div key={key} className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-1 md:gap-3">
-                    <dt className="font-medium text-muted-foreground">{label}</dt>
-                    <dd className="whitespace-pre-wrap break-words">{renderValue(formData[key])}</dd>
-                  </div>
-                ))}
-              </dl>
-            </CardContent>
-          </Card>
-        )
-      })}
-      <Card>
-        <CardHeader>
-          <CardTitle>Submit for Vetting</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Route to</Label>
-            <div className="flex flex-wrap gap-2">
-              {routeOptions.map((option) => (
-                <Toggle
-                  key={option.value}
-                  pressed={formData.routeTo.includes(option.value)}
-                  onPressedChange={() => handleRouteToggle(option.value)}
-                  variant="outline"
-                  className="rounded-full px-3 py-1 text-sm h-auto"
-                >
-                  {option.label}
-                </Toggle>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="reviewerNotes">Anything the vetting team should know?</Label>
-            <Textarea
-              id="reviewerNotes"
-              value={formData.reviewerNotes}
-              onChange={(e) => setFormData((prev) => ({ ...prev, reviewerNotes: e.target.value }))}
-              rows={3}
-            />
-          </div>
-          <SubmissionGate
-            formData={formData}
+        {formData.readinessScore && (
+          <p className="ks-section-head text-foreground">{readinessVerdictSentence(formData.readinessScore)}</p>
+        )}
+
+        <p className="text-[13px] text-muted-foreground">
+          {passedChecks} of {readiness.totalChecks} checks passed
+        </p>
+
+        {deterministicMissing.length > 0 && (
+          <ul className="space-y-2">
+            {deterministicMissing.map((item, i) => (
+              <li key={`${item.step}-${item.field}-${i}`} className="flex flex-wrap items-baseline gap-x-2 text-sm">
+                <span
+                  className="mt-[7px] h-[5px] w-[5px] flex-shrink-0 self-start rounded-full bg-attention"
+                  aria-hidden="true"
+                />
+                <span>{item.message}</span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-foreground-faint">required</span>
+                {item.step >= 1 && item.step <= 5 && (
+                  <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setCurrentStep(item.step)}>
+                    Fix in step {item.step}: {item.stepName}
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {formData.readinessScore ? (
+          <ReadinessResult
+            readinessScore={formData.readinessScore}
+            readinessSummary={formData.readinessSummary}
+            readinessFindings={formData.readinessFindings}
+            executiveSummary={formData.executiveSummary}
+            submitterOffice={formData.submitterOffice}
+            isAssessing={isAssessing}
             onJumpToStep={(s) => setCurrentStep(s)}
-            isSubmitting={isSubmitting}
-            onSubmit={handleSubmitForVetting}
+            onReassess={handleAssessReadiness}
           />
-        </CardContent>
-      </Card>
-    </div>
+        ) : deterministicMissing.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing is blocking this — assess it for a quality read too.</p>
+        ) : null}
+      </StepCard>
+
+      <div className="flex flex-col gap-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Everything you entered</p>
+        <div className="divide-y divide-border-subtle rounded-md border border-border-subtle bg-card">
+          {getFormSteps(formData.submitterOffice)
+            .slice(0, 5)
+            .map((step) => {
+              const fields = (STEP_FIELDS(tenant)[step.step] || []).filter(({ key }) => isFieldVisible(key, formData))
+              if (fields.length === 0) return null
+              const missingCountForStep = readiness.missing.filter((m) => m.step === step.step).length
+              const { label, status } = recapStatus(step.step, formData, missingCountForStep, fields)
+              return (
+                <Collapsible key={step.step}>
+                  <div className="flex items-center gap-3.5 px-[18px] py-3.5">
+                    {status === "healthy" ? (
+                      <Check className="h-3.5 w-3.5 flex-shrink-0 text-healthy" strokeWidth={2.4} />
+                    ) : (
+                      <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-attention" strokeWidth={1.9} />
+                    )}
+                    <span className="min-w-0 flex-1 text-[13.5px] text-foreground">
+                      Step {step.step} · {step.name}
+                    </span>
+                    <span className="text-[12.5px] text-muted-foreground">{label}</span>
+                    <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setCurrentStep(step.step)}>
+                      Edit
+                    </Button>
+                    <CollapsibleTrigger asChild>
+                      <button type="button" aria-label={`Expand Step ${step.step} details`} className="text-muted-foreground">
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent>
+                    <dl className="space-y-2 px-[18px] pb-4 pt-1 text-sm">
+                      {fields.map(({ label: fieldLabel, key }) => (
+                        <div key={key} className="grid grid-cols-1 gap-1 md:grid-cols-[200px_1fr] md:gap-3">
+                          <dt className="font-medium text-muted-foreground">{fieldLabel}</dt>
+                          <dd className="whitespace-pre-wrap break-words">{renderValue(formData[key])}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </CollapsibleContent>
+                </Collapsible>
+              )
+            })}
+        </div>
+      </div>
+
+      <StepCard>
+        <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Submit for vetting</p>
+        <Field label="Route to">
+          <div className="flex flex-wrap gap-2">
+            {routeOptions.map((option) => (
+              <Toggle
+                key={option.value}
+                pressed={formData.routeTo.includes(option.value)}
+                onPressedChange={() => handleRouteToggle(option.value)}
+                className={pillToggleClass}
+              >
+                {option.label}
+              </Toggle>
+            ))}
+          </div>
+        </Field>
+        <Field label="Anything the vetting team should know?" htmlFor="reviewerNotes">
+          <Textarea
+            id="reviewerNotes"
+            value={formData.reviewerNotes}
+            onChange={(e) => setFormData((prev) => ({ ...prev, reviewerNotes: e.target.value }))}
+            rows={3}
+          />
+        </Field>
+      </StepCard>
+
+      <StepFooterShell>
+        <Button variant="ghost" onClick={handleSaveDraft}>
+          Save as draft
+        </Button>
+        <div className="flex items-center gap-3.5">
+          {!readiness.canSubmit ? (
+            <span className="text-[12px] text-foreground-faint">
+              Complete {readiness.missing.length} {readiness.missing.length === 1 ? "item" : "items"} before submitting
+            </span>
+          ) : showSubmitNowHint ? (
+            <span className="text-[12px] text-foreground-faint">
+              You can submit now. Expect a request for the missing answers.
+            </span>
+          ) : null}
+          <Button size="lg" variant="secondary" onClick={handleSubmitForVetting} disabled={isSubmitting || !readiness.canSubmit}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...
+              </>
+            ) : (
+              "Submit for Vetting"
+            )}
+          </Button>
+        </div>
+      </StepFooterShell>
+    </>
   )
 }

@@ -10,12 +10,16 @@
 // What's left at intake is deliberately light: free-text notes only, no
 // self-graded feasibility rating, no OMB/M-25-21 fields. Reuses the existing
 // `dependencies` FormData field so nothing is renamed or duplicated.
+//
+// RD-2 (issue #203): same inline-Plumb section as steps 2/3, minus a
+// dedicated summary field — this step has none today, so drafted fields fall
+// back to the panel's generic per-field Apply cards.
 
 import { useForm } from "@/context/form-context"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AIdChatPanel } from "@/components/launchpad/chat-panel"
 import { useFieldVisibility } from "@/lib/formConfig"
+import { Field, StepCard } from "./step-frame"
 
 export function Step4TechnicalConstraints() {
   const { formData, setFormData } = useForm()
@@ -26,33 +30,26 @@ export function Step4TechnicalConstraints() {
   }
 
   return (
-    <div className="grid lg:grid-cols-12 gap-10">
-      <div className="lg:col-span-7">
-        <div className="space-y-8">
-          {isVisible("dependencies") && (
-            <div className="space-y-2">
-              <Label htmlFor="dependencies" className="text-base font-semibold text-uspto-gray-text">
-                Any known technical constraints?
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Quick notes only — dependencies, blockers, or integration realities we should know about. No need to
-                self-assess feasibility or security; reviewers cover that during vetting.
-              </p>
-              <Textarea
-                id="dependencies"
-                value={formData.dependencies}
-                onChange={(e) => setFormData((prev) => ({ ...prev, dependencies: e.target.value }))}
-                placeholder="e.g., access to authoritative data, integration with existing systems, ATO timeline... (optional)"
-                rows={5}
-                className="text-base"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="lg:col-span-5 flex flex-col">
-        <AIdChatPanel step={4} onApplySuggestion={handleSuggestion} />
-      </div>
-    </div>
+    <>
+      {isVisible("dependencies") && (
+        <StepCard>
+          <Field
+            label="Any known technical constraints?"
+            htmlFor="dependencies"
+            hint="Quick notes only — dependencies, blockers, or integration realities we should know about. No need to self-assess feasibility or security; reviewers cover that during vetting."
+          >
+            <Textarea
+              id="dependencies"
+              value={formData.dependencies}
+              onChange={(e) => setFormData((prev) => ({ ...prev, dependencies: e.target.value }))}
+              placeholder="e.g., access to authoritative data, integration with existing systems, ATO timeline... (optional)"
+              rows={5}
+              className="text-[15px]"
+            />
+          </Field>
+        </StepCard>
+      )}
+      <AIdChatPanel step={4} onApplySuggestion={handleSuggestion} />
+    </>
   )
 }

@@ -18,6 +18,11 @@ import { useIntakeModePreference, type IntakeMode } from "@/hooks/use-intake-mod
 // itself falls through to the remembered preference — defaulting to Guided
 // for a submitter who has never chosen either (see
 // hooks/use-intake-mode-preference.ts).
+//
+// RD-2 (issue #203) drops the toggle from the Form-mode page: the wizard's
+// own header carries a "Prefer a conversation? Guided mode" link to the same
+// `setMode`, per the mock. Guided mode has no such in-page link back to Form
+// yet, so the toggle stays mounted there — the only way out of it otherwise.
 export function IntakeModeSurface({ forcedInitialMode }: { forcedInitialMode?: IntakeMode }) {
   const { mode, setMode } = useIntakeModePreference()
   const appliedForcedMode = useRef(false)
@@ -29,12 +34,16 @@ export function IntakeModeSurface({ forcedInitialMode }: { forcedInitialMode?: I
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forcedInitialMode])
 
-  return (
-    <>
-      <div className="max-w-[1800px] mx-auto px-4 pt-6 flex justify-end">
-        <IntakeModeToggle mode={mode} onChange={setMode} />
-      </div>
-      {mode === "guided" ? <ConversationalIntake /> : <FormContainer />}
-    </>
-  )
+  if (mode === "guided") {
+    return (
+      <>
+        <div className="max-w-[1800px] mx-auto px-4 pt-6 flex justify-end">
+          <IntakeModeToggle mode={mode} onChange={setMode} />
+        </div>
+        <ConversationalIntake />
+      </>
+    )
+  }
+
+  return <FormContainer onSwitchToGuided={() => setMode("guided")} />
 }

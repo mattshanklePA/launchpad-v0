@@ -1,10 +1,11 @@
 "use client"
+import { useState } from "react"
 import { useForm } from "@/context/form-context"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
+import { Field, StepCard } from "./step-frame"
 
 export function Step1SubmitterInfo() {
   const { formData, setFormData } = useForm()
@@ -15,23 +16,29 @@ export function Step1SubmitterInfo() {
   const selectedUnit = getTenant().unit.options.find((o) => o.value === formData.submitterOffice)
   const offices = selectedUnit?.offices || []
 
+  const sponsorVisible = isVisible("sponsorName") || isVisible("sponsorRole") || isVisible("sponsorEmail")
+  const hasSponsorValue = Boolean(
+    formData.sponsorName.trim() || formData.sponsorRole.trim() || formData.sponsorEmail.trim(),
+  )
+  // Collapsed behind a link by default — open on arrival only when a sponsor
+  // value already exists, so returning to a draft never hides data.
+  const [sponsorOpen, setSponsorOpen] = useState(hasSponsorValue)
+
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <StepCard>
+      <div className="flex flex-wrap gap-5">
         {isVisible("submitterName") && (
-          <div className="space-y-2">
-            <Label htmlFor="submitterName">Name</Label>
+          <Field label="Name" htmlFor="submitterName" hint="From your session." className="min-w-[260px] flex-1">
             <Input
               id="submitterName"
               value={formData.submitterName}
               onChange={(e) => setFormData((prev) => ({ ...prev, submitterName: e.target.value }))}
               placeholder="e.g., Jane Doe"
             />
-          </div>
+          </Field>
         )}
         {isVisible("submitterEmail") && (
-          <div className="space-y-2">
-            <Label htmlFor="submitterEmail">Email</Label>
+          <Field label="Email" htmlFor="submitterEmail" className="min-w-[260px] flex-1">
             <Input
               id="submitterEmail"
               type="email"
@@ -41,13 +48,12 @@ export function Step1SubmitterInfo() {
               // army.mil address on every non-DoW instance (ES2-11).
               placeholder={`e.g., ${getTenant().loginEmailPlaceholder}`}
             />
-          </div>
+          </Field>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex flex-wrap gap-5">
         {isVisible("submitterRole") && (
-          <div className="space-y-2">
-            <Label htmlFor="submitterRole">Role</Label>
+          <Field label="Role" htmlFor="submitterRole" className="min-w-[260px] flex-1">
             <Select
               value={formData.submitterRole}
               onValueChange={(value) => setFormData((prev) => ({ ...prev, submitterRole: value as any }))}
@@ -61,11 +67,10 @@ export function Step1SubmitterInfo() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Field>
         )}
         {isVisible("submitterOffice") && (
-          <div className="space-y-2">
-            <Label htmlFor="submitterOffice">{getTenant().unit.label}</Label>
+          <Field label={getTenant().unit.label} htmlFor="submitterOffice" className="min-w-[260px] flex-1">
             <Select
               value={formData.submitterOffice}
               onValueChange={(value) =>
@@ -81,11 +86,10 @@ export function Step1SubmitterInfo() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Field>
         )}
         {isVisible("submitterSubOffice") && offices.length > 0 && (
-          <div className="space-y-2">
-            <Label htmlFor="submitterSubOffice">{getTenant().tierLabels.subUnit}</Label>
+          <Field label={getTenant().tierLabels.subUnit} htmlFor="submitterSubOffice" className="min-w-[260px] flex-1">
             <Select
               value={formData.submitterSubOffice}
               onValueChange={(value) => setFormData((prev) => ({ ...prev, submitterSubOffice: value as any }))}
@@ -99,42 +103,55 @@ export function Step1SubmitterInfo() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </Field>
         )}
       </div>
 
-      {(isVisible("sponsorName") || isVisible("sponsorRole") || isVisible("sponsorEmail")) && (
-        <div className="space-y-2 border-t pt-6">
-          <Label className="text-base font-semibold text-uspto-gray-text">Client sponsor</Label>
-          <p className="text-sm text-muted-foreground">
+      {sponsorVisible && !sponsorOpen && (
+        <div className="flex items-center justify-between gap-4 rounded-md border border-dashed border-border bg-card px-5 py-3.5">
+          <p className="text-[13.5px] text-foreground">
+            Submitting on someone else&apos;s behalf?{" "}
+            <span className="text-muted-foreground">Add a sponsor, optional.</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => setSponsorOpen(true)}
+            className="text-[13px] font-semibold text-primary hover:underline"
+          >
+            Add sponsor
+          </button>
+        </div>
+      )}
+
+      {sponsorVisible && sponsorOpen && (
+        <div className="space-y-4 border-t border-border-subtle pt-5">
+          <p className="text-[13.5px] font-semibold text-foreground">Client sponsor</p>
+          <p className="text-[12.5px] text-muted-foreground">
             Leave blank if you are your own sponsor. Fill this in if someone else is sponsoring this idea.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+          <div className="flex flex-wrap gap-5">
             {isVisible("sponsorName") && (
-              <div className="space-y-2">
-                <Label htmlFor="sponsorName">Sponsor name</Label>
+              <Field label="Sponsor name" htmlFor="sponsorName" className="min-w-[220px] flex-1">
                 <Input
                   id="sponsorName"
                   value={formData.sponsorName}
                   onChange={(e) => setFormData((prev) => ({ ...prev, sponsorName: e.target.value }))}
                   placeholder="e.g., Jonathan Smith"
                 />
-              </div>
+              </Field>
             )}
             {isVisible("sponsorRole") && (
-              <div className="space-y-2">
-                <Label htmlFor="sponsorRole">Sponsor role</Label>
+              <Field label="Sponsor role" htmlFor="sponsorRole" className="min-w-[220px] flex-1">
                 <Input
                   id="sponsorRole"
                   value={formData.sponsorRole}
                   onChange={(e) => setFormData((prev) => ({ ...prev, sponsorRole: e.target.value }))}
                   placeholder="e.g., Director of Operations"
                 />
-              </div>
+              </Field>
             )}
             {isVisible("sponsorEmail") && (
-              <div className="space-y-2">
-                <Label htmlFor="sponsorEmail">Sponsor email</Label>
+              <Field label="Sponsor email" htmlFor="sponsorEmail" className="min-w-[220px] flex-1">
                 <Input
                   id="sponsorEmail"
                   type="email"
@@ -144,11 +161,11 @@ export function Step1SubmitterInfo() {
                   // hardcoding one org's domain on every other org's screen.
                   placeholder={`e.g., ${getTenant().loginEmailPlaceholder}`}
                 />
-              </div>
+              </Field>
             )}
           </div>
         </div>
       )}
-    </div>
+    </StepCard>
   )
 }
