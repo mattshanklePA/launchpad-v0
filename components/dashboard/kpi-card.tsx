@@ -48,6 +48,7 @@ import {
   kpiDrilldownEntryHref,
   kpiDrilldownEntriesFor,
   presentCardField,
+  drilldownFooterHint,
   type KpiCardData,
   type KpiTrendDirection,
   type KpiDrilldownEntry,
@@ -97,13 +98,13 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
   const memberCount = memberCountLabel(item)
   const { badge, descriptor } = presentCardField(item)
   return (
-    <li className="min-w-0 rounded-md border p-2.5">
-      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+    <li className="min-w-0 px-6 py-3.5 hover:bg-muted/30">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1.5">
         <div className="min-w-0 flex-1 basis-64">
-          <p className="truncate text-sm font-medium" title={item.title}>
+          <p className="truncate text-[14.5px] font-semibold text-foreground" title={item.title}>
             {item.title}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
             <span>{item.bureauLabel}</span>
             <span aria-hidden="true">·</span>
             <span>{item.stage}</span>
@@ -123,7 +124,7 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
         </div>
         <Link
           href={kpiDrilldownEntryHref(item)}
-          className="flex shrink-0 items-center gap-1 text-xs font-medium text-uspto-blue-primary hover:underline"
+          className="flex shrink-0 items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
         >
           {cluster ? "Open cluster" : "Open submission"}
           <ArrowRight className="h-3 w-3" />
@@ -139,25 +140,45 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
  * Center's buttons navigate to the same list the matching KPI card already
  * shows rather than growing a second, divergent one. Caller supplies the
  * surrounding `<Dialog>`; this is only its `DialogContent`.
+ *
+ * `id` keys the footer hint (`drilldownFooterHint`, kpi-card-data.ts) — a
+ * KPI card's own id, or the matching Action Center item's id for the two
+ * rows with no KPI card of their own (unassigned, needs-info); either falls
+ * back to the same default hint when it names nothing more specific.
  */
-export function DrilldownDialogContent({ label, items }: { label: string; items: KpiDrilldownEntry[] }) {
+export function DrilldownDialogContent({ label, items, id = "" }: { label: string; items: KpiDrilldownEntry[]; id?: string }) {
+  const empty = items.length === 0
   return (
-    <DialogContent className="max-h-[80vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>{label}</DialogTitle>
-        <DialogDescription>
-          {items.length} item{items.length === 1 ? "" : "s"}
+    <DialogContent
+      overlayClassName="bg-[rgba(42,51,60,0.55)]"
+      className="max-h-[80vh] gap-0 overflow-x-hidden overflow-y-auto rounded-xl p-0 shadow-lg sm:max-w-[640px]"
+    >
+      <DialogHeader className="flex-row items-start justify-between gap-4 space-y-0 border-b px-6 py-5">
+        <div>
+          <p className="ks-microlabel mb-1">{label}</p>
+          <DialogTitle className="font-heading text-2xl font-black leading-none tracking-[-0.02em] text-foreground">
+            {items.length} use case{items.length === 1 ? "" : "s"}
+          </DialogTitle>
+        </div>
+        <DialogDescription className="sr-only">
+          {empty ? "Nothing here right now." : `${items.length} record${items.length === 1 ? "" : "s"} behind ${label}.`}
         </DialogDescription>
       </DialogHeader>
-      {items.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">Nothing here right now.</p>
+      {empty ? (
+        <div className="flex flex-col items-center gap-2 px-6 py-11 text-center">
+          <p className="font-heading text-base font-bold text-foreground">Nothing off-plumb</p>
+          <p className="max-w-[40ch] text-[13.5px] text-muted-foreground">
+            Every use case behind this number is inside its gates. Check back after the next intake.
+          </p>
+        </div>
       ) : (
-        <ul className="min-w-0 space-y-2">
+        <ul className="min-w-0 divide-y divide-border-subtle">
           {items.map((item) => (
             <DrilldownRow key={item.id} item={item} />
           ))}
         </ul>
       )}
+      <p className="border-t px-6 py-3 text-[12.5px] text-foreground-faint">{drilldownFooterHint(id)}</p>
     </DialogContent>
   )
 }
@@ -217,6 +238,7 @@ function KpiCardBody({ value, delta, status, subtitle }: Pick<KpiCardData, "valu
 }
 
 export function KpiCard({
+  id,
   label,
   value,
   delta,
@@ -274,7 +296,7 @@ export function KpiCard({
           )}
         </HoverCard>
 
-        <DrilldownDialogContent label={label} items={items} />
+        <DrilldownDialogContent label={label} items={items} id={id} />
       </Dialog>
     </Card>
   )
@@ -286,6 +308,80 @@ export function KpiCardGrid({ cards, drilldown }: { cards: KpiCardData[]; drilld
     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
       {sortKpiCardsByPriority(cards).map((card) => (
         <KpiCard key={card.id} {...card} items={drilldown && kpiDrilldownEntriesFor(card.id, drilldown)} />
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Compact rail variant (RD-1, mocks 01/02's "Where the portfolio stands" /
+ * "{code} at a glance" rail) — label eyebrow + subtitle on the left, the
+ * Chivo 900 number on the right, a 3px status-accent stripe instead of the
+ * grid card's 3-4px border. The whole card opens the same drill-down dialog
+ * as the grid card (`DrilldownDialogContent`); no hover-card preview at this
+ * size. `enterpriseValue` (RD-1 item 7) adds a second "of N enterprise-wide"
+ * line under the subtitle for a scoped view's rail — the matching
+ * department-scope card's own value, computed by the caller.
+ */
+export function KpiRailCard({
+  id,
+  label,
+  value,
+  status = "neutral",
+  subtitle,
+  items,
+  enterpriseValue,
+}: KpiCardData & { items?: KpiDrilldownEntry[]; enterpriseValue?: string | number }) {
+  const body = (
+    <div className="flex min-w-0 items-center justify-between gap-3 px-[15px] py-[13px]">
+      <div className="min-w-0">
+        <p className="ks-microlabel truncate">{label}</p>
+        {subtitle && <p className="mt-0.5 text-[12.5px] text-muted-foreground">{subtitle}</p>}
+        {enterpriseValue !== undefined && (
+          <p className="mt-0.5 text-[12.5px] text-muted-foreground">of {enterpriseValue} enterprise-wide</p>
+        )}
+      </div>
+      <div className="shrink-0 font-heading text-[26px] font-black leading-none tracking-[-0.02em] text-foreground">{value}</div>
+    </div>
+  )
+
+  const cardClassName = cn("shadow-none border-l-[3px] hover:border-strong", kpiStatusAccentClass(status))
+
+  if (!items) return <Card className={cardClassName}>{body}</Card>
+
+  return (
+    <Dialog>
+      <Card className={cardClassName}>
+        <DialogTrigger asChild>
+          <button type="button" aria-haspopup="dialog" aria-label={`${label} — view details`} className="w-full text-left">
+            {body}
+          </button>
+        </DialogTrigger>
+      </Card>
+      <DrilldownDialogContent label={label} items={items} id={id} />
+    </Dialog>
+  )
+}
+
+export function KpiRailList({
+  cards,
+  drilldown,
+  enterpriseCardsById,
+}: {
+  cards: KpiCardData[]
+  drilldown?: KpiDrilldown
+  enterpriseCardsById?: Record<string, KpiCardData>
+}) {
+  if (cards.length === 0) return null
+  return (
+    <div className="flex flex-col gap-2.5">
+      {sortKpiCardsByPriority(cards).map((card) => (
+        <KpiRailCard
+          key={card.id}
+          {...card}
+          items={drilldown && kpiDrilldownEntriesFor(card.id, drilldown)}
+          enterpriseValue={enterpriseCardsById?.[card.id]?.value}
+        />
       ))}
     </div>
   )

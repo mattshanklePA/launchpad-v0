@@ -140,3 +140,22 @@ export function presentCardField(item: KpiDrilldownEntry): CardFieldPresentation
 export function kpiDrilldownEntryHref(item: KpiDrilldownEntry): string {
   return `/submissions/${item.id}`
 }
+
+// Drill-down dialog footer hint (RD-1, mock 04) — one quiet line under the
+// list explaining when the count will move, keyed by KpiCardData id (and the
+// Action Center's own "duplicates"/"omb-review" ids, which open the same
+// dialog — see action-center.tsx). `default` covers every id without one of
+// its own.
+const DRILLDOWN_FOOTER_HINT: Record<string, string> = {
+  duplicates: "Either choice on the cluster page clears the block.",
+  "omb-reportable": "Counts refresh as reviewers record assessments.",
+  "omb-review": "Counts refresh as reviewers record assessments.",
+  reportability: "Counts refresh as reviewers record assessments.",
+  signoff: "Approved use cases appear here until their office confirms.",
+}
+const DEFAULT_DRILLDOWN_FOOTER_HINT = "Counts refresh as reviewers record decisions."
+
+/** The drill-down dialog's footer hint for a metric id — `DEFAULT_DRILLDOWN_FOOTER_HINT` for any id without its own. */
+export function drilldownFooterHint(id: string): string {
+  return DRILLDOWN_FOOTER_HINT[id] ?? DEFAULT_DRILLDOWN_FOOTER_HINT
+}

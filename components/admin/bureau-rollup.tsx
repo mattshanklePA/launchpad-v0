@@ -104,7 +104,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="text-xs uppercase tracking-wide text-muted-foreground">
+            <tr className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
               <th className="text-left font-semibold py-2 pr-3">{unitLabel}</th>
               {STATUS_ORDER.map((st) => (
                 <th key={st} className="text-center font-semibold px-2 py-2 whitespace-nowrap">
