@@ -1,135 +1,109 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sparkles, Loader2, CheckCircle, AlertTriangle, AlertCircle, FileText, X } from "lucide-react"
+import { StatusPill } from "@/components/ui/status-pill"
+import { Sparkles, Loader2, CheckCircle, AlertTriangle, AlertCircle } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import type { Submission } from "@/lib/submissions"
 import { compareSubmissions, type CompareBriefing } from "@/app/admin/compare-actions"
+import { computeRiskProfile } from "@/lib/riskProfile"
+import { businessUnitLabel } from "@/lib/reviewWorkflow"
+import { splitLabelCode } from "@/components/dashboard/command-center-data"
+import {
+  fmt,
+  prettyEnum,
+  readinessKeystoneStatus,
+  readinessPillLabel,
+  riskKeystoneStatus,
+  riskPillLabel,
+} from "@/components/admin/decision-center"
 
 type ComparisonViewProps = {
   submissions: Submission[]
   onClose: () => void
-}
-
-function readinessBadge(score: string | undefined) {
-  switch (score) {
-    case "ready":
-      return (
-        <Badge className="bg-green-100 text-green-800 border-green-300">
-          <CheckCircle className="w-3 h-3 mr-1" /> Ready
-        </Badge>
-      )
-    case "needs_work":
-      return (
-        <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-          <AlertTriangle className="w-3 h-3 mr-1" /> Needs Work
-        </Badge>
-      )
-    case "early_stage":
-      return (
-        <Badge className="bg-red-100 text-red-800 border-red-300">
-          <AlertCircle className="w-3 h-3 mr-1" /> Early Stage
-        </Badge>
-      )
-    default:
-      return <Badge variant="outline">Not Assessed</Badge>
-  }
+  Heading?: "h1" | "h2"
 }
 
 function verdictBadge(v: string) {
   switch (v) {
     case "fund_now":
       return (
-        <Badge className="bg-green-100 text-green-800 border-green-300">
-          <CheckCircle className="w-3 h-3 mr-1" /> Fund now
-        </Badge>
+        <span className="inline-flex items-center gap-1 rounded-full border border-healthy/30 bg-healthy-subtle px-2.5 py-0.5 text-xs font-semibold text-healthy-foreground">
+          <CheckCircle className="w-3 h-3" /> Fund now
+        </span>
       )
     case "fund_with_conditions":
       return (
-        <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-          <AlertTriangle className="w-3 h-3 mr-1" /> Fund with conditions
-        </Badge>
+        <span className="inline-flex items-center gap-1 rounded-full border border-attention/30 bg-attention-subtle px-2.5 py-0.5 text-xs font-semibold text-attention-foreground">
+          <AlertTriangle className="w-3 h-3" /> Fund with conditions
+        </span>
       )
     default:
       return (
-        <Badge className="bg-gray-100 text-gray-600 border-gray-300">
-          <AlertCircle className="w-3 h-3 mr-1" /> Hold
-        </Badge>
+        <span className="inline-flex items-center gap-1 rounded-full border border-neutral/40 bg-neutral-subtle px-2.5 py-0.5 text-xs font-semibold text-neutral-foreground">
+          <AlertCircle className="w-3 h-3" /> Hold
+        </span>
       )
   }
 }
 
-const ENUM_LABELS: Record<string, string> = {
-  lt_10: "<10 users",
-  "10_50": "10–50 users",
-  "50_500": "50–500 users",
-  gt_500: "500+ users",
-  lt_1: "<1 hr/week",
-  "1_5": "1–5 hrs/week",
-  "5_10": "5–10 hrs/week",
-  gt_10: "10+ hrs/week",
-  lt_50k: "<$50K",
-  "50k_250k": "$50K–$250K",
-  "250k_1m": "$250K–$1M",
-  gt_1m: "$1M+",
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  lt_3: "<3 months",
-  "3_6": "3–6 months",
-  "6_12": "6–12 months",
-  gt_12: "12+ months",
-  yes: "Yes",
-  no: "No",
-  ready: "Ready",
-  needs_work: "Needs Work",
-  early_stage: "Early Stage",
-  internal: "Internal",
-  external: "External",
-  controlled: "Controlled",
-  public: "Public",
-  excluded: "Excluded",
-  american_built: "American-built",
-  open_source_us: "Open-source (U.S.)",
-  foreign: "Foreign-built",
-  unknown: "Unknown",
-}
+// Row set for the 10b compare table (issue #204): the same fields already on
+// each Decision Center card (readiness/risk pills, the five-number row,
+// strategic alignment, feasibility) — no new data, just this set laid out
+// side by side. Deliberately narrower than the old expando's 19-field dump;
+// the mock's per-candidate "Plumb's read" row is left out, since there is no
+// source for it yet.
+const COMPARE_ROWS: Array<{ label: string; render: (s: Submission) => ReactNode }> = [
+  {
+    label: "Readiness",
+    render: (s) => (
+      <StatusPill status={readinessKeystoneStatus(s.formData.readinessScore)}>
+        {readinessPillLabel(s.formData.readinessScore)}
+      </StatusPill>
+    ),
+  },
+  {
+    label: "Risk",
+    render: (s) => {
+      const risk = computeRiskProfile(s.formData)
+      return <StatusPill status={riskKeystoneStatus(risk.level)}>{riskPillLabel(risk.level)}</StatusPill>
+    },
+  },
+  {
+    label: "Users",
+    render: (s) => <span className="text-[15px] font-semibold text-foreground">{prettyEnum(s.formData.impactedUsersCount)}</span>,
+  },
+  {
+    label: "Time saved",
+    render: (s) => <span className="text-[15px] font-semibold text-foreground">{prettyEnum(s.formData.userTimeSavings)}</span>,
+  },
+  {
+    label: "Cost saved",
+    render: (s) => <span className="text-[15px] font-semibold text-foreground">{prettyEnum(s.formData.costSavings)}</span>,
+  },
+  {
+    label: "Complexity",
+    render: (s) => (
+      <span className="text-[15px] font-semibold text-foreground">{prettyEnum(s.formData.implementationComplexity)}</span>
+    ),
+  },
+  {
+    label: "Timeline",
+    render: (s) => <span className="text-[15px] font-semibold text-foreground">{prettyEnum(s.formData.timelineForResults)}</span>,
+  },
+  {
+    label: "Strategic alignment",
+    render: (s) => <span className="text-[14px] text-foreground">{fmt(s.formData.alignmentSummary || s.formData.relevantOkrs)}</span>,
+  },
+  {
+    label: "Feasibility",
+    render: (s) => <span className="text-[14px] text-foreground">{fmt(s.formData.feasibilitySummary || s.formData.dependencies)}</span>,
+  },
+]
 
-function prettify(s: string): string {
-  return ENUM_LABELS[s] || s
-}
-
-function fieldValue(v: string | string[] | undefined): string {
-  if (Array.isArray(v)) return v.length > 0 ? v.map(prettify).join(", ") : "—"
-  if (!v || v.trim() === "") return "—"
-  return prettify(v)
-}
-
-type RowProps = {
-  label: string
-  values: (string | string[] | undefined)[]
-}
-
-function CompareRow({ label, values }: RowProps) {
-  return (
-    <div
-      className="grid gap-3 py-3 border-b last:border-b-0"
-      style={{ gridTemplateColumns: `180px repeat(${values.length}, minmax(0, 1fr))` }}
-    >
-      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-1">{label}</div>
-      {values.map((v, i) => (
-        <div key={i} className="text-sm whitespace-pre-wrap break-words">
-          {fieldValue(v)}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
+export function ComparisonView({ submissions, onClose, Heading = "h2" }: ComparisonViewProps) {
   const [briefing, setBriefing] = useState<CompareBriefing | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -152,186 +126,123 @@ export function ComparisonView({ submissions, onClose }: ComparisonViewProps) {
   }
 
   const recCand = briefing ? briefing.perSubmission.find((p) => p.id === briefing.recommendation.fundId) ?? null : null
+  const titles = submissions.map((s) => s.formData.useCaseTitle || "Untitled idea")
+  const gridStyle = { gridTemplateColumns: `170px repeat(${submissions.length}, minmax(0, 1fr))` }
 
   return (
-    <Card className="mb-6 border-2 border-primary/40">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Compare {submissions.length} Use Cases for Funding Decision
-          </CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            Generate an AI briefing for the recommendation, then open the full comparison if you want the detail.
-          </p>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-2 rounded-md bg-keystone-basalt600 px-7 py-6 text-white shadow-sm md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-2">
+          <Heading className="ks-page-title text-white">Decision Center · compare</Heading>
+          <p className="font-heading text-[20px] font-bold leading-[1.2] text-white">{titles.join(" vs. ")}</p>
+          <p className="text-[13px] text-white/72">Same rows, side by side. The briefing writes itself from this table.</p>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          <X className="w-4 h-4" />
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* AI Briefing — recommendation first */}
-        <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              Executive Comparative Briefing
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!briefing && !isLoading && (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Generate a decision-first briefing: a clear funding recommendation, a verdict per candidate, and the
-                  one gap that matters most for each. It names gaps honestly and invents nothing.
+        <div className="flex shrink-0 items-center gap-3.5 pb-0.5">
+          <button type="button" onClick={onClose} className="text-[13px] font-semibold text-white/90 hover:text-white hover:underline">
+            Back to candidates
+          </button>
+          <Button variant="chalk" onClick={handleGenerateBrief} disabled={isLoading}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generate Executive Briefing
+          </Button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-md border border-border-subtle bg-card">
+        <div className="grid gap-x-6 px-6 py-4" style={gridStyle}>
+          <div />
+          {submissions.map((s) => {
+            const unitLabel = s.formData.submitterOffice ? businessUnitLabel(s.formData.submitterOffice) : "—"
+            const unitShort = s.formData.submitterOffice ? splitLabelCode(unitLabel).code ?? unitLabel : "—"
+            return (
+              <div key={s.id} className="flex min-w-0 flex-col gap-1">
+                <p className="font-heading text-[16.5px] font-bold leading-[1.25] text-foreground">
+                  {s.formData.useCaseTitle || "Untitled idea"}
                 </p>
-                <Button onClick={handleGenerateBrief} size="lg">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Executive Briefing
+                <p className="text-[12.5px] text-muted-foreground">
+                  {fmt(s.formData.submitterName)} · {unitShort}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+        {COMPARE_ROWS.map((row) => (
+          <div key={row.label} className="grid items-baseline gap-x-6 border-t border-border-subtle px-6 py-3" style={gridStyle}>
+            <p className="ks-microlabel">{row.label}</p>
+            {submissions.map((s) => (
+              <div key={s.id} className="text-[13.5px] leading-[1.55]">
+                {row.render(s)}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {(isLoading || briefing) && (
+        <div className="rounded-md border-2 border-dashed border-primary/30 bg-primary/5 p-5">
+          <p className="flex items-center gap-2 text-lg font-semibold">
+            <Sparkles className="w-5 h-5" />
+            Executive Comparative Briefing
+          </p>
+
+          {isLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generating comparative briefing... (typically 10-20 seconds)
+            </div>
+          )}
+
+          {briefing && (
+            <div className="space-y-4 text-sm mt-3">
+              {/* Recommendation banner */}
+              <div className="rounded-lg border-2 border-green-300 bg-green-50 p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle className="w-4 h-4 text-green-700" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-green-800">Recommendation</span>
+                </div>
+                {recCand && <p className="font-semibold text-green-900">Fund first: {recCand.title}</p>}
+                <p className="text-green-900 mt-0.5 leading-relaxed">{briefing.recommendation.headline}</p>
+              </div>
+
+              {/* Per-candidate verdict cards */}
+              <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${briefing.perSubmission.length}, minmax(0, 1fr))` }}>
+                {briefing.perSubmission.map((p) => (
+                  <div
+                    key={p.id}
+                    className={`rounded-lg border p-3 ${p.id === briefing.recommendation.fundId ? "border-green-400 bg-green-50/40" : "bg-white"}`}
+                  >
+                    <p className="font-medium leading-tight">{p.title}</p>
+                    <div className="mt-1.5">{verdictBadge(p.verdict)}</div>
+                    <p className="text-muted-foreground text-xs mt-2 leading-relaxed">{p.oneLine}</p>
+                    <p className="text-xs mt-1.5 leading-relaxed">
+                      <span className="font-semibold text-amber-700">Gap: </span>
+                      {p.gap}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Short context */}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="rounded-md bg-muted/40 p-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">How they differ</span>
+                  <p className="mt-1 leading-relaxed">{briefing.differ}</p>
+                </div>
+                <div className="rounded-md bg-muted/40 p-3">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Biggest gap across the set</span>
+                  <p className="mt-1 leading-relaxed">{briefing.portfolioGap}</p>
+                </div>
+              </div>
+
+              <div className="pt-1 flex justify-end">
+                <Button variant="outline" size="sm" onClick={handleGenerateBrief} disabled={isLoading}>
+                  Regenerate
                 </Button>
               </div>
-            )}
-
-            {isLoading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Generating comparative briefing... (typically 10-20 seconds)
-              </div>
-            )}
-
-            {briefing && (
-              <div className="space-y-4 text-sm">
-                {/* Recommendation banner */}
-                <div className="rounded-lg border-2 border-green-300 bg-green-50 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle className="w-4 h-4 text-green-700" />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-green-800">Recommendation</span>
-                  </div>
-                  {recCand && <p className="font-semibold text-green-900">Fund first: {recCand.title}</p>}
-                  <p className="text-green-900 mt-0.5 leading-relaxed">{briefing.recommendation.headline}</p>
-                </div>
-
-                {/* Per-candidate verdict cards */}
-                <div
-                  className="grid gap-3"
-                  style={{ gridTemplateColumns: `repeat(${briefing.perSubmission.length}, minmax(0, 1fr))` }}
-                >
-                  {briefing.perSubmission.map((p) => (
-                    <div
-                      key={p.id}
-                      className={`rounded-lg border p-3 ${
-                        p.id === briefing.recommendation.fundId ? "border-green-400 bg-green-50/40" : "bg-white"
-                      }`}
-                    >
-                      <p className="font-medium leading-tight">{p.title}</p>
-                      <div className="mt-1.5">{verdictBadge(p.verdict)}</div>
-                      <p className="text-muted-foreground text-xs mt-2 leading-relaxed">{p.oneLine}</p>
-                      <p className="text-xs mt-1.5 leading-relaxed">
-                        <span className="font-semibold text-amber-700">Gap: </span>
-                        {p.gap}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Short context */}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="rounded-md bg-muted/40 p-3">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      How they differ
-                    </span>
-                    <p className="mt-1 leading-relaxed">{briefing.differ}</p>
-                  </div>
-                  <div className="rounded-md bg-muted/40 p-3">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Biggest gap across the set
-                    </span>
-                    <p className="mt-1 leading-relaxed">{briefing.portfolioGap}</p>
-                  </div>
-                </div>
-
-                <div className="pt-1 flex justify-end">
-                  <Button variant="outline" size="sm" onClick={handleGenerateBrief} disabled={isLoading}>
-                    Regenerate
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Full side-by-side comparison — collapsed by default */}
-        <details className="border rounded-lg bg-white">
-          <summary className="cursor-pointer select-none p-3 text-sm font-medium text-uspto-blue-primary">
-            Show full side-by-side comparison ({submissions.length} candidates, all fields)
-          </summary>
-          <div className="p-4 pt-0 overflow-x-auto">
-            <div
-              className="grid gap-3 pb-3 border-b-2 border-gray-300"
-              style={{ gridTemplateColumns: `180px repeat(${submissions.length}, minmax(0, 1fr))` }}
-            >
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-1">Dimension</div>
-              {submissions.map((s) => (
-                <div key={s.id} className="space-y-1">
-                  <p className="font-semibold text-uspto-blue-primary">{s.formData.useCaseTitle || "Untitled"}</p>
-                  <div className="flex items-center gap-2 flex-wrap">{readinessBadge(s.formData.readinessScore)}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {s.formData.submitterName || "Anonymous"} · {(s.formData.submitterOffice || "").toUpperCase() || "—"}
-                  </p>
-                </div>
-              ))}
             </div>
-
-            <CompareRow label="One-line bet" values={submissions.map((s) => s.formData.executiveSummary)} />
-            <CompareRow
-              label="Target users"
-              values={submissions.map((s) => s.formData.targetUserSummary || s.formData.targetUserContext)}
-            />
-            <CompareRow label="Impact size" values={submissions.map((s) => s.formData.impactedUsersCount)} />
-            <CompareRow
-              label="Problem"
-              values={submissions.map((s) => s.formData.problemDefinition || s.formData.coreProblem)}
-            />
-            <CompareRow label="Severity" values={submissions.map((s) => s.formData.severity)} />
-            <CompareRow
-              label="Solution"
-              values={submissions.map((s) => s.formData.solutionSummary || s.formData.proposedSolution)}
-            />
-            <CompareRow
-              label="Expected user value"
-              values={submissions.map((s) => s.formData.userValueSummary || s.formData.userValue)}
-            />
-            <CompareRow label="Time savings claim" values={submissions.map((s) => s.formData.userTimeSavings)} />
-            <CompareRow
-              label="Business value"
-              values={submissions.map((s) => s.formData.businessValueSummary || s.formData.businessValue)}
-            />
-            <CompareRow label="Cost savings claim" values={submissions.map((s) => s.formData.costSavings)} />
-            <CompareRow
-              label="Strategic alignment"
-              values={submissions.map((s) => s.formData.alignmentSummary || s.formData.relevantOkrs)}
-            />
-            <CompareRow
-              label="Implementation complexity"
-              values={submissions.map((s) => s.formData.implementationComplexity)}
-            />
-            <CompareRow
-              label="Feasibility & risks"
-              values={submissions.map((s) => s.formData.feasibilitySummary || s.formData.dependencies)}
-            />
-            <CompareRow label="Uses PII" values={submissions.map((s) => s.formData.involvesSensitiveData)} />
-            <CompareRow label="AI drives decisions" values={submissions.map((s) => s.formData.aiDecisionalImpact)} />
-            <CompareRow label="Model sourcing" values={submissions.map((s) => s.formData.aiModelSourcing)} />
-            <CompareRow label="Human review" values={submissions.map((s) => s.formData.aiHumanReview)} />
-            <CompareRow
-              label="Success metrics"
-              values={submissions.map((s) => s.formData.metricsSummary || s.formData.successMetrics)}
-            />
-            <CompareRow label="Timeline to results" values={submissions.map((s) => s.formData.timelineForResults)} />
-            <CompareRow label="Readiness summary" values={submissions.map((s) => s.formData.readinessSummary)} />
-          </div>
-        </details>
-      </CardContent>
-    </Card>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
