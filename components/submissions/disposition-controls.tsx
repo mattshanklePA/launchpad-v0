@@ -20,6 +20,7 @@
 import { Button } from "@/components/ui/button"
 import { Check, X, MessageSquare } from "lucide-react"
 import type { SubmissionStatus } from "@/lib/reviewWorkflow"
+import { cn } from "@/lib/utils"
 
 type DispositionAction = "approve" | "reject"
 type DispositionVariant = "default" | "outline"
@@ -35,10 +36,31 @@ export function dispositionButtonVariant(action: DispositionAction, status: Subm
   return status === "rejected" ? "outline" : "default"
 }
 
+// The components-sheet "disposition trio" look (00 Components Sheet.dc.html,
+// DIVERGENCES.md item 9): once a decision is on the record, it renders as a
+// filled color chip with a check/x mark rather than a filled button — a step
+// beyond `dispositionButtonVariant`'s default/outline split, reserved for
+// callers that want that specific decided-state visual (reviewer-detail's
+// "Why it was {approved|rejected}" card, issue #206). Every other caller
+// keeps the plain three-button trio unchanged.
+const DECISION_CHIP_CLASS = "inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-white"
+
+/** The filled chip half of the disposition trio, on its own — for callers (the reviewer-detail header, issue #206) that show the made decision somewhere other than beside its own Approve/Reject/Request info actions. */
+export function DecisionChip({ decision, className }: { decision: "approved" | "rejected"; className?: string }) {
+  const approved = decision === "approved"
+  return (
+    <span className={cn(DECISION_CHIP_CLASS, approved ? "bg-healthy" : "bg-alert", className)}>
+      {approved ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <X className="h-3.5 w-3.5" aria-hidden="true" />}
+      {approved ? "Approved" : "Rejected"}
+    </span>
+  )
+}
+
 export function DispositionControls({
   status,
   busy,
   blockReason,
+  chipStyle,
   onApprove,
   onRequestInfo,
   onReject,
@@ -46,10 +68,30 @@ export function DispositionControls({
   status: SubmissionStatus
   busy: boolean
   blockReason?: string
+  /** Renders the decided outcome (approved/rejected only) as a filled chip instead of a button. No effect while undecided. */
+  chipStyle?: boolean
   onApprove: () => void
   onRequestInfo: () => void
   onReject: () => void
 }) {
+  const decided = chipStyle && (status === "approved" || status === "rejected")
+
+  if (decided) {
+    const approved = status === "approved"
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <DecisionChip decision={status === "approved" ? "approved" : "rejected"} />
+        <Button variant="outline" onClick={approved ? onReject : onApprove} disabled={busy}>
+          {approved ? <X className="w-4 h-4 mr-1.5" /> : <Check className="w-4 h-4 mr-1.5" />}
+          {approved ? "Reject" : "Approve"}
+        </Button>
+        <Button variant="ghost" onClick={onRequestInfo} disabled={busy}>
+          <MessageSquare className="w-4 h-4 mr-1.5" />Request info
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button variant={dispositionButtonVariant("approve", status)} onClick={onApprove} disabled={busy || !!blockReason} title={blockReason}>

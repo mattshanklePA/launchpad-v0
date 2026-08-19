@@ -27,6 +27,8 @@ import {
   GOVERNANCE_FIELD_KEYS,
   getGovernanceCaptureReview,
   buildGovernanceCapturePatch,
+  governanceCaptureCounts,
+  governanceFieldValueLabel,
   type GovernanceFieldDraft,
   type GovernanceFieldValue,
 } from "@/lib/governanceCapture"
@@ -199,8 +201,7 @@ export function GovernanceCapturePanel({
     setBusy(false)
   }
 
-  const confirmedCount = review?.entries.filter((e) => e.decision === "confirmed").length ?? 0
-  const overriddenCount = review?.entries.filter((e) => e.decision === "overridden").length ?? 0
+  const { draftedByPlumb: confirmedCount, confirmedByReviewer: overriddenCount } = governanceCaptureCounts(review)
 
   const bySection = new Map<CaptureSection, CaptureFieldSpec[]>()
   for (const key of applicable) {
@@ -321,7 +322,7 @@ export function GovernanceCapturePanel({
 
                 {proposal && (
                   <p className="text-xs text-muted-foreground">
-                    {assistantName} proposes: {Array.isArray(proposal.value) ? proposal.value.join(", ") || "(none)" : proposal.value || "(blank)"} — {proposal.rationale}
+                    {assistantName} proposes: {governanceFieldValueLabel(spec.key as string, proposal.value)} — {proposal.rationale}
                   </p>
                 )}
               </div>
