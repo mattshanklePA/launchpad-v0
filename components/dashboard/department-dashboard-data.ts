@@ -309,14 +309,17 @@ export function buildActionItems(
 }
 
 /**
- * UX #4: the one-line "worklist-first" headline shown above the Action
- * Center so an admin sees what needs them before any metric — pluralizes,
- * and reads as an all-clear rather than "0 items" once nothing does.
+ * UX #4 / RD-1: the one-line "worklist-first" headline the Command Center
+ * header row reads (`.ks-section-head`) so an admin sees what needs them
+ * before any metric — pluralizes, and reads as an all-clear rather than
+ * "0 items" once nothing does. `scoped` appends "here" (RD-1 mock 02) for a
+ * bureau/office view, so the line reads as "here" rather than claiming the
+ * whole enterprise; the all-clear sentence doesn't vary by scope.
  */
-export function worklistSummaryLabel(actionItems: ActionItem[]): string {
+export function worklistSummaryLabel(actionItems: ActionItem[], scoped: boolean = false): string {
   const n = actionItems.length
   if (n === 0) return "Today: nothing needs you right now."
-  return `Today: ${n} item${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you.`
+  return `Today: ${n} item${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you${scoped ? " here" : ""}`
 }
 
 /**

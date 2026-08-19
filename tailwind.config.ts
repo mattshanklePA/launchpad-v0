@@ -130,6 +130,11 @@ const config: Config = {
         // its color/type token wiring is superseded.
         keystone: {
           basalt: "#2A333C",
+          // Raised basalt (--ks-basalt-600, app/styles/keystone/colors.css) —
+          // the hero/scoped-banner card background (RD-1, issue #202); no
+          // prior tailwind handle existed since RD-0 never needed a basalt
+          // surface lighter than the base --ks-basalt.
+          basalt600: "#3B4650",
           activeBlue: "#0086CA",
           amber: "#C77D3A",
           amberLight: "#DCA061",
