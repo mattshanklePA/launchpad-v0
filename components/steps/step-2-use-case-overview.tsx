@@ -2,10 +2,10 @@
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "@/context/form-context"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 import { Wand2, Loader2, Sparkles } from "lucide-react"
 import { useFieldVisibility } from "@/lib/formConfig"
 import { suggestIdeaOverview } from "@/app/actions"
@@ -14,6 +14,7 @@ import { getTenant } from "@/lib/tenant"
 import { proposeIsWithheld } from "@/lib/ombAutofill"
 import { useAiPropose } from "@/hooks/use-ai-propose"
 import { AiProposedHint } from "@/components/launchpad/ai-proposed-hint"
+import { Field, StepCard } from "./step-frame"
 
 export function Step2UseCaseOverview() {
   const { formData, setFormData } = useForm()
@@ -85,11 +86,11 @@ export function Step2UseCaseOverview() {
   }, [])
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      <div className="flex items-start justify-between gap-3 rounded-lg border bg-blue-50/40 px-4 py-3">
+    <StepCard>
+      <div className="flex items-start justify-between gap-3 rounded-md border border-border-subtle bg-background px-4 py-3">
         <p className="text-sm text-muted-foreground">
           {drafting ? (
-            <span className="flex items-center gap-2 text-uspto-blue-primary">
+            <span className="flex items-center gap-2 text-primary">
               <Sparkles className="h-4 w-4 animate-pulse" /> {tenant.assistantName} is drafting your title and summary…
             </span>
           ) : (
@@ -109,22 +110,16 @@ export function Step2UseCaseOverview() {
         </Button>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="useCaseTitle" className="text-base font-semibold text-uspto-gray-text">
-          Idea Title
-        </Label>
+      <Field label="Idea Title" htmlFor="useCaseTitle" required>
         <Input
           id="useCaseTitle"
           value={formData.useCaseTitle}
           onChange={(e) => setFormData((prev) => ({ ...prev, useCaseTitle: e.target.value }))}
           placeholder="A short, specific name, like AI-Assisted Prior Art Search"
         />
-      </div>
+      </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="useCaseDescription" className="text-base font-semibold text-uspto-gray-text">
-          Idea Summary
-        </Label>
+      <Field label="Idea Summary" htmlFor="useCaseDescription" required>
         <Textarea
           id="useCaseDescription"
           value={formData.useCaseDescription}
@@ -132,11 +127,10 @@ export function Step2UseCaseOverview() {
           placeholder="A 2-3 sentence summary of what the idea is, who it helps, and the outcome."
           rows={6}
         />
-      </div>
+      </Field>
 
       {isVisible("isWithheld") && (
-        <div className="space-y-3">
-          <Label>Should this AI use case be withheld from public reporting?</Label>
+        <Field label="Should this AI use case be withheld from public reporting?" required>
           <RadioGroup
             value={formData.isWithheld}
             onValueChange={(value) => setFormData((prev) => ({ ...prev, isWithheld: value as any }))}
@@ -168,8 +162,8 @@ export function Step2UseCaseOverview() {
             </div>
           </RadioGroup>
           <AiProposedHint proposal={isWithheldProposal} />
-        </div>
+        </Field>
       )}
-    </div>
+    </StepCard>
   )
 }
