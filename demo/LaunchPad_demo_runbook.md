@@ -7,7 +7,7 @@
 
 ## Technical framing — deliver this casually while you log in (~20 seconds)
 
-"Quick note on what this is under the hood while I log in: it's a standard web app, a Next.js front end with a Postgres database and server-side APIs. The AI is Claude, running server-side, not in the browser. None of it is tied to our demo stack. In your environment it drops onto AWS: Postgres becomes RDS or Aurora, hosting becomes ECS or Fargate, all inside your FedRAMP boundary. And Claude is already authorized at FedRAMP High and DoD IL4/5 through Amazon Bedrock in AWS GovCloud, so the model runs inside your accredited boundary, it's American-built, and no data leaves USPTO control."
+"Quick note on what this is under the hood while I log in: it's a standard web app, a Next.js front end with a Postgres database and server-side APIs. The AI runs server-side, not in the browser. None of it is tied to our demo stack. In your environment it drops onto AWS: Postgres becomes RDS or Aurora, hosting becomes ECS or Fargate, all inside your FedRAMP boundary. And the model is already authorized at FedRAMP High and DoD IL4/5 through Amazon Bedrock in AWS GovCloud, so it runs inside your accredited boundary, it's American-built, and no data leaves USPTO control."
 
 That one paragraph preempts three of the most likely questions: "is this just a form," "where would it run," and "is the model compliant."
 
@@ -34,11 +34,11 @@ Why it isn't a rebuild: the data layer already sits behind a clean server-side A
 
 - **Authentication:** federate to your IdP via OAuth2 / OIDC or SAML, through Amazon Cognito or an ALB OIDC integration, including PIV/CAC and MFA per your ICAM policy. No passwords stored in the app.
 - **Authorization:** map your existing IdP groups to the three roles, and enforce row-level data isolation in Postgres so a submitter only ever sees their own records at the database layer, not just in the UI.
-- **Boundary + model:** everything runs inside your AWS FedRAMP environment, and the model runs via Amazon Bedrock in AWS GovCloud, which carries FedRAMP High and DoD IL4/5 authorization for Claude. No data egress, American-built model, inside your accreditation boundary.
+- **Boundary + model:** everything runs inside your AWS FedRAMP environment, and the model runs via Amazon Bedrock in AWS GovCloud, which carries FedRAMP High and DoD IL4/5 authorization for the model we run. No data egress, American-built model, inside your accreditation boundary.
 
 The one-liner: *"We don't ask you to trust our security model. We plug into yours."*
 
-> Confidence note: the Bedrock FedRAMP High / IL4/5 authorization for Claude in AWS GovCloud is real and current (AWS and Anthropic, May 2025). Safe to state as fact.
+> Confidence note: the Bedrock FedRAMP High / IL4/5 authorization for the model we run in AWS GovCloud is real and current (AWS, May 2025). Safe to state as fact.
 
 ### "Is it Section 508 / accessibility compliant?"
 
@@ -69,7 +69,7 @@ Posture (honest and strong): *"508 is a first-class requirement here, not a bolt
 - [ ] **Wizard:** start a new idea → confirm problem-first, two-field steps, radio buttons, Scout, locked summary field.
 - [ ] **Decision Center:** compare 2 → generate briefing (⚠ this is the slow one, 20s+).
 
-**E. Confirm Scout works in PROD** — if the Anthropic API key isn't set in Vercel, Scout silently falls back to canned scaffolds. Make sure a real, specific Scout answer comes back in the deployed app, not the generic fallback.
+**E. Confirm Scout works in PROD** — if the model provider's API key isn't set in Vercel, Scout silently falls back to canned scaffolds. Make sure a real, specific Scout answer comes back in the deployed app, not the generic fallback.
 
 **F. Pre-stage for tomorrow** — because one browser shares a single login across tabs, set up **two windows: a normal window signed in as your demo submitter, and an incognito window signed in as admin**. Pre-generate one Decision Center briefing (in the admin window) so you're not waiting on it live. Screenshot that briefing as a fallback.
 
@@ -102,7 +102,7 @@ Land it: *"We don't ask you to trust our security model. We plug into yours."* (
 Start a new idea. Point out it jumps straight to **the problem**, not the idea: "the finding is people have 'ideas' that aren't even AI; we lead with the problem so we catch that early." Call out the **two-field, radio-driven** steps: "this is deliberately lean — Ramesh, you wanted three questions; I'll show you how you control exactly that in a minute."
 
 **6:30–9:00 — Scout (the intelligence).**
-Type something vague. Scout **asks a clarifying question** with clickable options instead of dumping feedback; it **never invents facts**; it drafts a **scaffold** into the locked summary field. "This is Claude in the back, running server-side — most of the IP is in the prompts. It coaches; the human stays in control." Governable angle: "Scout can also say *this doesn't look like AI* or *we already have a tool for this* before anyone spends a dollar."
+Type something vague. Scout **asks a clarifying question** with clickable options instead of dumping feedback; it **never invents facts**; it drafts a **scaffold** into the locked summary field. "This is our AI in the back, running server-side — most of the IP is in the prompts. It coaches; the human stays in control." Governable angle: "Scout can also say *this doesn't look like AI* or *we already have a tool for this* before anyone spends a dollar."
 
 **9:00–11:00 — Readiness gate + submit.**
 Land on the review step → **readiness verdict** (ready / needs work / early stage) and exec summary. "Every submission comes out structured and comparable, with a quality gate before it ever reaches a reviewer." Submit.
@@ -128,8 +128,8 @@ Open a **Rejected** example (auto-drafting office actions, or resume auto-screen
 
 ## 4. Likely light technical questions (+ short answers)
 
-- **"Is this just a Microsoft Form?"** No — there's real intelligence (Claude) in the back, server-side. It produces structured, comparable data and a readiness score; a form can't coach or assess.
-- **"What model is it / is it American-built?"** Claude (Anthropic) today; it's configurable to whatever model you approve — American-built or open-source U.S.-hosted. In a real deployment no submission data leaves USPTO control.
+- **"Is this just a Microsoft Form?"** No — there's real intelligence (an AI model) in the back, server-side. It produces structured, comparable data and a readiness score; a form can't coach or assess.
+- **"What model is it / is it American-built?"** American-built today; it's configurable to whatever model you approve — American-built or open-source U.S.-hosted. In a real deployment no submission data leaves USPTO control.
 - **"Where's it hosted? FedRAMP?"** It's a prototype on Vercel + Supabase right now; built to deploy on USPTO infrastructure / GovCloud. Not ATO'd yet — that's part of standing it up for real.
 - **"Is it GitLab? Can we have the code?"** Yes — it's in a repo and can be shared or open-sourced. *(Defer terms: "great question, let me sync with my team and come back to you.")*
 - **"Does the AI make the decisions?"** No. Advisory only, human-in-the-loop by design — and the tool actively flags decisional AI without human review as a risk.
