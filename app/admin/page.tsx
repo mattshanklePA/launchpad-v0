@@ -1249,7 +1249,10 @@ function AdminPageInner() {
                   </div>
                   <div>
                     <Label>{tenant.assistantName} AI Model</Label>
-                    <Input defaultValue="claude-sonnet-4-5" className="mt-1" />
+                    <Input
+                      defaultValue={process.env.NEXT_PUBLIC_MODEL_DISPLAY_NAME ?? "Default (configured by administrator)"}
+                      className="mt-1"
+                    />
                   </div>
                   {tenant.features.rallyExport && (
                     <div>

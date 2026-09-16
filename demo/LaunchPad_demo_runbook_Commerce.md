@@ -55,7 +55,7 @@
   })); localStorage.setItem('aid-current-step','3'); location.reload();
   ```
 - **Pre-generate one Decision Center briefing** (it's the slow call, ~10–20s) on a parked admin tab.
-- **Confirm Scout is live** in the deployed app (if the Anthropic key isn't live in prod, Scout silently falls back to canned scaffolds — fine, just narrate it).
+- **Confirm Scout is live** in the deployed app (if the model provider key isn't live in prod, Scout silently falls back to canned scaffolds — fine, just narrate it).
 - **Three tabs ready:** submitter, admin, and admin parked on the Decision Center.
 
 ---
@@ -72,9 +72,9 @@ Then frame in his language: *"Across Commerce, AI ideas show up everywhere — S
 
 Log in as **`submitter@uspto.gov`**. While logging in, deliver the **architecture + identity line casually** (preempts "is this just a form," "where does it run," "is it compliant," "who manages users"):
 
-> *"Quick note under the hood while I log in: a standard web app — Next.js front end, Postgres, server-side APIs. The AI is Claude, server-side, never in the browser. In your environment it drops onto AWS inside your FedRAMP boundary, and Claude is already authorized at FedRAMP High and DoD IL4/5 through Amazon Bedrock in GovCloud — American-built, running inside your accredited boundary, no data leaving Commerce control. And LaunchPad isn't another place to manage users: identity and role come from your IdP via SSO — OIDC or SAML, PIV/CAC and MFA per your ICAM policy — and people/org data is read from your systems of record. We map your existing groups to the three roles. It's a thin governance layer on top of your sources of truth; we plug into your security model, not ours."*
+> *"Quick note under the hood while I log in: a standard web app — Next.js front end, Postgres, server-side APIs. The AI runs server-side, never in the browser. In your environment it drops onto AWS inside your FedRAMP boundary, and the model is already authorized at FedRAMP High and DoD IL4/5 through Amazon Bedrock in GovCloud — American-built, running inside your accredited boundary, no data leaving Commerce control. And LaunchPad isn't another place to manage users: identity and role come from your IdP via SSO — OIDC or SAML, PIV/CAC and MFA per your ICAM policy — and people/org data is read from your systems of record. We map your existing groups to the three roles. It's a thin governance layer on top of your sources of truth; we plug into your security model, not ours."*
 
-> **Confidence note:** the Bedrock FedRAMP High / IL4/5 authorization for Claude in GovCloud is real and current (AWS + Anthropic, 2025). Safe to state as fact.
+> **Confidence note:** the Bedrock FedRAMP High / IL4/5 authorization for the model we run in GovCloud is real and current (AWS, 2025). Safe to state as fact.
 
 On the landing page: *"This is the front door — one plain-language place for any staff member to bring an AI idea. Notice sign-up is locked; accounts are provisioned, so nothing pollutes the inventory."*
 
@@ -88,7 +88,7 @@ Click **Start a new idea**. Point out it jumps straight to **the problem in plai
 We want an AI chatbot on our website to help the public get answers faster.
 ```
 
-Scout **asks one clarifying question with clickable options** instead of dumping feedback — and the options are real (who's the audience, what channels, is it answering from official content, what happens when it's unsure). Land the line: *"This is Claude in the back, but most of the value is in the prompts — Scout coaches a non-technical submitter toward a clear, well-scoped problem. The human stays in control; it folds your answer into a sharper problem statement instead of making you rewrite."*
+Scout **asks one clarifying question with clickable options** instead of dumping feedback — and the options are real (who's the audience, what channels, is it answering from official content, what happens when it's unsure). Land the line: *"This is our AI in the back, but most of the value is in the prompts — Scout coaches a non-technical submitter toward a clear, well-scoped problem. The human stays in control; it folds your answer into a sharper problem statement instead of making you rewrite."*
 
 Pick options, then use this as the **refined problem statement** (paste-ready):
 
@@ -221,7 +221,7 @@ This is the heart of the question, so be crisp. The entry is **free but scoped**
 
 Three real options; lead with the first for Commerce.
 
-- **In your cloud boundary, PA-managed (recommended).** We deploy LaunchPad as a PA-owned image into **your** AWS GovCloud (or Azure Gov) inside your FedRAMP / ATO boundary — Postgres becomes RDS/Aurora, the app runs on ECS/Fargate, and Claude runs **server-side via Amazon Bedrock** (FedRAMP High, DoD IL4/5, American-built). Your data never leaves your boundary, we manage and patch the image, and **source is never delivered** (image + escrow). Best balance of your security/ATO needs and our IP — and it matches the architecture line you gave at sign-in.
+- **In your cloud boundary, PA-managed (recommended).** We deploy LaunchPad as a PA-owned image into **your** AWS GovCloud (or Azure Gov) inside your FedRAMP / ATO boundary — Postgres becomes RDS/Aurora, the app runs on ECS/Fargate, and the model runs **server-side via Amazon Bedrock** (FedRAMP High, DoD IL4/5, American-built). Your data never leaves your boundary, we manage and patch the image, and **source is never delivered** (image + escrow). Best balance of your security/ATO needs and our IP — and it matches the architecture line you gave at sign-in.
 - **PA-hosted SaaS.** We run it in our cloud and you consume it — fastest to stand up, least ops burden on you. But a SaaS handling federal data generally needs **FedRAMP authorization**, so it's a longer runway for production use; good for a **pilot/sandbox** with non-sensitive data while the in-boundary option is stood up.
 - **Your team hosts, we deploy + support.** You operate it in your environment; we provide the licensed build and do the deployment and support as labor. Source still isn't delivered; escrow covers continuity.
 
@@ -263,7 +263,7 @@ You can do a full dry run and then snap everything back to the prepped starting 
 
 ### Trial run — what to verify
 Walk the full script (steps 1–10) once and confirm:
-- Scout asks a clarifying question on the vague problem, and returns real (not canned) text → confirms the Anthropic key is live in this environment.
+- Scout asks a clarifying question on the vague problem, and returns real (not canned) text → confirms the model provider key is live in this environment.
 - **Strategic Alignment auto-fills** on entry, and the Scout prompt is still there if you clear it and navigate back (the fix from earlier).
 - The readiness review returns a verdict + executive summary, and **Submit** lands the record in the pipeline.
 - Admin pipeline shows the two CX use cases as the two most recent, with readiness bars; filters work.
@@ -316,7 +316,7 @@ location.reload();
 - **The draft isn't on the dashboard** → paste the console snippet in the pre-flight, reload.
 
 ## Likely questions (quick answers)
-- **"Is this just a web form?"** No — Claude server-side produces structured, comparable, risk-scored data and coaches the submitter. A form can't.
+- **"Is this just a web form?"** No — an AI model, server-side, produces structured, comparable, risk-scored data and coaches the submitter. A form can't.
 - **"Does the AI make decisions?"** No. Advisory, human-in-the-loop by design — and it actively flags decisional AI without human review as a risk.
 - **"How does this help me as the Responsible AI Official?"** Your AI use-case inventory and risk posture become a byproduct of intake; the Decision Center makes the fund/hold call defensible and names gaps honestly.
 - **"Is it accessible / 508?"** Accessible by construction, WCAG 2.0 AA target; full conformance (VPAT + Trusted Tester) is part of stand-up.
