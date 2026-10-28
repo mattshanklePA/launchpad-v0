@@ -49,9 +49,17 @@ function wizardHeaderCopy(currentStep: number, formData: FormData, stepInfo: { t
     const readiness = getSubmissionReadiness(formData)
     const shortSteps = new Set(readiness.missing.filter((m) => m.step >= 1 && m.step <= 5).map((m) => m.step))
     const shortCount = shortSteps.size
+    // With the fields complete, the title follows Plumb's verdict when there
+    // is one, so it never reads "Ready to submit" above a NEEDS WORK pill.
+    const completeTitle =
+      formData.readinessScore === "needs_work"
+        ? "You can submit. Plumb suggests fixes first."
+        : formData.readinessScore === "early_stage"
+          ? "You can submit, but Plumb says it's early."
+          : "Ready to submit"
     const title =
       shortCount === 0
-        ? "Ready to submit"
+        ? completeTitle
         : `Almost ready — ${NUMBER_WORDS[shortCount] || shortCount} step${shortCount === 1 ? "" : "s"} short`
     const subtitle = formData.readinessScore
       ? "Plumb assessed the idea against what vetting looks for. Fix the findings or submit as-is."

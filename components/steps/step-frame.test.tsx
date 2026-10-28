@@ -90,6 +90,53 @@ describe("StepHeader", () => {
     expect(step6.textContent).toContain("Get Plumb's read before you submit.")
   })
 
+  // The step 6 title must agree with Plumb's verdict pill in the card below it.
+  // It used to read "Ready to submit" beside a NEEDS WORK pill whenever the
+  // required fields were complete, because it only looked at field completeness.
+  describe("step 6 title agrees with Plumb's verdict", () => {
+    const completeFields = {
+      ...initialFormData,
+      submitterName: "Jane Doe",
+      submitterEmail: "jane@example.gov",
+      submitterRole: "role-a",
+      submitterOffice: "unit-a",
+      coreProblem: "Contract closeout files are checked by hand.",
+      affectedBusinessUnits: ["unit-a"],
+      targetAudience: "audience-a",
+      impactedUsersCount: "50_500",
+      targetUserContext: "Contract specialists at field offices.",
+      proposedSolution: "An anomaly model flags likely-incomplete files.",
+      internalOrExternal: "internal",
+      userValue: "Fewer files reopened after audit.",
+      businessValue: "Fewer audit findings per quarter.",
+      useCaseTitle: "AI-Assisted Closeout Review",
+      useCaseDescription: "Flags incomplete contract closeout files before archiving.",
+      isWithheld: "no",
+    }
+
+    function titleFor(readinessScore: string | undefined) {
+      mockUseForm.mockReturnValue({ currentStep: 6, setCurrentStep, formData: { ...completeFields, readinessScore } })
+      const el = render(<StepHeader />)
+      return el.querySelector("h1, h2")?.textContent ?? ""
+    }
+
+    it("reads 'Ready to submit' when Plumb says ready", () => {
+      expect(titleFor("ready")).toBe("Ready to submit")
+    })
+
+    it("reads 'Ready to submit' before Plumb has assessed", () => {
+      expect(titleFor(undefined)).toBe("Ready to submit")
+    })
+
+    it("does not say 'Ready to submit' when Plumb says needs work", () => {
+      expect(titleFor("needs_work")).toBe("You can submit. Plumb suggests fixes first.")
+    })
+
+    it("does not say 'Ready to submit' when Plumb says early stage", () => {
+      expect(titleFor("early_stage")).toBe("You can submit, but Plumb says it's early.")
+    })
+  })
+
   // Issue #213 item 6: an optional step (Technical Constraints, step 4) used
   // to count as done as soon as it was visited, with no content — the header
   // then disagreed with Review & Submit's own recap. `isStepComplete` now
