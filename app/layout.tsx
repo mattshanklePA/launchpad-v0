@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Chivo, Hanken_Grotesk, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
+import { DraftResetSync } from "@/components/draft-reset-sync"
 import { getTenant } from "@/lib/tenant"
 
 // Keystone base brand type system (.claude/skills/tokens/typography.css /
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body className={hankenGrotesk.className}>
         <div className="min-h-screen bg-background font-sans antialiased">{children}</div>
         <Toaster />
+        <DraftResetSync />
       </body>
     </html>
   )

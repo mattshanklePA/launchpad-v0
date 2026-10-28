@@ -1,7 +1,7 @@
 "use server"
 
 // LaunchPad Co-Pilot server actions for AI vetting + readiness assessment
-import { generateObject } from "ai"
+import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
 import { getFormSteps, type FormData } from "@/lib/steps"
@@ -296,7 +296,7 @@ export async function assessReadiness(
   const submissionSummary = `\n${sections.join("\n\n")}${omittedNote}\n`
 
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("assessReadiness", {
       model: getModel(),
       schema: z.object({
         readinessScore: z.enum(["ready", "needs_work", "early_stage"]).describe("Overall readiness rating for leadership review"),
@@ -444,7 +444,7 @@ Rules:
 - If the idea is non-examination (e.g., HR, OCIO ops), align to "goal_employee_experience" + appropriate AI strategy priority — don't force-fit to examination goals.`
 
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("suggestStrategicAlignment", {
       model: getModel(),
       schema: z.object({
         focusAreas: z
@@ -555,7 +555,7 @@ export async function validateAndRefineInput(
   const fieldsSchema = z.object(fieldsShape)
 
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("validateAndRefineInput", {
       model: getModel(),
       schema: z.object({
         mode: z
@@ -713,7 +713,7 @@ export async function suggestIdeaOverview(
     .join("\n")
 
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("suggestIdeaOverview", {
       model: getModel(),
       schema: z.object({
         title: z.string().describe("A concise 3-8 word, Title Case name for the AI use case"),
@@ -775,7 +775,7 @@ Prior readiness verdict: ${formData.readinessScore || "n/a"}
 `
 
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("assistReviewer", {
       model: getModel(),
       schema: z.object({
         verdict: z.string().describe("1-2 sentence overall read for a reviewer deciding whether this should advance"),
@@ -916,7 +916,7 @@ export async function draftGovernanceFields(formData: FormData): Promise<Governa
     .join("\n")
 
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("draftGovernanceFields", {
       model: getModel(),
       schema: z.object({
         disseminatesToPublic: z.enum(["yes", "no"]).describe("Does the AI system's output get disseminated to the public?"),

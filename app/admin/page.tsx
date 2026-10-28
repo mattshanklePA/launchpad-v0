@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { clearSubmissions } from "@/lib/submissions"
+import { clearAllDrafts, syncDraftsWithDemoReset } from "@/lib/demoReset"
 import { FormConfigPanel } from "@/components/admin/form-config-panel"
 import { formConfigLockedNote } from "@/lib/formConfig"
 import { DataProvider, useDataProvider } from "@/components/data-provider"
@@ -388,6 +389,16 @@ function AdminPageInner() {
       }
       if (json?.seeded === false && (json?.existingCount ?? 0) > 0) {
         throw new Error("Clearing existing submissions didn't fully complete, so the reset was skipped. Try again.")
+      }
+      // Drafts live in each browser, not the database. Clear this browser's
+      // now; other browsers clear theirs on next load via the reset stamp
+      // (lib/demoReset.ts). Without the stamp (demo_state not migrated),
+      // still clear here so the admin's own view is clean.
+      try {
+        if (json?.resetAt) syncDraftsWithDemoReset(json.resetAt, window.localStorage)
+        else clearAllDrafts(window.localStorage)
+      } catch {
+        /* storage unavailable (private mode) — nothing to clear */
       }
       setResetStage("refreshing")
       await refetchSubmissions()
@@ -1325,7 +1336,7 @@ function AdminPageInner() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Reset Demo Data wipes the Supabase submissions table and re-inserts this tenant&apos;s deterministic
-                    demo set. Clear All wipes everything with nothing re-seeded. Both actions affect what every
+                    demo set, and clears unsubmitted drafts in every visitor&apos;s browser the next time they load the site. Clear All wipes everything with nothing re-seeded. Both actions affect what every
                     visitor to the demo site sees.
                   </p>
                 </CardContent>
