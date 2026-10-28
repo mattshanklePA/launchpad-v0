@@ -6,7 +6,7 @@
 // Tenant-neutral: all org-specific framing comes from getTenant(), so this
 // reads correctly for USPTO, DoC, DoW, or any future tenant.
 
-import { generateObject } from "ai"
+import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
@@ -191,7 +191,7 @@ export async function compareSubmissions(submissions: Submission[]): Promise<Com
   const dossier = submissions.map((s, i) => summarizeSubmission(s, i)).join("\n")
 
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("compareSubmissions", {
       model: getModel(),
       schema: z.object({
         recommendation: z.object({

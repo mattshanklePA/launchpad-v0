@@ -6,7 +6,7 @@
 // Advisory only — the reviewer still makes the call via
 // lib/rationalizationActions.ts; this never writes anything.
 
-import { generateObject } from "ai"
+import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
 import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
@@ -53,7 +53,7 @@ export async function assessCluster(members: Submission[]): Promise<ClusterAsses
 
   let result: ClusterAssessment
   try {
-    const { object } = await generateObject({
+    const { object } = await generateObjectResilient("assessCluster", {
       model: getModel(),
       schema: z.object({
         recommendation: z

@@ -17,6 +17,7 @@ import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
 import { getTenant } from "@/lib/tenant"
 import { errToDetail } from "@/lib/errToDetail"
+import { stampDemoReset } from "@/lib/demoResetStamp"
 import type { Submission } from "@/lib/submissions"
 
 // Pick the seed set for the active tenant. Returns null for tenants whose data
@@ -90,10 +91,16 @@ export async function POST() {
     }
     if (error) throw error
 
+    // Tell every visitor's browser a reset happened so it drops leftover
+    // unsubmitted drafts on its next load (lib/demoReset.ts). Best-effort:
+    // null when the demo_state table isn't migrated yet.
+    const resetAt = await stampDemoReset()
+
     return NextResponse.json({
       ok: true,
       seeded: true,
       insertedCount: rows.length,
+      resetAt,
     })
   } catch (error) {
     console.error("POST /api/seed failed:", error)
