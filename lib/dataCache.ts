@@ -45,6 +45,7 @@ export type CachedFormConfig = {
 
 type Cache = {
   submissions: CachedSubmission[] | null
+  submissionsTruncated: boolean
   users: CachedUser[] | null
   formConfig: CachedFormConfig | null
   loaded: boolean
@@ -52,6 +53,7 @@ type Cache = {
 
 const cache: Cache = {
   submissions: null,
+  submissionsTruncated: false,
   users: null,
   formConfig: null,
   loaded: false,
@@ -70,12 +72,18 @@ export function subscribeToCache(listener: Listener): () => void {
 }
 
 // ─── Submissions ───
-export function setCachedSubmissions(submissions: CachedSubmission[]) {
+export function setCachedSubmissions(submissions: CachedSubmission[], truncated = false) {
   cache.submissions = submissions
+  cache.submissionsTruncated = truncated
   notify()
 }
 export function getCachedSubmissions(): CachedSubmission[] {
   return cache.submissions || []
+}
+
+/** True when the server hit its safety ceiling and the list is incomplete (SEC-4). */
+export function isSubmissionsTruncated(): boolean {
+  return cache.submissionsTruncated
 }
 
 // ─── Users ───
