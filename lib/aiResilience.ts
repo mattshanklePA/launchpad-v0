@@ -19,6 +19,7 @@
 import { generateObject, NoObjectGeneratedError, type LanguageModel, type Prompt, type RepairTextFunction } from "ai"
 import type { z } from "zod"
 import { recordAiFailure } from "@/lib/aiFailureLog"
+import { recordAiUsage, maxOutputTokensFor } from "@/lib/aiUsageLog"
 
 /**
  * If `text` is JSON of the form {"<anyKey>": {…}} — exactly one key whose value
@@ -43,6 +44,8 @@ export function unwrapWrappedObjectText(text: string): string | null {
 type ResilientArgs<T> = {
   model: LanguageModel
   schema: z.ZodType<T, z.ZodTypeDef, unknown>
+  /** Submission this call is about, when there is one; stored on the usage row only. */
+  submissionId?: string | null
 } & Prompt
 
 const MAX_ATTEMPTS = 2
@@ -65,13 +68,24 @@ export async function generateObjectResilient<T>(label: string, args: ResilientA
       if (fixed !== null) repairedFrom = text
       return fixed
     }
+    const started = Date.now()
     try {
       // The overloads of generateObject don't narrow on a spread Prompt union;
       // the args are exactly what each caller passed before this wrapper.
+      const { submissionId: _submissionId, ...callArgs } = args
       const result = await generateObject({
-        ...(args as Parameters<typeof generateObject>[0]),
+        maxOutputTokens: maxOutputTokensFor(label),
+        ...(callArgs as Parameters<typeof generateObject>[0]),
         experimental_repairText: repair,
       } as Parameters<typeof generateObject>[0])
+      await recordAiUsage({
+        action: label,
+        submissionId: args.submissionId,
+        tokensIn: result.usage?.inputTokens ?? 0,
+        tokensOut: result.usage?.outputTokens ?? 0,
+        durationMs: Date.now() - started,
+        success: true,
+      })
       if (repairedFrom !== undefined) {
         await recordAiFailure({ label, outcome: "repaired", attempt, rawText: repairedFrom })
       }
@@ -81,6 +95,15 @@ export async function generateObjectResilient<T>(label: string, args: ResilientA
       return { object: result.object as T }
     } catch (error) {
       lastError = error
+      const failedUsage = NoObjectGeneratedError.isInstance(error) ? error.usage : undefined
+      await recordAiUsage({
+        action: label,
+        submissionId: args.submissionId,
+        tokensIn: failedUsage?.inputTokens ?? 0,
+        tokensOut: failedUsage?.outputTokens ?? 0,
+        durationMs: Date.now() - started,
+        success: false,
+      })
       console.warn(`[aiResilience] ${label} attempt ${attempt} failed:`, error instanceof Error ? error.message : error)
       // Only an unusable answer is worth asking again for. Network/API errors
       // are already retried inside the AI SDK; a third round-trip would only

@@ -34,6 +34,7 @@ import * as submissions from "@/app/api/submissions/route"
 import * as formConfig from "@/app/api/form-config/route"
 import * as seed from "@/app/api/seed/route"
 import * as demoReset from "@/app/api/demo-reset/route"
+import * as aiUsage from "@/app/api/ai-usage/route"
 import * as exportOmb from "@/app/api/export/omb/route"
 import * as exportApproval from "@/app/api/export/approval/route"
 import * as sessionRoute from "@/app/api/session/route"
@@ -90,6 +91,7 @@ const ROUTES: Array<[string, Handler, string, Rule]> = [
   ["GET /api/seed", seed.GET as Handler, "GET", "any"],
   ["POST /api/seed", seed.POST as Handler, "POST", "admin"],
   ["GET /api/demo-reset", demoReset.GET as Handler, "GET", "any"],
+  ["GET /api/ai-usage", aiUsage.GET as Handler, "GET", "admin"],
   ["GET /api/export/omb", exportOmb.GET as Handler, "GET", "any"],
   ["GET /api/export/approval", exportApproval.GET as Handler, "GET", "any"],
   ["GET /api/session", sessionRoute.GET as Handler, "GET", "any"],
@@ -131,6 +133,7 @@ describe("every API route enforces the session guard", () => {
     const { globSync } = await import("node:fs")
     const files = globSync("app/api/**/route.ts").map((f) => f.replace(/\\/g, "/")).sort()
     const covered = [
+      "app/api/ai-usage/route.ts",
       "app/api/demo-reset/route.ts",
       "app/api/export/approval/route.ts",
       "app/api/export/omb/route.ts",
