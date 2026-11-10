@@ -219,7 +219,7 @@ describe("CommandCenter scoped view", () => {
     scopedSubmissionsFixture = [
       {
         id: "s1",
-        submittedAt: "2026-08-18T00:00:00.000Z",
+        submittedAt: "2026-08-18T12:00:00.000Z",
         formData: { useCaseTitle: "Closeout completeness flagging", submitterName: "Avery Lang" } as any,
         status: "in_review",
         businessUnit: "census",

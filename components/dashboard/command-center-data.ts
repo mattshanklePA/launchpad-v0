@@ -12,6 +12,7 @@ import type { DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, STATUS_LABEL, businessUnitLabel, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import { clusterHref } from "@/lib/rationalization"
+import { DISPLAY_TIME_ZONE } from "@/lib/dateFormat"
 import { kpiDrilldownEntryHref } from "./kpi-card-data"
 import type { ActionItem } from "./action-center-data"
 import type { KeystoneStatus } from "@/lib/statusTokens"
@@ -39,10 +40,10 @@ export function splitLeadingCount(title: string): [count: string, rest: string] 
 }
 
 /** `d Mon yyyy` (e.g. "18 Aug 2026") — the mock's date format throughout the dashboard family. */
-export function formatKeystoneDate(iso: string): string {
+export function formatKeystoneDate(iso: string, timeZone: string = DISPLAY_TIME_ZONE): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(d)
+  return new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric" }).format(d)
 }
 
 /** Splits a `"Name (CODE)"` option label (bureau/office labels throughout `lib/tenant`) into its code and bare name; `code: null` when the label carries no trailing parenthetical. */

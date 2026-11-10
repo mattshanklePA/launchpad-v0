@@ -40,7 +40,19 @@ describe("splitLeadingCount", () => {
 
 describe("formatKeystoneDate", () => {
   it("formats as d Mon yyyy", () => {
-    expect(formatKeystoneDate("2026-08-18T00:00:00.000Z")).toBe("18 Aug 2026")
+    expect(formatKeystoneDate("2026-08-18T12:00:00.000Z")).toBe("18 Aug 2026")
+  })
+
+  it("formats in an explicit time zone, independent of the process TZ", () => {
+    const iso = "2026-08-18T00:00:00.000Z"
+    expect(formatKeystoneDate(iso, "UTC")).toBe("18 Aug 2026")
+    expect(formatKeystoneDate(iso, "America/New_York")).toBe("17 Aug 2026")
+    expect(formatKeystoneDate(iso, "Pacific/Auckland")).toBe("18 Aug 2026")
+  })
+
+  it("defaults to the fixed display zone (America/New_York)", () => {
+    expect(formatKeystoneDate("2026-08-18T00:00:00.000Z")).toBe("17 Aug 2026")
+    expect(formatKeystoneDate("2026-01-01T03:00:00.000Z")).toBe("31 Dec 2025")
   })
 })
 
@@ -144,7 +156,7 @@ describe("scopedSubmissionRow", () => {
   function submission(overrides: Partial<Submission> = {}): Submission {
     return {
       id: "s1",
-      submittedAt: "2026-08-18T00:00:00.000Z",
+      submittedAt: "2026-08-18T12:00:00.000Z",
       formData: { useCaseTitle: "Closeout completeness flagging", submitterName: "Avery Lang" } as any,
       status: "in_review",
       ...overrides,
