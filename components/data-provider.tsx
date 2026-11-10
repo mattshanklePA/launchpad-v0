@@ -17,6 +17,7 @@ import {
   setCachedUsers,
   subscribeToCache,
   isCacheLoaded,
+  isSubmissionsTruncated,
 } from "@/lib/dataCache"
 import { getSession, syncSessionFromServer, SESSION_CHANGED_EVENT } from "@/lib/auth"
 
@@ -65,8 +66,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refetchSubmissions = useCallback(async () => {
-    const json = await fetchJson<{ submissions: any[] }>("/api/submissions")
-    if (json?.submissions) setCachedSubmissions(json.submissions)
+    const json = await fetchJson<{ submissions: any[]; truncated?: boolean }>("/api/submissions")
+    if (json?.submissions) setCachedSubmissions(json.submissions, json.truncated === true)
   }, [])
 
   const refetchUsers = useCallback(async () => {
@@ -134,7 +135,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     refetchFormConfig,
   }
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>
+  return (
+    <DataContext.Provider value={value}>
+      {isSubmissionsTruncated() && (
+        <div role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          Showing the most recent records only. The list reached its safety limit, so older
+          records are not included in these counts.
+        </div>
+      )}
+      {children}
+    </DataContext.Provider>
+  )
 }
 
 export function useDataProvider(): DataContextValue {

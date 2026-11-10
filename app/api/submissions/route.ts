@@ -1,6 +1,7 @@
 // /api/submissions
 //   GET    → list the submissions the caller may see (visibleSubmissions with
-//            the verified session), newest first, capped at 50 for safety
+//            the verified session), newest first, all of them (paged; safety ceiling
+//            of 5,000 logs a warning and returns truncated: true)
 //   POST   → insert/update one (body: { id, submittedAt, formData }); authorized
 //            and decision-time-stamped on the server (lib/serverAccess.ts)
 //   DELETE → wipe all (used by the admin "Clear All Submissions" button)
@@ -10,6 +11,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
+import { fetchAllSubmissionRows } from "@/lib/fetchAllSubmissionRows"
 import { requireSession } from "@/lib/session/guard"
 import { authorizeWrite, visibleToSession } from "@/lib/serverAccess"
 import type { Submission } from "@/lib/submissions"
@@ -49,18 +51,14 @@ export async function GET(req: Request) {
   if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
-    const { data, error } = await supabase
-      .from("submissions")
-      .select("*")
-      .order("submitted_at", { ascending: false })
-    if (error) throw error
-    // Scope first, cap second: capping before filtering would hide a caller's
-    // own records behind other people's newer ones.
+    // Every row (paged past the server's per-request max), up to a high safety
+    // ceiling. Hitting the ceiling logs a warning and sets `truncated`.
+    const { rows, truncated } = await fetchAllSubmissionRows(supabase)
     const submissions = visibleToSession(
-      (data || []).map((row) => fromRow(row as DbSubmissionRow) as Submission),
+      rows.map((row) => fromRow(row) as Submission),
       guard.session,
-    ).slice(0, 50) as ApiSubmission[]
-    return NextResponse.json({ submissions }, { headers: NO_STORE })
+    ) as ApiSubmission[]
+    return NextResponse.json({ submissions, truncated }, { headers: NO_STORE })
   } catch (error) {
     console.error("GET /api/submissions failed:", error)
     return NextResponse.json(

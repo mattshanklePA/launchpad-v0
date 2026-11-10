@@ -17,10 +17,12 @@ vi.mock("@/lib/supabaseClient", () => {
       let filterId: string | null = null
       let op: "select" | "other" = "select"
       let payload: Row | null = null
+      let rangeArgs: [number, number] | null = null
       const b: any = {
         select: () => b,
         order: () => b,
         limit: () => b,
+        range: (from: number, to: number) => ((rangeArgs = [from, to]), b),
         eq: (_c: string, v: string) => ((filterId = v), b),
         upsert: (r: Row) => ((op = "other"), (payload = r), (lastUpsert = r), b),
         update: () => ((op = "other"), b),
@@ -29,7 +31,10 @@ vi.mock("@/lib/supabaseClient", () => {
             if (payload) rows = [...rows.filter((r) => r.id !== payload!.id), payload]
             return Promise.resolve({ data: null, error: null }).then(res)
           }
-          const data = filterId ? rows.filter((r) => r.id === filterId) : rows
+          let data = filterId ? rows.filter((r) => r.id === filterId) : rows
+          // Mimic PostgREST: a ranged read returns that slice, and an
+          // unranged read is silently cut at the 1000-row server max.
+          data = rangeArgs ? data.slice(rangeArgs[0], rangeArgs[1] + 1) : data.slice(0, 1000)
           return Promise.resolve({ data, error: null }).then(res)
         },
       }
@@ -103,6 +108,30 @@ describe("GET /api/submissions body per role", () => {
   it("scopes before capping: a submitter's record is found behind 60 newer others", async () => {
     rows = [...Array.from({ length: 60 }, (_, i) => row(`o${i}`, "bob@x.gov", "noaa", "nos")), row("mine", "alice@x.gov", "noaa", "nws")]
     expect(await listIds("alice")).toEqual(["mine"])
+  })
+})
+
+describe("SEC-4: no silent cap on the list", () => {
+  const many = (n: number) =>
+    Array.from({ length: n }, (_, i) => row(`m${String(i).padStart(4, "0")}`, "bob@x.gov", "noaa", "nos"))
+
+  it("returns all 120 records to an admin (not 50)", async () => {
+    rows = many(120)
+    const body = await (await submissions.GET(req("deptAdmin"))).json()
+    expect(body.submissions).toHaveLength(120)
+    expect(body.truncated).toBe(false)
+  })
+  it("pages past the 1000-row server max", async () => {
+    rows = many(2300)
+    const body = await (await submissions.GET(req("deptAdmin"))).json()
+    expect(body.submissions).toHaveLength(2300)
+  })
+  it("at the safety ceiling: warns, flags truncated, and does not cut silently", async () => {
+    rows = many(5200)
+    const body = await (await submissions.GET(req("deptAdmin"))).json()
+    expect(body.submissions).toHaveLength(5000)
+    expect(body.truncated).toBe(true)
+    expect(console.warn).toHaveBeenCalled()
   })
 })
 
