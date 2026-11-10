@@ -2,10 +2,9 @@ import { describe, it, expect, vi } from "vitest"
 
 // public-landing.tsx self-hosts fonts via next/font, which only resolves under
 // a Next build. Stubbed so its copy builders can be imported here.
-vi.mock("next/font/google", () => {
-  const font = () => ({ variable: "", className: "", style: {} })
-  return { Fraunces: font, Public_Sans: font }
-})
+vi.mock("next/font/local", () => ({
+  default: () => ({ variable: "", className: "", style: {} }),
+}))
 
 import { ALL_TENANTS, type TenantConfig } from "@/lib/tenant"
 import { doc } from "@/lib/tenant/doc"
