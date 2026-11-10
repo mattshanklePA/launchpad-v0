@@ -1,6 +1,8 @@
 // /api/submissions
-//   GET    → list all submissions, newest first (capped at 50 for safety)
-//   POST   → insert one (body: { id, submittedAt, formData })
+//   GET    → list the submissions the caller may see (visibleSubmissions with
+//            the verified session), newest first, capped at 50 for safety
+//   POST   → insert/update one (body: { id, submittedAt, formData }); authorized
+//            and decision-time-stamped on the server (lib/serverAccess.ts)
 //   DELETE → wipe all (used by the admin "Clear All Submissions" button)
 //
 // All operations use the server-side admin client which bypasses RLS.
@@ -9,6 +11,8 @@ import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
 import { requireSession } from "@/lib/session/guard"
+import { authorizeWrite, visibleToSession } from "@/lib/serverAccess"
+import type { Submission } from "@/lib/submissions"
 
 export const dynamic = "force-dynamic" // never cache list reads
 export const revalidate = 0
@@ -49,9 +53,13 @@ export async function GET(req: Request) {
       .from("submissions")
       .select("*")
       .order("submitted_at", { ascending: false })
-      .limit(50)
     if (error) throw error
-    const submissions = (data || []).map((row) => fromRow(row as DbSubmissionRow))
+    // Scope first, cap second: capping before filtering would hide a caller's
+    // own records behind other people's newer ones.
+    const submissions = visibleToSession(
+      (data || []).map((row) => fromRow(row as DbSubmissionRow) as Submission),
+      guard.session,
+    ).slice(0, 50) as ApiSubmission[]
     return NextResponse.json({ submissions }, { headers: NO_STORE })
   } catch (error) {
     console.error("GET /api/submissions failed:", error)
@@ -75,10 +83,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing formData" }, { status: 400 })
     }
     const supabase = getSupabaseAdmin()
+
+    // Authorize against the stored record (not anything the browser claims) and
+    // let the server stamp decision times.
+    const { data: existingRows, error: lookupErr } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("id", id)
+      .limit(1)
+    if (lookupErr) throw lookupErr
+    const existingRow = (existingRows || [])[0] as DbSubmissionRow | undefined
+    const decision = authorizeWrite({
+      session: guard.session,
+      existing: existingRow ? (fromRow(existingRow) as Submission) : null,
+      formData: formData as Record<string, unknown>,
+      now: new Date().toISOString(),
+    })
+    if (!decision.ok) {
+      return NextResponse.json({ error: decision.error }, { status: decision.status, headers: NO_STORE })
+    }
+    const authorizedFormData = decision.formData
+
     const { error } = await supabase.from("submissions").upsert({
       id,
-      submitted_at: submittedAt || new Date().toISOString(),
-      form_data: formData,
+      // An existing record keeps its original timestamp.
+      submitted_at: existingRow?.submitted_at || submittedAt || new Date().toISOString(),
+      form_data: authorizedFormData,
     })
     if (error) throw error
 
@@ -89,7 +119,7 @@ export async function POST(req: Request) {
     // fails wholesale and status/owner/business_unit never sync either, so
     // retry without it rather than swallowing the whole update.
     try {
-      const fd = formData as Record<string, any>
+      const fd = authorizedFormData as Record<string, any>
       const columns = {
         status: fd.reviewStatus || "submitted",
         owner_email: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : null,
