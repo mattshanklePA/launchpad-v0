@@ -17,7 +17,9 @@ import {
   setCachedUsers,
   subscribeToCache,
   isCacheLoaded,
+  isSubmissionsTruncated,
 } from "@/lib/dataCache"
+import { getSession, syncSessionFromServer, SESSION_CHANGED_EVENT } from "@/lib/auth"
 
 type DataContextValue = {
   loaded: boolean
@@ -64,8 +66,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refetchSubmissions = useCallback(async () => {
-    const json = await fetchJson<{ submissions: any[] }>("/api/submissions")
-    if (json?.submissions) setCachedSubmissions(json.submissions)
+    const json = await fetchJson<{ submissions: any[]; truncated?: boolean }>("/api/submissions")
+    if (json?.submissions) setCachedSubmissions(json.submissions, json.truncated === true)
   }, [])
 
   const refetchUsers = useCallback(async () => {
@@ -83,23 +85,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [refetchSubmissions, refetchUsers, refetchFormConfig])
 
   // Bootstrap on mount: seed-if-empty, then fetch everything in parallel.
+  // Every data route now requires the signed session cookie (SEC-1), so the
+  // bootstrap first confirms the session with the server and only then loads
+  // data. Signed out → nothing to fetch; the login event re-runs this.
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      try {
-        // Idempotent — only seeds if submissions table is empty.
-        await fetch("/api/seed", { method: "POST" }).catch(() => null)
-      } catch {
-        // non-fatal
+    const bootstrap = async (reloadIfSessionLost: boolean) => {
+      const hadLocalSession = !!getSession()
+      const session = await syncSessionFromServer()
+      if (!session) {
+        // A leftover display cache with no valid cookie behind it (expired,
+        // tampered, or from before cookies existed): reload once so pages
+        // re-evaluate against the cleared session. No loop: the second load
+        // has no cache to lose.
+        if (reloadIfSessionLost && hadLocalSession) {
+          window.location.reload()
+          return
+        }
+      } else {
+        if (session.role === "admin") {
+          // Idempotent — only seeds if submissions table is empty. Admin-only
+          // on the server, so only attempt it for an admin.
+          await fetch("/api/seed", { method: "POST" }).catch(() => null)
+        }
+        await refetch()
       }
-      await refetch()
       if (!cancelled) {
         markCacheLoaded()
         setLoaded(true)
       }
-    })()
+    }
+    bootstrap(true)
+    const onSessionChanged = () => {
+      bootstrap(false)
+    }
+    window.addEventListener(SESSION_CHANGED_EVENT, onSessionChanged)
     return () => {
       cancelled = true
+      window.removeEventListener(SESSION_CHANGED_EVENT, onSessionChanged)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -112,7 +135,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     refetchFormConfig,
   }
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>
+  return (
+    <DataContext.Provider value={value}>
+      {isSubmissionsTruncated() && (
+        <div role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          Showing the most recent records only. The list reached its safety limit, so older
+          records are not included in these counts.
+        </div>
+      )}
+      {children}
+    </DataContext.Provider>
+  )
 }
 
 export function useDataProvider(): DataContextValue {

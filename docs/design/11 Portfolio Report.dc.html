@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Portfolio report</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&amp;family=Hanken+Grotesk:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#f4f2ec}
+a{color:#006ba1}a:hover{color:#1e252c}
+a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid #0086ca;outline-offset:2px}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: #f4f2ec; font-family: 'Hanken Grotesk', 'Source Sans 3', sans-serif; color: #2a333c">
+
+  <nav aria-label="Main" style="flex: 1 1 240px; max-width: 260px; background: #1e252c; color: #f4f2ec; padding: 20px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12l-3 18H9z" fill="#c77d3a"></path><path d="M6 3h12l-1 6H7z" fill="#dca061"></path></svg>
+      <div style="display: flex; flex-direction: column">
+        <span style="font-family: Chivo, sans-serif; font-weight: 700; font-size: 16px">Keystone</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #b9c0c7">AI use case governance</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #b9c0c7; padding: 0 8px 6px">Workspace</span>
+      <a href="#" aria-current="page" style="color: #ffffff; background: #3b4650; padding: 8px; border-radius: 5px; font-size: 14px; font-weight: 600">Portfolio report</a>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Review to-do list</a>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Submit an idea</a>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Decision Center</a>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #3b4650; padding-top: 16px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #b9c0c7; padding: 0 8px 6px">Program offices</span>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Acquisition, Training and Readiness</a>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Human Resources and Force Management</a>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Logistics and Finance</a>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Business Technology Solutions</a>
+      <a href="#" style="color: #e7e1d6; padding: 8px; font-size: 14px">Consolidated ERP</a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+
+    <div style="background: #ffffff; border-bottom: 1px solid #e7e1d6; padding: 14px 40px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px">
+      <span style="color: #4a545e"><a href="#">Command Center</a> / <span style="color: #2a333c; font-weight: 600">Portfolio report</span></span>
+      <span style="color: #4a545e">Avery Lang, executive view</span>
+    </div>
+
+    <header style="background: #2a333c; color: #f4f2ec; padding: 40px 40px 36px">
+      <div style="max-width: 1200px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px">
+        <div style="flex: 1 1 560px; display: flex; flex-direction: column; gap: 14px">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #dca061">Portfolio report · 1 Sep to 10 Dec 2026</span>
+          <h1 style="margin: 0; font-family: Chivo, sans-serif; font-weight: 900; font-size: 39px; line-height: 1.1; letter-spacing: -0.02em">AI portfolio, Enterprise Software and Services</h1>
+          <p style="margin: 0; font-size: 18px; line-height: 1.5; color: #e7e1d6; max-width: 760px">42 ideas from all 5 program offices. 6 are high risk. 14 are decided, at a median of 11 days from submit to decision. 3 need a leader this week.</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #e7e1d6">Program office
+            <select style="font-family: inherit; font-size: 15px; padding: 10px 12px; min-height: 44px; border-radius: 5px; border: 1px solid #6c7680; background: #1e252c; color: #f4f2ec">
+              <option>All 5 offices</option>
+              <option>Acquisition, Training and Readiness</option>
+              <option>Human Resources and Force Management</option>
+              <option>Logistics and Finance</option>
+              <option>Business Technology Solutions</option>
+              <option>Consolidated ERP</option>
+            </select>
+          </label>
+          <button type="button" style="font-family: inherit; font-size: 15px; font-weight: 600; min-height: 44px; padding: 0 18px; border-radius: 5px; border: 1px solid #97a0a9; background: transparent; color: #f4f2ec; cursor: pointer">Copy link</button>
+          <button type="button" style="font-family: inherit; font-size: 15px; font-weight: 600; min-height: 44px; padding: 0 20px; border-radius: 5px; border: 1px solid #0086ca; background: #0086ca; color: #ffffff; cursor: pointer">Download PDF</button>
+        </div>
+      </div>
+    </header>
+
+    <div style="padding: 32px 40px 56px; display: flex; flex-direction: column; gap: 40px; max-width: 1280px; box-sizing: border-box">
+
+      <section aria-labelledby="sum-h" style="background: #ffffff; border: 1px solid #e7e1d6; border-radius: 8px">
+        <h2 id="sum-h" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Summary</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))">
+          <div style="padding: 24px; border-right: 1px solid #e7e1d6; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a545e">Ideas in</span>
+            <span style="font-family: Chivo, sans-serif; font-weight: 700; font-size: 39px; line-height: 1">42</span>
+            <span style="font-size: 14px; line-height: 1.45; color: #4a545e">From 5 of 5 program offices, submitted 1 Sep to 10 Dec 2026</span>
+          </div>
+          <div style="padding: 24px; border-right: 1px solid #e7e1d6; display: flex; flex-direction: column; gap: 8px; background: #fbf6ef">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #9c5f22">High risk</span>
+            <span style="font-family: Chivo, sans-serif; font-weight: 700; font-size: 39px; line-height: 1">6 <span style="font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; font-size: 16px; color: #4a545e">of 42</span></span>
+            <span style="font-size: 14px; line-height: 1.45; color: #4a545e">Most common reason: it affects decisions about people (4 of 6)</span>
+          </div>
+          <div style="padding: 24px; border-right: 1px solid #e7e1d6; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a545e">Duplicates caught</span>
+            <span style="font-family: Chivo, sans-serif; font-weight: 700; font-size: 39px; line-height: 1">3 <span style="font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; font-size: 16px; color: #4a545e">groups</span></span>
+            <span style="font-size: 14px; line-height: 1.45; color: #4a545e">Covering 8 of 42 ideas: the same idea sent in by more than one office</span>
+          </div>
+          <div style="padding: 24px; border-right: 1px solid #e7e1d6; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a545e">Decisions made</span>
+            <span style="font-family: Chivo, sans-serif; font-weight: 700; font-size: 39px; line-height: 1">14 <span style="font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; font-size: 16px; color: #4a545e">of 42</span></span>
+            <span style="font-size: 14px; line-height: 1.45; color: #4a545e">9 approved, 5 not approved, 1 Sep to 10 Dec 2026</span>
+          </div>
+          <div style="padding: 24px; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a545e">Median time to decision</span>
+            <span style="font-family: Chivo, sans-serif; font-weight: 700; font-size: 39px; line-height: 1">11 <span style="font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; font-size: 16px; color: #4a545e">days</span></span>
+            <span style="font-size: 14px; line-height: 1.45; color: #4a545e">From submit to decision, across all 14 decisions in the period</span>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="lead-h" style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+          <h2 id="lead-h" style="margin: 0; font-family: Chivo, sans-serif; font-weight: 700; font-size: 25px">Needs a leader's decision</h2>
+          <span style="font-size: 14px; color: #4a545e">3 of 28 ideas in review, as of 10 Dec 2026</span>
+        </div>
+        <ol style="list-style: none; margin: 0; padding: 0; background: #ffffff; border: 1px solid #e7e1d6; border-radius: 8px">
+          <sc-for list="{{lead}}" as="item" hint-placeholder-count="3">
+            <li style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 18px 24px; border-bottom: 1px solid #e7e1d6">
+              <span aria-hidden="true" style="width: 10px; height: 10px; background: #c77d3a; flex: 0 0 auto"></span>
+              <div style="flex: 1 1 420px; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 16px; font-weight: 600; color: #2a333c">{{item.title}}</span>
+                <span style="font-size: 15px; line-height: 1.5; color: #4a545e">{{item.why}}</span>
+              </div>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #9c5f22; min-width: 130px">{{item.wait}}</span>
+              <a href="#" style="font-size: 15px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Open</a>
+            </li>
+          </sc-for>
+        </ol>
+      </section>
+
+      <section aria-labelledby="off-h" style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+          <h2 id="off-h" style="margin: 0; font-family: Chivo, sans-serif; font-weight: 700; font-size: 25px">By program office</h2>
+          <span style="font-size: 14px; color: #4a545e">42 ideas, 1 Sep to 10 Dec 2026. Select an office to see only its ideas.</span>
+        </div>
+        <div style="overflow-x: auto; background: #ffffff; border: 1px solid #e7e1d6; border-radius: 8px">
+          <table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 15px">
+            <thead>
+              <tr style="text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a545e">
+                <th scope="col" style="padding: 14px 24px; font-weight: 500; border-bottom: 1px solid #d6cebe">Program office</th>
+                <th scope="col" style="padding: 14px 16px; font-weight: 500; border-bottom: 1px solid #d6cebe; text-align: right">Ideas in</th>
+                <th scope="col" style="padding: 14px 16px; font-weight: 500; border-bottom: 1px solid #d6cebe; text-align: right">High risk</th>
+                <th scope="col" style="padding: 14px 16px; font-weight: 500; border-bottom: 1px solid #d6cebe; text-align: right">In review</th>
+                <th scope="col" style="padding: 14px 16px; font-weight: 500; border-bottom: 1px solid #d6cebe; text-align: right">Decided</th>
+                <th scope="col" style="padding: 14px 24px; font-weight: 500; border-bottom: 1px solid #d6cebe; text-align: right">Median days to decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{offices}}" as="o" hint-placeholder-count="5">
+                <tr style="border-bottom: 1px solid #e7e1d6">
+                  <th scope="row" style="padding: 14px 24px; text-align: left; font-weight: 600">{{o.name}} <span style="font-weight: 400; color: #4a545e">({{o.short}})</span></th>
+                  <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace">{{o.ideas}}</td>
+                  <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace; color: {{o.highColor}}">{{o.high}}</td>
+                  <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace">{{o.review}}</td>
+                  <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace">{{o.decided}}</td>
+                  <td style="padding: 14px 24px; text-align: right; font-family: 'JetBrains Mono', monospace">{{o.median}}</td>
+                </tr>
+              </sc-for>
+              <tr style="background: #f4f2ec; font-weight: 600">
+                <th scope="row" style="padding: 14px 24px; text-align: left">All 5 offices</th>
+                <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace">42</td>
+                <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace">6</td>
+                <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace">28</td>
+                <td style="padding: 14px 16px; text-align: right; font-family: 'JetBrains Mono', monospace">14</td>
+                <td style="padding: 14px 24px; text-align: right; font-family: 'JetBrains Mono', monospace">11 days</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #4a545e">In review includes 4 ideas waiting on the person who sent them in. Median days counts only decided ideas.</p>
+      </section>
+
+      <section aria-labelledby="all-h" style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+          <h2 id="all-h" style="margin: 0; font-family: Chivo, sans-serif; font-weight: 700; font-size: 25px">Every idea</h2>
+          <span style="font-size: 14px; color: #4a545e">Showing 10 of 42, highest risk first, then longest open. Select a column to sort.</span>
+        </div>
+        <div style="overflow-x: auto; background: #ffffff; border: 1px solid #e7e1d6; border-radius: 8px">
+          <table style="width: 100%; min-width: 1040px; border-collapse: collapse; font-size: 14px">
+            <thead>
+              <tr style="text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a545e">
+                <th scope="col" style="padding: 14px 24px; font-weight: 500; border-bottom: 1px solid #d6cebe">Idea</th>
+                <th scope="col" style="padding: 14px 12px; font-weight: 500; border-bottom: 1px solid #d6cebe">Office and program</th>
+                <th scope="col" style="padding: 14px 12px; font-weight: 500; border-bottom: 1px solid #d6cebe">Status</th>
+                <th scope="col" aria-sort="descending" style="padding: 14px 12px; font-weight: 500; border-bottom: 1px solid #d6cebe; color: #2a333c">Risk ↓</th>
+                <th scope="col" style="padding: 14px 12px; font-weight: 500; border-bottom: 1px solid #d6cebe">Why, in plain words</th>
+                <th scope="col" style="padding: 14px 12px; font-weight: 500; border-bottom: 1px solid #d6cebe">Days</th>
+                <th scope="col" style="padding: 14px 24px 14px 12px; font-weight: 500; border-bottom: 1px solid #d6cebe">Decided by</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ideas}}" as="r" hint-placeholder-count="10">
+                <tr style="border-bottom: 1px solid #e7e1d6; vertical-align: top">
+                  <td style="padding: 14px 24px; font-weight: 600"><a href="#" style="color: #2a333c">{{r.title}}</a></td>
+                  <td style="padding: 14px 12px; color: #4a545e">{{r.office}}</td>
+                  <td style="padding: 14px 12px">{{r.status}}</td>
+                  <td style="padding: 14px 12px; white-space: nowrap; font-weight: 600; color: {{r.riskText}}"><span aria-hidden="true" style="display: inline-block; width: 8px; height: 8px; margin-right: 8px; background: {{r.riskMark}}"></span>{{r.risk}}</td>
+                  <td style="padding: 14px 12px; color: #4a545e; line-height: 1.45; max-width: 320px">{{r.why}}</td>
+                  <td style="padding: 14px 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; white-space: nowrap">{{r.days}}</td>
+                  <td style="padding: 14px 24px 14px 12px; color: #4a545e">{{r.by}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <div style="padding: 14px 24px">
+            <button type="button" style="font-family: inherit; font-size: 15px; font-weight: 600; min-height: 44px; padding: 0 18px; border-radius: 5px; border: 1px solid #d6cebe; background: #ffffff; color: #006ba1; cursor: pointer">Show all 42 ideas</button>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="plumb-h" style="display: flex; gap: 20px; padding: 24px; background: #ffffff; border: 1px solid #e7e1d6; border-radius: 8px">
+        <svg width="20" height="56" viewBox="0 0 20 56" aria-hidden="true" style="flex: 0 0 auto"><line x1="10" y1="0" x2="10" y2="40" stroke="#2a333c" stroke-width="1.5"></line><path d="M4 40h12l-6 14z" fill="#0086ca"></path></svg>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-width: 820px">
+          <h2 id="plumb-h" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a545e">Plumb's read of the portfolio · advice, not a decision · written 10 Dec 2026, 06:00</h2>
+          <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #2a333c">Half of the high-risk ideas sit in Human Resources and Force Management, and all three involve decisions about people. Settling the supplier risk scoring overlap this week stops three offices from funding the same build. Decisions move fastest in Consolidated ERP and AT&amp;R (8 and 9 days) and slowest in HR-FM (16 days).</p>
+        </div>
+      </section>
+
+      <footer style="font-size: 13px; color: #4a545e; border-top: 1px solid #d6cebe; padding-top: 16px">Prepared from Keystone on 10 Dec 2026. Internal. Not an official Army record. Demo data.</footer>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var HIGH = { riskText: '#a83c2e', riskMark: '#c24a3a' };
+    var MED = { riskText: '#9c5f22', riskMark: '#c77d3a' };
+    var LOW = { riskText: '#4a545e', riskMark: '#97a0a9' };
+    function row(title, office, status, risk, why, days, by) {
+      var c = risk === 'High' ? HIGH : (risk === 'Medium' ? MED : LOW);
+      return { title: title, office: office, status: status, risk: risk, why: why, days: days, by: by, riskText: c.riskText, riskMark: c.riskMark };
+    }
+    return {
+      lead: [
+        { title: 'Promotion board file scoring (HR-FM)', why: 'High risk: it scores people for promotion. A leader accepts or declines that risk before review can finish.', wait: 'Waiting 19 days' },
+        { title: 'Supplier risk scoring, sent in by 3 offices (AT&R, BTS, LOG-FIN)', why: 'The same idea three times. Name one office to lead before any of them is funded.', wait: 'Waiting 12 days' },
+        { title: 'Reassignment match recommendations (HR-FM)', why: 'The reviewer rates it high risk and the office rates it medium. A leader settles which one stands.', wait: 'Waiting 8 days' }
+      ],
+      offices: [
+        { name: 'Acquisition, Training and Readiness', short: 'AT&R', ideas: '15', high: '2', highColor: '#a83c2e', review: '10', decided: '5', median: '9 days' },
+        { name: 'Human Resources and Force Management', short: 'HR-FM', ideas: '9', high: '3', highColor: '#a83c2e', review: '6', decided: '3', median: '16 days' },
+        { name: 'Logistics and Finance', short: 'LOG-FIN', ideas: '8', high: '1', highColor: '#a83c2e', review: '5', decided: '3', median: '11 days' },
+        { name: 'Business Technology Solutions', short: 'BTS', ideas: '7', high: '0', highColor: '#4a545e', review: '5', decided: '2', median: '12 days' },
+        { name: 'Consolidated ERP', short: 'C-ERP', ideas: '3', high: '0', highColor: '#4a545e', review: '2', decided: '1', median: '8 days' }
+      ],
+      ideas: [
+        row('Promotion board file scoring', 'HR-FM', 'In review', 'High', 'Scores people for promotion; a person must decide', '19 days open', 'Not yet'),
+        row('Source selection evaluation drafting', 'AT&R · ACWS', 'In review', 'High', 'Shapes who wins a contract; a contracting officer decides', '24 days open', 'Not yet'),
+        row('Course failure early warning', 'AT&R · ATIS', 'In review', 'High', 'Flags students likely to fail; an instructor decides what happens', '17 days open', 'Not yet'),
+        row('Invoice payment hold prediction', 'LOG-FIN', 'In review', 'High', 'Could hold a payment to a vendor; a person approves every hold', '14 days open', 'Not yet'),
+        row('Reassignment match recommendations', 'HR-FM', 'In review', 'High', 'Recommends who moves where; a person must decide', '8 days open', 'Not yet'),
+        row('Civilian hiring resume screening', 'HR-FM', 'Not approved', 'High', 'Would screen people out of hiring with no human check', '21 days to decide', 'A. Brooks'),
+        row('Case status answers for partner nations', 'AT&R · FMS-ACES', 'Needs info', 'Medium', 'Answers go to partner nations; staff check each one', '16 days open', 'Not yet'),
+        row('Supplier past-performance risk scoring', 'BTS', 'In review', 'Medium', 'Same idea as 2 other offices; one office should lead', '12 days open', 'Not yet'),
+        row('Vendor past-performance risk scoring', 'AT&R · Digital Market', 'In review', 'Medium', 'Same idea as 2 other offices; one office should lead', '12 days open', 'Not yet'),
+        row('Clause recommendation from requirement text', 'AT&R · ACWS', 'Approved', 'Medium', 'Suggests contract clauses; a specialist accepts or rejects each one', '6 days to decide', 'A. Brooks')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

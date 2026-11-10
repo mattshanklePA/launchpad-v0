@@ -8,6 +8,7 @@
 
 import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
+import { REVIEWER_UP, requireActionSession } from "@/lib/session/guard"
 import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
 import { getTenant } from "@/lib/tenant"
@@ -44,6 +45,7 @@ function cacheKey(members: Submission[]): string {
 }
 
 export async function assessCluster(members: Submission[]): Promise<ClusterAssessment> {
+  requireActionSession({ role: REVIEWER_UP }) // before the cache: a cached result must not leak
   const key = cacheKey(members)
   const cached = cache.get(key)
   if (cached) return cached

@@ -242,7 +242,9 @@ export async function login(
     if (!res.ok || !body.session) {
       return { ok: false, error: body.error || "Login failed" }
     }
+    // The server has set the signed httpOnly cookie; this copy is display-only.
     setSession(body.session as Session)
+    window.dispatchEvent(new Event(SESSION_CHANGED_EVENT))
     return { ok: true, session: body.session as Session }
   } catch (error) {
     return { ok: false, error: String(error) }
@@ -252,6 +254,37 @@ export async function login(
 export function logout(): void {
   if (typeof window === "undefined") return
   localStorage.removeItem(SESSION_KEY)
+  // Clear the cookie server-side (best-effort; an expired/invalid cookie is already inert).
+  fetch("/api/session", { method: "DELETE", keepalive: true }).catch(() => {})
+}
+
+// Fired after login so the data layer (DataProvider) can load what it could not
+// fetch while signed out.
+export const SESSION_CHANGED_EVENT = "launchpad:session-changed"
+
+/**
+ * Rebuilds the display cache from the signed cookie (GET /api/session). The
+ * server is the source of truth: a role edited in localStorage is overwritten,
+ * and a cache with no valid cookie behind it is dropped. Returns the verified
+ * session, or null when signed out.
+ */
+export async function syncSessionFromServer(): Promise<Session | null> {
+  if (typeof window === "undefined") return null
+  try {
+    const res = await fetch("/api/session", { cache: "no-store" })
+    if (res.ok) {
+      const body = await res.json()
+      if (body?.session) {
+        setSession(body.session as Session)
+        return body.session as Session
+      }
+    }
+    if (res.status === 401) localStorage.removeItem(SESSION_KEY)
+  } catch {
+    // Network failure: keep the cache as-is rather than signing the user out.
+    return getSession()
+  }
+  return null
 }
 
 export function hasAdminAccess(session: Session | null): boolean {

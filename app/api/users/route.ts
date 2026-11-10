@@ -3,12 +3,13 @@
 //   POST → create a new user (admin-facing)
 //
 // Important: passwords are stripped from GET responses. The POST handler
-// accepts the password in plaintext (demo-grade), stores it in plaintext
-// (same), and the login route compares plaintext. Production work item:
+// stores only a scrypt hash (lib/passwordHash.ts). Production work item:
 // swap to Supabase Auth and stop touching passwords at all.
 
 import { NextResponse } from "next/server"
+import { hashPassword } from "@/lib/passwordHash"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
+import { requireSession } from "@/lib/session/guard"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -46,7 +47,9 @@ function genId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
@@ -66,6 +69,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const guard = requireSession(req, { role: "admin" })
+  if (!guard.ok) return guard.response
   try {
     const body = await req.json()
     const email = String(body.email || "").trim().toLowerCase()
@@ -106,7 +111,7 @@ export async function POST(req: Request) {
       email,
       name,
       role,
-      password,
+      password: await hashPassword(password),
       job_role: jobRole,
       business_unit: businessUnit,
       office,

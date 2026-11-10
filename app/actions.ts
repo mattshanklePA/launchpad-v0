@@ -3,6 +3,7 @@
 // LaunchPad Co-Pilot server actions for AI vetting + readiness assessment
 import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
+import { requireActionSession } from "@/lib/session/guard"
 import { z } from "zod"
 import { getFormSteps, type FormData } from "@/lib/steps"
 import {
@@ -246,9 +247,10 @@ export async function assessReadiness(
   // does not score their absence as a gap. Optional for backward compatibility.
   enabledFields?: Record<string, boolean>,
 ): Promise<{ readinessScore: "ready" | "needs_work" | "early_stage"; readinessSummary: string; executiveSummary: string; findings: ReadinessFinding[] }> {
+  requireActionSession()
   const on = (k: string) => !enabledFields || enabledFields[k] !== false
 
-  const targetUser = formData.targetUserSummary || formData.targetUserContext || "[Not provided]"
+  const targetUser =formData.targetUserSummary || formData.targetUserContext || "[Not provided]"
   const problem = formData.problemDefinition || formData.coreProblem || "[Not provided]"
   const solution = formData.solutionSummary || formData.proposedSolution || "[Not provided]"
   const userValue = formData.userValue || "[Not provided]"
@@ -389,6 +391,7 @@ The readinessSummary should be 2-3 sentences naming specific gaps rather than sm
 export async function suggestStrategicAlignment(
   formData: FormData,
 ): Promise<AlignmentSuggestion> {
+  requireActionSession()
   // Build context from the prior steps. We only call the AI when the idea
   // has enough body to alignment-match against — title alone isn't enough.
   const haveBody = Boolean(
@@ -511,6 +514,7 @@ export async function validateAndRefineInput(
   conversationHistory: Message[],
   enabledFields?: Record<string, boolean>,
 ): Promise<ScoutResponse> {
+  requireActionSession()
   const currentStepInfo = getFormSteps(formData.submitterOffice).find((s) => s.step === step)
   if (!currentStepInfo) throw new Error("Invalid step number")
 
@@ -685,6 +689,7 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
 export async function suggestIdeaOverview(
   formData: FormData,
 ): Promise<{ title: string; description: string; error?: string }> {
+  requireActionSession()
   const problem = (formData.problemDefinition || formData.coreProblem || "").trim()
   const solution = (formData.solutionSummary || formData.proposedSolution || "").trim()
   const userValue = (formData.userValueSummary || formData.userValue || "").trim()
@@ -759,6 +764,7 @@ export async function assistReviewer(
   suggestedDisposition: "approve" | "request_info" | "reject"
   draftRequestInfo: string
 }> {
+  requireActionSession()
   const summary = `
 Title: ${formData.useCaseTitle || "Untitled"}
 Problem: ${formData.problemDefinition || formData.coreProblem || "[Not provided]"}
@@ -870,6 +876,7 @@ function minPracticeNotStarted(practice: string): { value: "in_progress"; ration
 }
 
 export async function draftGovernanceFields(formData: FormData): Promise<GovernanceFieldDraft> {
+  requireActionSession()
   const draft: GovernanceFieldDraft = {}
 
   // Tier 1 — reuse the existing deterministic determinations.

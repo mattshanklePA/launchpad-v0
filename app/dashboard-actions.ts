@@ -13,11 +13,13 @@
 // file yet) never touches the notifier at all.
 
 import { getNotifier } from "@/lib/notifier"
+import { REVIEWER_UP, requireActionSession } from "@/lib/session/guard"
 import { buildNotificationBatch, type DashboardAction } from "@/lib/dashboard/actions"
 
 export async function sendDashboardActionNotification(
   actions: DashboardAction[],
 ): Promise<{ sent: boolean; count: number }> {
+  requireActionSession({ role: REVIEWER_UP })
   const batch = buildNotificationBatch(actions)
   if (!batch) return { sent: false, count: 0 }
   await getNotifier().send(batch.message)
