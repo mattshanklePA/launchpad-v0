@@ -38,6 +38,15 @@ jobs:
           GH_TOKEN: ${{ secrets.QUEUE_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
+          # One build at a time. `cc-building` means "being built right now",
+          # so if any OPEN issue still carries it, a build is in flight (or
+          # stalled and needs a person). Do not start another.
+          BUSY=$(gh issue list --repo "$REPO" --label cc-building --state open \
+            --json number --jq 'map("#\(.number)") | join(" ")')
+          if [ -n "$BUSY" ]; then
+            echo "Not starting the next story: still marked cc-building: $BUSY"
+            exit 0
+          fi
           NEXT=$(gh issue list --repo "$REPO" --label cc-queue --state open \
             --json number --jq 'sort_by(.number) | .[0].number // empty')
           if [ -z "$NEXT" ]; then
