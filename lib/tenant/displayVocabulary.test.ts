@@ -2,10 +2,9 @@ import { describe, it, expect, vi } from "vitest"
 import fs from "node:fs"
 import path from "node:path"
 
-vi.mock("next/font/google", () => {
-  const font = () => ({ variable: "", className: "", style: {} })
-  return { Fraunces: font, Public_Sans: font }
-})
+vi.mock("next/font/local", () => ({
+  default: () => ({ variable: "", className: "", style: {} }),
+}))
 
 import { ALL_TENANTS, tenantFilePrefix, type TenantConfig } from "@/lib/tenant"
 import { doc } from "@/lib/tenant/doc"
