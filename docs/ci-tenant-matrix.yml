@@ -1,0 +1,41 @@
+# Proposed job for .github/workflows/ci.yml (issue #235).
+#
+# Claude's GitHub App cannot write to .github/workflows, so this lives here for
+# a maintainer to paste under `jobs:` in ci.yml. It runs `pnpm test` once per
+# tenant. es2 is required; uspto, doc and dow are allowed to fail until their
+# tenant-sensitive assertions are fixed (then drop `continue-on-error`).
+#
+# To make the es2 run a required check, add "Tests (es2)" to the branch
+# protection rules for doc.
+#
+# Note: the existing `verify` job's "Unit tests" step runs with no tenant set
+# (= uspto). Once uspto is required here, that step can be removed from
+# `verify` to avoid running it twice.
+
+  tenant-tests:
+    name: Tests (${{ matrix.tenant }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.tenant != 'es2' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        tenant: [uspto, doc, dow, es2]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Unit tests (${{ matrix.tenant }})
+        run: pnpm test
+        env:
+          NEXT_PUBLIC_TENANT: ${{ matrix.tenant }}
