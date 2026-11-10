@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
+import { requireSession } from "@/lib/session/guard"
 import { buildApprovalReportCsv } from "@/lib/approvalReport"
 import type { Submission } from "@/lib/submissions"
 
@@ -30,7 +31,9 @@ function fromRow(row: DbSubmissionRow): Submission {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase

@@ -18,6 +18,7 @@ import {
   subscribeToCache,
   isCacheLoaded,
 } from "@/lib/dataCache"
+import { getSession, syncSessionFromServer, SESSION_CHANGED_EVENT } from "@/lib/auth"
 
 type DataContextValue = {
   loaded: boolean
@@ -83,23 +84,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [refetchSubmissions, refetchUsers, refetchFormConfig])
 
   // Bootstrap on mount: seed-if-empty, then fetch everything in parallel.
+  // Every data route now requires the signed session cookie (SEC-1), so the
+  // bootstrap first confirms the session with the server and only then loads
+  // data. Signed out → nothing to fetch; the login event re-runs this.
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      try {
-        // Idempotent — only seeds if submissions table is empty.
-        await fetch("/api/seed", { method: "POST" }).catch(() => null)
-      } catch {
-        // non-fatal
+    const bootstrap = async (reloadIfSessionLost: boolean) => {
+      const hadLocalSession = !!getSession()
+      const session = await syncSessionFromServer()
+      if (!session) {
+        // A leftover display cache with no valid cookie behind it (expired,
+        // tampered, or from before cookies existed): reload once so pages
+        // re-evaluate against the cleared session. No loop: the second load
+        // has no cache to lose.
+        if (reloadIfSessionLost && hadLocalSession) {
+          window.location.reload()
+          return
+        }
+      } else {
+        if (session.role === "admin") {
+          // Idempotent — only seeds if submissions table is empty. Admin-only
+          // on the server, so only attempt it for an admin.
+          await fetch("/api/seed", { method: "POST" }).catch(() => null)
+        }
+        await refetch()
       }
-      await refetch()
       if (!cancelled) {
         markCacheLoaded()
         setLoaded(true)
       }
-    })()
+    }
+    bootstrap(true)
+    const onSessionChanged = () => {
+      bootstrap(false)
+    }
+    window.addEventListener(SESSION_CHANGED_EVENT, onSessionChanged)
     return () => {
       cancelled = true
+      window.removeEventListener(SESSION_CHANGED_EVENT, onSessionChanged)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

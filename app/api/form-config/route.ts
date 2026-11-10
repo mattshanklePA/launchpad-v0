@@ -15,6 +15,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbFormConfigRow } from "@/lib/supabaseClient"
+import { requireSession } from "@/lib/session/guard"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -66,7 +67,9 @@ function fromRow(row: DbFormConfigRow): ApiFormConfig {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
@@ -94,6 +97,8 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
+  const guard = requireSession(req, { role: "admin" })
+  if (!guard.ok) return guard.response
   try {
     const body = await req.json()
     const enabled = body.enabled

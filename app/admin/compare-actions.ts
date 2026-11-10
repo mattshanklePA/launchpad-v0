@@ -8,6 +8,7 @@
 
 import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
+import { REVIEWER_UP, requireActionSession } from "@/lib/session/guard"
 import { z } from "zod"
 import type { Submission } from "@/lib/submissions"
 import { getTenant } from "@/lib/tenant"
@@ -180,6 +181,7 @@ Reviewer notes: ${fmt(d.reviewerNotes)}
 }
 
 export async function compareSubmissions(submissions: Submission[]): Promise<CompareBriefing> {
+  requireActionSession({ role: REVIEWER_UP })
   if (!Array.isArray(submissions) || submissions.length < 2) {
     throw new Error("Need at least 2 submissions to compare.")
   }

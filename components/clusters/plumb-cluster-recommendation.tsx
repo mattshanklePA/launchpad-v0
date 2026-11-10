@@ -19,7 +19,7 @@ import { ClusterSignals } from "@/components/clusters/cluster-signals"
 import type { Submission } from "@/lib/submissions"
 import { clusterSignals } from "@/lib/similarity"
 import { assessCluster } from "@/app/cluster-actions"
-import type { ClusterAssessment } from "@/lib/clusterFallback"
+import { clusterFallback, type ClusterAssessment } from "@/lib/clusterFallback"
 import { cn } from "@/lib/utils"
 
 function ClusterRecommendationSkeleton() {
@@ -64,7 +64,12 @@ export function PlumbClusterRecommendation({
     if (ranRef.current === membersKey || members.length === 0) return
     ranRef.current = membersKey
     setAssessment(null)
-    assessCluster(members).then(setAssessment)
+    // assessCluster now rejects without a reviewer/admin session (SEC-1). Show
+    // the same deterministic fallback it uses when the model is unavailable
+    // rather than leaving the skeleton up forever.
+    assessCluster(members)
+      .then(setAssessment)
+      .catch(() => setAssessment(clusterFallback()))
   }, [membersKey, members])
 
   if (!assessment) {

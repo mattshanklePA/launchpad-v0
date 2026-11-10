@@ -8,10 +8,12 @@
 // docs/BOUNDARY.md).
 
 import { getSystemConnector } from "@/lib/systemConnector"
+import { REVIEWER_UP, requireActionSession } from "@/lib/session/guard"
 import type { Submission } from "@/lib/submissions"
 
 export async function pushApprovedSubmission(
   submission: Submission,
 ): Promise<{ ok: boolean; url?: string }> {
+  requireActionSession({ role: REVIEWER_UP })
   return getSystemConnector().pushSubmission(submission)
 }

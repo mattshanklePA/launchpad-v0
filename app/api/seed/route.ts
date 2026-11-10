@@ -18,6 +18,7 @@ import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
 import { getTenant } from "@/lib/tenant"
 import { errToDetail } from "@/lib/errToDetail"
 import { stampDemoReset } from "@/lib/demoResetStamp"
+import { requireSession } from "@/lib/session/guard"
 import type { Submission } from "@/lib/submissions"
 
 // Pick the seed set for the active tenant. Returns null for tenants whose data
@@ -35,7 +36,9 @@ function seedForActiveTenant(): Submission[] | null {
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  const guard = requireSession(req, { role: "admin" })
+  if (!guard.ok) return guard.response
   try {
     const seedSet = seedForActiveTenant()
     if (!seedSet) {
@@ -111,7 +114,9 @@ export async function POST() {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     const { count, error } = await supabase
