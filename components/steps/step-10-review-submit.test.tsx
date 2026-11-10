@@ -3,6 +3,7 @@ import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { initialFormData, type FormData } from "@/lib/steps"
 import { getSubmissionReadiness } from "@/lib/submissionReadiness"
+import { getTenant } from "@/lib/tenant"
 
 const setCurrentStep = vi.fn()
 const setFormData = vi.fn()
@@ -150,7 +151,8 @@ describe("Step10ReviewSubmit — vetting readiness + submit gate (RD-2)", () => 
 
     expect(el.textContent).toContain("Nothing is blocking submission.")
     expect(el.textContent).not.toContain("Close the items below, then submit.")
-    expect(el.textContent).toContain("Scout has 1 suggestion. You can act on it or submit as-is.")
+    // The assistant's name is tenant copy (Scout on uspto/dow, Plumb on doc/es2).
+    expect(el.textContent).toContain(`${getTenant().assistantName} has 1 suggestion. You can act on it or submit as-is.`)
   })
 
   it("keeps 'Close the items below, then submit.' when Plumb reads needs_work and something required is actually missing", () => {

@@ -296,19 +296,23 @@ describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerc
 })
 
 describe("getTenant", () => {
+  // These tests are about the default, so they set the tenant themselves
+  // instead of inheriting the CI run's NEXT_PUBLIC_TENANT.
+  const original = process.env.NEXT_PUBLIC_TENANT
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = original
+  })
+
   it("defaults to uspto when NEXT_PUBLIC_TENANT is unset", () => {
+    delete process.env.NEXT_PUBLIC_TENANT
     expect(getTenant().id).toBe("uspto")
   })
 
   it("resolves NEXT_PUBLIC_TENANT=es2 to the ES2 config, without moving the default", () => {
-    const prev = process.env.NEXT_PUBLIC_TENANT
     process.env.NEXT_PUBLIC_TENANT = "es2"
-    try {
-      expect(getTenant()).toBe(es2)
-    } finally {
-      if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
-      else process.env.NEXT_PUBLIC_TENANT = prev
-    }
+    expect(getTenant()).toBe(es2)
+    delete process.env.NEXT_PUBLIC_TENANT
     expect(getTenant().id).toBe("uspto")
   })
 
