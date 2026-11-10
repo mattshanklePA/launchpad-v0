@@ -31,6 +31,7 @@ import {
 } from "@/lib/rationalization"
 import { applyRationalizationDecision } from "@/lib/rationalizationActions"
 import { getSession } from "@/lib/auth"
+import { formatDisplayDate } from "@/lib/dateFormat"
 import { useDataProvider } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -105,7 +106,7 @@ export function RationalizationPanel({ submissions }: { submissions: Submission[
                 {decision && (
                   <span className="text-xs text-muted-foreground">
                     {decision.decision === "consolidated" && lead ? `Lead: ${lead.formData.useCaseTitle || "Untitled idea"} · ` : ""}
-                    by {decision.decidedBy} on {new Date(decision.decidedAt).toLocaleDateString()}
+                    by {decision.decidedBy} on {formatDisplayDate(decision.decidedAt)}
                   </span>
                 )}
               </div>
