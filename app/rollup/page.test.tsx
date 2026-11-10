@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
+import { getTenant } from "@/lib/tenant"
 
 // This test is about page composition (ordering + the auth gate), not the
 // shell chrome (dashboard-shell.test.tsx already covers that) or the real
@@ -119,7 +120,7 @@ describe("/rollup", () => {
     // Two "code generation" matches consolidate to one entry, plus the one
     // individually-reported submission — 2 reportable entries, same number
     // BureauRollup's own summary line computes.
-    expect(el.textContent).toContain("consolidates to 2 OMB reportable entries")
+    expect(el.textContent).toContain(`consolidates to 2 ${getTenant().inventoryShortLabel} reportable entries`)
     expect(el.textContent).not.toContain("the OMB inventory count")
     expect(el.textContent).not.toContain("inventory count")
   })
