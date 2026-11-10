@@ -44,6 +44,7 @@ export const es2: TenantConfig = {
     "One front door for AI ideas across the enterprise. Capture an idea in two minutes, let reviewers complete the governance record, and keep an inventory you can hand your chain of command on demand.",
   // `heroImage` deliberately unset — the hero falls back to `theme.primary` as
   // a clean solid background rather than inheriting another org's imagery.
+  primaryAdminEmail: "avery.lang@es2.demo",
   loginEmailPlaceholder: "you@es2.demo",
   publicInquiryEmail: "ai.inventory@es2.demo",
 
