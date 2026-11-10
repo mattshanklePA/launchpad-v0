@@ -19,6 +19,17 @@ import { GLOSSARY_TERM_KEYS } from "@/lib/glossary"
 const sendDashboardActionNotification = vi.hoisted(() => vi.fn())
 vi.mock("@/app/dashboard-actions", () => ({ sendDashboardActionNotification }))
 
+// The tests below that don't pass a tenant exercise the *default* (unpinned,
+// "OMB"-worded) dashboard, which is USPTO's. Pin `getTenant()` to uspto so they
+// don't inherit the CI run's NEXT_PUBLIC_TENANT (issue #258): es2 pins its own
+// KPI strip via `dashboardKpiCardIds` on purpose (ES2-15, covered by the
+// "ES2-15 A3" test), and dow words the inventory differently. Tests that name
+// a tenant pass it explicitly and are unaffected.
+vi.mock("@/lib/tenant", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/tenant")>()
+  return { ...actual, getTenant: () => actual.ALL_TENANTS.find((t) => t.id === "uspto")! }
+})
+
 function dashboardAction(overrides: Partial<DashboardAction>): DashboardAction {
   return {
     id: "a",

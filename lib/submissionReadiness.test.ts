@@ -271,6 +271,12 @@ describe("getSubmissionReadiness — governanceMissing OMB field coverage (issue
         highImpact: "not_high_impact",
         topicArea: "administrative_functions",
         aiClassification: "generative_ai",
+        // The two NIST RMF Map-function questions are shown (and so counted)
+        // only for tenants with `features.rmf` (doc, es2). Filling them keeps
+        // "every applicable field is filled" true on every tenant; on
+        // uspto/dow they are hidden and this is a no-op.
+        disseminatesToPublic: "no",
+        scalable: "no",
       }),
     )
     expect(governanceMissing).toEqual([])
