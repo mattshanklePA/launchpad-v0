@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
+import { requireSession } from "@/lib/session/guard"
 
 export const dynamic = "force-dynamic" // never cache list reads
 export const revalidate = 0
@@ -39,7 +40,9 @@ function fromRow(row: DbSubmissionRow): ApiSubmission {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
@@ -60,6 +63,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   try {
     const body = await req.json()
     const { id, submittedAt, formData } = body
@@ -116,7 +121,9 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
+  const guard = requireSession(req, { role: "admin" })
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     // Delete everything. Using neq on a column that always exists; Supabase

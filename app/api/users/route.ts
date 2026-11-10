@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
+import { requireSession } from "@/lib/session/guard"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -46,7 +47,9 @@ function genId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
@@ -66,6 +69,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const guard = requireSession(req, { role: "admin" })
+  if (!guard.ok) return guard.response
   try {
     const body = await req.json()
     const email = String(body.email || "").trim().toLowerCase()

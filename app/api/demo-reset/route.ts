@@ -7,12 +7,15 @@
 
 import { NextResponse } from "next/server"
 import { readLastDemoReset } from "@/lib/demoResetStamp"
+import { requireSession } from "@/lib/session/guard"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 export const fetchCache = "force-no-store"
 
-export async function GET() {
+export async function GET(req: Request) {
+  const guard = requireSession(req)
+  if (!guard.ok) return guard.response
   const lastResetAt = await readLastDemoReset()
   return NextResponse.json(
     { lastResetAt },

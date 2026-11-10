@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
 import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth"
+import { requireSession } from "@/lib/session/guard"
 
 type ApiUser = {
   id: string
@@ -33,6 +34,8 @@ function fromRow(row: DbUserRow): ApiUser {
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const guard = requireSession(req, { role: "admin" })
+  if (!guard.ok) return guard.response
   try {
     const body = await req.json()
     const supabase = getSupabaseAdmin()
@@ -84,7 +87,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const guard = requireSession(req, { role: "admin" })
+  if (!guard.ok) return guard.response
   try {
     const supabase = getSupabaseAdmin()
     const { data: existing } = await supabase

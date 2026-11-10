@@ -9,10 +9,13 @@
 
 import { useEffect } from "react"
 import { syncDraftsWithDemoReset } from "@/lib/demoReset"
+import { getSession } from "@/lib/auth"
 
 export function DraftResetSync() {
   useEffect(() => {
     let cancelled = false
+    // /api/demo-reset needs a session; drafts only matter once someone is signed in.
+    if (!getSession()) return
     fetch("/api/demo-reset", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((json: { lastResetAt?: string | null } | null) => {

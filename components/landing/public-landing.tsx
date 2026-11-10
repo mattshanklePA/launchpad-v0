@@ -391,8 +391,12 @@ export function PublicLanding() {
   const [metrics, setMetrics] = useState<{ submitted: number; deployed: number }>({ submitted: 0, deployed: 0 })
 
   useEffect(() => {
-    setSession(getSession())
+    const current = getSession()
+    setSession(current)
     setHydrated(true)
+    // /api/submissions now requires a session, so the counters stay at 0 for a
+    // signed-out visitor (SEC-1; see PR notes).
+    if (!current) return
     fetch(`/api/submissions?_=${Date.now()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
