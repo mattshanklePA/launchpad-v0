@@ -1,12 +1,14 @@
 // /api/users/login
 //   POST { email, password } → { session } or { error }
 //
-// Demo-grade: plaintext password comparison server-side. On success it sets
+// Passwords are scrypt-hashed (lib/passwordHash.ts). Legacy plain-text values
+// still match once and are rehashed in place. On success it sets
 // the signed, httpOnly session cookie (lib/session/token.ts) that every other
 // route and server action verifies, and returns a session blob the client
-// keeps only as a display cache. Password hashing is still a production item.
+// keeps only as a display cache.
 
 import { NextResponse } from "next/server"
+import { hashPassword, verifyAndMaybeUpgrade } from "@/lib/passwordHash"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
 import { SESSION_COOKIE_NAME, sessionCookieOptions, signSession } from "@/lib/session/token"
@@ -30,8 +32,22 @@ export async function POST(req: Request) {
     const user = data as DbUserRow | null
     // Use one generic message for both "no such email" and "wrong password" so
     // the endpoint doesn't reveal which emails have accounts (account enumeration).
-    if (!user || user.password !== password) {
+    // Unknown email: still burn one scrypt so timing doesn't reveal it.
+    const result = user
+      ? await verifyAndMaybeUpgrade(password, user.password ?? "")
+      : (await hashPassword(password), { ok: false, upgradedHash: null })
+    if (!user || !result.ok) {
       return NextResponse.json({ error: "Email or password is incorrect" }, { status: 401 })
+    }
+
+    // One-time upgrade of legacy plain-text passwords. A failed write must not
+    // block login (never lock out demo accounts); it retries next login.
+    if (result.upgradedHash) {
+      const { error: upgradeError } = await supabase
+        .from("users")
+        .update({ password: result.upgradedHash })
+        .eq("id", user.id)
+      if (upgradeError) console.error("Password hash upgrade failed:", errToDetail(upgradeError))
     }
 
     // SSO seam: this is the one step that changes when an identity provider is
