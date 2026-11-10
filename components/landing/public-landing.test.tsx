@@ -2,10 +2,9 @@ import { describe, it, expect, vi } from "vitest"
 
 // The module self-hosts Fraunces/Public Sans via next/font, which only resolves
 // under Next's build. Stub it so the copy builders can be imported directly.
-vi.mock("next/font/google", () => {
-  const font = () => ({ variable: "", className: "", style: {} })
-  return { Fraunces: font, Public_Sans: font }
-})
+vi.mock("next/font/local", () => ({
+  default: () => ({ variable: "", className: "", style: {} }),
+}))
 
 import {
   landingStrings,
