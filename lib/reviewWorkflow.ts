@@ -131,8 +131,9 @@ export function officeLabel(unit: string, office: string): string {
 
 // Role-scoped visibility. Submitters see only their own; reviewers/admins all
 // unless bureau-scoped (see roll-down below).
-// NOTE: client-side filter only — not a security boundary (see storage note,
-// and the RLS-per-claim follow-up in docs/ARCHITECTURE.md).
+// NOTE: the client calls this for display, but the security boundary is the
+// server: GET /api/submissions and both exports apply this same function with
+// the viewer taken from the verified session (lib/serverAccess.ts, SEC-2).
 export function visibleSubmissions(
   all: Submission[],
   viewer: { role: string; email?: string; businessUnit?: string; office?: string } | null,
