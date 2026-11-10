@@ -301,3 +301,22 @@ describe("getDashboardMetrics", () => {
     expect(metrics.awaitingSignoff.total).toBe(0)
   })
 })
+
+// SEC-4: the old 50-record cap made every count top out at 50.
+describe("SEC-4: counts past 50 records", () => {
+  const BUREAUS = ["noaa", "census", "nist", "ita"]
+  const many: Submission[] = Array.from({ length: 120 }, (_, i) =>
+    sub({ id: `big-${i}`, businessUnit: BUREAUS[i % BUREAUS.length], status: "submitted" }),
+  )
+
+  it("department dashboard counts all 120", () => {
+    const metrics = getDashboardMetrics(DEPT, many, doc)
+    expect(metrics.pipelineStatus.total).toBe(120)
+    expect(metrics.readiness.total).toBe(120)
+  })
+
+  it("roll-up counts sum to 120", () => {
+    const rows = bureauRollupRows(DEPT, many, doc)
+    expect(rows.reduce((n, r) => n + r.total, 0)).toBe(120)
+  })
+})

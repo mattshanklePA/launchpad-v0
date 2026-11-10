@@ -10,6 +10,7 @@ import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
 import { requireSession } from "@/lib/session/guard"
+import { visibleToSession } from "@/lib/serverAccess"
 import { buildOmbCsv, ombExportContext } from "@/lib/ombExport"
 import { migrateFormData } from "@/lib/formDataMigrations"
 import { getTenant } from "@/lib/tenant"
@@ -27,6 +28,7 @@ function fromRow(row: DbSubmissionRow): Submission {
     status: row.status ?? undefined,
     ownerEmail: row.owner_email ?? undefined,
     businessUnit: row.business_unit ?? undefined,
+    office: row.office ?? undefined,
   }
 }
 
@@ -41,7 +43,11 @@ export async function GET(req: Request) {
       .order("submitted_at", { ascending: false })
     if (error) throw error
 
-    const submissions = (data || []).map((row) => fromRow(row as DbSubmissionRow))
+    // Only what the caller may see (same rule as GET /api/submissions).
+    const submissions = visibleToSession(
+      (data || []).map((row) => fromRow(row as DbSubmissionRow)),
+      guard.session,
+    )
     const tenant = getTenant()
     const csv = buildOmbCsv(submissions, ombExportContext(tenant))
 

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Fraunces, Public_Sans } from "next/font/google"
+import localFont from "next/font/local"
 import { useEffect, useState } from "react"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { Button } from "@/components/ui/button"
@@ -25,17 +25,25 @@ import { cn } from "@/lib/utils"
 
 // Public landing typography system (docs/landing-page-conversion-audit-2026-07-15.md):
 // Fraunces (display, headlines) paired with Public Sans (the official U.S. federal
-// typeface, body). Self-hosted via next/font — no runtime font CDN — and scoped to
+// typeface, body). Self-hosted from app/fonts via next/font/local (no network fetch at build
+// time, no runtime font CDN) and scoped to
 // this component only, so the app-wide DOW brand fonts (app/layout.tsx) are unaffected.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const fraunces = localFont({
+  src: [
+    { path: "../../app/fonts/fraunces-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../app/fonts/fraunces-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../app/fonts/fraunces-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-fraunces",
   display: "swap",
 })
-const publicSans = Public_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const publicSans = localFont({
+  src: [
+    { path: "../../app/fonts/public-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../app/fonts/public-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../app/fonts/public-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../app/fonts/public-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-public-sans",
   display: "swap",
 })

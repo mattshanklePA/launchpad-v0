@@ -12,6 +12,7 @@ import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
 import { errToDetail } from "@/lib/errToDetail"
 import { requireSession } from "@/lib/session/guard"
+import { visibleToSession } from "@/lib/serverAccess"
 import { buildApprovalReportCsv } from "@/lib/approvalReport"
 import type { Submission } from "@/lib/submissions"
 
@@ -42,7 +43,11 @@ export async function GET(req: Request) {
       .order("submitted_at", { ascending: false })
     if (error) throw error
 
-    const submissions = (data || []).map((row) => fromRow(row as DbSubmissionRow))
+    // Only what the caller may see (same rule as GET /api/submissions).
+    const submissions = visibleToSession(
+      (data || []).map((row) => fromRow(row as DbSubmissionRow)),
+      guard.session,
+    )
     const csv = buildApprovalReportCsv(submissions)
 
     return new NextResponse(csv, {

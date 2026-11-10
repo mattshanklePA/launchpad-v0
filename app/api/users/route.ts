@@ -3,11 +3,11 @@
 //   POST → create a new user (admin-facing)
 //
 // Important: passwords are stripped from GET responses. The POST handler
-// accepts the password in plaintext (demo-grade), stores it in plaintext
-// (same), and the login route compares plaintext. Production work item:
+// stores only a scrypt hash (lib/passwordHash.ts). Production work item:
 // swap to Supabase Auth and stop touching passwords at all.
 
 import { NextResponse } from "next/server"
+import { hashPassword } from "@/lib/passwordHash"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
 import { requireSession } from "@/lib/session/guard"
 
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
       email,
       name,
       role,
-      password,
+      password: await hashPassword(password),
       job_role: jobRole,
       business_unit: businessUnit,
       office,
