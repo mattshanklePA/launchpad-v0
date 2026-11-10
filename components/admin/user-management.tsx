@@ -28,8 +28,7 @@ import {
   type BusinessUnit,
 } from "@/lib/auth"
 import { useDataProvider } from "@/components/data-provider"
-import { getTenant, type TenantConfig } from "@/lib/tenant"
-import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth"
+import { getTenant, isPrimaryAdminEmail, type TenantConfig } from "@/lib/tenant"
 import { businessUnitLabel, officeLabel } from "@/lib/reviewWorkflow"
 
 // Job roles come from the active tenant's `submitterRoles` — the same list
@@ -316,7 +315,7 @@ export function UserManagement() {
         <div className="space-y-2">
           {users.map((u) => {
             const isMe = session?.userId === u.id
-            const isPrimaryAdmin = u.email === PRIMARY_ADMIN_EMAIL
+            const isPrimaryAdmin = isPrimaryAdminEmail(u.email)
             const userOffices = unitOptions.find((o) => o.value === u.businessUnit)?.offices || []
             return (
               <div

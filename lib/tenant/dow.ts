@@ -13,6 +13,7 @@ export const dow: TenantConfig = {
   heroSubtitle:
     "One place to turn AI ideas into vetted, decision-ready use cases, so leaders can fund the strongest ones and catch responsible-AI risks early.",
   heroImage: "/hero-dow.jpg",
+  primaryAdminEmail: "admin@dow.mil",
   loginEmailPlaceholder: "you@army.mil",
   publicInquiryEmail: "AI.Inventory@dow.mil",
 

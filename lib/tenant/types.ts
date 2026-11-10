@@ -46,6 +46,12 @@ export type TenantConfig = {
   // so a tenant never inherits another org's imagery.
   heroImage?: string
 
+  // The tenant's seeded admin account, protected from demotion and deletion
+  // (app/api/users/[id]/route.ts, components/admin/user-management.tsx). An
+  // identity constant, never display text. Must match the admin the tenant's
+  // user seed creates; compared case-insensitively (see isPrimaryAdminEmail).
+  primaryAdminEmail: string
+
   // Example address shown as the login email input's placeholder (e.g.
   // "you@uspto.gov"), so no tenant ever shows another tenant's domain.
   loginEmailPlaceholder: string

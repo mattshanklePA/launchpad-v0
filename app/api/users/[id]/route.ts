@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin, type DbUserRow } from "@/lib/supabaseClient"
-import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth"
+import { isPrimaryAdminEmail } from "@/lib/tenant"
 import { requireSession } from "@/lib/session/guard"
 
 type ApiUser = {
@@ -54,7 +54,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         return NextResponse.json({ error: "Invalid role" }, { status: 400 })
       }
       // Don't allow demoting the primary admin.
-      if ((existing as DbUserRow).email === PRIMARY_ADMIN_EMAIL && body.role !== "admin") {
+      if (isPrimaryAdminEmail((existing as DbUserRow).email) &&body.role !== "admin") {
         return NextResponse.json(
           { error: "Cannot demote the primary admin account" },
           { status: 403 },
@@ -98,7 +98,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       .eq("id", params.id)
       .maybeSingle()
     if (!existing) return NextResponse.json({ error: "User not found" }, { status: 404 })
-    if ((existing as { email: string }).email === PRIMARY_ADMIN_EMAIL) {
+    if (isPrimaryAdminEmail((existing as { email: string }).email)) {
       return NextResponse.json(
         { error: "Cannot delete the primary admin account" },
         { status: 403 },
