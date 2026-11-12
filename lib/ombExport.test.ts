@@ -1,7 +1,16 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, afterEach } from "vitest"
 import { mapSubmissionToOmbRow, buildOmbCsv, isPubliclyReportable, OMB_COLUMNS } from "@/lib/ombExport"
 import { csvLine } from "@/lib/csv"
+import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import type { Submission } from "@/lib/submissions"
+
+// Tests that depend on a tenant's vocabulary set that tenant themselves rather
+// than inheriting the run's NEXT_PUBLIC_TENANT (issue #258).
+const originalTenant = process.env.NEXT_PUBLIC_TENANT
+afterEach(() => {
+  if (originalTenant === undefined) delete process.env.NEXT_PUBLIC_TENANT
+  else process.env.NEXT_PUBLIC_TENANT = originalTenant
+})
 
 const AGENCY = { shortName: "USPTO", publicInquiryEmail: "AI.Inventory@uspto.gov" }
 
@@ -50,6 +59,9 @@ const HIGH_IMPACT_DEPLOYED_FORM = {
 
 describe("mapSubmissionToOmbRow", () => {
   it("maps a fully-answered high-impact, deployed submission to OMB column order, including the 9 hi_* columns", () => {
+    // Column 3 (Bureau/Component) prints the tenant's label for the unit code;
+    // "patents" is a USPTO unit, so this test is about USPTO.
+    process.env.NEXT_PUBLIC_TENANT = "uspto"
     const row = mapSubmissionToOmbRow(sub("sub-1", HIGH_IMPACT_DEPLOYED_FORM), AGENCY)
 
     expect(row).toHaveLength(OMB_COLUMNS.length)
@@ -177,6 +189,8 @@ describe("buildOmbCsv", () => {
   })
 
   it("collapses multiple bureaus' consolidated matches into a single department-level row per category", () => {
+    // "2 bureaus: ..." is Commerce vocabulary, so this test is about doc.
+    process.env.NEXT_PUBLIC_TENANT = "doc"
     const emailUseCase = (id: string, office: string) =>
       sub(id, {
         useCaseTitle: "Inbox Assistant",
@@ -192,7 +206,9 @@ describe("buildOmbCsv", () => {
     const lines = csv.trim().split("\n")
     // header + exactly one consolidated row (not one per submission)
     expect(lines).toHaveLength(2)
-    expect(lines[1]).toContain("2 bureaus: census, noaa")
+    // Units print as the active (doc) tenant's labels, sorted.
+    const units = ["census", "noaa"].map((u) => businessUnitLabel(u)).sort().join(", ")
+    expect(lines[1]).toContain(`2 bureaus: ${units}`)
     expect(lines[1]).toContain("Consolidated")
     expect(lines[1]).toContain("Email prioritization & categorization")
   })

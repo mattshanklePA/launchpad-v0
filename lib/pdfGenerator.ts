@@ -4,6 +4,7 @@
 // focus-area chips, and a readiness assessment banner.
 
 import { jsPDF } from "jspdf"
+import { DISPLAY_TIME_ZONE } from "@/lib/dateFormat"
 import { getSubmitterRoleLabels, type FormData } from "@/lib/steps"
 import { getTenant, getOrgNameForUnit, tenantFilePrefix } from "@/lib/tenant"
 
@@ -70,7 +71,7 @@ export function generateSubmissionPDF(formData: FormData) {
   doc.setFontSize(11)
   doc.text("AI Use Case Submission", margin, 54)
   doc.setFontSize(9)
-  const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  const date = new Date().toLocaleDateString("en-US", { timeZone: DISPLAY_TIME_ZONE, month: "long", day: "numeric", year: "numeric" })
   doc.text(date, pageW - margin, 54, { align: "right" })
   y = 96
 

@@ -3,7 +3,7 @@ import { doc } from "@/lib/tenant/doc"
 import { dow } from "@/lib/tenant/dow"
 import { uspto } from "@/lib/tenant/uspto"
 import { es2 } from "@/lib/tenant/es2"
-import { getTenant, getOrgNameForUnit, tenantHasBureauTier, ALL_TENANTS } from "@/lib/tenant"
+import { getTenant, getOrgNameForUnit, tenantHasBureauTier, isPrimaryAdminEmail, ALL_TENANTS } from "@/lib/tenant"
 import { getFormSteps } from "@/lib/steps"
 
 describe("DoC tenant", () => {
@@ -296,19 +296,23 @@ describe("org-tier labels (ISS-1 — tier vocabulary moved off hardcoded Commerc
 })
 
 describe("getTenant", () => {
+  // These tests are about the default, so they set the tenant themselves
+  // instead of inheriting the CI run's NEXT_PUBLIC_TENANT.
+  const original = process.env.NEXT_PUBLIC_TENANT
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = original
+  })
+
   it("defaults to uspto when NEXT_PUBLIC_TENANT is unset", () => {
+    delete process.env.NEXT_PUBLIC_TENANT
     expect(getTenant().id).toBe("uspto")
   })
 
   it("resolves NEXT_PUBLIC_TENANT=es2 to the ES2 config, without moving the default", () => {
-    const prev = process.env.NEXT_PUBLIC_TENANT
     process.env.NEXT_PUBLIC_TENANT = "es2"
-    try {
-      expect(getTenant()).toBe(es2)
-    } finally {
-      if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
-      else process.env.NEXT_PUBLIC_TENANT = prev
-    }
+    expect(getTenant()).toBe(es2)
+    delete process.env.NEXT_PUBLIC_TENANT
     expect(getTenant().id).toBe("uspto")
   })
 
@@ -506,5 +510,42 @@ describe("wizard step copy (issue #16 — DoW branding leaking into the DoC wiza
         expect(getOrgNameForUnit("forscom")).toBe("Department of War")
       })
     })
+  })
+})
+
+describe("protected primary admin is per tenant (CLEAN-1, #237)", () => {
+  const original = process.env.NEXT_PUBLIC_TENANT
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = original
+  })
+
+  it("every tenant declares its own primary admin email", () => {
+    for (const t of ALL_TENANTS) {
+      expect(t.primaryAdminEmail, `${t.id}.primaryAdminEmail`).toMatch(/^[^@\s]+@[^@\s]+$/)
+    }
+  })
+
+  it("no two tenants share a primary admin", () => {
+    const emails = ALL_TENANTS.map((t) => t.primaryAdminEmail.toLowerCase())
+    expect(new Set(emails).size).toBe(emails.length)
+  })
+
+  it("matches the seeded admin for each tenant", () => {
+    expect(uspto.primaryAdminEmail).toBe("matt.shankle@uspto.gov")
+    expect(dow.primaryAdminEmail).toBe("admin@dow.mil")
+    expect(es2.primaryAdminEmail).toBe("avery.lang@es2.demo")
+    expect(doc.primaryAdminEmail).toBe("doug.freeman@doc.gov")
+  })
+
+  it("isPrimaryAdminEmail protects only the active tenant's admin, case-insensitively", () => {
+    process.env.NEXT_PUBLIC_TENANT = "es2"
+    expect(isPrimaryAdminEmail("avery.lang@es2.demo")).toBe(true)
+    expect(isPrimaryAdminEmail("Avery.Lang@ES2.demo")).toBe(true)
+    expect(isPrimaryAdminEmail("matt.shankle@uspto.gov")).toBe(false)
+    expect(isPrimaryAdminEmail(undefined)).toBe(false)
+    process.env.NEXT_PUBLIC_TENANT = "uspto"
+    expect(isPrimaryAdminEmail("matt.shankle@uspto.gov")).toBe(true)
+    expect(isPrimaryAdminEmail("avery.lang@es2.demo")).toBe(false)
   })
 })

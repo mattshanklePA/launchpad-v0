@@ -57,3 +57,41 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: dummy-service-key
           ANTHROPIC_API_KEY: dummy-anthropic-key
           NEXT_PUBLIC_TENANT: uspto
+
+  # Per-tenant test runs (issue #235) and a non-UTC time-zone run (issue #236).
+  # uspto is already covered by `verify` above (no tenant set). Tenant runs are
+  # non-blocking until their failures are fixed (issue TEST-2); then flip
+  # `blocking` to true for es2 first. The time-zone run blocks now: it passes
+  # today, and a date regression should stop the chain.
+  tenant-tests:
+    name: Tests (${{ matrix.tenant }}, ${{ matrix.tz }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ !matrix.blocking }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { tenant: es2, tz: UTC, blocking: false }
+          - { tenant: doc, tz: UTC, blocking: false }
+          - { tenant: dow, tz: UTC, blocking: false }
+          - { tenant: uspto, tz: America/New_York, blocking: true }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Unit tests (${{ matrix.tenant }}, ${{ matrix.tz }})
+        run: pnpm test
+        env:
+          NEXT_PUBLIC_TENANT: ${{ matrix.tenant }}
+          TZ: ${{ matrix.tz }}

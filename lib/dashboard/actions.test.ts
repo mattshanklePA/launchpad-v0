@@ -4,6 +4,7 @@ import type { DashboardScope } from "@/lib/dashboard/scope"
 import { setCachedUsers, type CachedUser } from "@/lib/dataCache"
 import { doc } from "@/lib/tenant/doc"
 import { uspto } from "@/lib/tenant/uspto"
+import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import type { Submission } from "@/lib/submissions"
 
 type SubInput = {
@@ -144,13 +145,22 @@ describe("getDashboardActions", () => {
 
   it("keeps Commerce's sign-off message word-for-word", () => {
     const s = sub({ id: "s11", businessUnit: "noaa", status: "approved", useCaseTitle: "Chatbot triage" })
-    const [action] = getDashboardActions(DEPT, [s], doc)
-    // `businessUnitLabel` resolves against the *active* tenant (uspto under
-    // test), not the one passed here, so the unit renders as its raw value —
-    // unchanged by ISS-2, which only touches the tier noun after it.
-    expect(action.message).toBe(
-      '"Chatbot triage" (noaa) was approved and is awaiting bureau sign-off from Noaa Reviewer.',
-    )
+    // `businessUnitLabel` resolves against the *active* tenant, not the one
+    // passed here. This test is about Commerce, so it activates doc: a real
+    // Commerce deployment prints the bureau's full name (the earlier "(noaa)"
+    // in this assertion was only the raw code a uspto-default run falls back
+    // to). Only the tier noun after it is ISS-2's concern.
+    const previous = process.env.NEXT_PUBLIC_TENANT
+    process.env.NEXT_PUBLIC_TENANT = "doc"
+    try {
+      const [action] = getDashboardActions(DEPT, [s], doc)
+      expect(action.message).toBe(
+        `"Chatbot triage" (${businessUnitLabel("noaa")}) was approved and is awaiting bureau sign-off from Noaa Reviewer.`,
+      )
+    } finally {
+      if (previous === undefined) delete process.env.NEXT_PUBLIC_TENANT
+      else process.env.NEXT_PUBLIC_TENANT = previous
+    }
   })
 
   // ISS-2 regression. `tenantHasBureauTier()` gates *whether* this action is

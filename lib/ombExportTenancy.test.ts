@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, afterEach } from "vitest"
+import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import { buildOmbCsv, inventoryColumns, ombExportContext, OMB_COLUMNS } from "@/lib/ombExport"
 import { csvLine } from "@/lib/csv"
 import { ALL_TENANTS } from "@/lib/tenant"
@@ -117,14 +118,32 @@ describe("inventory header labels are tenant-driven (ES2-10 #2)", () => {
 // 3. THE CONSOLIDATED ROW
 // ============================================================
 describe("consolidated row vocabulary is tenant-driven (ES2-10 #3)", () => {
+  // The row prints each unit as the *active* tenant labels it (raw code when
+  // the tenant has no such unit), so every test sets the tenant it is about
+  // instead of inheriting the run's NEXT_PUBLIC_TENANT (issue #258).
+  const original = process.env.NEXT_PUBLIC_TENANT
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = original
+  })
+  const useTenant = (id: string) => {
+    process.env.NEXT_PUBLIC_TENANT = id
+  }
+  /** How the active tenant prints a set of unit codes in the row. */
+  const printed = (...codes: string[]) => codes.map((c) => businessUnitLabel(c)).sort().join(", ")
+
   it("keeps the DoC consolidated row byte-identical", () => {
+    useTenant("doc")
     const row = consolidatedRow(doc, "census", "noaa")
-    expect(row).toContain("2 bureaus: census, noaa")
+    const units = printed("census", "noaa")
+    expect(row).toContain(`2 bureaus: ${units}`)
     expect(row).toContain("Reported once across the department per OMB's widely-used commercial AI category guidance")
-    expect(row).toContain("consolidates 3 bureau submissions (census, noaa) into this single department-level entry.")
+    expect(row).toContain(`consolidates 3 bureau submissions (${units}) into this single department-level entry.`)
   })
 
   it("keeps the USPTO consolidated row byte-identical", () => {
+    // census/noaa are not USPTO units, so they print as raw codes here.
+    useTenant("uspto")
     const row = consolidatedRow(uspto, "census", "noaa")
     expect(row).toContain("2 bureaus: census, noaa")
     expect(row).toContain("Reported once across the department per OMB's widely-used commercial AI category guidance")
@@ -132,16 +151,19 @@ describe("consolidated row vocabulary is tenant-driven (ES2-10 #3)", () => {
   })
 
   it("gives the es2 consolidated row no bureau and no OMB", () => {
+    useTenant("es2")
     const row = consolidatedRow(es2, "hrfm", "logfin")
     expect(row).not.toMatch(/bureau/i)
     expect(row).not.toContain("OMB")
   })
 
   it("reads with the es2 program-office and enterprise vocabulary", () => {
+    useTenant("es2")
     const row = consolidatedRow(es2, "hrfm", "logfin")
-    expect(row).toContain("2 program offices: hrfm, logfin")
+    const units = printed("hrfm", "logfin")
+    expect(row).toContain(`2 program offices: ${units}`)
     expect(row).toContain("across the enterprise")
-    expect(row).toContain("consolidates 3 program office submissions (hrfm, logfin)")
+    expect(row).toContain(`consolidates 3 program office submissions (${units})`)
     expect(row).toContain("into this single enterprise-level entry.")
     expect(row).toContain(es2.inventoryAuthority as string)
   })
@@ -161,10 +183,14 @@ describe("consolidated row vocabulary is tenant-driven (ES2-10 #3)", () => {
       )
       return csv.trim().split("\n")[1]
     }
-    expect(one(doc, "census")).toContain("1 bureau: census")
-    expect(one(doc, "census")).toContain("consolidates 1 bureau submission (census)")
-    expect(one(es2, "hrfm")).toContain("1 program office: hrfm")
-    expect(one(es2, "hrfm")).toContain("consolidates 1 program office submission (hrfm)")
+    useTenant("doc")
+    const census = printed("census")
+    expect(one(doc, "census")).toContain(`1 bureau: ${census}`)
+    expect(one(doc, "census")).toContain(`consolidates 1 bureau submission (${census})`)
+    useTenant("es2")
+    const hrfm = printed("hrfm")
+    expect(one(es2, "hrfm")).toContain(`1 program office: ${hrfm}`)
+    expect(one(es2, "hrfm")).toContain(`consolidates 1 program office submission (${hrfm})`)
   })
 
   it("derives the es2 nouns from its own tierLabels rather than restating them", () => {

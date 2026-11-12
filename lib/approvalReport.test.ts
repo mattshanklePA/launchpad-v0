@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, afterEach } from "vitest"
 import {
   mapSubmissionToApprovalRow,
   buildApprovalReportCsv,
@@ -31,7 +31,17 @@ function sub(id: string, formData: Record<string, unknown>): Submission {
 }
 
 describe("mapSubmissionToApprovalRow", () => {
+  // The unit column prints the active tenant's own label for the unit code, so
+  // this test names the tenant it is about: "patents" is a USPTO business unit
+  // (label "Patents"); other tenants have no such unit and print the raw code.
+  const original = process.env.NEXT_PUBLIC_TENANT
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = original
+  })
+
   it("maps a signed-off, approved submission", () => {
+    process.env.NEXT_PUBLIC_TENANT = "uspto"
     const row = mapSubmissionToApprovalRow(
       sub("sub-1", {
         submitterOffice: "patents",

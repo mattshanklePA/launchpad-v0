@@ -12,6 +12,12 @@ vi.mock("@/lib/aiFailureLog", () => ({
   recordAiFailure: (...args: unknown[]) => recordAiFailure(...args),
 }))
 
+const recordAiUsage = vi.fn()
+vi.mock("@/lib/aiUsageLog", async (orig) => ({
+  ...(await orig<typeof import("@/lib/aiUsageLog")>()),
+  recordAiUsage: (...args: unknown[]) => recordAiUsage(...args),
+}))
+
 import { unwrapWrappedObjectText, generateObjectResilient } from "@/lib/aiResilience"
 
 const schema = z.object({ title: z.string(), score: z.number() })
@@ -107,5 +113,32 @@ describe("generateObjectResilient", () => {
     await expect(generateObjectResilient("test", { model, schema, prompt: "x" })).rejects.toThrow()
     expect(model.doGenerateCalls).toHaveLength(2)
     expect(recordAiFailure).toHaveBeenCalledWith(expect.objectContaining({ label: "test", outcome: "failed" }))
+  })
+})
+
+describe("generateObjectResilient usage recording and output cap (issue #240)", () => {
+  beforeEach(() => {
+    recordAiFailure.mockReset()
+    recordAiUsage.mockReset()
+  })
+
+  it("records one usage row per model call, with token counts and no text", async () => {
+    const model = modelReturning(JSON.stringify({ wrong: true, shape: 1 }), JSON.stringify(good))
+    await generateObjectResilient("test", { model, schema, prompt: "secret prompt" })
+    expect(recordAiUsage).toHaveBeenCalledTimes(2)
+    expect(recordAiUsage).toHaveBeenLastCalledWith(expect.objectContaining({ action: "test", tokensIn: 10, tokensOut: 10, success: true }))
+    expect(JSON.stringify(recordAiUsage.mock.calls)).not.toContain("secret prompt")
+  })
+
+  it("records a failed row when the call throws", async () => {
+    const model = modelReturning(JSON.stringify({ wrong: true, shape: 1 }))
+    await expect(generateObjectResilient("test", { model, schema, prompt: "x" })).rejects.toThrow()
+    expect(recordAiUsage).toHaveBeenCalledWith(expect.objectContaining({ success: false }))
+  })
+
+  it("passes an output limit to the model", async () => {
+    const model = modelReturning(JSON.stringify(good))
+    await generateObjectResilient("assessReadiness", { model, schema, prompt: "x" })
+    expect((model.doGenerateCalls[0] as { maxOutputTokens?: number }).maxOutputTokens).toBeGreaterThan(0)
   })
 })

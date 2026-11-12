@@ -19,6 +19,13 @@ export function getTenant(): TenantConfig {
   return TENANTS[id] || uspto
 }
 
+// Whether `email` is the active tenant's protected primary admin. Only the
+// active tenant's admin is protected; another tenant's address is not.
+export function isPrimaryAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  return email.trim().toLowerCase() === getTenant().primaryAdminEmail.toLowerCase()
+}
+
 // Resolves the org name to reference in wizard copy that names "the
 // organization" (e.g. "Align with {orgName} priorities"): the submitter's
 // bureau's own name (`UnitOption.label`) when their bureau declares its own

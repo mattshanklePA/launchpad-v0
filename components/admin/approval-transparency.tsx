@@ -18,6 +18,7 @@
 // gates rendering, same as lib/rationalization.ts's gate.
 
 import { getSession } from "@/lib/auth"
+import { formatDisplayDate } from "@/lib/dateFormat"
 import type { Submission } from "@/lib/submissions"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import { getTenant } from "@/lib/tenant"
@@ -108,7 +109,7 @@ export function ApprovalTransparency({ submissions }: { submissions: Submission[
                   </Badge>
                   {item.signoff && (
                     <span>
-                      {item.signoff.signedOffByName} · {new Date(item.signoff.signedOffAt).toLocaleDateString()}
+                      {item.signoff.signedOffByName} · {formatDisplayDate(item.signoff.signedOffAt)}
                     </span>
                   )}
                   {item.departmentApproval && (

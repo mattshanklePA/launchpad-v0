@@ -2,11 +2,16 @@ import { describe, it, expect, afterEach, beforeEach } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { OrientationBanner } from "./orientation-banner"
+import { getTenant } from "@/lib/tenant"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
 let container: HTMLDivElement | null = null
 let root: Root | null = null
+
+// CI runs this suite once per tenant via NEXT_PUBLIC_TENANT (issue #235), so
+// remember the tenant the run started with and restore it after every test.
+const initialTenant = process.env.NEXT_PUBLIC_TENANT
 
 beforeEach(() => {
   localStorage.clear()
@@ -18,7 +23,8 @@ afterEach(() => {
   container = null
   root = null
   localStorage.clear()
-  delete process.env.NEXT_PUBLIC_TENANT
+  if (initialTenant === undefined) delete process.env.NEXT_PUBLIC_TENANT
+  else process.env.NEXT_PUBLIC_TENANT = initialTenant
 })
 
 // The sign-off stage names the tenant's middle org tier (`tierLabels.unit`),
@@ -46,7 +52,7 @@ describe("OrientationBanner", () => {
   it("shows the generic pipeline stages for a non-bureau-tier tenant", () => {
     const el = render(<OrientationBanner bureauTier={false} />)
     expect(el.textContent).toContain("Submitted")
-    expect(el.textContent).toContain("OMB reportable")
+    expect(el.textContent).toContain(`${getTenant().inventoryShortLabel} reportable`)
     expect(el.textContent).not.toContain("Bureau sign-off")
   })
 

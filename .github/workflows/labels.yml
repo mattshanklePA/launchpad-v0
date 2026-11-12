@@ -1,0 +1,33 @@
+name: Clear build labels on close
+
+# `cc-building` marks the ONE issue being built right now, and `cc-queue`
+# marks issues waiting their turn. Neither should stay on an issue once it is
+# closed (its PR merged with "Closes #N", or a person closed it). Before this
+# workflow existed, nothing removed `cc-building`, so every shipped issue kept
+# it and the label stopped meaning anything. queue.yml now refuses to start a
+# new build while any open issue carries `cc-building`, so this cleanup is
+# also what lets the chain move on after each merge.
+#
+# Note: GitHub only auto-closes an issue from "Closes #N" when the PR merges
+# into the default branch (`doc`). For `base:redesign` builds, close the issue
+# by hand after its PR merges (or the queue will wait, by design).
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  clear-labels:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Remove cc-building and cc-queue
+        env:
+          GH_TOKEN: ${{ secrets.QUEUE_TOKEN }}
+          REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          for L in cc-building cc-queue; do
+            gh issue edit "$ISSUE" --repo "$REPO" --remove-label "$L" || true
+          done
