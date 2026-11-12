@@ -6,7 +6,7 @@
 import type { FormData } from "@/lib/steps"
 import type { Submission } from "@/lib/submissions"
 import type { SubmissionStore } from "@/lib/ports/store"
-import { getCachedSubmissions } from "@/lib/dataCache"
+import { getCachedSubmissions, setCachedSubmissions, isSubmissionsTruncated } from "@/lib/dataCache"
 import type { SubmissionComment, SubmissionStatus } from "@/lib/reviewWorkflow"
 import { assigneeForBusinessUnit } from "@/lib/reviewWorkflow"
 import { migrateFormData } from "@/lib/formDataMigrations"
@@ -67,6 +67,26 @@ async function saveSubmission(formData: FormData): Promise<Submission> {
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
       console.error("Save submission failed:", body)
+    } else {
+      // Put the new record in the cache the detail page reads synchronously.
+      // Without this the page the submitter lands on next says "Submission
+      // not found" until something refetches (issue #268). Mirrors the
+      // owner/unit/office columns the server derives from the same fields.
+      const fd = withRmf as Record<string, unknown>
+      setCachedSubmissions(
+        [
+          {
+            id: submission.id,
+            submittedAt: submission.submittedAt,
+            formData: withRmf as Record<string, unknown>,
+            ownerEmail: fd.submitterEmail ? String(fd.submitterEmail).toLowerCase() : undefined,
+            businessUnit: (fd.submitterOffice as string) || undefined,
+            office: (fd.submitterSubOffice as string) || undefined,
+          },
+          ...getCachedSubmissions(),
+        ],
+        isSubmissionsTruncated(),
+      )
     }
   } catch (error) {
     console.error("Save submission threw:", error)

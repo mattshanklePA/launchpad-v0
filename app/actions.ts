@@ -15,7 +15,7 @@ import { getTenant } from "@/lib/tenant"
 import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
 import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
 import { scoutFieldsForStep, draftFieldFallback } from "@/lib/scoutFieldPlan"
-import { buildSubmissionContext, buildQuestionModeGuidance } from "@/lib/scoutPrompt"
+import { buildSubmissionContext, buildSubmitterFitGuidance, buildQuestionModeGuidance } from "@/lib/scoutPrompt"
 import { readinessFallback } from "@/lib/readinessFallback"
 import type { ReadinessFinding } from "@/lib/readinessPresentation"
 
@@ -595,6 +595,8 @@ ${HUMANIZATION_GUIDELINES}
 
 ═══ SUBMISSION CONTEXT (carry these through every coaching turn) ═══
 ${submissionContext}
+
+SUBMITTER FIT: ${buildSubmitterFitGuidance(formData, TENANT)}
 
 CURRENT STEP: ${currentStepInfo.title}
 

@@ -20,13 +20,14 @@ import { fieldLabel } from "@/components/launchpad/chat-panel"
 import { Pencil, Check, X, Send, Loader2, ClipboardList } from "lucide-react"
 import type { FormData } from "@/lib/steps"
 import { getTenant } from "@/lib/tenant"
-import { cn } from "@/lib/utils"
+import { IntakeDetailsEditor } from "@/components/launchpad/intake-details-editor"
+import type { GuidedSubmitGate } from "@/lib/guidedSubmitGate"
 
 type Props = {
   formData: FormData
   onFieldChange: (patch: Partial<FormData>) => void
-  remainingLabels: string[]
-  readyToSubmit: boolean
+  /** The single submit gate (lib/guidedSubmitGate.ts) — the button opens only when it passes. */
+  gate: GuidedSubmitGate
   isSubmitting: boolean
   onSubmit: () => void
 }
@@ -76,7 +77,7 @@ function RecordSection({
   )
 }
 
-export function IntakeRecordPanel({ formData, onFieldChange, remainingLabels, readyToSubmit, isSubmitting, onSubmit }: Props) {
+export function IntakeRecordPanel({ formData, onFieldChange, gate, isSubmitting, onSubmit }: Props) {
   const tenant = getTenant()
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [textDraft, setTextDraft] = useState("")
@@ -268,30 +269,33 @@ export function IntakeRecordPanel({ formData, onFieldChange, remainingLabels, re
             </div>
           )}
         </RecordSection>
+
+        <div className="rounded-md border p-3 space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Idea details</h3>
+          <IntakeDetailsEditor formData={formData} onFieldChange={onFieldChange} />
+        </div>
       </CardContent>
-      <CardFooter className={cn("flex-shrink-0 flex-col items-stretch gap-2 border-t pt-4", !readyToSubmit && "items-start")}>
-        {!readyToSubmit ? (
-          <p className="text-xs text-muted-foreground" aria-live="polite">
-            Still need: {remainingLabels.join(", ")}
+      <CardFooter className="flex-shrink-0 flex-col items-stretch gap-2 border-t pt-4">
+        {gate.canSubmit ? (
+          <p className="text-xs text-green-700" aria-live="polite">
+            Everything required is filled in — ready to submit.
           </p>
         ) : (
-          <>
-            <p className="text-xs text-green-700" aria-live="polite">
-              Every light field is captured — ready to submit.
-            </p>
-            <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" /> Submit for Vetting
-                </>
-              )}
-            </Button>
-          </>
+          <p className="text-xs text-muted-foreground" aria-live="polite" data-testid="submit-blocked-reason">
+            {gate.message}
+          </p>
         )}
+        <Button onClick={onSubmit} disabled={isSubmitting || !gate.canSubmit} className="w-full">
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-2" /> Submit for Vetting
+            </>
+          )}
+        </Button>
       </CardFooter>
     </Card>
   )
