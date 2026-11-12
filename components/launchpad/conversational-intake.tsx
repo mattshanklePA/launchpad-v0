@@ -47,6 +47,7 @@ import { saveSubmission } from "@/lib/submissions"
 import { getGuidedSubmitGate, withGuidedAliases } from "@/lib/guidedSubmitGate"
 import { getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { cn } from "@/lib/utils"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { FormData } from "@/lib/steps"
 import {
   INTAKE_TOPICS,
@@ -69,7 +70,7 @@ type ThreadMessage =
 function choicePromptFor(topic: IntakeTopic, tenant: ReturnType<typeof getTenant>): ChoicePrompt {
   if (topic.id === "affectedUnits") {
     return {
-      prompt: "Which business units, systems, or groups does this affect? Tap all that apply, then Continue.",
+      prompt: tenantCopy(tenant).affectedUnitsPrompt,
       multiSelect: true,
       options: tenant.affectedSystems,
     }
@@ -423,7 +424,7 @@ export function ConversationalIntake() {
                                 >
                                   <span className="flex-1">
                                     {opt.label}
-                                    {opt.isRecommended && <span className="ml-2 text-xs opacity-80">(Recommended)</span>}
+                                    {opt.isRecommended && <>{" "}<span className="ml-2 text-xs opacity-80">(Recommended)</span></>}
                                   </span>
                                 </Button>
                               ))}

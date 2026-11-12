@@ -136,7 +136,6 @@ export function ReviewProcessRail({
 }) {
   const [exitAction, setExitAction] = useState<EarlyExitAction | null>(null)
   const totalSteps = steps.length
-  const settledCount = steps.filter((s) => s.settled).length
   const lastStep = steps[steps.length - 1]
 
   const railLabel = (step: ReviewStep) =>
@@ -156,7 +155,7 @@ export function ReviewProcessRail({
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-card p-5">
-        <span className="ks-microlabel">Your progress · {settledCount} of {totalSteps}</span>
+        <span className="ks-microlabel">Your progress</span>
         <div className="flex flex-col gap-2.5 text-[13px]">
           {awaitingPlumb && (
             <div className="flex items-start gap-2.5">

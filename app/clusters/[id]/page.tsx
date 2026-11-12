@@ -54,18 +54,20 @@ function ClusterPageInner({ id }: { id: string }) {
     if (loaded) setSubmissions(getSubmissions())
   }, [loaded])
 
-  const breadcrumb = `Duplicate cluster ${id.slice(0, 8)}`
-
   if (!loaded) return null
 
   const clusters = clusterDuplicates(submissions)
   const cluster = clusters.find((c) => c.id === id)
-  if (!cluster) return <ClusterNotFound breadcrumb={breadcrumb} />
+  if (!cluster) return <ClusterNotFound breadcrumb="Duplicate cluster" />
 
   const byId = new Map(submissions.map((s) => [s.id, s]))
   const members = cluster.memberIds.map((memberId) => byId.get(memberId)).filter((s): s is Submission => !!s)
   const decision = members.map(getRationalization).find((r) => r?.clusterId === cluster.id)
   const currentLeadId = decision?.leadSubmissionId || selectedLeadId || cluster.memberIds[0]
+
+  // The cluster id is a code (the smallest member id); a reader gets the lead idea's title instead.
+  const leadTitle = byId.get(currentLeadId)?.formData.useCaseTitle?.trim()
+  const breadcrumb = leadTitle ? `Duplicate cluster: ${leadTitle}` : "Duplicate cluster"
 
   const reload = async () => {
     await refetchSubmissions()

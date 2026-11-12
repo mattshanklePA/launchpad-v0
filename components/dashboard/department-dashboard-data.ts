@@ -5,6 +5,7 @@
 // plus the active tenant and returns view-model values.
 
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { isLevelAllowed } from "@/lib/dashboard/scope"
 import type { DashboardMetrics } from "@/lib/dashboard/metrics"
@@ -141,7 +142,7 @@ export function buildKpiCards(
   if (rmfEnabled) {
     cards.push({
       id: "rmf",
-      label: "RMF at risk",
+      label: tenantCopy(tenant).rmfAtRiskLabel,
       value: rmfRollup.at_risk,
       delta: rmfRollup.attention > 0 ? { value: `${rmfRollup.attention} need attention`, direction: "down" } : undefined,
       status: rmfRollup.at_risk > 0 ? "critical" : rmfRollup.attention > 0 ? "warning" : "neutral",
@@ -225,7 +226,7 @@ export function buildActionItems(
     const n = metrics.crossBureauDuplicates.pendingCount
     items.push({
       id: "duplicates",
-      title: `${n} cross-${tiers.unit.toLowerCase()} duplicate cluster${n === 1 ? "" : "s"} pending rationalization`,
+      title: `${n} cross-${tiers.unit.toLowerCase()} duplicate cluster${n === 1 ? "" : "s"} ${tenantCopy(tenant).pendingDecisionPhrase}`,
       severity: "critical",
       actionLabel: "Rationalize",
       // The same clusters the Duplicates KPI card opens — each row's "Open
@@ -294,7 +295,9 @@ export function buildActionItems(
     const n = metrics.ombReportability.review
     items.push({
       id: "omb-review",
-      title: `${n} submission${n === 1 ? " needs" : "s need"} an ${tenant.inventoryShortLabel} reportability review`,
+      title: tenantCopy(tenant).inventoryCheckLabel
+        ? `${tenantCopy(tenant).inventoryCheckLabel}: ${n} submission${n === 1 ? "" : "s"}`
+        : `${n} submission${n === 1 ? " needs" : "s need"} an ${tenant.inventoryShortLabel} reportability review`,
       severity: "info",
       actionLabel: "Review",
       // The inventory-reportable KPI card's own list. Its length is the

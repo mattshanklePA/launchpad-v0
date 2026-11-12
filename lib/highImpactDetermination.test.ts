@@ -154,3 +154,14 @@ describe("determineHighImpact", () => {
     })
   })
 })
+
+describe("authority citation (F3-2, #269)", () => {
+  it("names the framework once per idea, not once per reason", () => {
+    const tenant = { riskFramework: { label: "DoW AI Ethical Principles + NIST AI RMF" } } as never
+    const { reasons } = determineHighImpact({ highImpactFactors: ["rights", "safety", "enforcement"] } as never, tenant)
+    expect(reasons).toHaveLength(3)
+    expect(reasons.join(" ").split("DoW AI Ethical Principles + NIST AI RMF")).toHaveLength(2)
+    expect(reasons[0]).toContain("(DoW AI Ethical Principles + NIST AI RMF)")
+    expect(reasons[1]).toBe("AI output could meaningfully affect the safety of individuals.")
+  })
+})

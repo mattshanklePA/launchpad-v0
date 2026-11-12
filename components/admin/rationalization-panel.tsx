@@ -23,6 +23,7 @@ import { Users, Check } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { getBusinessUnit, businessUnitLabel } from "@/lib/reviewWorkflow"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import {
   clusterDuplicates,
   getRationalization,
@@ -31,7 +32,7 @@ import {
 } from "@/lib/rationalization"
 import { applyRationalizationDecision } from "@/lib/rationalizationActions"
 import { getSession } from "@/lib/auth"
-import { formatDisplayDate } from "@/lib/dateFormat"
+import { formatKeystoneDate } from "@/lib/dateFormat"
 import { useDataProvider } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -99,14 +100,14 @@ export function RationalizationPanel({ submissions }: { submissions: Submission[
                     variant="outline"
                     className={decision ? "bg-green-100 text-green-800 border-green-300" : "bg-amber-100 text-amber-800 border-amber-300"}
                   >
-                    {decision ? (decision.decision === "consolidated" ? "Consolidated" : "Keep separate") : "Rationalization pending"}
+                    {decision ? (decision.decision === "consolidated" ? "Consolidated" : "Keep separate") : tenantCopy(getTenant()).pendingDecisionLabel}
                   </Badge>
                   <span className="text-xs text-muted-foreground">{Math.round(cluster.maxSimilarity * 100)}% match</span>
                 </div>
                 {decision && (
                   <span className="text-xs text-muted-foreground">
                     {decision.decision === "consolidated" && lead ? `Lead: ${lead.formData.useCaseTitle || "Untitled idea"} · ` : ""}
-                    by {decision.decidedBy} on {formatDisplayDate(decision.decidedAt)}
+                    by {decision.decidedBy} on {formatKeystoneDate(decision.decidedAt)}
                   </span>
                 )}
               </div>

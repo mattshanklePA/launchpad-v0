@@ -5,6 +5,8 @@
 // invented (e.g. Plumb's advisory read is never cached with a completion
 // time today, so it never appears — see the comment below).
 
+import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, getComments } from "@/lib/reviewWorkflow"
 import { getBureauSignoff, getDepartmentApproval } from "@/lib/bureauSignoff"
@@ -53,7 +55,7 @@ export function buildActivity(s: Submission): ActivityEvent[] {
 
   const rationalization = getRationalization(s)
   if (rationalization) {
-    const verb = rationalization.decision === "consolidated" ? "consolidated" : "keep-separate"
+    const verb = rationalization.decision === "consolidated" ? "consolidated" : tenantCopy(getTenant()).keepSeparate
     events.push({ at: rationalization.decidedAt, label: `Cluster ${rationalization.clusterId} marked ${verb}` })
   }
 

@@ -398,7 +398,9 @@ describe("/submissions/[id] — Plumb loading header (RD-8, issue #218)", () => 
   it("does not render a bare dash for the step count while Plumb's read is loading", async () => {
     submissions = [submission({ id: "s1", status: "in_review" })]
     const el = render(<SubmissionDetailPage />)
-    expect(el.textContent).toContain("just submitted")
+    // The fixture was submitted days ago, so it must not claim "just submitted".
+    expect(el.textContent).not.toContain("just submitted")
+    expect(el.textContent).toContain("Submitted 17 Aug 2026")
     const microlabels = Array.from(el.querySelectorAll(".ks-microlabel")).map((n) => n.textContent)
     expect(microlabels).toContain("Reading")
     expect(microlabels.some((t) => t?.includes("—"))).toBe(false)

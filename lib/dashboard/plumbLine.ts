@@ -1,3 +1,6 @@
+import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
+
 // Plumb's one-sentence line at the bottom of the Command Center right rail
 // (RD-1, mock 01/02's "Where the portfolio stands" rail). Deterministic —
 // no model call, no chat behind it. Exactly three fixed strings, chosen by
@@ -13,12 +16,12 @@
  * the scope's own "no reviewer assigned" action row already computed, not a
  * sum across every warning-severity item (issue #218).
  */
-export function plumbLine(hasCriticalItem: boolean, warningCount: number): string {
+export function plumbLine(hasCriticalItem: boolean, warningCount: number, tenant: TenantConfig = getTenant()): string {
   if (hasCriticalItem) {
     return "The cluster is the only thing blocking approvals this week. Everything else can wait until it is settled."
   }
   if (warningCount > 0) {
     return `Nothing is blocked. ${warningCount} item${warningCount === 1 ? "" : "s"} want${warningCount === 1 ? "s" : ""} a reviewer when you have time.`
   }
-  return "Nothing off-plumb. Every use case is inside its gates."
+  return `${tenantCopy(tenant).nothingNeedsAttention}. Every use case is inside its gates.`
 }

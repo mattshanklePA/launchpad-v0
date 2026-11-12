@@ -106,7 +106,7 @@ describe("public landing copy (ISS-5)", () => {
     // What it says instead: a short intake, with the record completed in vetting.
     const [submit] = howItWorksSteps(es2, true)
     expect(submit.description).toBe(
-      "Plumb walks a submitter through a short intake in about two minutes, asking the follow-up questions a reviewer would.",
+      "Plumb walks a submitter through a short intake, asking the follow-up questions a reviewer would.",
     )
     expect(featureItems(es2, true)[0].description).toMatch(/during vetting/)
     expect(proofSignals(es2)[0].description).toMatch(/during vetting/)
