@@ -44,12 +44,12 @@ import { IntakeRecordPanel } from "@/components/launchpad/intake-record-panel"
 import { getFormConfig } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
 import { saveSubmission } from "@/lib/submissions"
+import { getGuidedSubmitGate, withGuidedAliases } from "@/lib/guidedSubmitGate"
+import { getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { cn } from "@/lib/utils"
 import type { FormData } from "@/lib/steps"
 import {
   INTAKE_TOPICS,
-  activeIntakeTopics,
-  isTopicCaptured,
   nextIntakeTopic,
   type IntakeTopic,
   type IntakeTopicId,
@@ -120,6 +120,8 @@ export function ConversationalIntake() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
+  const gate = getGuidedSubmitGate(formData, tenant)
+
   const startedTopics = useRef<Set<IntakeTopicId>>(new Set())
   const reviewAnnounced = useRef(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -178,7 +180,9 @@ export function ConversationalIntake() {
           {
             role: "assistant",
             kind: "note",
-            text: "That's everything I need — review your idea in the record on the right, then submit it for vetting whenever you're ready.",
+            text: gate.canSubmit
+              ? "That's everything I need — review your idea in the record on the right, then submit it there."
+              : "That's all my questions — a few details are still needed on the record on the right before it can be submitted.",
           },
         ])
       }
@@ -224,20 +228,42 @@ export function ConversationalIntake() {
     setFormData((prev) => ({ ...prev, ...patch }))
     const keys = Object.keys(patch)
     const topic = INTAKE_TOPICS.find((t) => t.fields.some((f) => keys.includes(f)))
+    // Details-form edits (title, office, …) belong to no conversation topic;
+    // no "Updated …" chat note for those, or typing a title would spam the thread.
+    if (!topic) return
     setMessages((prev) => [
       ...prev,
-      { role: "assistant", kind: "note", text: `✏️ Updated "${topic?.label ?? "your idea"}" on the record — noted.` },
+      { role: "assistant", kind: "note", text: `✏️ Updated "${topic.label}" on the record — noted.` },
     ])
   }
 
   const handleSubmit = async () => {
+    // Same gate the button is disabled by — checked again here so a stale
+    // click or a programmatic call can never save an unfinished idea.
+    const current = getGuidedSubmitGate(formData, tenant)
+    if (!current.canSubmit) {
+      toast({ variant: "destructive", title: `${tenant.assistantName} can't submit this yet`, description: current.message })
+      return
+    }
     setIsSubmitting(true)
     try {
       // `findings` comes back under its own name from the action and is stored
       // as `readinessFindings` (ES2-14); spreading the result whole would put
       // it on the record under the wrong key.
-      const { findings, ...readiness } = await assessReadiness(formData, getFormConfig().enabled)
-      const finalData: FormData = { ...formData, ...readiness, readinessFindings: findings, intakeMode: "guided" }
+      const aliased = withGuidedAliases(formData)
+      const { findings, ...readiness } = await assessReadiness(aliased, getFormConfig().enabled)
+      const finalData: FormData = { ...aliased, ...readiness, readinessFindings: findings, intakeMode: "guided" }
+      // The AI quality verdict blocks here exactly as it does in form mode.
+      const final = getSubmissionReadiness(finalData, tenant)
+      if (!final.canSubmit) {
+        toast({
+          variant: "destructive",
+          title: `${tenant.assistantName} can't submit this yet`,
+          description: final.missing.map((m) => m.message).join(" "),
+        })
+        setIsSubmitting(false)
+        return
+      }
       const saved = await saveSubmission(finalData)
       setSubmitted(true)
       resetForm()
@@ -249,8 +275,6 @@ export function ConversationalIntake() {
     }
   }
 
-  const activeTopics = activeIntakeTopics(formData.submitterOffice)
-  const remaining = activeTopics.filter((t) => !isTopicCaptured(t, formData))
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 py-8">
@@ -473,8 +497,7 @@ export function ConversationalIntake() {
             <IntakeRecordPanel
               formData={formData}
               onFieldChange={handleFieldChange}
-              remainingLabels={remaining.map((t) => t.label)}
-              readyToSubmit={remaining.length === 0}
+              gate={gate}
               isSubmitting={isSubmitting}
               onSubmit={handleSubmit}
             />

@@ -21,6 +21,40 @@ function attribution(blockStep: number, currentStep: number): string {
   return blockStep === currentStep ? `Step ${blockStep}, in progress` : `from Step ${blockStep}`
 }
 
+// The submitter's role and program office as the tenant words them, falling
+// back to the stored value (underscores read as spaces) for anything the
+// tenant no longer lists. Empty string when the session has no value.
+function submitterLabels(formData: FormData, tenant: TenantConfig): { role: string; office: string } {
+  const role = formData.submitterRole
+    ? tenant.submitterRoles.find((o) => o.value === formData.submitterRole)?.label ||
+      String(formData.submitterRole).replace(/_/g, " ")
+    : ""
+  const office = formData.submitterOffice
+    ? tenant.unit.options.find((o) => o.value === formData.submitterOffice)?.label ||
+      String(formData.submitterOffice).replace(/_/g, " ")
+    : ""
+  return { role, office }
+}
+
+// ============================================================
+// SUBMITTER FIT (issue #268)
+// Guided mode used to ask every submitter about contracting
+// workflows, because the tenant context describes contract
+// writing at length and nothing told the model the person in
+// front of it might not do that work. The role and office are
+// already in the session; say so, and say what to do with them.
+// ============================================================
+export function buildSubmitterFitGuidance(formData: FormData, tenant: TenantConfig = getTenant()): string {
+  const { role, office } = submitterLabels(formData, tenant)
+  const raw = `${formData.submitterRole ?? ""} ${role} ${formData.submitterOffice ?? ""} ${office}`
+  const isContracting = /contract/i.test(raw)
+  const who =
+    role && office ? `a ${role} in ${office}` : role ? `a ${role}` : office ? `someone in ${office}` : "someone whose role and office are not known"
+  const base = `The submitter is ${who}. Ask about their own work, the people they work with, and the systems they use — in the words of their office.`
+  if (isContracting) return base
+  return `${base} Do not assume contracting or acquisition workflows: only bring up contracts, awards, solicitations or contracting officers if the submitter has mentioned them.`
+}
+
 // ============================================================
 // SUBMISSION CONTEXT BUILDER
 // Compiles the submitter's responses so the co-pilot has full
@@ -41,9 +75,8 @@ export function buildSubmissionContext(
   const lines: string[] = []
 
   if (formData.submitterRole || formData.submitterOffice) {
-    const role = (formData.submitterRole || "unspecified role").replace(/_/g, " ")
-    const office = formData.submitterOffice ? formData.submitterOffice.toUpperCase() : "unspecified office"
-    lines.push(`- Submitter is a ${role} in ${office}`)
+    const { role, office } = submitterLabels(formData, tenant)
+    lines.push(`- Submitter is a ${role || "person with an unspecified role"} in ${office || "an unspecified office"}`)
   }
   if (formData.useCaseTitle) {
     lines.push(`- Idea title: "${formData.useCaseTitle}"`)
@@ -119,6 +152,7 @@ export function buildQuestionModeGuidance(tenant: TenantConfig = getTenant()): s
   const groups = exampleUserGroups(tenant).join(", ")
   return `— QUESTION MODE —
 Ask ONE specific question that ONLY the submitter can answer from their own observation, role, or organization.
+Fit the question to the submitter named under SUBMISSION CONTEXT: their role and office decide the subject, not the organization's most prominent line of business.
 
 Provide a 1-sentence rationale explaining why this question matters in strategic terms.
 
