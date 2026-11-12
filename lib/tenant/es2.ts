@@ -41,7 +41,7 @@ export const es2: TenantConfig = {
   sidebarTagline: "AI use case governance",
   heroHeadline: "Move fast on AI without losing the record.",
   heroSubtitle:
-    "One front door for AI ideas across the enterprise. Capture an idea in two minutes, let reviewers complete the governance record, and keep an inventory you can hand your chain of command on demand.",
+    "One front door for AI ideas across the enterprise. Capture an idea, let reviewers complete the governance record, and keep an inventory you can hand your chain of command on demand.",
   // `heroImage` deliberately unset — the hero falls back to `theme.primary` as
   // a clean solid background rather than inheriting another org's imagery.
   primaryAdminEmail: "avery.lang@es2.demo",
@@ -52,6 +52,8 @@ export const es2: TenantConfig = {
 Enterprise Software and Services delivers the business systems the Army runs on: contract writing, training management, foreign military sales, logistics and finance, human resources, and enterprise IT acquisition. Its stated mission is standardizing, streamlining, and sharing critical data across the Army, the Department of War, and industry partners.
 
 Reason about every idea using the AI Hierarchy of Needs: quality, AI-ready data is the foundation, analytics sits on top of it, and Responsible AI governs the whole stack. An idea with no realistic data foundation is not yet a use case, no matter how good the concept.
+
+Write in plain words. Never write "NLP-based", "scaffold", "off-plumb", "rationalization", or "reportability", and never present an OMB memo as binding on the Department of War: the OMB inventory field set is the standard this inventory is built to.
 
 The Department of War's AI Strategy pushes for speed: name priority projects quickly, field capability fast, and let small accountable teams move rather than waiting on process. Speed is the goal. It does not remove the obligation to keep a defensible record of what was fielded, what data it used, and who stayed accountable for the decision.
 
@@ -281,12 +283,53 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
   dataMaturityFraming:
     "AI-ready data is the foundation. Maturity is what turns a promising idea into something that can be funded and sustained.",
   modelSourcingGuidance:
-    "American-built or U.S.-hosted models running inside an accredited boundary are preferred, with documented sourcing. Foreign or unknown sourcing requires additional review.",
+    "American-built or U.S.-hosted models running inside an accredited boundary are preferred, with documented sourcing. Foreign or unknown sourcing needs additional review.",
   // `trlSystemName` deliberately unset — its only render site prints "A
   // required {trlSystemName} field," and there is no downstream marketplace an
   // internal submitter here files into. TRL still renders without it.
   srgCaveat: "FedRAMP authorization alone does not satisfy the Cloud Computing SRG.",
   humanReviewCitation: "Governable / DoDD 3000.09",
+
+  // Plain words for the people who read every screen (F3-2, #269). Nothing here
+  // states what a memo demands, quotes an unmeasured time, or leaves a term of
+  // art unexplained. Wording for the other tenants is untouched; their strings
+  // are the defaults in lib/tenant/copy.ts.
+  copy: {
+    heroCta: "See how it works",
+    intakeStepDescription: "{assistant} walks a submitter through a short intake, asking the follow-up questions a reviewer would.",
+    featuresSubtitle: "Purpose-built for the AI use case pipeline, from first idea to inventory.",
+    featureInventoryDescription:
+      "Every field in the {inventory} has a home in the data model, so the record is filled in as a use case is vetted rather than backfilled at year end.",
+    featureExportDescription: "Generates the {inventory} export in the field set the inventory uses, no manual reformatting.",
+    proofFieldSetDescription:
+      "Every field in the {inventory} is mapped field-for-field, and completed by reviewers during vetting rather than demanded of submitters up front.",
+    isWithheldDefaultRationale: "Defaults to No: nothing found that needs to stay out of public reporting.",
+    rmfAtRiskLabel: "Risk framework needs attention",
+    pendingDecisionLabel: "Waiting on a decision: combine or keep separate",
+    pendingClusterField: "Waiting on a decision: combine or keep separate",
+    pendingDecisionPhrase: "waiting on a decision: combine or keep separate",
+    keepSeparate: "keep separate",
+    nothingNeedsAttention: "Nothing needs attention",
+    inventoryCheckLabel: "Check if it goes in the AI inventory",
+    crossRationalizationTerm: "Cross-{unit} duplicate check",
+    haveEnoughOption: "I have enough, write the draft",
+    reviseDraftPlaceholder: "Ask a follow-up or request a revised draft...",
+    affectedUnitsPrompt: "Which program offices, systems, or groups does this affect? Tap all that apply, then Continue.",
+  },
+
+  glossaryOverrides: {
+    ombReportability: {
+      term: "AI inventory check",
+      definition: "Whether this AI use case belongs in the AI use case inventory the organization reports each year.",
+    },
+    highImpactDetermination: {
+      definition:
+        "A recommendation on whether an AI use case meets the high-impact definition in DoW AI Ethical Principles + NIST AI RMF: its output could meaningfully affect people's rights, safety, access to benefits, resource allocation, or enforcement outcomes. A reviewer makes the final call.",
+    },
+    advisory: {
+      definition: "This is a recommendation for a human reviewer to confirm or override. It never sets the final answer by itself.",
+    },
+  },
 
   theme: { primary: "#2A333C", primaryForeground: "#ffffff" }, // Keystone basalt
 

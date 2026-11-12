@@ -21,7 +21,7 @@ import Link from "next/link"
 import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { getSession } from "@/lib/auth"
-import { formatDisplayDate } from "@/lib/dateFormat"
+import { formatKeystoneDate } from "@/lib/dateFormat"
 import { DRAFT_FORM_KEY_BASE, scopedDraftKey, migrateLegacyDraftKeys } from "@/lib/draftStorage"
 import { getTenant } from "@/lib/tenant"
 import { getDashboardScope } from "@/lib/dashboard/scope"
@@ -170,7 +170,7 @@ export function PersonalDashboard() {
                 <div className="min-w-0">
                   <div className="font-medium text-sm truncate">{s.formData.useCaseTitle || "Untitled idea"}</div>
                   <div className="text-xs text-muted-foreground">
-                    Submitted {formatDisplayDate(s.submittedAt)}
+                    Submitted {formatKeystoneDate(s.submittedAt)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">

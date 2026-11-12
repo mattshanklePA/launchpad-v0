@@ -23,6 +23,32 @@ export type UnitOption = { value: string; label: string; offices?: OfficeOption[
 // One illustrative row in the public landing page's Command Center preview.
 // `status` is a display state, not a `reviewStatus` — see PREVIEW_STATUS in
 // components/landing/public-landing.tsx for the label/tone it renders as.
+// Display strings a tenant may word its own way (F3-2, #269). Every key has a
+// default in lib/tenant/copy.ts that is the wording the product shipped with;
+// a tenant overrides only the keys it needs, in its own file. `{assistant}` and
+// `{inventory}` in a value are filled with the tenant's assistantName and
+// inventoryLabel.
+export type TenantCopy = {
+  heroCta: string                       // landing hero's secondary button
+  intakeStepDescription: string         // "How it works" step 1
+  featuresSubtitle: string              // under "What {product} does"
+  featureInventoryDescription: string   // "Built-in {inventory}" card
+  featureExportDescription: string      // "One-click {inventory} export" card
+  proofFieldSetDescription: string      // "Built to the {inventory} field set" card
+  isWithheldDefaultRationale: string    // intake step 5, default answer
+  rmfAtRiskLabel: string                // KPI label and glossary term
+  pendingDecisionLabel: string          // status of a duplicate cluster nobody has decided
+  pendingClusterField: string           // drilldown cardField that marks an undecided cluster
+  pendingDecisionPhrase: string         // same state, inside a sentence
+  keepSeparate: string                  // the "keep apart" outcome, inside a sentence
+  nothingNeedsAttention: string         // empty-state heading and Plumb's all-clear
+  inventoryCheckLabel: string           // reviewer action title; empty keeps the original count-first title
+  crossRationalizationTerm: string      // glossary term for the cross-unit duplicate check
+  haveEnoughOption: string              // Plumb's "stop asking, draft it" chip
+  reviseDraftPlaceholder: string        // chat box placeholder after a draft
+  affectedUnitsPrompt: string           // guided intake question on affected units
+}
+
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }
 
 export type TenantConfig = {
@@ -179,6 +205,13 @@ export type TenantConfig = {
 
   // Theme accents (wired into UI in a later step)
   theme: { primary: string; primaryForeground: string }
+
+  // Glossary entries this tenant words its own way, keyed by GlossaryTermKey
+  // (lib/glossary.ts). Unset entries keep the shared wording.
+  glossaryOverrides?: Record<string, { term?: string; definition?: string }>
+
+  // Per-tenant wording overrides; see TenantCopy. Unset keys use the defaults.
+  copy?: Partial<TenantCopy>
 
   // Per-tenant feature toggles
   features: Record<string, boolean>

@@ -159,5 +159,18 @@ export function determineHighImpact(fd: HighImpactInputs, tenant: TenantConfig =
   for (const f of manualFactors) reasons.push(factorReason[f])
   for (const s of inferredSignals) reasons.push(inferredReason[s.factor])
 
-  return { recommendation: "yes", reasons }
+  return { recommendation: "yes", reasons: citeAuthorityOnce(reasons, authority) }
+}
+
+/**
+ * Names the authority in the first reason only. Every reason used to close with
+ * the same parenthetical, so an idea with three reasons read it three times
+ * (F3-2, #269). Later reasons drop it, whether it closes the sentence
+ * ("... (X).") or ends a longer parenthetical ("... , X)").
+ */
+function citeAuthorityOnce(reasons: string[], authority: string): string[] {
+  return reasons.map((r, i) => {
+    if (i === 0) return r
+    return r.replace(` (${authority})`, "").replace(`, ${authority})`, ")")
+  })
 }

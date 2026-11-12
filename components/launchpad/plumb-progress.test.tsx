@@ -36,13 +36,14 @@ describe("PlumbProgress", () => {
 
   it("marks the read and similar-use-case stages done after mount, with governance/recommendation still active", () => {
     const el = render(<PlumbProgress assistantName="Plumb" governanceDone={false} recommendationDone={false} />)
-    // "Step 3 of 4" once read+similar resolve — the first still-active stage is drafting governance.
-    expect(el.textContent).toContain("Step 3 of 4")
+    // The review's own "Step N of M" is the only step counter (F3-2, #269); Plumb shows time left, not a second count.
+    expect(el.textContent).not.toMatch(/Step \d of 4/)
+    expect(el.textContent).toMatch(/About \d+ seconds left/)
   })
 
   it("marks governance and recommendation done once their promises resolve", () => {
     const el = render(<PlumbProgress assistantName="Plumb" governanceDone recommendationDone />)
-    expect(el.textContent).toContain("Step 4 of 4")
+    expect(el.textContent).not.toMatch(/Step \d of 4/)
   })
 
   it("uses the same min-height class the resolved card is expected to share", () => {

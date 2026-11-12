@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import { getTenant, tenantHasBureauTier, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { HeroPreviewItem } from "@/lib/tenant/types"
 import { cn } from "@/lib/utils"
 
@@ -174,7 +175,7 @@ export function howItWorksSteps(tenant: TenantConfig, bureauTier: boolean) {
   return [
     {
       title: "Submit",
-      description: `${tenant.assistantName} walks a submitter through a short intake in about two minutes, asking the follow-up questions a reviewer would.`,
+      description: tenantCopy(tenant).intakeStepDescription,
     },
     {
       title: "Vet & de-dupe",
@@ -229,7 +230,7 @@ export function featureItems(tenant: TenantConfig, bureauTier: boolean) {
     {
       icon: ClipboardList,
       title: `Built-in ${tenant.inventoryLabel}`,
-      description: `Every field the ${tenant.inventoryLabel} requires has a home in the data model, so the record is filled in as a use case is vetted rather than backfilled at year end.`,
+      description: tenantCopy(tenant).featureInventoryDescription,
     },
     {
       icon: GitMerge,
@@ -241,7 +242,7 @@ export function featureItems(tenant: TenantConfig, bureauTier: boolean) {
     {
       icon: Download,
       title: `One-click ${tenant.inventoryLabel} export`,
-      description: `Generates the ${tenant.inventoryLabel} export in the exact format reviewers require, no manual reformatting.`,
+      description: tenantCopy(tenant).featureExportDescription,
     },
     {
       icon: LayoutDashboard,
@@ -261,7 +262,7 @@ function Features({ tenant, bureauTier, accent }: { tenant: TenantConfig; bureau
           <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-uspto-gray-text">
             What {tenant.productName} does
           </h2>
-          <p className="mt-2 text-muted-foreground">Purpose-built for the AI use case pipeline federal governance actually requires.</p>
+          <p className="mt-2 text-muted-foreground">{tenantCopy(tenant).featuresSubtitle}</p>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
@@ -297,7 +298,7 @@ export function proofSignals(tenant: TenantConfig) {
     {
       icon: ShieldCheck,
       title: `Built to the ${tenant.inventoryLabel} field set`,
-      description: `Every field the ${tenant.inventoryLabel} requires is mapped field-for-field, and completed by reviewers during vetting rather than demanded of submitters up front.`,
+      description: tenantCopy(tenant).proofFieldSetDescription,
     },
     {
       icon: Award,
@@ -374,12 +375,12 @@ export function landingStrings(tenant: TenantConfig, bureauTier: boolean): strin
     "Use cases submitted",
     "Use cases deployed",
     "Command Center",
-    "See it in 2 minutes",
+    tenantCopy(tenant).heroCta,
     "How it works",
     "From a submitted idea to a funded, reportable use case, in three steps.",
     ...howItWorksSteps(tenant, bureauTier).flatMap((s) => [s.title, s.description]),
     `What ${tenant.productName} does`,
-    "Purpose-built for the AI use case pipeline federal governance actually requires.",
+    tenantCopy(tenant).featuresSubtitle,
     ...featureItems(tenant, bureauTier).flatMap((f) => [f.title, f.description]),
     "Why it holds up",
     ...proofSignals(tenant).flatMap((p) => [p.title, p.description]),
@@ -477,7 +478,7 @@ export function PublicLanding() {
                         style={{ color: t.theme.primary }}
                         asChild
                       >
-                        <a href="#explore">See it in 2 minutes <ArrowRight className="w-4 h-4 ml-2" /></a>
+                        <a href="#explore">{tenantCopy(t).heroCta} <ArrowRight className="w-4 h-4 ml-2" /></a>
                       </Button>
                       <Button
                         size="lg"

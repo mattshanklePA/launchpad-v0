@@ -10,7 +10,7 @@ import { FileEdit, Info, FileText, CheckCircle, Sparkles, ArrowRight } from "luc
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { getPhaseForStep, formPhases, type FormData } from "@/lib/steps"
 import { getSession } from "@/lib/auth"
-import { formatDisplayDate } from "@/lib/dateFormat"
+import { formatKeystoneDate } from "@/lib/dateFormat"
 import {
   DRAFT_FORM_KEY_BASE,
   DRAFT_STEP_KEY_BASE,
@@ -73,7 +73,7 @@ function timeAgo(iso: string): string {
   if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`
-  return formatDisplayDate(iso)
+  return formatKeystoneDate(iso)
 }
 
 function readinessClass(score: string | undefined): string {

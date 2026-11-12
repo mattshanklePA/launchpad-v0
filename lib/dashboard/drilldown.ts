@@ -17,6 +17,7 @@ import { determineConsolidation } from "@/lib/ombConsolidation"
 import { clusterDuplicates, isRationalizationPending, tenantHasBureauTier } from "@/lib/rationalization"
 import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { scopedSubmissions, readinessBucket } from "@/lib/dashboard/metrics"
 
@@ -112,7 +113,7 @@ export function getKpiDrilldown(
       const lead = byId.get(c.memberIds[0])!
       const pending = isRationalizationPending(lead, clusters)
       return {
-        ...toItem(lead, pending ? "Pending rationalization" : "Decided"),
+        ...toItem(lead, pending ? tenantCopy(tenant).pendingClusterField : "Decided"),
         bureau: c.bureaus.join(","),
         bureauLabel: c.bureaus.map(businessUnitLabel).join(" / "),
         memberIds: c.memberIds,

@@ -4,7 +4,6 @@ import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { getSession } from "@/lib/auth"
-import { formatDisplayDate } from "@/lib/dateFormat"
 import { useDataProvider } from "@/components/data-provider"
 import {
   getSubmissions,
@@ -45,6 +44,7 @@ import {
 import { assistReviewer, draftGovernanceFields } from "@/app/actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import {
   rmfBadgeClass,
   rmfFunctionStatusBadgeClass,
@@ -503,7 +503,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const rmfStatusClass = resolvedRmf ? (resolvedRmf.review ? STATUS_BADGE_CLASS.healthy : STATUS_BADGE_CLASS.attention) : ""
 
   const rationalizationStatusLabel = blockReason
-    ? "Rationalization pending"
+    ? tenantCopy(tenant).pendingDecisionLabel
     : rationalizationDecision?.decision === "consolidated"
       ? "Consolidated"
       : "Keep separate"
@@ -560,6 +560,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           awaitingPlumb ? (
             <ReviewProcessLoading
               submissionId={sub.id}
+              submittedAt={sub.submittedAt}
               totalSteps={reviewSteps.length}
               reviewerName={session?.name || "Reviewer"}
               assistantName={tenant.assistantName}
@@ -645,7 +646,7 @@ export function SubmissionDetail({ id }: { id: string }) {
             </div>
             {departmentApproval ? (
               <p className="text-sm text-muted-foreground">
-                {departmentApproval.decision === "approved" ? "Approved" : "Rejected"} by {departmentApproval.byName} on {formatDisplayDate(departmentApproval.at)}.
+                {departmentApproval.decision === "approved" ? "Approved" : "Rejected"} by {departmentApproval.byName} on {formatKeystoneDate(departmentApproval.at)}.
               </p>
             ) : (
               <div className="flex flex-wrap items-center gap-2">
@@ -741,7 +742,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                         {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}
                       </div>
                       <div>
-                        <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatDisplayDate(c.createdAt)}</span></div>
+                        <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatKeystoneDate(c.createdAt)}</span></div>
                         <div className="text-sm text-muted-foreground">{c.body}</div>
                       </div>
                     </div>
@@ -881,7 +882,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                           {resolvedRmf.review.decision === "overridden"
                             ? `Overridden to "${RMF_OVERALL_LABELS[resolvedRmf.review.overriddenOverall || resolvedRmf.review.proposedOverall]}" (proposed "${RMF_OVERALL_LABELS[resolvedRmf.review.proposedOverall]}")`
                             : "Confirmed as proposed"}
-                          {" "}by {resolvedRmf.review.byName}, {formatDisplayDate(resolvedRmf.review.at)}
+                          {" "}by {resolvedRmf.review.byName}, {formatKeystoneDate(resolvedRmf.review.at)}
                           {resolvedRmf.review.notes ? ` — "${resolvedRmf.review.notes}"` : ""}
                         </p>
                       )}
@@ -939,8 +940,8 @@ export function SubmissionDetail({ id }: { id: string }) {
                       {blockReason
                         ? `This use case closely matches work filed under another ${tiers.unit.toLowerCase()}.`
                         : rationalizationDecision?.decision === "consolidated"
-                          ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${formatDisplayDate(rationalizationDecision.decidedAt)}.`
-                          : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${formatDisplayDate(rationalizationDecision.decidedAt)}` : ""}.`}
+                          ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${formatKeystoneDate(rationalizationDecision.decidedAt)}.`
+                          : `Marked ${tenantCopy(tenant).keepSeparate} by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${formatKeystoneDate(rationalizationDecision.decidedAt)}` : ""}.`}
                     </p>
                     <ul className="space-y-1.5">
                       {clusterMembers.map((m) => (
@@ -1150,7 +1151,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                     {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}
                   </div>
                   <div>
-                    <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatDisplayDate(c.createdAt)}</span></div>
+                    <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatKeystoneDate(c.createdAt)}</span></div>
                     <div className="text-sm text-muted-foreground">{c.body}</div>
                   </div>
                 </div>

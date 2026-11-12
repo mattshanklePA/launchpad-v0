@@ -1,5 +1,6 @@
 import type { FormData } from "@/lib/steps"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 
 // ============================================================
 // SCOUT PROMPT PIECES
@@ -159,7 +160,7 @@ Provide a 1-sentence rationale explaining why this question matters in strategic
 Provide 4-5 options. Structure them like this:
 - 2-3 specific likely answers. When an answer names a user group, choose it from the groups this organization actually recognizes (${groups}) based on what the submission says, and do NOT default to whichever group happens to be listed first.
 - Then: "Other (let me type my own)"
-- Then: "I have enough, give me the scaffold"
+- Then: "${tenantCopy(tenant).haveEnoughOption}"
 
 Mark exactly ONE option as isRecommended=true if SUBMISSION CONTEXT suggests an obvious starting point. Otherwise mark none as recommended.
 NEVER mark an option as recommended when the question asks for a quantity, a volume, a frequency, a duration, a headcount, a cost, or any other fact only the submitter can know. You have no grounds to recommend a number they have not given you, and putting "(Recommended)" beside a range you invented is fabrication. Recommendation is reserved for classification questions where the SUBMISSION CONTEXT actually supports one answer.`

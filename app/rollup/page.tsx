@@ -16,6 +16,7 @@ import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { getSession } from "@/lib/auth"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { getDashboardScope, getHierarchy } from "@/lib/dashboard/scope"
 import { getDashboardMetrics, scopedSubmissions } from "@/lib/dashboard/metrics"
 import { getKpiDrilldown } from "@/lib/dashboard/drilldown"
@@ -53,7 +54,7 @@ function RollupPageInner() {
   const metrics = getDashboardMetrics(scope, allSubmissions, tenant)
   const actionItems = buildActionItems(metrics, bureauTier, [], tenant, kpiDrilldown)
   const pendingClusterItem = actionItems.find((i) => i.id === "duplicates")
-  const leadCluster = kpiDrilldown.duplicates.find((d) => d.cardField === "Pending rationalization")
+  const leadCluster = kpiDrilldown.duplicates.find((d) => d.cardField === tenantCopy(tenant).pendingClusterField)
 
   return (
     <DashboardShell baseScope={scope} hierarchy={hierarchy} selection={null} onSelect={() => {}} breadcrumb={`${tenant.unit.label} roll-up`}>

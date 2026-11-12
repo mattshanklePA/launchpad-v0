@@ -12,6 +12,7 @@ import {
   type AlignmentSuggestion,
 } from "@/lib/strategicFocusAreas"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
 import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
 import { scoutFieldsForStep, draftFieldFallback } from "@/lib/scoutFieldPlan"
@@ -32,6 +33,7 @@ type Message = {
 // AI strategy revision.
 // ============================================================
 const TENANT = getTenant()
+const ENOUGH = tenantCopy(TENANT).haveEnoughOption
 
 // Strategic frameworks for the active tenant, injected into every Scout prompt.
 const USPTO_STRATEGIC_CONTEXT = TENANT.strategicContext
@@ -577,7 +579,7 @@ export async function validateAndRefineInput(
             }),
           )
           .describe(
-            "If mode=question: 4-5 options. Use 2-3 specific likely answers FIRST, then 'Other (let me type my own)', then 'I have enough, give me the scaffold'. If mode=scaffold: empty array.",
+            "If mode=question: 4-5 options. Use 2-3 specific likely answers FIRST, then 'Other (let me type my own)', then '" + ENOUGH + "'. If mode=scaffold: empty array.",
           ),
         fields: fieldsSchema.describe(
           "If mode=scaffold: one drafted value + rationale per named output field for this step. If mode=question: every field's value and rationale are empty strings.",
@@ -613,8 +615,8 @@ Q&A turns completed so far in this session: ${assistantTurns}
 ═══ INTERACTION MODEL ═══
 
 EACH RESPONSE IS EITHER mode="question" OR mode="scaffold". You decide based on:
-- If turns so far is 0-2 AND the submitter has not selected "I have enough, give me the scaffold" → prefer mode="question"
-- If turns so far is ≥3 OR the most recent user message in history is "I have enough, give me the scaffold" → produce mode="scaffold"
+- If turns so far is 0-2 AND the submitter has not selected "${ENOUGH}" → prefer mode="question"
+- If turns so far is ≥3 OR the most recent user message in history is "${ENOUGH}" → produce mode="scaffold"
 - If the submitter's draft text is already substantive and well-grounded → you may skip directly to mode="scaffold"
 
 ${buildQuestionModeGuidance(TENANT)}
@@ -658,7 +660,7 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
             ? object.options
             : [
                 { label: "Other (let me type my own)", isRecommended: false },
-                { label: "I have enough, give me the scaffold", isRecommended: false },
+                { label: ENOUGH, isRecommended: false },
               ],
       }
     }

@@ -12,6 +12,7 @@ import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { useForm } from "@/context/form-context"
 import { getFormConfig } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { Field } from "@/components/steps/step-frame"
 import { cn } from "@/lib/utils"
@@ -260,7 +261,7 @@ export function AIdChatPanel({ step, onApplySuggestion, summaryField }: LaunchPa
   const handleWriteSummaryClick = async () => {
     if (messages.length === 0) return handleInitialClick()
     if (enoughOption) return handleOptionClick(enoughOption.label)
-    const updated: ChatMessage[] = [...messages, { role: "user", content: "I have enough, give me the scaffold" }]
+    const updated: ChatMessage[] = [...messages, { role: "user", content: tenantCopy(tenant).haveEnoughOption }]
     setMessages(updated)
     await callAI(updated)
   }
@@ -342,6 +343,7 @@ export function AIdChatPanel({ step, onApplySuggestion, summaryField }: LaunchPa
                 )}
               >
                 {opt.label}
+                {opt.isRecommended && " "}
                 {opt.isRecommended && (
                   <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-keystone-activeBlue">
                     Recommended
@@ -440,7 +442,7 @@ export function AIdChatPanel({ step, onApplySuggestion, summaryField }: LaunchPa
               <Textarea
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask a follow-up or request a revised scaffold..."
+                placeholder={tenantCopy(tenant).reviseDraftPlaceholder}
                 rows={1}
                 className="flex-1"
                 disabled={isLoading}

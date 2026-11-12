@@ -8,6 +8,7 @@
 import type { Submission } from "@/lib/submissions"
 import type { RationalizationCluster, Rationalization } from "@/lib/rationalization"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { spellCount, formatKeystoneDate } from "@/components/dashboard/command-center-data"
 
 /**
@@ -43,7 +44,7 @@ export function ClusterHeader({
 
   const eyebrow = decision
     ? `Decided · ${decision.decision === "consolidated" ? "consolidated" : "kept separate"} by ${decision.decidedBy} on ${formatKeystoneDate(decision.decidedAt)}`
-    : `Rationalization pending · ${matchPct}% match`
+    : `${tenantCopy(tenant).pendingDecisionLabel} · ${matchPct}% match`
 
   // Same count word as the title (spellCount), not the numeral — a "Three ...
   // one problem" title followed by an "All 3 were flagged ... or 3 efforts"
