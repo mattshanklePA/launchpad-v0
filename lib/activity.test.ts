@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest"
 import { initialFormData, type FormData } from "@/lib/steps"
 import type { Submission } from "@/lib/submissions"
 import { buildActivity } from "@/lib/activity"
+import { uspto } from "@/lib/tenant/uspto"
+import { es2 } from "@/lib/tenant/es2"
 
 function sub(overrides: Partial<FormData> & { submittedAt?: string; status?: string } = {}): Submission {
   const { submittedAt, status, ...formOverrides } = overrides
@@ -37,7 +39,7 @@ describe("buildActivity", () => {
       ],
     } as unknown as Partial<FormData>)
 
-    const activity = buildActivity(s)
+    const activity = buildActivity(s, uspto)
 
     expect(activity.map((e) => e.label)).toEqual([
       "Avery Lang replied",
@@ -51,6 +53,14 @@ describe("buildActivity", () => {
       "2026-08-18T14:00:00.000Z",
       "2026-08-17T09:00:00.000Z",
     ])
+  })
+
+  it("words a keep-separate cluster decision in ES2's plain words", () => {
+    const s = sub({
+      rationalization: { clusterId: "m1", decision: "keep_separate", decidedBy: "Avery Lang", decidedAt: "2026-08-18T14:00:00.000Z" },
+    } as unknown as Partial<FormData>)
+
+    expect(buildActivity(s, es2).map((e) => e.label)).toContain("Cluster m1 marked keep separate")
   })
 
   it("only lists reviewer/admin comments as activity, not the submitter's own replies", () => {
