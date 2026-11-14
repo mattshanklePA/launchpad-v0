@@ -287,8 +287,10 @@ describe("/submissions/[id] — tenants without a bureau tier (no decision attri
     submissions = [submission({ id: "s1", status: "approved", businessUnit: "" })]
     const el = await flush(render(<SubmissionDetailPage />))
     expect(el.textContent).toContain("Approved")
-    // Reversible until sign-off (never actually signed off on this tenant).
-    expect(el.textContent).toContain("Reversible until")
+    // No bureau tier means no separate sign-off: the decision itself is final
+    // and locked (#271), so it must not claim to be reversible.
+    expect(el.textContent).not.toContain("Reversible until")
+    expect(el.textContent).toContain("contact the office to reopen")
   })
 })
 

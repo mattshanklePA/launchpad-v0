@@ -31,6 +31,8 @@ export const DEFAULT_COPY: TenantCopy = {
   timeToDecisionAcrossOne: "across 1 decision",
   timeToDecisionEmpty: "No decisions yet",
   decidedInLabel: "Decided in {days}",
+  rmfNotConfirmedApproved: "Not confirmed before approval",
+  rmfNotConfirmedRejected: "Not confirmed before the decision",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */
