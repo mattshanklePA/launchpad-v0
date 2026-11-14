@@ -10,6 +10,8 @@ import type { Submission } from "@/lib/submissions"
 import { compareSubmissions, type CompareBriefing } from "@/app/admin/compare-actions"
 import { computeRiskProfile } from "@/lib/riskProfile"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
+import { getTenant } from "@/lib/tenant"
+import { SectionTitle, SquareTag } from "@/components/cockpit"
 import { splitLabelCode } from "@/components/dashboard/command-center-data"
 import {
   fmt,
@@ -24,6 +26,18 @@ type ComparisonViewProps = {
   submissions: Submission[]
   onClose: () => void
   Heading?: "h1" | "h2"
+}
+
+// NL-5 (#286), ES2 only: square tags with a word, no pills.
+function cockpitVerdictTag(v: string) {
+  switch (v) {
+    case "fund_now":
+      return <SquareTag tone="healthy">Fund now</SquareTag>
+    case "fund_with_conditions":
+      return <SquareTag tone="attention">Fund with conditions</SquareTag>
+    default:
+      return <SquareTag tone="neutral">Hold</SquareTag>
+  }
 }
 
 function verdictBadge(v: string) {
@@ -58,17 +72,24 @@ function verdictBadge(v: string) {
 const COMPARE_ROWS: Array<{ label: string; render: (s: Submission) => ReactNode }> = [
   {
     label: "Readiness",
-    render: (s) => (
-      <StatusPill status={readinessKeystoneStatus(s.formData.readinessScore)}>
-        {readinessPillLabel(s.formData.readinessScore)}
-      </StatusPill>
-    ),
+    render: (s) =>
+      getTenant().features.cockpitLook ? (
+        <SquareTag tone={readinessKeystoneStatus(s.formData.readinessScore)}>{readinessPillLabel(s.formData.readinessScore)}</SquareTag>
+      ) : (
+        <StatusPill status={readinessKeystoneStatus(s.formData.readinessScore)}>
+          {readinessPillLabel(s.formData.readinessScore)}
+        </StatusPill>
+      ),
   },
   {
     label: "Risk",
     render: (s) => {
       const risk = computeRiskProfile(s.formData)
-      return <StatusPill status={riskKeystoneStatus(risk.level)}>{riskPillLabel(risk.level)}</StatusPill>
+      return getTenant().features.cockpitLook ? (
+        <SquareTag tone={riskKeystoneStatus(risk.level)}>{riskPillLabel(risk.level)}</SquareTag>
+      ) : (
+        <StatusPill status={riskKeystoneStatus(risk.level)}>{riskPillLabel(risk.level)}</StatusPill>
+      )
     },
   },
   {
@@ -128,6 +149,108 @@ export function ComparisonView({ submissions, onClose, Heading = "h2" }: Compari
   const recCand = briefing ? briefing.perSubmission.find((p) => p.id === briefing.recommendation.fundId) ?? null : null
   const titles = submissions.map((s) => s.formData.useCaseTitle || "Untitled idea")
   const gridStyle = { gridTemplateColumns: `170px repeat(${submissions.length}, minmax(0, 1fr))` }
+
+  if (getTenant().features.cockpitLook) {
+    const box = "border border-[var(--ks-limestone-dark)] bg-white"
+    return (
+      <div className="space-y-5">
+        <SectionTitle title="Decision Center · compare" context="Same rows, side by side. The briefing writes itself from this table." />
+        <p className="font-heading text-[20px] font-bold leading-[1.2] text-[var(--ks-ink-900)]">{titles.join(" vs. ")}</p>
+        <div className="flex flex-wrap items-center gap-3.5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[13px] font-semibold text-[var(--ks-active-blue-dark)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+          >
+            Back to candidates
+          </button>
+          <Button onClick={handleGenerateBrief} disabled={isLoading}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generate Executive Briefing
+          </Button>
+        </div>
+
+        <div className={`overflow-x-auto ${box}`}>
+          <div className="grid gap-x-6 px-6 py-4" style={gridStyle}>
+            <div />
+            {submissions.map((s) => {
+              const unitLabel = s.formData.submitterOffice ? businessUnitLabel(s.formData.submitterOffice) : "—"
+              const unitShort = s.formData.submitterOffice ? splitLabelCode(unitLabel).code ?? unitLabel : "—"
+              return (
+                <div key={s.id} className="flex min-w-0 flex-col gap-1">
+                  <p className="font-heading text-[16.5px] font-bold leading-[1.25] text-[var(--ks-ink-900)]">
+                    {s.formData.useCaseTitle || "Untitled idea"}
+                  </p>
+                  <p className="text-[12.5px] text-[var(--ks-ink-700)]">
+                    {fmt(s.formData.submitterName)} · {unitShort}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+          {COMPARE_ROWS.map((row) => (
+            <div key={row.label} className="grid items-baseline gap-x-6 border-t border-[var(--ks-limestone)] px-6 py-3" style={gridStyle}>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)]">{row.label}</p>
+              {submissions.map((s) => (
+                <div key={s.id} className="text-[13.5px] leading-[1.55]">
+                  {row.render(s)}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {(isLoading || briefing) && (
+          <div className="space-y-4">
+            <SectionTitle title="Executive Comparative Briefing" />
+            {isLoading && (
+              <div className="flex items-center gap-2 py-4 text-sm text-[var(--ks-ink-700)]">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating comparative briefing... (typically 10-20 seconds)
+              </div>
+            )}
+            {briefing && (
+              <div className="space-y-4 text-sm">
+                <div className={`${box} border-l-4 border-l-[var(--ks-amber)] p-4`}>
+                  <SquareTag tone="healthy">Recommendation</SquareTag>
+                  {recCand && <p className="mt-2 font-semibold text-[var(--ks-ink-900)]">Fund first: {recCand.title}</p>}
+                  <p className="mt-0.5 leading-relaxed text-[var(--ks-ink-900)]">{briefing.recommendation.headline}</p>
+                </div>
+                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${briefing.perSubmission.length}, minmax(0, 1fr))` }}>
+                  {briefing.perSubmission.map((p) => (
+                    <div key={p.id} className={`${box} p-3 ${p.id === briefing.recommendation.fundId ? "border-[var(--ks-amber)]" : ""}`}>
+                      <p className="font-medium leading-tight">{p.title}</p>
+                      <div className="mt-1.5">{cockpitVerdictTag(p.verdict)}</div>
+                      <p className="mt-2 text-xs leading-relaxed text-[var(--ks-ink-700)]">{p.oneLine}</p>
+                      <p className="mt-1.5 text-xs leading-relaxed">
+                        <span className="font-semibold text-[var(--ks-amber-dark)]">Gap: </span>
+                        {p.gap}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className={`${box} p-3`}>
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)]">How they differ</span>
+                    <p className="mt-1 leading-relaxed">{briefing.differ}</p>
+                  </div>
+                  <div className={`${box} p-3`}>
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)]">Biggest gap across the set</span>
+                    <p className="mt-1 leading-relaxed">{briefing.portfolioGap}</p>
+                  </div>
+                </div>
+                <div className="flex justify-end pt-1">
+                  <Button variant="outline" size="sm" onClick={handleGenerateBrief} disabled={isLoading}>
+                    Regenerate
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5">
