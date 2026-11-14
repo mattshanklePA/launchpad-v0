@@ -347,6 +347,9 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     recordColWho: "Who",
     recordColWhen: "When",
     overlapColLead: "Lead",
+    // NL-8 (#289): submit an idea.
+    submitEyebrow: "Submit an idea · Step {step} of {count}",
+    submitSentEyebrow: "Submit an idea · Sent",
   },
 
   glossaryOverrides: {

@@ -213,6 +213,33 @@ describe("StepHeader", () => {
   })
 })
 
+// NL-8 (#289): ES2 gets the cockpit band and one numbered progress line; doc
+// (and every other tenant) keeps the basalt card header, unchanged.
+describe("StepHeader tenant look (NL-8)", () => {
+  it("ES2: band eyebrow, step question as title, six-step progress line, mode switch slot", () => {
+    process.env.NEXT_PUBLIC_TENANT = "es2"
+    mockUseForm.mockReturnValue({ currentStep: 2, setCurrentStep, formData: { ...initialFormData } })
+    const el = render(<StepHeader modeToggle={<span data-testid="toggle">toggle</span>} />)
+    expect(el.querySelector('[data-cockpit="header-band"]')).toBeTruthy()
+    expect(el.textContent).toContain("SUBMIT AN IDEA · STEP 2 OF 6")
+    expect(el.querySelector("h2")?.textContent).toBe("What's the Problem or Opportunity?")
+    expect(el.querySelectorAll('[data-cockpit="submit-progress"] li').length).toBe(6)
+    expect(el.querySelector('[aria-current="step"]')?.textContent).toContain("Business Problem & Opportunity")
+    expect(el.querySelector('[data-testid="toggle"]')).toBeTruthy()
+  })
+
+  it("doc: still renders the basalt card header with no cockpit band or progress line", () => {
+    process.env.NEXT_PUBLIC_TENANT = "doc"
+    mockUseForm.mockReturnValue({ currentStep: 2, setCurrentStep, formData: { ...initialFormData } })
+    const el = render(<StepHeader onSwitchToGuided={() => {}} />)
+    expect(el.querySelector('[data-cockpit="header-band"]')).toBeNull()
+    expect(el.querySelector('[data-cockpit="submit-progress"]')).toBeNull()
+    expect(el.textContent).toContain("Step 2 of 6 · Business Problem & Opportunity")
+    expect(el.textContent).toContain("Prefer a conversation? Guided mode")
+    expect(el.querySelector("h1")?.textContent).toBe("What's the Problem or Opportunity?")
+  })
+})
+
 describe("formatSavedAgo", () => {
   it("reads 'Saved' before anything has persisted", () => {
     expect(formatSavedAgo(null, Date.now())).toBe("Saved")

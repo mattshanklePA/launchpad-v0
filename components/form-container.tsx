@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import type React from "react"
 import { useForm } from "@/context/form-context"
 import { AnimatePresence, motion } from "framer-motion"
 import { StepHeader, StepFooter } from "./steps/step-frame"
@@ -13,7 +14,13 @@ import { Step10ReviewSubmit } from "./steps/step-10-review-submit"
 import { Step11ExportTracking } from "./steps/step-11-export-tracking"
 import { Button } from "@/components/ui/button"
 
-export function FormContainer({ onSwitchToGuided }: { onSwitchToGuided?: () => void }) {
+export function FormContainer({
+  onSwitchToGuided,
+  modeToggle,
+}: {
+  onSwitchToGuided?: () => void
+  modeToggle?: React.ReactNode
+}) {
   const { currentStep, formData, showResumePrompt, continueDraft, startNewForm } = useForm()
 
   // Whenever the step changes (including quick-jumps from the header's Edit
@@ -106,7 +113,7 @@ export function FormContainer({ onSwitchToGuided }: { onSwitchToGuided?: () => v
             transition={{ duration: 0.08 }}
             className="flex flex-col gap-[22px]"
           >
-            <StepHeader onSwitchToGuided={onSwitchToGuided} />
+            <StepHeader onSwitchToGuided={onSwitchToGuided} modeToggle={modeToggle} />
             {renderStepContent()}
           </motion.div>
         </AnimatePresence>

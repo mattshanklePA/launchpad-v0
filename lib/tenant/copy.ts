@@ -62,6 +62,9 @@ export const DEFAULT_COPY: TenantCopy = {
   recordColWho: "Who",
   recordColWhen: "When",
   overlapColLead: "Lead",
+  // NL-8 (#289): submit an idea.
+  submitEyebrow: "Submit an idea · Step {step} of {count}",
+  submitSentEyebrow: "Submit an idea · Sent",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */
