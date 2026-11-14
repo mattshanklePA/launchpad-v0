@@ -333,6 +333,20 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     listColLink: "Open",
     decisionDetailRmf: "RMF",
     decisionDetailRecord: "Record",
+    // NL-7 (#288): decided record and overlap group.
+    decisionBlockTitle: "The decision",
+    decisionEyebrow: "Decided",
+    decisionFactDecision: "Decision",
+    decisionFactBy: "Decided by",
+    decisionFactDate: "Date",
+    decisionFactDays: "Decided in",
+    decisionFactLock: "Lock",
+    decisionLockedTag: "Locked",
+    recordColStep: "Step",
+    recordColAnswer: "Answer",
+    recordColWho: "Who",
+    recordColWhen: "When",
+    overlapColLead: "Lead",
   },
 
   glossaryOverrides: {

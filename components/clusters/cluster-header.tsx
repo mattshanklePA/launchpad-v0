@@ -9,6 +9,7 @@ import type { Submission } from "@/lib/submissions"
 import type { RationalizationCluster, Rationalization } from "@/lib/rationalization"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
+import { HeaderBand } from "@/components/cockpit"
 import { spellCount, formatKeystoneDate } from "@/components/dashboard/command-center-data"
 
 /**
@@ -33,11 +34,14 @@ export function ClusterHeader({
   members,
   decision,
   tenant = getTenant(),
+  cockpit = false,
 }: {
   cluster: RationalizationCluster
   members: Submission[]
   decision: Rationalization | undefined
   tenant?: TenantConfig
+  /** NL-7 (#288): ES2 (`features.cockpitLook`) shows the same eyebrow, title and sentence in the K1 band. */
+  cockpit?: boolean
 }) {
   const count = cluster.memberIds.length
   const matchPct = Math.round(cluster.maxSimilarity * 100)
@@ -53,6 +57,17 @@ export function ClusterHeader({
   const countWord = spellCount(count).toLowerCase()
   const title = `${spellCount(count)} use cases, one problem`
   const explanation = `All ${countWord} ${shortDescription(members, tenant)}. Decide whether they are one effort with a lead, or ${countWord} efforts that stay separate. Neither choice touches the submissions themselves.`
+
+  if (cockpit) {
+    return (
+      <HeaderBand
+        eyebrow={eyebrow.toUpperCase()}
+        title={title}
+        subtitle={explanation}
+        background={tenant.theme.primary}
+      />
+    )
+  }
 
   return (
     <div className="space-y-2.5 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm">

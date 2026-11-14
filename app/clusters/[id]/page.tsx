@@ -16,6 +16,7 @@ import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { getSession } from "@/lib/auth"
 import { getDashboardScope } from "@/lib/dashboard/scope"
+import { getTenant } from "@/lib/tenant"
 import { clusterDuplicates, getRationalization } from "@/lib/rationalization"
 import { ClusterHeader } from "@/components/clusters/cluster-header"
 import { PlumbClusterRecommendation } from "@/components/clusters/plumb-cluster-recommendation"
@@ -69,6 +70,8 @@ function ClusterPageInner({ id }: { id: string }) {
   const leadTitle = byId.get(currentLeadId)?.formData.useCaseTitle?.trim()
   const breadcrumb = leadTitle ? `Duplicate cluster: ${leadTitle}` : "Duplicate cluster"
 
+  const cockpit = !!getTenant().features.cockpitLook
+
   const reload = async () => {
     await refetchSubmissions()
     setSubmissions(getSubmissions())
@@ -83,7 +86,7 @@ function ClusterPageInner({ id }: { id: string }) {
       breadcrumb={breadcrumb}
     >
       <div className="space-y-6">
-        <ClusterHeader cluster={cluster} members={members} decision={decision} />
+        <ClusterHeader cluster={cluster} members={members} decision={decision} cockpit={cockpit} />
 
         <div className="flex flex-col items-stretch gap-4 lg:flex-row">
           <PlumbClusterRecommendation members={members} />
@@ -95,6 +98,7 @@ function ClusterPageInner({ id }: { id: string }) {
           currentLeadId={currentLeadId}
           decided={!!decision}
           onSelectLead={setSelectedLeadId}
+          cockpit={cockpit}
         />
 
         <ClusterDecision cluster={cluster} members={members} decision={decision} leadId={currentLeadId} onDecided={reload} />

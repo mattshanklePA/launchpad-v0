@@ -88,11 +88,11 @@ import { ReviewProcessLoading } from "@/components/submissions/review-process-lo
 import { buildReviewSteps, defaultReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { SectionTitle } from "@/components/cockpit"
-import { KeyFacts, RecordBand, type KeyFact } from "@/components/submissions/record-cockpit"
+import { DecisionBlock, KeyFacts, RecordBand, type KeyFact } from "@/components/submissions/record-cockpit"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
-import { timeToDecision } from "@/lib/timeToDecision"
+import { formatDays, timeToDecision } from "@/lib/timeToDecision"
 import { formatKeystoneDate, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
@@ -588,6 +588,39 @@ export function SubmissionDetail({ id }: { id: string }) {
     </>
   ) : null
 
+  // NL-7 (#288): the decided record on ES2. Same values the ReviewerHeader and
+  // the locked line show today; a fact the record does not have is left out.
+  const copy = tenantCopy(tenant)
+  const daysToDecision = timeToDecision(sub)
+  const decidedFacts: KeyFact[] = decision
+    ? [
+        { label: copy.decisionFactDecision, value: decision === "approved" ? "Approved" : "Rejected", tag: true, tone: decision === "approved" ? "healthy" : "alert" },
+        ...(decidedByName
+          ? [{ label: copy.decisionFactBy, value: `${decidedByName}${decidedByUnitShort ? ` · ${decidedByUnitShort}` : ""}` }]
+          : []),
+        ...(decidedAt ? [{ label: copy.decisionFactDate, value: formatKeystoneDate(decidedAt) }] : []),
+        ...(decidedAt && daysToDecision !== undefined && tenant.features.timeToDecision
+          ? [{ label: copy.decisionFactDays, value: formatDays(daysToDecision) }]
+          : []),
+        locked
+          ? { label: copy.decisionFactLock, value: copy.decisionLockedTag, tag: true, tone: "neutral" as const, reason: reversibilityText }
+          : { label: copy.decisionFactLock, value: reversibilityText },
+      ]
+    : []
+  const decidedBand = cockpit && decided ? (
+    <>
+      <RecordBand
+        unitLabel={businessUnitLabel(getBusinessUnit(sub))}
+        slugTail={uniqueSlugTail(sub.id)}
+        status={status}
+        statusLabel={copy.decisionEyebrow}
+        title={fd.useCaseTitle || "Untitled idea"}
+        background={tenant.theme.primary}
+      />
+      <DecisionBlock title={copy.decisionBlockTitle} facts={decidedFacts} />
+    </>
+  ) : null
+
   const complianceItems: ComplianceGridItem[] = [
     {
       eyebrow: `${tiers.department} reporting mode`,
@@ -618,6 +651,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         <Link href="/home" className="text-sm text-uspto-blue-primary hover:underline"><ArrowLeft className="w-4 h-4 inline mr-1" />Back</Link>
 
         {cockpit && !decided ? cockpitBand : null}
+        {decidedBand}
 
         {isReviewer && !decided ? (
           awaitingPlumb ? (
@@ -677,7 +711,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           )
         ) : (
           <>
-        {cockpit && !decided ? null : <ReviewerHeader
+        {cockpit ? null : <ReviewerHeader
           slugTail={uniqueSlugTail(sub.id)}
           lifecycleStage={getLifecycleStage(sub)}
           title={fd.useCaseTitle || "Untitled idea"}
@@ -859,6 +893,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                   rationale: e.rationale || "",
                 }))}
                   resolvedRmf={resolvedRmf ?? undefined}
+                  cockpit={cockpit}
                   notConfirmedLabel={decision === "approved" ? tenantCopy(tenant).rmfNotConfirmedApproved : tenantCopy(tenant).rmfNotConfirmedRejected}
                 />
                 ) : (

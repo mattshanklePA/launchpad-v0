@@ -6,6 +6,8 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { RankedTable, SquareTag } from "@/components/cockpit"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { KindTag } from "@/components/ui/kind-tag"
 import { StatusPill } from "@/components/ui/status-pill"
 import type { Submission } from "@/lib/submissions"
@@ -118,6 +120,7 @@ export function ClusterMembers({
   decided,
   onSelectLead,
   currentSubmissionId,
+  cockpit = false,
 }: {
   members: Submission[]
   currentLeadId: string
@@ -125,6 +128,8 @@ export function ClusterMembers({
   onSelectLead: (id: string) => void
   /** The submission the reviewer is currently viewing (RD-6, issue #207 step 1) — tagged "This one" instead of "Oldest"/"Furthest along". Omit outside the reviewer-detail process; the dedicated cluster page doesn't set it. */
   currentSubmissionId?: string
+  /** NL-7 (#288): ES2 (`features.cockpitLook`) shows the same members as a K5 table. */
+  cockpit?: boolean
 }) {
   const oldestId = oldestMemberId(members)
   const furthestId = furthestAlongMemberId(members)
@@ -133,6 +138,18 @@ export function ClusterMembers({
     if (b.id === currentLeadId) return 1
     return 0
   })
+
+  if (cockpit) {
+    return (
+      <MembersTable
+        members={ordered}
+        currentLeadId={currentLeadId}
+        decided={decided}
+        onSelectLead={onSelectLead}
+        tagFor={(id) => derivedTag(id, oldestId, furthestId, currentSubmissionId)}
+      />
+    )
+  }
 
   return (
     <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -147,5 +164,81 @@ export function ClusterMembers({
         />
       ))}
     </div>
+  )
+}
+
+const LINK_CLASS =
+  "font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+
+/** Today's member cards, as the K5 table: same fields, same Make lead and Open controls. */
+function MembersTable({
+  members,
+  currentLeadId,
+  decided,
+  onSelectLead,
+  tagFor,
+}: {
+  members: Submission[]
+  currentLeadId: string
+  decided: boolean
+  onSelectLead: (id: string) => void
+  tagFor: (id: string) => string | null
+}) {
+  const copy = tenantCopy()
+  const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
+  return (
+    <RankedTable
+      groups={[{ id: "members", rows: members }]}
+      columns={[
+        { key: "office", header: "Program office", render: (m: Submission) => businessUnitLabel(getBusinessUnit(m)) },
+        {
+          key: "status",
+          header: copy.listColStatus,
+          render: (m: Submission) => <SquareTag tone={submissionStatusKeystone(getStatus(m))}>{STATUS_LABEL[getStatus(m)]}</SquareTag>,
+        },
+        {
+          key: "lead",
+          header: copy.overlapColLead,
+          render: (m: Submission) =>
+            m.id === currentLeadId ? (
+              <SquareTag tone="info">Lead if consolidated</SquareTag>
+            ) : decided ? null : (
+              <button
+                type="button"
+                className={LINK_CLASS}
+                onClick={(e) => {
+                  stop(e)
+                  onSelectLead(m.id)
+                }}
+                onKeyDown={stop}
+              >
+                Make lead
+              </button>
+            ),
+        },
+        {
+          key: "open",
+          header: copy.listColLink,
+          width: 80,
+          render: (m: Submission) => (
+            <Link href={`/submissions/${m.id}`} className={LINK_CLASS} onClick={stop} onKeyDown={stop}>
+              Open
+            </Link>
+          ),
+        },
+      ]}
+      getRowId={(m) => m.id}
+      getRank={(m) => String(members.indexOf(m) + 1)}
+      getName={(m) => m.formData.useCaseTitle || "Untitled idea"}
+      getReference={(m) => tagFor(m.id) ?? undefined}
+      getDetails={(m) => [
+        { label: "Submitted by", value: `${String(m.formData.submitterName || "").trim() || "Unknown submitter"} · ${formatKeystoneDate(m.submittedAt)}` },
+        { label: "Scope", value: scopeLine(m) },
+      ]}
+      rankHeader={copy.listColNo}
+      nameHeader={copy.listColIdea}
+      expandAllLabel={copy.homeExpandAll}
+      collapseAllLabel={copy.homeCollapseAll}
+    />
   )
 }
