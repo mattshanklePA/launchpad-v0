@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { plumbLine } from "./plumbLine"
+import { uspto } from "@/lib/tenant/uspto"
+import { es2 } from "@/lib/tenant/es2"
 
 describe("plumbLine", () => {
   it("leads with the cluster when a critical item is present, regardless of warning count", () => {
@@ -17,6 +19,10 @@ describe("plumbLine", () => {
   })
 
   it("reads as an all-clear when nothing needs a reviewer", () => {
-    expect(plumbLine(false, 0)).toBe("Nothing off-plumb. Every use case is inside its gates.")
+    expect(plumbLine(false, 0, uspto)).toBe("Nothing off-plumb. Every use case is inside its gates.")
+  })
+
+  it("uses ES2's plain wording for the all-clear", () => {
+    expect(plumbLine(false, 0, es2)).toBe("Nothing needs attention. Every use case is inside its gates.")
   })
 })
