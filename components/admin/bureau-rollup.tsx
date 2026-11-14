@@ -18,6 +18,7 @@ import { officesForBureau } from "@/lib/officeRollup"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { signoffProgress } from "@/lib/bureauSignoff"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { Badge } from "@/components/ui/badge"
 import { OfficeRollup } from "@/components/admin/office-rollup"
 import { SectionTitle } from "@/components/cockpit/section-title"
@@ -106,6 +107,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
     })
 
   if (getTenant().features.cockpitLook) {
+    const rollupCopy = tenantCopy(getTenant())
     const zeroOr = (n: number, cell: ReactNode = n) => (n === 0 ? cockpitZero : cell)
     return (
       <section aria-label={`${unitLabel} roll-up`} className="flex flex-col gap-4">
@@ -113,7 +115,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
           title={`${unitLabel} roll-up`}
           context={`${submissions.length} use cases across ${units.length} ${units.length === 1 ? unitLower : unitPluralLower}${
             grandConsolidated > 0
-              ? ` · consolidates to ${reportableEntries} ${inventoryShort} reportable ${reportableEntries === 1 ? "entry" : "entries"}`
+              ? ` · consolidates to ${reportableEntries} ${reportableEntries === 1 ? rollupCopy.inventoryEntryPhrase : rollupCopy.inventoryEntriesPhrase}`
               : ""
           }`}
         />
@@ -131,7 +133,7 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
                 <th className={TH}>High-impact</th>
                 <th className={TH}>{inventoryShort} review needed</th>
                 <th className={TH}>Possible duplicates</th>
-                <th className={TH}>Consolidated ({inventoryShort})</th>
+                <th className={TH}>{rollupCopy.consolidatedColumnLabel}</th>
                 {showSignoff && <th className={TH}>Signed off</th>}
               </tr>
             </thead>

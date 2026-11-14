@@ -89,6 +89,19 @@ export type TenantCopy = {
   recordColWhen: string
   // Submit an idea (NL-8, #289). ES2 only.
   submitEyebrow: string                 // band eyebrow over the step question; {step} and {count} are filled in by the page
+  // NL-13 (#314): plain words, read by the ES2 (cockpitLook) screens and the shared builders.
+  duplicatesLabel: string               // duplicates KPI and drilldown title; empty keeps "Cross-{unit} duplicate clusters"
+  duplicatesActionLabel: string         // Action Center button on the duplicates row
+  consolidatedColumnLabel: string       // roll-up column; "{inventoryShort}" = short inventory label
+  inventoryEntriesPhrase: string        // roll-up context, after a count: plural
+  inventoryEntryPhrase: string          // same, after a count of one
+  inventoryCheckEyebrow: string         // record compliance label, "{inventoryShort}" = short inventory label
+  rmfAtRiskRationale: string            // RMF profile line when a step has a gap
+  rmfPartialRationale: string           // RMF profile line when a step is partly covered
+  rmfOnTrackRationale: string           // RMF profile line when every step is covered
+  similarWordingLabel: string           // record compliance value, "{count}" = matches
+  similarWordingHint: string            // hover text for it
+  noOtherMessages: string               // decided record, conversation with no other messages
   submitStepLabels: string              // the six step names on the one step line, "|" between them
   submitSentEyebrow: string             // band eyebrow on the page shown after sending
   overlapColLead: string                // overlap group table: heading over the lead / "Make lead" cell

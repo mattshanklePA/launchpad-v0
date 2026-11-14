@@ -15,7 +15,9 @@ import {
 import {
   getStatus,
   getComments,
+  type SubmissionComment,
   getBusinessUnit,
+  getOffice,
   getAssigneeName,
   businessUnitLabel,
   visibleSubmissions,
@@ -93,7 +95,7 @@ import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
 import { formatDays, timeToDecision } from "@/lib/timeToDecision"
-import { formatKeystoneDate, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
+import { formatKeystoneDate, recordPlaceShortLabel, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
@@ -158,13 +160,17 @@ function RiskRow({ ok, label }: { ok: boolean; label: string }) {
  * reason), so that middle fallback the issue describes never has a source to
  * read from today.
  */
-function decisionReasonText(sub: Submission, decidedAt: string | undefined): string {
+function decisionReasonComment(sub: Submission, decidedAt: string | undefined): SubmissionComment | undefined {
   const reviewerComments = getComments(sub).filter((c) => {
     if (c.authorRole !== "reviewer" && c.authorRole !== "admin") return false
     if (!decidedAt) return true
     return new Date(c.createdAt).getTime() >= new Date(decidedAt).getTime()
   })
-  return reviewerComments[reviewerComments.length - 1]?.body || "No reason was recorded."
+  return reviewerComments[reviewerComments.length - 1]
+}
+
+function decisionReasonText(sub: Submission, decidedAt: string | undefined): string {
+  return decisionReasonComment(sub, decidedAt)?.body || "No reason was recorded."
 }
 
 export function SubmissionDetail({ id }: { id: string }) {
@@ -551,6 +557,11 @@ export function SubmissionDetail({ id }: { id: string }) {
   const decidedByName = signedOff?.signedOffByName
   const decidedByUnitShort = signedOff ? shortBusinessUnitLabel(signedOff.bureau) : undefined
   const reasonText = decided ? decisionReasonText(sub, decidedAt) : ""
+  // NL-13 (#314), ES2: on a decided record the reason shows once, in the decision
+  // card, so the conversation lists the other messages only.
+  const reasonComment = tenant.features.cockpitLook && decided ? decisionReasonComment(sub, decidedAt) : undefined
+  const conversationComments = reasonComment ? comments.filter((c) => c.id !== reasonComment.id) : comments
+  const noMessagesText = reasonComment ? tenantCopy(tenant).noOtherMessages : "No messages yet."
   const locked = isDecisionLocked({ ...(fd as Record<string, unknown>), reviewStatus: status }, tenantHasBureauTier())
   const reversibilityText = signedOff
     ? `Signed off ${formatKeystoneDate(signedOff.signedOffAt)}; contact the office to reopen.`
@@ -582,8 +593,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const cockpitBand = cockpit ? (
     <>
       <RecordBandContent
-        unitLabel={businessUnitLabel(getBusinessUnit(sub))}
-        slugTail={uniqueSlugTail(sub.id)}
+        placeLabel={recordPlaceShortLabel(getBusinessUnit(sub), getOffice(sub))}
         status={status}
         title={fd.useCaseTitle || "Untitled idea"}
       />
@@ -613,8 +623,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const decidedBand = cockpit && decided ? (
     <>
       <RecordBandContent
-        unitLabel={businessUnitLabel(getBusinessUnit(sub))}
-        slugTail={uniqueSlugTail(sub.id)}
+        placeLabel={recordPlaceShortLabel(getBusinessUnit(sub), getOffice(sub))}
         status={status}
         statusLabel={copy.decisionEyebrow}
         title={fd.useCaseTitle || "Untitled idea"}
@@ -631,7 +640,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         : `Consolidated${consolidation.categoryLabel ? ` · ${consolidation.categoryLabel}` : ""}`,
     },
     {
-      eyebrow: `${tenant.inventoryShortLabel} reportability`,
+      eyebrow: tenantCopy(tenant).inventoryCheckEyebrow,
       value: reportabilityLabels(tenant)[reportability.status],
     },
     ...(resolvedRmf
@@ -640,11 +649,18 @@ export function SubmissionDetail({ id }: { id: string }) {
           value: resolvedRmf.review ? rmfStatusLabel : `${RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]} · proposed`,
         }]
       : []),
-    {
-      eyebrow: "Similar use cases",
-      value: similarMatches.length > 0 ? `${similarMatches.length} similar on record` : "None on record",
-      onClick: similarMatches.length > 0 ? () => setComplianceOpen(true) : undefined,
-    },
+    // NL-13 (#314), ES2: "N with similar wording" with a hover line, and no line
+    // at all when the record is not in a duplicate cluster.
+    ...(cockpit && !cluster
+      ? []
+      : [{
+          eyebrow: "Similar use cases",
+          value: similarMatches.length > 0
+            ? tenantCopy(tenant).similarWordingLabel.replace("{count}", String(similarMatches.length))
+            : "None on record",
+          onClick: similarMatches.length > 0 ? () => setComplianceOpen(true) : undefined,
+          hint: cockpit ? tenantCopy(tenant).similarWordingHint : undefined,
+        }]),
   ]
 
   return (
@@ -770,7 +786,7 @@ export function SubmissionDetail({ id }: { id: string }) {
             <TabsTrigger value="decision" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>{decided ? "The decision" : "Review"}</TabsTrigger>
             <TabsTrigger value="governance" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>Governance record</TabsTrigger>
             <TabsTrigger value="conversation" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>
-              Conversation <span className="ml-1 font-mono text-[11px] text-muted-foreground">({comments.length})</span>
+              Conversation <span className="ml-1 font-mono text-[11px] text-muted-foreground">({conversationComments.length})</span>
             </TabsTrigger>
           </TabsList>
 
@@ -835,8 +851,8 @@ export function SubmissionDetail({ id }: { id: string }) {
 
                 <div className="rounded-lg border bg-card p-4 space-y-3">
                   {cockpit ? <SectionTitle title="Conversation with submitter" /> : <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>}
-                  {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
-                  {comments.map((c) => (
+                  {conversationComments.length === 0 && <p className="text-sm text-muted-foreground">{noMessagesText}</p>}
+                  {conversationComments.map((c) => (
                     <div key={c.id} className="flex gap-2">
                       <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[13px] font-medium flex-shrink-0">
                         {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}
@@ -1114,7 +1130,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               <CollapsibleContent className="space-y-4 border-t p-4">
                 <div className="space-y-2">
                   <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                    <GlossaryTerm term="ombReportability">{tenant.inventoryShortLabel} reportability</GlossaryTerm>
+                    <GlossaryTerm term="ombReportability">{tenantCopy(tenant).inventoryCheckEyebrow}</GlossaryTerm>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", REPORTABILITY_CLASSES[reportability.status])}>
@@ -1262,8 +1278,8 @@ export function SubmissionDetail({ id }: { id: string }) {
           <TabsContent value="conversation" className="space-y-[18px] pt-[18px]">
             <div className="rounded-lg border bg-card p-4 space-y-3">
               <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>
-              {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
-              {comments.map((c) => (
+              {conversationComments.length === 0 && <p className="text-sm text-muted-foreground">{noMessagesText}</p>}
+              {conversationComments.map((c) => (
                 <div key={c.id} className="flex gap-2">
                   <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[13px] font-medium flex-shrink-0">
                     {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}

@@ -11,7 +11,7 @@ import type { TenantConfig } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
 import type { DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { Submission } from "@/lib/submissions"
-import { getStatus, STATUS_LABEL, businessUnitLabel, type SubmissionStatus } from "@/lib/reviewWorkflow"
+import { getStatus, STATUS_LABEL, businessUnitLabel, officeLabel, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import { clusterHref } from "@/lib/rationalization"
 import { DISPLAY_TIME_ZONE, formatKeystoneDate } from "@/lib/dateFormat"
 import { kpiDrilldownEntryHref } from "./kpi-card-data"
@@ -79,6 +79,19 @@ export function uniqueSlugTail(id: string): string {
   const parts = id.split("-")
   const tail = parts.length > 2 ? parts.slice(2).join("-") : id
   return tail.toUpperCase()
+}
+
+/**
+ * NL-13 (#314): the record band's eyebrow place name. The program's short name
+ * ("ACWS") when the record sits in a program; for an office with no programs,
+ * the office short name ("HR-FM"). Never the record's internal ID.
+ */
+export function recordPlaceShortLabel(unit: string, office: string): string {
+  if (office) {
+    const label = officeLabel(unit, office)
+    return splitLabelCode(label).code ?? label
+  }
+  return shortBusinessUnitLabel(unit)
 }
 
 export type HeroCluster = {

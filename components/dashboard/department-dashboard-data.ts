@@ -125,7 +125,7 @@ export function buildKpiCards(
     })
     cards.push({
       id: "duplicates",
-      label: `Cross-${tiers.unit.toLowerCase()} duplicate clusters`,
+      label: tenantCopy(tenant).duplicatesLabel || `Cross-${tiers.unit.toLowerCase()} duplicate clusters`,
       value: crossBureauDuplicates.clusterCount,
       delta:
         crossBureauDuplicates.clusterCount > 0
@@ -252,10 +252,10 @@ export function buildActionItems(
       id: "duplicates",
       title: `${n} cross-${tiers.unit.toLowerCase()} duplicate cluster${n === 1 ? "" : "s"} ${tenantCopy(tenant).pendingDecisionPhrase}`,
       severity: "critical",
-      actionLabel: "Rationalize",
+      actionLabel: tenantCopy(tenant).duplicatesActionLabel,
       // The same clusters the Duplicates KPI card opens — each row's "Open
       // cluster" link is the path the rationalization walkthrough already uses.
-      drilldown: actionDrilldown(`Cross-${tiers.unit.toLowerCase()} duplicate clusters`, drilldown?.duplicates),
+      drilldown: actionDrilldown(tenantCopy(tenant).duplicatesLabel || `Cross-${tiers.unit.toLowerCase()} duplicate clusters`, drilldown?.duplicates),
     })
   }
 
@@ -327,7 +327,7 @@ export function buildActionItems(
       // F3-6 item 5: the list is the same rule as the count in the title —
       // `determineReportability(...).status === "review"` — so tile and drawer
       // always agree. (It used to open the "reportable" list, a different set.)
-      drilldown: actionDrilldown(`Needs ${tenant.inventoryShortLabel} reportability review`, drilldown?.["omb-review"]),
+      drilldown: actionDrilldown(tenantCopy(tenant).inventoryCheckLabel || `Needs ${tenant.inventoryShortLabel} reportability review`, drilldown?.["omb-review"]),
     })
   }
 
