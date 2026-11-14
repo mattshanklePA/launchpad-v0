@@ -54,9 +54,11 @@ function mk(partial: Partial<FormData>): FormData {
 const hoursAgo = (h: number) => new Date(Date.now() - 1000 * 60 * 60 * h).toISOString()
 
 export const es2SeedSubmissions: Submission[] = [
-  // 1) AT&R / ACWS — the clean win, and the seed's high-impact + deployed
-  // example, so all nine M-25-21 minimum-practice fields render and RMF
-  // Measure/Manage become applicable rather than not_yet_applicable.
+  // 1) AT&R / ACWS — the clean win, and the seed's high-impact example in
+  // pilot. It is not "deployed": an approved idea is a Decision Center funding
+  // candidate (lib/decisionCenter.ts), and a deployed one waiting on a funding
+  // decision contradicts itself on screen (F4-2, #303). Pilot still makes RMF
+  // Measure/Manage applicable.
   {
     id: "es2-acws-clause-recommendation",
     submittedAt: hoursAgo(96),
@@ -129,7 +131,7 @@ export const es2SeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
-      stageOfDevelopment: "deployed",
+      stageOfDevelopment: "pilot",
       highImpact: "high_impact",
       highImpactFactors: ["resource_allocation"],
       highImpactJustification:
@@ -274,7 +276,7 @@ export const es2SeedSubmissions: Submission[] = [
       successMetrics: "Evaluation days per acquisition; rating variance between evaluators.",
       keyMetrics: ["time_saved", "quality_improvement"],
       timelineForResults: "6_12",
-      metricsSummary: "Measured on evaluation days and rating variance — neither addresses the governance objection.",
+      metricsSummary: "Measured on evaluation days and rating variance. Neither addresses the governance objection.",
       routeTo: ["governance"],
       reviewerNotes: "Decisional AI on award outcomes with human review answered 'no'. Blocked until the board evaluates independently and the tool is advisory.",
       readinessScore: "needs_work",
@@ -375,6 +377,15 @@ export const es2SeedSubmissions: Submission[] = [
         signedOffByEmail: "alan.brooks@es2.demo",
         signedOffAt: hoursAgo(78),
       },
+      comments: [
+        {
+          id: "c-acws-migration-1",
+          authorName: "Alan Brooks",
+          authorRole: "reviewer",
+          body: "Approved for continued pilot. The ranking only orders the review queue, an analyst confirms every correction, and no decision about a person depends on it.",
+          createdAt: hoursAgo(78),
+        },
+      ],
       useCaseTitle: "Migration Data-Quality Triage Across Transferred Contract Files",
       useCaseDescription:
         "Ranks transferred contract files by how likely their data is wrong, so the cleanup team works the worst records first instead of sampling at random. Advisory: a person confirms every correction.",
@@ -468,6 +479,15 @@ export const es2SeedSubmissions: Submission[] = [
         signedOffByEmail: "alan.brooks@es2.demo",
         signedOffAt: hoursAgo(64),
       },
+      comments: [
+        {
+          id: "c-atis-course-refresh-1",
+          authorName: "Alan Brooks",
+          authorRole: "reviewer",
+          body: "Approved for continued pilot. The tool only flags course content that may be out of date, an instructor decides every change, and no decision about a student depends on it.",
+          createdAt: hoursAgo(64),
+        },
+      ],
       useCaseTitle: "Course Content Refresh When Doctrine Changes",
       useCaseDescription:
         "Watches published doctrine for changes and flags the course lessons that cite the changed passage, so a training developer knows what to revise instead of re-reading the catalog.",
@@ -1082,7 +1102,23 @@ export const es2SeedSubmissions: Submission[] = [
       submitterEmail: "renee.calder@es2.demo",
       submitterRole: "it_staff",
       submitterOffice: "hrfm",
-      reviewStatus: "submitted",
+      reviewStatus: "approved",
+      bureauSignoff: {
+        bureau: "hrfm",
+        decision: "approved",
+        signedOffByName: "Jordan Pierce",
+        signedOffByEmail: "jordan.pierce@es2.demo",
+        signedOffAt: hoursAgo(10),
+      },
+      comments: [
+        {
+          id: "c-hrfm-transcription-1",
+          authorName: "Jordan Pierce",
+          authorRole: "reviewer",
+          body: "Approved. This turns on a commercial capability already in the collaboration suite, the chair edits every action-item list before it circulates, and sessions that touch personnel matters follow the existing handling rule.",
+          createdAt: hoursAgo(10),
+        },
+      ],
       useCaseTitle: "Meeting Transcription And Action Items",
       useCaseDescription:
         "Commercial meeting transcription that produces a transcript and a draft action-item list for staff sessions, which the chair edits before it is circulated.",
@@ -1117,8 +1153,20 @@ export const es2SeedSubmissions: Submission[] = [
       implementationComplexity: "low",
       resourcesNeeded: ["infrastructure"],
       dependencies: "Collaboration suite licensing; a handling rule for sessions that touch personnel matters.",
+      involvesSensitiveData: "yes",
+      securityClassification: "controlled",
+      impactLevel: "cui",
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      stageOfDevelopment: "pre_deployment",
+      highImpact: "not_high_impact",
+      hasATO: "yes",
+      atoSystemName: "Collaboration Suite",
+      systemSource: "vendor",
       routeTo: ["governance"],
-      readinessScore: "needs_work",
+      reviewerNotes: "Advisory, chair-reviewed, no decisions about people. Approved to proceed.",
+      readinessScore: "ready",
     } as Partial<FormData>),
   },
 
@@ -1182,6 +1230,7 @@ export const es2SeedSubmissions: Submission[] = [
       submitterEmail: "victor.hale@es2.demo",
       submitterRole: "product_owner",
       submitterOffice: "atr",
+      submitterSubOffice: "digitalmarket",
       reviewStatus: "draft",
       useCaseTitle: "Schedule Risk Prediction From The Integrated Master Schedule",
       useCaseDescription:
