@@ -73,6 +73,32 @@ function riskAnswers(risk: Risk): Partial<FormData> {
   return { involvesSensitiveData: "no", aiDecisionalImpact: "no", aiModelSourcing: "american_built", aiHumanReview: "yes" }
 }
 
+// F4-5 (#310): the inventory answers an approved idea needs so its decider can
+// confirm every applicable governance field (none is left blank on the record).
+type Inventory = { topicArea: string; aiClassification: string; hasPii: "yes" | "no"; atoSystemName: string; operationalDate: string; trainingData: string; customCode: "yes" | "no" }
+const INVENTORY: Record<string, Inventory> = {
+  "es2-hrfm-personnel-action-completeness": {
+    topicArea: "human_resources", aiClassification: "nlp", hasPii: "yes", atoSystemName: "Personnel Records System",
+    operationalDate: "2026-09-15", trainingData: "Closed personnel actions with the missing-item notes specialists recorded; personnel data stays inside the accredited system.", customCode: "yes",
+  },
+  "es2-logfin-unliquidated-obligations": {
+    topicArea: "procurement_financial_management", aiClassification: "classical_predictive_ml", hasPii: "no", atoSystemName: "Logistics Finance Ledger",
+    operationalDate: "2026-09-01", trainingData: "Past unliquidated obligation reviews and their outcomes, from the finance ledger.", customCode: "yes",
+  },
+  "es2-logfin-invoice-mismatch-notes": {
+    topicArea: "procurement_financial_management", aiClassification: "nlp", hasPii: "no", atoSystemName: "Logistics Finance Ledger",
+    operationalDate: "2026-09-08", trainingData: "Resolved invoice mismatches with the technician's resolution notes.", customCode: "yes",
+  },
+  "es2-bts-license-right-sizing": {
+    topicArea: "information_technology", aiClassification: "classical_predictive_ml", hasPii: "no", atoSystemName: "IT Asset Management System",
+    operationalDate: "2026-10-01", trainingData: "License assignment and sign-in records; no model training, rules over usage counts.", customCode: "yes",
+  },
+  "es2-cerp-material-master-cleanup": {
+    topicArea: "procurement_financial_management", aiClassification: "classical_predictive_ml", hasPii: "no", atoSystemName: "ERP Material Master",
+    operationalDate: "2026-10-15", trainingData: "Material master descriptions, units and part numbers across ERP instances.", customCode: "yes",
+  },
+}
+
 function build(i: Idea): Submission {
   const base: Record<string, unknown> = {
     ...initialFormData,
@@ -122,6 +148,20 @@ function build(i: Idea): Submission {
 
   if (i.status === "approved" || i.status === "rejected") {
     const d = i.decision!
+    const inv = i.status === "approved" ? INVENTORY[i.id] : undefined
+    if (inv) {
+      Object.assign(base, {
+        disseminatesToPublic: "no",
+        topicArea: inv.topicArea,
+        aiClassification: inv.aiClassification,
+        hasPii: inv.hasPii,
+        demographicFeatures: ["none"],
+        atoSystemName: inv.atoSystemName,
+        operationalDate: inv.operationalDate,
+        trainingDataDescription: inv.trainingData,
+        customCode: inv.customCode,
+      })
+    }
     Object.assign(base, {
       stageOfDevelopment: i.status === "approved" ? "pilot" : "pre_deployment",
       highImpact: i.risk === "high" ? "high_impact" : "not_high_impact",

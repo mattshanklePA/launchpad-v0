@@ -15,6 +15,8 @@ import { decisionCenterCandidates } from "@/lib/decisionCenter"
 import { computeRiskProfile } from "@/lib/riskProfile"
 import { getDecidedAt, medianTimeToDecision } from "@/lib/timeToDecision"
 import { getBureauSignoff } from "@/lib/bureauSignoff"
+import { applicableGovernanceFields, getGovernanceCaptureReview, governanceFieldCounts } from "@/lib/governanceCapture"
+import { getRmfProfileReview, resolveRmfProfile } from "@/lib/rmfProfileReview"
 
 // Golden-state test for the ES2 one-click demo reset (app/api/seed/route.ts and
 // the admin "Reset Demo Data" tool). The seed is a demo script, not sample
@@ -673,6 +675,85 @@ describe("CPE-wide ES2 demo data (F4-3)", () => {
       expect(Math.abs(rows.length - ideas), `${unit} ideas`).toBeLessThanOrEqual(2)
       expect(Math.abs(rows.filter((s) => high.includes(s)).length - hi), `${unit} high`).toBeLessThanOrEqual(1)
       expect(Math.abs(rows.filter((s) => decided.includes(s)).length - dec), `${unit} decided`).toBeLessThanOrEqual(1)
+    }
+  })
+})
+
+// ─── F4-5 (#310): fixes from the CPO preview walk ─────────────────────────
+describe("F4-5: approved records read as pilots, confirmed by the decider", () => {
+  const approved = S.filter((s) => s.formData.reviewStatus === "approved")
+  const rejected = S.filter((s) => s.formData.reviewStatus === "rejected")
+
+  // Every string the record page can show, comments included.
+  function texts(v: unknown): string[] {
+    if (typeof v === "string") return [v]
+    if (Array.isArray(v)) return v.flatMap(texts)
+    if (v && typeof v === "object") return Object.values(v).flatMap(texts)
+    return []
+  }
+
+  it("1. no approved record's text says deployed, or accredited without an ATO", () => {
+    expect(approved.length).toBeGreaterThan(0)
+    for (const s of approved) {
+      const fd = s.formData as unknown as Record<string, unknown>
+      expect(fd.stageOfDevelopment, s.id).not.toBe("deployed")
+      const all = texts(fd)
+      expect(all.filter((t) => /\bdeployed\b/i.test(t)), `${s.id} says "deployed"`).toEqual([])
+      if (fd.hasATO !== "yes") {
+        expect(all.filter((t) => /\baccredited\b/i.test(t)), `${s.id} says "accredited" with no ATO`).toEqual([])
+      }
+    }
+  })
+
+  it("1b. the clause recommender says pilot, and no accredited pilot claim beyond its ATO", () => {
+    const fd = byId("es2-acws-clause-recommendation").formData
+    expect(fd.hasATO).toBe("yes")
+    expect(`${fd.feasibilitySummary} ${fd.executiveSummary} ${fd.readinessSummary}`).toMatch(/pilot/i)
+  })
+
+  it("2. every approved record carries the decider's confirmations, at or before the decision", () => {
+    for (const s of approved) {
+      const signoff = getBureauSignoff(s)!
+      const decidedAt = new Date(getDecidedAt(s)!).getTime()
+      const resolved = resolveRmfProfile(s, es2)
+
+      const rmf = getRmfProfileReview(s)
+      expect(rmf, `${s.id} rmf review`).toBeDefined()
+      expect(rmf!.decision, s.id).toBe("confirmed")
+      expect(resolved.isProposal, `${s.id} still a proposal`).toBe(false)
+      expect(rmf!.byName, s.id).toBe(signoff.signedOffByName)
+      expect(rmf!.byEmail, s.id).toBe(signoff.signedOffByEmail)
+      expect(new Date(rmf!.at).getTime(), `${s.id} rmf at`).toBeLessThanOrEqual(decidedAt)
+      expect(new Date(rmf!.at).getTime(), `${s.id} rmf after submit`).toBeGreaterThanOrEqual(new Date(s.submittedAt).getTime())
+
+      const gov = getGovernanceCaptureReview(s)
+      expect(gov, `${s.id} governance review`).toBeDefined()
+      expect(gov!.byName, s.id).toBe(signoff.signedOffByName)
+      expect(gov!.byEmail, s.id).toBe(signoff.signedOffByEmail)
+      expect(new Date(gov!.at).getTime(), `${s.id} governance at`).toBeLessThanOrEqual(decidedAt)
+      expect(new Date(gov!.at).getTime(), `${s.id} governance after submit`).toBeGreaterThanOrEqual(new Date(s.submittedAt).getTime())
+
+      const applicable = applicableGovernanceFields(s.formData)
+      const reviewed = new Set(gov!.entries.map((e) => e.field))
+      expect(applicable.filter((f) => !reviewed.has(f as string)), `${s.id} unconfirmed fields`).toEqual([])
+      expect(reviewed.has("highImpact"), `${s.id} high-impact`).toBe(true)
+      for (const e of gov!.entries) {
+        expect(e.decision, `${s.id} ${e.field}`).toBe("confirmed")
+        expect(e.finalValue, `${s.id} ${e.field}`).toEqual((s.formData as unknown as Record<string, unknown>)[e.field])
+      }
+
+      const counts = governanceFieldCounts(applicable, null, gov)
+      expect(counts.confirmedByReviewer, s.id).toBe(counts.applicableCount)
+    }
+  })
+
+  it("3. rejected records still show who decided and when", () => {
+    expect(rejected.length).toBeGreaterThan(0)
+    for (const s of rejected) {
+      const signoff = getBureauSignoff(s)
+      expect(signoff?.signedOffByName, s.id).toBeTruthy()
+      expect(Number.isNaN(new Date(signoff?.signedOffAt || "").getTime()), s.id).toBe(false)
+      expect(getDecidedAt(s), s.id).toBe(signoff!.signedOffAt)
     }
   })
 })
