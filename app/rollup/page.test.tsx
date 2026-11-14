@@ -74,10 +74,14 @@ function render(ui: ReactElement) {
 }
 
 describe("/rollup", () => {
-  it("redirects a non-admin (submitter) session the same way /decisions redirects", () => {
+  // Was "/login?next=%2Frollup". The login page sends a signed-in person on to
+  // `next`, so that bounced a submitter between the two pages forever and
+  // crashed the browser (ES2 preview, 14 Nov). Signed in without the role now
+  // goes home.
+  it("sends a signed-in submitter home, the same way /decisions does", () => {
     mockSession = { userId: "u1", email: "sub@x.gov", name: "Sub", role: "submitter", loggedInAt: new Date().toISOString() }
     render(<RollupPage />)
-    expect(replaced).toBe("/login?next=%2Frollup")
+    expect(replaced).toBe("/home")
   })
 
   it("redirects a signed-out visitor to login", () => {
