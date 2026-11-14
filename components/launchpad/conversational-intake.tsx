@@ -302,7 +302,7 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
           />
           <p className="m-0 max-w-2xl pt-4 text-[14px] text-[var(--ks-ink-700)]">
             Answer a few quick questions, mostly by tapping the suggested answers. {tenant.assistantName} keeps a
-            running record of what it's captured on the right — edit anything there at any time.
+            running record of what it's captured on the right. Edit anything there at any time.
           </p>
         </div>
       ) : (

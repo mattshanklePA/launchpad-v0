@@ -27,21 +27,20 @@ export function StatusTag({ status }: { status: SubmissionStatus }) {
  * idea title go in the page band (no second band, no cut-off). Renders nothing itself.
  */
 export function RecordBandContent({
-  unitLabel,
-  slugTail,
+  placeLabel,
   status,
   title,
   statusLabel,
 }: {
-  unitLabel: string
-  slugTail: string
+  /** NL-13: program short name, or the office short name when it has no programs. Never a record ID. */
+  placeLabel: string
   status: SubmissionStatus
   title: string
   /** Replaces the status word in the eyebrow (NL-7: "Decided" once the record is final). */
   statusLabel?: string
 }) {
   useCockpitBand({
-    eyebrow: `${unitLabel} · ${slugTail} · ${statusLabel ?? STATUS_LABEL[status]}`.toUpperCase(),
+    eyebrow: `${placeLabel} · ${statusLabel ?? STATUS_LABEL[status]}`.toUpperCase(),
     title,
   })
   return null

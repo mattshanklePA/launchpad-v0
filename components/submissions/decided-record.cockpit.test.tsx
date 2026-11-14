@@ -63,20 +63,20 @@ describe("decided record, review record table", () => {
 })
 
 describe("decided record, band and decision block", () => {
-  it("band eyebrow reads office · record ID · DECIDED", () => {
+  it("band eyebrow reads program · DECIDED, with no record ID (NL-13)", () => {
     const long = "A very long idea title that would once have been cut off with dots and now wraps in the band instead"
     const el = render(
       <BandHost>
-        <RecordBandContent unitLabel="Census" slugTail="ab12cd34" status="approved" statusLabel="Decided" title={long} />
+        <RecordBandContent placeLabel="Census" status="approved" statusLabel="Decided" title={long} />
       </BandHost>,
     )
     expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
-    expect(el.querySelector('[data-band="eyebrow"]')?.textContent).toBe("CENSUS · AB12CD34 · DECIDED")
+    expect(el.querySelector('[data-band="eyebrow"]')?.textContent).toBe("CENSUS · DECIDED")
     expect(el.querySelector("h1")?.textContent).toBe(long)
   })
 
   it("draws no band of its own outside the ES2 shell", () => {
-    const el = render(<RecordBandContent unitLabel="Census" slugTail="ab12cd34" status="approved" title="Idea" />)
+    const el = render(<RecordBandContent placeLabel="Census" status="approved" title="Idea" />)
     expect(el.querySelector('[data-cockpit="header-band"]')).toBeNull()
     expect(el.textContent).toBe("")
   })

@@ -57,7 +57,7 @@ Write in plain words. Never write "NLP-based", "scaffold", "off-plumb", "rationa
 
 The Department of War's AI Strategy pushes for speed: name priority projects quickly, field capability fast, and let small accountable teams move rather than waiting on process. Speed is the goal. It does not remove the obligation to keep a defensible record of what was fielded, what data it used, and who stayed accountable for the decision.
 
-Every AI use here must satisfy the DoW AI Ethical Principles:
+Every AI use here must line up with the DoW AI Ethical Principles:
 - Responsible: appropriate human judgment and care; people remain accountable
 - Equitable: deliberate steps to minimize unintended bias
 - Traceable: transparent, auditable methods, data sources, and design; for generative AI that means citations and hallucination controls
@@ -66,7 +66,7 @@ Every AI use here must satisfy the DoW AI Ethical Principles:
 
 Data is managed to the VAULTIS standard: visible, accessible, understandable, linked, trustworthy, interoperable, secure.
 
-A serious idea here does six things: (1) names the program and the mission outcome it improves, and the mechanism; (2) states whether AI-ready, accessible data exists today or has to be built; (3) states its data classification and required Impact Level (unclassified to IL2, CUI to IL4 or IL5, Secret to IL6); (4) states the human-judgment posture — who decides, where a person reviews, how it can be turned off; (5) states its maturity (TRL 1-9) and a plan to mature or sustain it; (6) says plainly what it does not address.
+A serious idea here does six things: (1) names the program and the mission outcome it improves, and the mechanism; (2) states whether AI-ready, accessible data exists today or has to be built; (3) states its data classification and required Impact Level (unclassified to IL2, CUI to IL4 or IL5, Secret to IL6); (4) states the human-judgment posture: who decides, where a person reviews, how it can be turned off; (5) states its maturity (TRL 1-9) and a plan to mature or sustain it; (6) says plainly what it does not address.
 
 Push back on these patterns. Vague modernization or efficiency with no named outcome. No data-readiness plan, which oversight bodies repeatedly identify as the most common reason government AI efforts fail. No human oversight. Automated decisions about people, awards, or careers with no review. No test-and-evaluation story. Value claims with no number behind them, or claims that ignore what the thing costs to sustain.
 
@@ -312,7 +312,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     pendingDecisionPhrase: "waiting on a decision: combine or keep separate",
     keepSeparate: "keep separate",
     nothingNeedsAttention: "Nothing needs attention",
-    inventoryCheckLabel: "Check if it goes in the AI inventory",
+    inventoryCheckLabel: "Check whether it counts toward the AI inventory",
     crossRationalizationTerm: "Cross-{unit} duplicate check",
     haveEnoughOption: "I have enough, write the draft",
     reviseDraftPlaceholder: "Ask a follow-up or request a revised draft...",
@@ -352,6 +352,19 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     // NL-8 (#289): submit an idea.
     submitEyebrow: "Submit an idea · Step {step} of {count}",
     submitSentEyebrow: "Submit an idea · Sent",
+    // NL-13 (#314): plain words, from the approved mocks.
+    duplicatesLabel: "Same idea in more than one office",
+    duplicatesActionLabel: "Decide",
+    consolidatedColumnLabel: "Counted as one inventory entry",
+    inventoryEntriesPhrase: "entries in the AI inventory",
+    inventoryEntryPhrase: "entry in the AI inventory",
+    inventoryCheckEyebrow: "AI inventory check",
+    rmfAtRiskRationale: "Some risk steps have a gap. See what is missing.",
+    rmfPartialRationale: "Some risk steps are not covered yet. See what is missing.",
+    rmfOnTrackRationale: "Every risk step that applies is covered.",
+    similarWordingLabel: "{count} with similar wording",
+    similarWordingHint: "Other use cases whose descriptions use many of the same words. A reviewer decides if they are the same idea.",
+    noOtherMessages: "No other messages",
     submitStepLabels: "Who you are|The problem|Your solution|Constraints|Name it|Review and send",
   },
 
@@ -362,7 +375,15 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     },
     highImpactDetermination: {
       definition:
-        "A recommendation on whether an AI use case meets the high-impact definition in DoW AI Ethical Principles + NIST AI RMF: its output could meaningfully affect people's rights, safety, access to benefits, resource allocation, or enforcement outcomes. A reviewer makes the final call.",
+        "High-impact: an AI use whose output is a main basis for a decision with a legal, material or significant effect on people's rights or safety. Keystone uses the federal civilian definition as its standard. It is not a Department of War rule.",
+    },
+    coveredPartialGap: {
+      definition:
+        "The status of one risk step for a use case: \"Covered\" means the expected information is fully in place, \"Partial\" means some is missing, and \"Gap\" means none of it is.",
+    },
+    rmfAtRisk: {
+      definition:
+        "At least one risk step (Govern, Map, Measure, or Manage) has a gap serious enough to need attention before this use case can move forward.",
     },
     advisory: {
       definition: "This is a recommendation for a human reviewer to confirm or override. It never sets the final answer by itself.",

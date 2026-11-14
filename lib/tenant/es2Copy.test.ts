@@ -32,6 +32,11 @@ const BANNED: { name: string; re: RegExp }[] = [
   { name: "reportability", re: /reportability/i },
   { name: "keep-separate", re: /keep-separate/i },
   { name: "em dash", re: /—/ },
+  // NL-13 (#314)
+  { name: "RMF functions", re: /RMF functions?/i },
+  { name: "Rationalize", re: /\bRationalize\b/i },
+  { name: "Consolidated (Inventory)", re: /Consolidated \(/ },
+  { name: "duplicate clusters", re: /duplicate clusters/i },
 ]
 
 function leaves(value: unknown, out: string[] = []): string[] {
@@ -68,9 +73,44 @@ describe("ES2 copy and credibility sweep (#269)", () => {
     expect(c.pendingDecisionLabel).toBe("Waiting on a decision: combine or keep separate")
     expect(c.keepSeparate).toBe("keep separate")
     expect(c.nothingNeedsAttention).toBe("Nothing needs attention")
-    expect(c.inventoryCheckLabel).toBe("Check if it goes in the AI inventory")
+    expect(c.inventoryCheckLabel).toBe("Check whether it counts toward the AI inventory")
     expect(c.affectedUnitsPrompt).toContain("program offices")
     expect(c.affectedUnitsPrompt).not.toContain("business units")
+  })
+
+  it("NL-13: plain words from the approved mocks", () => {
+    const c = tenantCopy(es2)
+    expect(c.duplicatesLabel).toBe("Same idea in more than one office")
+    expect(c.duplicatesActionLabel).toBe("Decide")
+    expect(c.consolidatedColumnLabel).toBe("Counted as one inventory entry")
+    expect(c.inventoryEntriesPhrase).toBe("entries in the AI inventory")
+    expect(c.rmfPartialRationale).toBe("Some risk steps are not covered yet. See what is missing.")
+    expect(c.similarWordingLabel).toBe("{count} with similar wording")
+    expect(c.noOtherMessages).toBe("No other messages")
+  })
+
+  it("NL-13: the high-impact glossary line is the CEO's wording, exactly", () => {
+    expect(getGlossary(es2).highImpactDetermination.definition).toBe(
+      "High-impact: an AI use whose output is a main basis for a decision with a legal, material or significant effect on people's rights or safety. Keystone uses the federal civilian definition as its standard. It is not a Department of War rule.",
+    )
+  })
+
+  it("NL-13: the model prompt says line up with, not must satisfy", () => {
+    expect(es2.strategicContext).toContain("line up with the DoW AI Ethical Principles")
+    expect(es2.strategicContext).not.toContain("must satisfy")
+  })
+
+  it("NL-13: USPTO, DoC and DoW copy and glossary are unchanged", () => {
+    for (const t of [uspto, doc, dow]) {
+      const c = tenantCopy(t)
+      expect(c.duplicatesLabel).toBe("")
+      expect(c.duplicatesActionLabel).toBe("Rationalize")
+      expect(c.consolidatedColumnLabel).toBe("Consolidated ({inventoryShort})".replace("{inventoryShort}", t.inventoryShortLabel))
+      expect(c.inventoryEntriesPhrase).toBe(`${t.inventoryShortLabel} reportable entries`)
+      expect(c.rmfPartialRationale).toBe("One or more RMF functions are only partially covered — review the flags for what's missing.")
+      expect(c.inventoryCheckLabel).toBe("")
+      expect(getGlossary(t).highImpactDetermination.definition).toContain("meets the high-impact definition in")
+    }
   })
 
   it("says what the public reporting default is without citing OMB", () => {
@@ -92,5 +132,17 @@ describe("ES2 copy and credibility sweep (#269)", () => {
       expect(plumbLine(false, 0, t)).toBe("Nothing off-plumb. Every use case is inside its gates.")
       expect(landingStrings(t, true)).toContain("See it in 2 minutes")
     }
+  })
+})
+
+describe("NL-13 (#314): record band place name", () => {
+  it("uses the program short name, and the office short name when it has no programs", async () => {
+    vi.resetModules()
+    vi.stubEnv("NEXT_PUBLIC_TENANT", "es2")
+    const { recordPlaceShortLabel } = await import("@/components/dashboard/command-center-data")
+    expect(recordPlaceShortLabel("atr", "acws")).toBe("ACWS")
+    expect(recordPlaceShortLabel("atr", "digitalmarket")).toBe("Digital Market")
+    expect(recordPlaceShortLabel("hrfm", "")).toBe("HR-FM")
+    vi.unstubAllEnvs()
   })
 })

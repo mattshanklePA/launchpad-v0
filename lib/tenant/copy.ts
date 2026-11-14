@@ -65,6 +65,19 @@ export const DEFAULT_COPY: TenantCopy = {
   // NL-8 (#289): submit an idea.
   submitEyebrow: "Submit an idea · Step {step} of {count}",
   submitSentEyebrow: "Submit an idea · Sent",
+  // NL-13 (#314): plain words for ES2. These defaults are what every other tenant rendered before.
+  duplicatesLabel: "", // empty: keep "Cross-{unit} duplicate clusters"
+  duplicatesActionLabel: "Rationalize",
+  consolidatedColumnLabel: "Consolidated ({inventoryShort})",
+  inventoryEntriesPhrase: "{inventoryShort} reportable entries",
+  inventoryEntryPhrase: "{inventoryShort} reportable entry",
+  inventoryCheckEyebrow: "{inventoryShort} reportability",
+  rmfAtRiskRationale: "At least one RMF function has a governance gap that needs attention.",
+  rmfPartialRationale: "One or more RMF functions are only partially covered — review the flags for what's missing.",
+  rmfOnTrackRationale: "Every applicable RMF function is fully covered.",
+  similarWordingLabel: "{count} similar on record",
+  similarWordingHint: "",
+  noOtherMessages: "No messages yet.",
   submitStepLabels: "Who you are|The problem|Your solution|Constraints|Name it|Review and send",
 }
 
@@ -76,6 +89,7 @@ export function tenantCopy(tenant: TenantConfig = getTenant()): TenantCopy {
     out[key] = merged[key]
       .replace(/\{assistant\}/g, tenant.assistantName)
       .replace(/\{inventory\}/g, tenant.inventoryLabel)
+      .replace(/\{inventoryShort\}/g, tenant.inventoryShortLabel)
       .replace(/\{unit\}/g, tenant.tierLabels.unit.toLowerCase())
   }
   return out
