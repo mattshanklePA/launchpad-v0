@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review step 1, overlap</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#006BA1}a:hover{color:#1E252C}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:3px;border:1px solid #D6CEBE;background:#FFFFFF;color:#2A333C;white-space:nowrap}
+.th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #D6CEBE;background:#FFFFFF;white-space:nowrap}
+.td{padding:12px;border-bottom:1px solid #E7E1D6;font-size:14px;color:#2A333C;vertical-align:middle}
+.num{font-family:'JetBrains Mono',monospace;font-size:13px}
+.rank{display:inline-block;min-width:34px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#E7E1D6;color:#2A333C;border-radius:3px;padding:4px 6px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;margin:0 0 4px}
+.val{font-size:14px;line-height:1.45;color:#2A333C;margin:0}
+.meta{font-size:12px;color:#4A545E;margin-top:3px}
+.sec{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sec h2{font-family:'Chivo',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.012em;margin:0}
+.sec .ctx{font-size:13px;color:#4A545E}
+.sec .rule{flex:1 1 80px;height:2px;background:#C77D3A}
+.panel{background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px}
+.pad{padding:20px 22px}
+.btn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 14px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;cursor:pointer;text-decoration:none}
+.btn-p{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 16px;border:1px solid #006BA1;border-radius:5px;background:#006BA1;color:#FFFFFF;cursor:pointer;text-decoration:none}
+.btn-p:hover{background:#1E252C;color:#FFFFFF}
+.h3{font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0}
+.big{font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em}
+.q{margin:0;font-size:14px;color:#4A545E}
+.badge{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px}
+.nav a{color:#F4F2EC;text-decoration:none;font-size:14px;font-weight:500;padding:10px 2px;border-bottom:3px solid transparent}
+.nav a.on{font-weight:700;border-bottom-color:#C77D3A}
+.note{display:flex;gap:16px;align-items:flex-start}
+.field{font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:9px 11px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;width:100%;box-sizing:border-box}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #E7E1D6;font-size:14px}
+</style>
+</helmet>
+<div style="min-height:100vh;position:relative;background:#F4F2EC;font-family:'Hanken Grotesk',sans-serif;color:#2A333C">
+<header style="background:#1E252C;border-bottom:3px solid #C77D3A">
+  <div style="padding:14px 32px 6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M9 6h16l-4 22h-8z" fill="#C77D3A"></path><path d="M9 6h16l-1 5H10z" fill="#DCA061"></path></svg>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;color:#DCA061">REVIEW · KS-3104 · STEP 1 OF 5</span>
+      <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:22px;letter-spacing:-.02em;color:#F4F2EC">Is this one effort, or three?</span>
+    </div>
+    <div style="flex:1"></div>
+    
+  </div>
+  <nav class="nav" aria-label="Main" style="padding:0 32px;display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap"><a href="Portfolio-Report.dc.html" class="">Portfolio</a><a href="Action-Center.dc.html" class="on">My work</a><a href="Decision-Center.dc.html" class="">Decision Center</a><a href="Intake-Ready-Check.dc.html" class="">Submit an idea</a><span style="flex:1"></span><span style="font-size:13px;color:#C9CED3;padding:10px 0">Avery Lang · reviewer, AT&amp;R</span></nav>
+</header>
+<div style="background:#E7E1D6;border-bottom:1px solid #D6CEBE;padding:8px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;background:#2A333C;color:#F4F2EC;padding:3px 8px;border-radius:3px">SAMPLE DATA</span>
+  <span style="font-size:13px;color:#4A545E">Every idea, office and number on this page is sample data for the demo.</span>
+</div>
+<main style="max-width:1320px;margin:0 auto;padding:32px 32px 48px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start"><div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px"><p style="margin:0;font-size:15px;line-height:1.55">Three offices filed supplier risk scoring. None of the three can be approved until you make one the lead or record that they are different.</p>
+<div class="panel pad note"><svg width="22" height="40" viewBox="0 0 22 40" aria-hidden="true"><line x1="11" y1="0" x2="11" y2="26" stroke="#2A333C" stroke-width="1.5"></line><path d="M5 26h12l-6 12z" fill="#0086CA"></path></svg><div><p class="lbl">Plumb's read · advice, not a decision</p><p style="margin:0;font-size:15px;line-height:1.6;max-width:880px">Keep them separate and link them to one shared scoring model. Two of three run on the same cloud environment and platform, so one shared service is realistic for AT&amp;R and BTS. LOG-FIN would need its own connection.</p></div></div>
+<div class="sec"><h2>Why these look like the same effort</h2><span class="ctx">3 of 3 signals match</span><span class="rule" aria-hidden="true"></span></div><div class="panel pad"><div style="padding:10px 0;border-top:1px solid #E7E1D6"><p style="margin:0;font-weight:600">Same problem</p><p class="meta">BTS: "reports take weeks to pull together" · AT&amp;R: "past performance is assembled by hand" · LOG-FIN: "no quick view of a supplier's record"</p></div><div style="padding:10px 0;border-top:1px solid #E7E1D6"><p style="margin:0;font-weight:600">Same users</p><p class="meta">Contracting officers before award, in all three</p></div><div style="padding:10px 0;border-top:1px solid #E7E1D6"><p style="margin:0;font-weight:600">Same data</p><p class="meta">Past-performance records and contract history, in all three</p></div></div>
+<div class="sec"><h2>Could they share one solution?</h2><span class="ctx">from each program profile</span><span class="rule" aria-hidden="true"></span></div><div class="panel" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:820px"><thead><tr><th class="th"></th><th class="th">BTS · this one</th><th class="th">AT&amp;R · ACWS</th><th class="th">LOG-FIN · supply awards</th></tr></thead><tbody><tr style=""><td class="td"><span class="lbl">Where it runs</span></td><td class="td">Army enterprise cloud, impact level 4</td><td class="td">Army enterprise cloud, impact level 4 <span class="meta">Same as BTS</span></td><td class="td"><span class="meta">No profile yet.</span> <a href="Program-Profile.dc.html">Add one</a></td></tr><tr style=""><td class="td"><span class="lbl">Built on</span></td><td class="td">Low-code platform the office already runs</td><td class="td">Same platform <span class="meta">Same as BTS</span></td><td class="td">–</td></tr><tr style=""><td class="td"><span class="lbl">Data it would use</span></td><td class="td">Past-performance records</td><td class="td">Past-performance records, contract history</td><td class="td">Supplier records only <span class="meta">Different</span></td></tr><tr style=""><td class="td"><span class="lbl">Who owns it</span></td><td class="td">BTS program office</td><td class="td">ACWS program office</td><td class="td">LOG-FIN program office</td></tr></tbody></table></div>
+<div class="panel pad" style="display:flex;flex-direction:column;gap:12px"><p class="h3">Your choice</p><p class="q">Either choice clears the hold on all three ideas.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn-p">Keep separate and link</button><button class="btn">Make one the lead</button><button class="btn">Compare the full text</button></div></div></div><aside style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:16px"><div class="panel pad"><p class="lbl">Your review</p><ol style="list-style:none;margin:0;padding:0"><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;font-weight:700"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#C77D3A"></span>Are these one effort?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#FFFFFF"></span>Is this high impact?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#FFFFFF"></span>Does the risk profile hold?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#FFFFFF"></span>Are the inventory fields right?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#FFFFFF"></span>Decide</li></ol></div><div class="panel pad"><p class="lbl">The submission</p><span class="tag" style=""><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#2A333C" stroke-width="1.5"></circle></svg>In review</span><p class="h3" style="margin-top:10px">Supplier past-performance risk scoring before award</p><p class="meta">KS-3104 · BTS · Andre Duval · submitted 17 Aug 2026</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px 32px"><div><p class="lbl">Problem</p><p class="val">Award decisions rely on past-performance reports that take weeks to pull together.</p></div><div><p class="lbl">Who uses it</p><p class="val">Contracting officers before award, about 60 people.</p></div><div><p class="lbl">Data</p><p class="val">Past-performance records and contract history.</p></div></div>
+<p style="margin:12px 0 0"><a href="#">Read the full submission</a></p></div></aside></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

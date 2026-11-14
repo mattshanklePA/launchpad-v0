@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keystone page kit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&amp;family=Hanken+Grotesk:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#006BA1}a:hover{color:#1E252C}
+.ml{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:3px;border:1px solid #D6CEBE;background:#FFFFFF;color:#2A333C;white-space:nowrap}
+.th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #D6CEBE;background:#FFFFFF}
+.td{padding:12px;border-bottom:1px solid #E7E1D6;font-size:14px;color:#2A333C;vertical-align:middle}
+.rank{display:inline-block;min-width:34px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#E7E1D6;color:#2A333C;border-radius:3px;padding:4px 6px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;margin:0 0 4px}
+.val{font-size:14px;line-height:1.45;color:#2A333C;margin:0}
+.kit-h{font-family:'Chivo',sans-serif;font-weight:700;font-size:15px;color:#2A333C;margin:0}
+.kit-n{font-size:13px;color:#4A545E;margin:4px 0 0;line-height:1.45}
+</style>
+</helmet>
+<div style="width:1440px;height:1640px;box-sizing:border-box;background:#F4F2EC;font-family:'Hanken Grotesk',sans-serif;color:#2A333C;display:flex;flex-direction:column">
+
+  <!-- K1 header band -->
+  <header style="background:#1E252C;border-bottom:3px solid #C77D3A;padding:14px 32px;display:flex;align-items:center;gap:16px">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M9 6h16l-4 22h-8z" fill="#C77D3A"></path><path d="M9 6h16l-1 5H10z" fill="#DCA061"></path></svg>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;color:#DCA061">CPE ES2 · ENTERPRISE SOFTWARE AND SERVICES</span>
+      <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:22px;letter-spacing:-.02em;color:#F4F2EC">AI portfolio</span>
+    </div>
+    <div style="flex:1"></div>
+    <div role="group" aria-label="View" style="display:flex;border:1px solid #3B4650;border-radius:5px;overflow:hidden">
+      <button style="font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:0;background:#F4F2EC;color:#1E252C;cursor:pointer" aria-pressed="true">Today</button>
+      <button style="font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border:0;background:transparent;color:#F4F2EC;cursor:pointer" aria-pressed="false">Last 90 days</button>
+    </div>
+    <button style="font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:1px solid #97A0A9;border-radius:5px;background:transparent;color:#F4F2EC;cursor:pointer">Download PDF</button>
+    <a href="#" style="font-size:13px;color:#F4F2EC;text-decoration:underline">Copy link</a>
+  </header>
+
+  <!-- K2 sample strip -->
+  <div style="background:#E7E1D6;border-bottom:1px solid #D6CEBE;padding:8px 32px;display:flex;align-items:center;gap:12px">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;background:#2A333C;color:#F4F2EC;padding:3px 8px;border-radius:3px">SAMPLE DATA</span>
+    <span style="font-size:13px;color:#4A545E">Every idea, office and number on this page is sample data for the demo.</span>
+  </div>
+
+  <main style="padding:32px;display:flex;flex-direction:column;gap:40px">
+    <div style="display:flex;align-items:baseline;gap:16px">
+      <h1 style="font-family:'Chivo',sans-serif;font-weight:900;font-size:30px;letter-spacing:-.024em;margin:0">Page kit</h1>
+      <p style="margin:0;font-size:14px;color:#4A545E">Six shared pieces every Keystone screen is built from. Keystone tokens only: basalt, chalk, limestone, amber for attention, active blue for links. Chivo, Hanken Grotesk, JetBrains Mono.</p>
+    </div>
+
+    <!-- K1/K2 notes -->
+    <section style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px">
+      <div><p class="kit-h">K1 Header band (top of this board)</p><p class="kit-n">Deep basalt, one amber rule along the bottom. Eyebrow names the customer and scope; title names the page. Actions sit right: view switch, Download PDF, Copy link. Keystone mark only, never an agency seal. Each site keeps its own band color from its setup file.</p></div>
+      <div><p class="kit-h">K2 Sample-data strip</p><p class="kit-n">Shown only while a site runs on demo data. Turned off for a customer with real data. Square basalt tag, plain sentence, no stripes.</p></div>
+    </section>
+
+    <!-- K3 section title -->
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <p class="kit-h">K3 Section title</p>
+      <div style="display:flex;align-items:center;gap:16px">
+        <h2 style="font-family:'Chivo',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.012em;margin:0;white-space:nowrap">Whole portfolio</h2>
+        <span style="font-size:13px;color:#4A545E;white-space:nowrap">42 ideas from 5 of 5 program offices · 1 Sep to 10 Dec 2026</span>
+        <span style="flex:1;height:2px;background:#C77D3A" aria-hidden="true"></span>
+      </div>
+    </section>
+
+    <!-- K4 measure panels -->
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <p class="kit-h">K4 Measure panel <span style="font-weight:500;color:#4A545E;font-size:13px">· lead panel wider (1.4 : 1 : 1), thin border, colored top rule, no shadow</span></p>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:20px">
+        <article style="background:#FFFFFF;border:1px solid #D6CEBE;border-top:3px solid #C77D3A;border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px">1</span>
+            <h3 style="font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0">Risk</h3>
+            <span class="tag" style="border-color:#9C5F22;color:#9C5F22">ATTENTION</span>
+          </div>
+          <p style="margin:0;font-size:14px;color:#4A545E">Which ideas carry high risk, and why?</p>
+          <div style="display:flex;align-items:flex-end;gap:14px">
+            <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em">6</span>
+            <span style="font-size:14px;line-height:1.4;padding-bottom:4px">of 42 ideas are high risk. Most common reason: <strong>affects decisions about people</strong> (4 of 6).</span>
+          </div>
+          <a href="#" style="font-size:14px;font-weight:600">See the six</a>
+        </article>
+        <article style="background:#FFFFFF;border:1px solid #D6CEBE;border-top:3px solid #2A333C;border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px">2</span>
+            <h3 style="font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0">Decisions</h3>
+          </div>
+          <p style="margin:0;font-size:14px;color:#4A545E">Are leaders deciding?</p>
+          <div style="display:flex;align-items:flex-end;gap:12px">
+            <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em">14</span>
+            <span style="font-size:14px;line-height:1.4;padding-bottom:4px">decided of 42. 9 approved, 5 not approved.</span>
+          </div>
+          <a href="#" style="font-size:14px;font-weight:600">Open the breakdown</a>
+        </article>
+        <article style="background:#FFFFFF;border:1px solid #D6CEBE;border-top:3px solid #006BA1;border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px">3</span>
+            <h3 style="font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0">Overlap</h3>
+          </div>
+          <p style="margin:0;font-size:14px;color:#4A545E">Are offices building the same thing twice?</p>
+          <div style="display:flex;align-items:flex-end;gap:12px">
+            <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em">3</span>
+            <span style="font-size:14px;line-height:1.4;padding-bottom:4px">groups covering 8 ideas in 4 offices.</span>
+          </div>
+          <a href="#" style="font-size:14px;font-weight:600">See the overlaps</a>
+        </article>
+      </div>
+    </section>
+
+    <!-- K5 ranked table -->
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <p class="kit-h">K5 Ranked table <span style="font-weight:500;color:#4A545E;font-size:13px">· grouped by office, rows open in place into a label and value grid</span></p>
+      <div style="background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid #D6CEBE">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="#2A333C" stroke-width="1.75"></path></svg>
+          <div><p style="margin:0;font-family:'Chivo',sans-serif;font-weight:700;font-size:16px">Acquisition, Training and Readiness (AT&amp;R)</p><p style="margin:2px 0 0;font-size:12px;color:#4A545E">14 ideas · 2 high risk · 6 decided</p></div>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr><th class="th" style="width:70px">Rank</th><th class="th">Idea</th><th class="th" style="width:170px">Status</th><th class="th" style="width:300px">Risk and why</th><th class="th" style="width:110px">Days open</th></tr></thead>
+          <tbody>
+            <tr><td class="td"><span class="rank">#1</span></td><td class="td"><div style="font-weight:600">Score supplier past performance before award</div><div style="font-size:12px;color:#4A545E;margin-top:3px">KS-031 · ACWS · submitted 2 Oct 2026</div></td><td class="td"><span class="tag"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#2A333C" stroke-width="1.5"></circle></svg>In review</span></td><td class="td"><span class="tag" style="border-color:#C24A3A;color:#C24A3A"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1l4 8H1z" fill="#C24A3A"></path></svg>High</span> <span style="font-size:13px">Shapes which companies win work</span></td><td class="td" style="font-family:'JetBrains Mono',monospace">43</td></tr>
+            <tr style="background:#F4F2EC"><td class="td"><span class="rank" style="background:#2A333C;color:#F4F2EC">#2</span></td><td class="td"><div style="font-weight:700">Flag missing fields in contract files</div><div style="font-size:12px;color:#4A545E;margin-top:3px">KS-040 · FMS-ACES · submitted 15 Oct 2026</div></td><td class="td"><span class="tag" style="border-color:#9C5F22;color:#9C5F22"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.5l4.5 4.5-4.5 4.5-4.5-4.5z" fill="#C77D3A"></path></svg>Needs a decision</span></td><td class="td"><span class="tag"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" fill="#4A545E"></rect></svg>Moderate</span> <span style="font-size:13px">Reads contract records</span></td><td class="td" style="font-family:'JetBrains Mono',monospace">30</td></tr>
+            <tr style="background:#F4F2EC"><td colspan="5" style="padding:8px 24px 22px 98px;border-bottom:1px solid #E7E1D6">
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 32px">
+                <div><p class="lbl">What it does</p><p class="val">Checks each contract file for the fields a reviewer needs and lists what is missing.</p></div>
+                <div><p class="lbl">Who uses it</p><p class="val">Contracting staff in FMS-ACES, about 40 people.</p></div>
+                <div><p class="lbl">Why moderate risk</p><p class="val">Reads contract records. A person confirms every flag. It can be switched off by the program office.</p></div>
+                <div><p class="lbl">Waiting on</p><p class="val">A leader's decision since 13 Nov 2026.</p></div>
+                <div><p class="lbl">Plumb's read (advice)</p><p class="val">Approve. Clear owner, a person decides, and a way to measure it.</p></div>
+                <div><p class="lbl">Next step</p><p class="val"><a href="#">Open the full record</a></p></div>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- K6 tags and track -->
+    <section style="display:grid;grid-template-columns:1.4fr 1fr;gap:32px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <p class="kit-h">K6 Tags <span style="font-weight:500;color:#4A545E;font-size:13px">· square corners, shape plus word, color never alone</span></p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <span class="tag"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#2A333C" stroke-width="1.5"></circle></svg>Submitted</span>
+          <span class="tag"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#2A333C" stroke-width="1.5"></circle></svg>In review</span>
+          <span class="tag" style="border-color:#9C5F22;color:#9C5F22"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.5l4.5 4.5-4.5 4.5-4.5-4.5z" fill="#C77D3A"></path></svg>Needs a decision</span>
+          <span class="tag" style="border-color:#2E9E7B;color:#1F6F56"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#2E9E7B"></circle></svg>Approved</span>
+          <span class="tag" style="border-color:#C24A3A;color:#A23A2C"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="#C24A3A" stroke-width="1.8"></path></svg>Not approved</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <span class="tag" style="border-color:#C24A3A;color:#A23A2C"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1l4 8H1z" fill="#C24A3A"></path></svg>High risk</span>
+          <span class="tag"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" fill="#4A545E"></rect></svg>Moderate risk</span>
+          <span class="tag"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="#4A545E" stroke-width="1.5"></rect></svg>Low risk</span>
+          <span class="tag" style="background:#2A333C;color:#F4F2EC;border-color:#2A333C">COUNT</span>
+          <span class="tag" style="background:#006BA1;color:#FFFFFF;border-color:#006BA1">PLUMB ADVICE</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <p class="kit-h">K6 Track <span style="font-weight:500;color:#4A545E;font-size:13px">· hollow = planned, solid = actual</span></p>
+        <div style="position:relative;height:40px">
+          <div style="position:absolute;left:0;right:0;top:12px;height:2px;background:#D6CEBE"></div>
+          <div style="position:absolute;left:0;width:48%;top:12px;height:2px;background:#2A333C"></div>
+          <div style="position:absolute;left:25%;top:8px;width:1px;height:10px;background:#97A0A9"></div>
+          <div style="position:absolute;left:50%;top:8px;width:1px;height:10px;background:#97A0A9"></div>
+          <div style="position:absolute;left:75%;top:8px;width:1px;height:10px;background:#97A0A9"></div>
+          <div style="position:absolute;left:calc(48% - 6px);top:7px;width:12px;height:12px;border-radius:50%;background:#2A333C"></div>
+          <div style="position:absolute;left:calc(70% - 7px);top:6px;width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#FFFFFF"></div>
+          <div style="position:absolute;left:0;right:0;top:24px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:#4A545E"><span>0 days</span><span>Median 11 days to decision, last 90 days</span><span>30 days</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
