@@ -11,6 +11,10 @@ import { computeRmfProfile, RMF_FUNCTION_ORDER } from "@/lib/nistRmf"
 import { STATUS_ORDER, getBusinessUnit } from "@/lib/reviewWorkflow"
 import type { Submission } from "@/lib/submissions"
 import { officeRollupRows } from "@/lib/officeRollup"
+import { decisionCenterCandidates } from "@/lib/decisionCenter"
+import { computeRiskProfile } from "@/lib/riskProfile"
+import { getDecidedAt } from "@/lib/timeToDecision"
+import { getBureauSignoff } from "@/lib/bureauSignoff"
 
 // Golden-state test for the ES2 one-click demo reset (app/api/seed/route.ts and
 // the admin "Reset Demo Data" tool). The seed is a demo script, not sample
@@ -189,16 +193,24 @@ describe("lifecycle completeness", () => {
     }
   })
 
-  it("includes a high-impact, deployed example so the nine high-impact fields render", () => {
-    const highImpactDeployed = S.filter(
-      (s) => s.formData.highImpact === "high_impact" && s.formData.stageOfDevelopment === "deployed",
+  // F4-2 (#303): this used to demand a high-impact record that is *deployed*.
+  // In ES2 every approved record is a Decision Center funding candidate, so an
+  // approved + deployed record sat waiting for a funding decision. The example
+  // is now in pilot, and no approved record may be deployed.
+  it("includes a high-impact approved example in pilot, and no approved record is deployed", () => {
+    const highImpactPilot = S.filter(
+      (s) =>
+        s.formData.reviewStatus === "approved" &&
+        s.formData.highImpact === "high_impact" &&
+        s.formData.stageOfDevelopment === "pilot",
     )
-    expect(highImpactDeployed.length).toBeGreaterThanOrEqual(1)
-    for (const s of highImpactDeployed) {
+    expect(highImpactPilot.length).toBeGreaterThanOrEqual(1)
+    for (const s of highImpactPilot) {
       expect(s.formData.highImpactFactors.length, `${s.id}.highImpactFactors`).toBeGreaterThan(0)
       expect(s.formData.preDeploymentTesting, s.id).toBe("yes")
       expect(s.formData.ongoingMonitoringPlan, s.id).toBe("yes")
     }
+    expect(S.filter((s) => s.formData.reviewStatus === "approved" && s.formData.stageOfDevelopment === "deployed")).toEqual([])
   })
 
   it("gives the two rejected items the decisional-AI + no-human-review shape and a recorded reason", () => {
@@ -459,5 +471,87 @@ describe("ADAMS (fifth AT&R program)", () => {
 
   it("is not part of the cross-program duplicate group", () => {
     for (const a of adams) expect(DUPLICATE_GROUP).not.toContain(a.id)
+  })
+})
+
+// F4-2 (#303): demo data rules. On 10 Dec a quality lead and a CTO read these
+// records closely, so the set must not contradict itself on screen.
+describe("ES2 demo data rules (F4-2)", () => {
+  const admin = { role: "admin" }
+  const decided = S.filter((s) => ["approved", "rejected"].includes(String(s.formData.reviewStatus)))
+  const approved = S.filter((s) => s.formData.reviewStatus === "approved")
+  const candidates = decisionCenterCandidates(S, admin)
+
+  const strings: { id: string; text: string }[] = []
+  const collect = (id: string, v: unknown) => {
+    if (typeof v === "string") strings.push({ id, text: v })
+    else if (Array.isArray(v)) v.forEach((x) => collect(id, x))
+    else if (v && typeof v === "object") Object.values(v).forEach((x) => collect(id, x))
+  }
+  for (const s of S) collect(s.id, s.formData)
+
+  it("1. every approved or rejected record has a decision time, a decider, a reason, and was submitted before it was decided", () => {
+    expect(decided.length).toBeGreaterThanOrEqual(5)
+    for (const s of decided) {
+      const decidedAt = getDecidedAt(s)
+      expect(decidedAt, `${s.id} decision time`).toBeTruthy()
+      expect(getBureauSignoff(s)?.signedOffByName, `${s.id} decider`).toBeTruthy()
+      const comments = s.formData.comments as { body?: string }[] | undefined
+      expect(comments?.[0]?.body?.trim(), `${s.id} reason`).toBeTruthy()
+      expect(new Date(s.submittedAt).getTime(), `${s.id} submitted before decided`).toBeLessThan(
+        new Date(String(decidedAt)).getTime(),
+      )
+    }
+  })
+
+  it("2. every approved record has a confirmed risk profile and a confirmed high-impact answer", () => {
+    for (const s of approved) {
+      expect(computeRiskProfile(s.formData).level, `${s.id} risk profile`).not.toBe("unknown")
+      expect(["high_impact", "not_high_impact"], `${s.id}.highImpact="${s.formData.highImpact}"`).toContain(
+        s.formData.highImpact,
+      )
+    }
+  })
+
+  it("3. no approved, deployed record is a Decision Center candidate", () => {
+    for (const s of candidates) {
+      expect(s.formData.stageOfDevelopment, `${s.id} is deployed and still a funding candidate`).not.toBe("deployed")
+    }
+  })
+
+  it("4. the Decision Center candidates are not near-copies", () => {
+    expect(candidates.length).toBeGreaterThanOrEqual(2)
+    expect(new Set(candidates.map(getBusinessUnit)).size, "program offices").toBeGreaterThanOrEqual(2)
+    const shape = (s: Submission) =>
+      [computeRiskProfile(s.formData).level, s.formData.costSavings, s.formData.implementationComplexity].join("|")
+    expect(new Set(candidates.map(shape)).size, "risk / savings / complexity combinations").toBeGreaterThanOrEqual(2)
+  })
+
+  it("5. every record has a real title, a program office, and a program that exist in es2.ts", () => {
+    for (const s of S) {
+      expect(String(s.formData.useCaseTitle || "").trim().length, `${s.id} title`).toBeGreaterThan(5)
+      const unit = String(s.formData.submitterOffice)
+      expect(unitValues.has(unit), `${s.id} office "${unit}"`).toBe(true)
+      const programs = officeValuesByUnit.get(unit)
+      if (programs && programs.size > 0) {
+        expect(programs.has(String(s.formData.submitterSubOffice || "")), `${s.id} program`).toBe(true)
+      }
+    }
+  })
+
+  it("6. no text has a bracketed blank, 'Untitled idea', 'TEST', or an em dash", () => {
+    expect(strings.length).toBeGreaterThan(200)
+    for (const { id, text } of strings) {
+      expect(text, `${id}: bracketed blank`).not.toMatch(/\[[A-Z _]+\]/)
+      expect(text, `${id}: Untitled idea`).not.toMatch(/untitled idea/i)
+      expect(text, `${id}: TEST`).not.toMatch(/\bTEST\b/)
+      expect(text, `${id}: em dash`).not.toContain("—")
+    }
+  })
+
+  it("7. no text names an AI model vendor or model", () => {
+    const FORBIDDEN =
+      /\bAnthropic\b|\bClaude\b|\bSonnet\b|\bOpus\b|\bHaiku\b|\bOpenAI\b|\bChatGPT\b|\bGPT-?\d\w*\b|\bGemini\b|\bLlama\b|\bMistral\b|\bCohere\b/i
+    for (const { id, text } of strings) expect(text, id).not.toMatch(FORBIDDEN)
   })
 })
