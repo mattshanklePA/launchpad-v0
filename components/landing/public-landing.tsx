@@ -403,16 +403,12 @@ export function PublicLanding() {
     const current = getSession()
     setSession(current)
     setHydrated(true)
-    // /api/submissions now requires a session, so the counters stay at 0 for a
-    // signed-out visitor (SEC-1; see PR notes).
-    if (!current) return
-    fetch(`/api/submissions?_=${Date.now()}`, { cache: "no-store" })
+    // /api/submissions requires a session (#228); the public landing page reads
+    // /api/public-summary instead, which returns only these two counts.
+    fetch(`/api/public-summary?_=${Date.now()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        const subs: any[] = j?.submissions || []
-        const submitted = subs.length
-        const deployed = subs.filter((s) => (s.status || s.formData?.reviewStatus) === "approved").length
-        setMetrics({ submitted, deployed })
+        setMetrics({ submitted: Number(j?.submitted) || 0, deployed: Number(j?.deployed) || 0 })
       })
       .catch(() => setMetrics({ submitted: 0, deployed: 0 }))
   }, [])

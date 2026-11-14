@@ -18,13 +18,14 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useDataProvider } from "@/components/data-provider"
 import { getSubmissions, type Submission } from "@/lib/submissions"
 import { getSession } from "@/lib/auth"
 import { formatKeystoneDate } from "@/lib/dateFormat"
 import { DRAFT_FORM_KEY_BASE, scopedDraftKey, migrateLegacyDraftKeys } from "@/lib/draftStorage"
 import { getTenant } from "@/lib/tenant"
-import { getDashboardScope } from "@/lib/dashboard/scope"
+import { getDashboardScope, getHierarchy } from "@/lib/dashboard/scope"
 import { scopedSubmissions } from "@/lib/dashboard/metrics"
 import { getStatus, getComments, STATUS_LABEL } from "@/lib/reviewWorkflow"
 import { submissionStatusPillStatus } from "@/lib/submissionStatusPill"
@@ -67,17 +68,21 @@ export function PersonalDashboard() {
   }, [loaded])
 
   const tenant = getTenant()
-  const baseScope = getDashboardScope(getSession())
-  const mine = scopedSubmissions(baseScope, submissions)
+  const router = useRouter()
+  const session = getSession()
+  const baseScope = getDashboardScope(session)
+  // "My ideas" is always the signed-in person's own submissions, whatever their
+  // role — a reviewer/admin reaches it from the sidebar's Personal item (F3-6).
+  const mine = scopedSubmissions({ level: "personal", email: session?.email ?? "" }, submissions)
   const needsInfo = mine.filter((s) => getStatus(s) === "needs_info")
   const submitted = mine.filter((s) => getStatus(s) !== "needs_info")
 
   return (
     <DashboardShell
       baseScope={baseScope}
-      hierarchy={{ bureaus: [] }}
+      hierarchy={baseScope.level === "personal" ? { bureaus: [] } : getHierarchy(tenant)}
       selection={null}
-      onSelect={() => {}}
+      onSelect={() => router.push("/home")}
       breadcrumb="My ideas"
       tenant={tenant}
     >

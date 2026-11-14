@@ -74,3 +74,30 @@ describe("decisionCenterCandidates (issue #213 item 1)", () => {
     expect(decisionCenterCandidates([sub({ status: "approved" })], null)).toEqual([])
   })
 })
+
+// F3-6 item 6: the Command Center's "N candidates ready to compare" card in a
+// single-office view counted the whole department's approved ideas. A scope
+// passed in narrows the candidates to the office being viewed.
+describe("decisionCenterCandidates scope (F3-6 item 6)", () => {
+  const all = [
+    sub({ id: "a-hq", status: "approved", businessUnit: "noaa", office: "nws" }),
+    sub({ id: "a-other-office", status: "approved", businessUnit: "noaa", office: "nmfs" }),
+    sub({ id: "a-other-bureau", status: "approved", businessUnit: "census", office: "decennial" }),
+    sub({ id: "pending-in-office", status: "submitted", businessUnit: "noaa", office: "nws" }),
+  ]
+
+  it("counts every approved idea when no scope is given or the scope is department-wide", () => {
+    expect(decisionCenterCandidates(all, ADMIN_VIEWER)).toHaveLength(3)
+    expect(decisionCenterCandidates(all, ADMIN_VIEWER, { level: "department" })).toHaveLength(3)
+  })
+
+  it("narrows to the office being viewed", () => {
+    const scope = { level: "office", businessUnit: "noaa", office: "nws" } as const
+    expect(decisionCenterCandidates(all, ADMIN_VIEWER, scope).map((s) => s.id)).toEqual(["a-hq"])
+  })
+
+  it("narrows to the bureau being viewed", () => {
+    const scope = { level: "bureau", businessUnit: "noaa" } as const
+    expect(decisionCenterCandidates(all, ADMIN_VIEWER, scope).map((s) => s.id).sort()).toEqual(["a-hq", "a-other-office"])
+  })
+})

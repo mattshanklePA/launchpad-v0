@@ -43,6 +43,8 @@ export type KpiDrilldown = {
   readiness: KpiDrilldownItem[]
   "high-impact": KpiDrilldownItem[]
   "omb-reportable": KpiDrilldownItem[]
+  /** Ideas whose reportability needs a human look (`status === "review"`) — the list behind the Action Center's "N need a reportability review" row. */
+  "omb-review": KpiDrilldownItem[]
   signoff: KpiDrilldownItem[]
   duplicates: DuplicateClusterDrilldownItem[]
   rmf: KpiDrilldownItem[]
@@ -70,6 +72,7 @@ function toItem(s: Submission, cardField: string): KpiDrilldownItem {
  *   - `readiness` <-> `readinessDistribution(...).ready`
  *   - `high-impact` <-> `highImpactCount(...).count`
  *   - `omb-reportable` <-> `ombReportabilitySummary(...).reportable`
+ *   - `omb-review` <-> `ombReportabilitySummary(...).review`
  *   - `signoff` <-> `awaitingSignoff(...).count`
  *   - `duplicates` <-> `crossBureauDuplicatesSummary(...).clusterCount`
  *   - `rmf` <-> `rmfRollupSummary(...).at_risk`
@@ -100,6 +103,10 @@ export function getKpiDrilldown(
       const { status: consolidationStatus } = determineConsolidation(s.formData)
       return toItem(s, `${reason} (${consolidationStatus})`)
     })
+
+  const ombReview = rows
+    .filter((s) => determineReportability(s.formData).status === "review")
+    .map((s) => toItem(s, determineReportability(s.formData).reason))
 
   const signoff = tenantHasBureauTier(tenant)
     ? rows
@@ -140,6 +147,7 @@ export function getKpiDrilldown(
     readiness,
     "high-impact": highImpact,
     "omb-reportable": ombReportable,
+    "omb-review": ombReview,
     signoff,
     duplicates,
     rmf,

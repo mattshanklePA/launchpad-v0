@@ -145,6 +145,21 @@ describe("DashboardShell sidebar", () => {
   })
 })
 
+describe("DashboardShell Personal item (F3-6 item 1)", () => {
+  it("is a live link to the signed-in person's own ideas, not a disabled button", () => {
+    const el = renderShell({
+      userId: "u1",
+      email: "admin@doc.gov",
+      name: "Admin User",
+      role: "admin",
+      loggedInAt: new Date().toISOString(),
+    })
+    const personal = Array.from(el.querySelectorAll("a")).find((a) => a.textContent?.trim() === "Personal")
+    expect(personal?.getAttribute("href")).toBe("/my-ideas")
+    expect(el.querySelector("button[disabled]")).toBeNull()
+  })
+})
+
 describe("DashboardShell user dropdown", () => {
   it("shows the five admin items plus Sign out for an admin session, each with the sidebar's own href", async () => {
     const el = renderShell({

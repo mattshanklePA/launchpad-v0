@@ -59,6 +59,7 @@ function kpiDrilldown(overrides: Partial<KpiDrilldown> = {}): KpiDrilldown {
     readiness: [],
     "high-impact": [],
     "omb-reportable": [],
+    "omb-review": [],
     signoff: [],
     duplicates: [],
     rmf: [],
@@ -502,10 +503,15 @@ describe("buildActionItems", () => {
     const drilldown = kpiDrilldown({
       duplicates: [drilldownCluster("c1"), drilldownCluster("c2")],
       "omb-reportable": [drilldownItem("r1"), drilldownItem("r2"), drilldownItem("r3")],
+      "omb-review": [drilldownItem("v1"), drilldownItem("v2")],
     })
     const items = buildActionItems(metrics, true, [], doc, drilldown)
     expect(items.find((i) => i.id === "duplicates")!.drilldown!.items).toEqual(drilldown.duplicates)
-    expect(items.find((i) => i.id === "omb-review")!.drilldown!.items).toEqual(drilldown["omb-reportable"])
+    // F3-6 item 5: the "N need a reportability review" row opens the review
+    // list (N items), not the reportable list (a different count).
+    const review = items.find((i) => i.id === "omb-review")!
+    expect(review.drilldown!.items).toEqual(drilldown["omb-review"])
+    expect(review.drilldown!.items).toHaveLength(2) // metrics.ombReportability.review
   })
 
   it("gives the unassigned item an Assign button backed by its own submissions", () => {
@@ -546,11 +552,11 @@ describe("buildActionItems", () => {
       awaitingSignoff: { count: 2, total: 5 },
       ombReportability: { reportable: 3, excluded: 0, review: 2, consolidated: 1, individual: 2 },
     })
-    const drilldown = kpiDrilldown({ "omb-reportable": [drilldownItem("r1"), drilldownItem("r2"), drilldownItem("r3")] })
+    const drilldown = kpiDrilldown({ "omb-review": [drilldownItem("v1"), drilldownItem("v2")] })
     const items = buildActionItems(metrics, true, [dashboardAction({ kind: "signoff_nudge" })], tenant, drilldown)
 
     expect(items.find((i) => i.id === "signoff")!.onAction).toBeTypeOf("function")
-    expect(items.find((i) => i.id === "omb-review")!.drilldown!.items).toEqual(drilldown["omb-reportable"])
+    expect(items.find((i) => i.id === "omb-review")!.drilldown!.items).toEqual(drilldown["omb-review"])
   })
 
   // Callers that pass no drilldown (the CC-4 callers and every older test) get

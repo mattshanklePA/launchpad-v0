@@ -35,6 +35,7 @@ const emptyDrilldown: KpiDrilldown = {
   readiness: [],
   "high-impact": [],
   "omb-reportable": [],
+  "omb-review": [],
   signoff: [],
   duplicates: [],
   rmf: [],

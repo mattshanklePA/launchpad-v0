@@ -319,11 +319,10 @@ export function buildActionItems(
         : `${n} submission${n === 1 ? " needs" : "s need"} an ${tenant.inventoryShortLabel} reportability review`,
       severity: "info",
       actionLabel: "Review",
-      // The inventory-reportable KPI card's own list. Its length is the
-      // `reportable` count, not the `review` count in this item's title — the
-      // dialog states its own count, and this is the list a reportability
-      // review is conducted against.
-      drilldown: actionDrilldown(`${tenant.inventoryShortLabel} reportable`, drilldown?.["omb-reportable"]),
+      // F3-6 item 5: the list is the same rule as the count in the title —
+      // `determineReportability(...).status === "review"` — so tile and drawer
+      // always agree. (It used to open the "reportable" list, a different set.)
+      drilldown: actionDrilldown(`Needs ${tenant.inventoryShortLabel} reportability review`, drilldown?.["omb-review"]),
     })
   }
 
