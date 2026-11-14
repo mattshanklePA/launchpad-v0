@@ -2,6 +2,7 @@
 
 import { Fragment, useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { accessRedirect } from "@/lib/accessRedirect"
 import { getSession, hasAdminAccess, isAdmin, logout, ensureSeeded, type Session } from "@/lib/auth"
 import { formatKeystoneDate } from "@/lib/dateFormat"
 import { UserManagement } from "@/components/admin/user-management"
@@ -363,7 +364,9 @@ function AdminPageInner() {
     ensureSeeded()
     const s = getSession()
     if (!hasAdminAccess(s)) {
-      router.replace("/login?next=/admin")
+      // Signed in without access goes home, never to /login (which would send
+      // them straight back here, forever). See lib/accessRedirect.ts.
+      router.replace(accessRedirect(s, ["admin", "reviewer"], "/admin") ?? "/home")
       return
     }
     setSession(s)

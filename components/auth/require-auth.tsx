@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { ensureSeeded, getSession, type Session } from "@/lib/auth"
 import { DataProvider, useDataProvider } from "@/components/data-provider"
+import { accessRedirect } from "@/lib/accessRedirect"
 
 type Props = {
   children: ReactNode
@@ -38,13 +39,11 @@ function RequireAuthInner({ children, requireRole }: Props) {
     // No-op in the Supabase world — admin seed lives in the SQL migration.
     ensureSeeded()
     const s = getSession()
-    const next = encodeURIComponent(pathname || "/")
-    if (!s) {
-      router.replace(`/login?next=${next}`)
-      return
-    }
-    if (requireRole && !requireRole.includes(s.role)) {
-      router.replace(`/login?next=${next}`)
+    // Signed in without the role goes home, never to /login (which would send
+    // them straight back here, forever). See lib/accessRedirect.ts.
+    const to = accessRedirect(s, requireRole, pathname || "/")
+    if (to || !s) {
+      router.replace(to ?? "/login")
       return
     }
     setSession(s)
