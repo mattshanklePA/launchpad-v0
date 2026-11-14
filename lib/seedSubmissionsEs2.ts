@@ -47,6 +47,9 @@ import type { FormData } from "@/lib/steps"
 import { initialFormData } from "@/lib/steps"
 import { type Submission } from "@/lib/submissions"
 import { es2CpeSeedSubmissions } from "@/lib/seedSubmissionsEs2Cpe"
+import { es2 } from "@/lib/tenant/es2"
+import type { GovernanceCaptureReview, GovernanceFieldReviewEntry } from "@/lib/governanceCapture"
+import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 
 function mk(partial: Partial<FormData>): FormData {
   return { ...initialFormData, ...partial }
@@ -144,6 +147,7 @@ const BASE_SEED: Submission[] = [
       hasATO: "yes",
       atoSystemName: "Contract Writing System",
       systemSource: "contract",
+      systemSourceVendorName: "Contract writing system vendor",
       operationalDate: "2026-02-01",
       trainingDataDescription: "Current regulation text plus historical clause selections, with acceptance decisions retained for evaluation.",
       hasPii: "no",
@@ -165,7 +169,7 @@ const BASE_SEED: Submission[] = [
       humanOversightAppealNote: "A specialist can reject any recommendation without justification, and the rejection is recorded.",
       publicConsultationSteps: ["direct_usability_testing"],
       feasibilitySummary:
-        "Deployed and accredited. The bar is citation groundedness and keeping the regulation corpus current; both are monitored.",
+        "In pilot inside an accredited system. The bar is citation groundedness and keeping the regulation corpus current; both are monitored.",
       successMetrics: "Recommendation acceptance rate, missed-clause findings at review, cycle time per package, specialist-rated citation accuracy.",
       keyMetrics: ["quality_improvement", "time_saved", "adoption_rate"],
       timelineForResults: "6_12",
@@ -173,9 +177,9 @@ const BASE_SEED: Submission[] = [
       routeTo: ["governance"],
       reviewerNotes: "Advisory by design with citations and an accept/reject record. Minimum practices are on file.",
       readinessScore: "ready",
-      readinessSummary: "Complete, accredited, and monitored. The strongest example of the pattern the enterprise wants.",
+      readinessSummary: "Complete, in pilot, and monitored. The strongest example of the pattern the enterprise wants.",
       executiveSummary:
-        "Specialists hand-check clause applicability against long regulation text, and misses surface late. This deployed recommender proposes candidate clauses with the regulation citation attached and logs what the specialist accepted or rejected. Advisory only, American-built, inside the accredited boundary, with testing, monitoring and an appeal path on file.",
+        "Specialists hand-check clause applicability against long regulation text, and misses surface late. This pilot recommender proposes candidate clauses with the regulation citation attached and logs what the specialist accepted or rejected. Advisory only, American-built, inside the accredited boundary, with testing, monitoring and an appeal path on file.",
     } as Partial<FormData>),
   },
 
@@ -1160,6 +1164,10 @@ const BASE_SEED: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
+      disseminatesToPublic: "no",
+      scalable: "yes",
+      topicArea: "administrative_functions",
+      aiClassification: "nlp",
       stageOfDevelopment: "pre_deployment",
       highImpact: "not_high_impact",
       hasATO: "yes",
@@ -1328,4 +1336,70 @@ function withPlainReason(s: Submission): Submission {
   return { ...s, formData: { ...s.formData, riskPlainReason: reason } as unknown as FormData }
 }
 
-export const es2SeedSubmissions: Submission[] = [...BASE_SEED.map(reschedule), ...es2CpeSeedSubmissions].map(withPlainReason)
+// ─── F4-5 (#310): an approved record carries its decider's confirmations ─────
+// The decision checklist (components/submissions/locked-governance.tsx) reads
+// `rmfProfileReview` and `governanceCaptureReview`. Without them an approved
+// record shows "Not confirmed before approval" and "0 confirmed by the
+// reviewer". So each approved record gets both, written by the person who
+// decided it and timed shortly before the decision. Rejected records stay as
+// they are: the reviewer may have stopped early.
+// The governance fields the checklist counts (GOVERNANCE_FIELD_KEYS in
+// lib/submissionReadiness.ts). Copied, not imported: that module pulls in
+// lib/formConfig.ts, which uses React hooks, and this seed also loads in the
+// server route app/api/seed/route.ts. Only fields with an answer get an entry;
+// the seed test pins that every applicable field is covered.
+const GOVERNANCE_KEYS = [
+  "stageOfDevelopment", "highImpact", "highImpactJustification", "topicArea", "aiClassification",
+  "disseminatesToPublic", "scalable", "hasATO", "atoSystemName", "systemSource", "systemSourceVendorName",
+  "operationalDate", "trainingDataDescription", "hasPii", "demographicFeatures", "customCode",
+  "preDeploymentTesting", "aiImpactAssessmentCompleted", "aiImpactAssessment", "independentReviewConducted",
+  "ongoingMonitoringPlan", "operatorTrainingEstablished", "failSafeMechanism", "humanOversightAppeal",
+  "publicConsultationSteps",
+]
+
+const CONFIRMATION_RATIONALE: Record<string, string> = {
+  highImpact: "Confirmed against the high-impact factors on the record.",
+  stageOfDevelopment: "Confirmed against the stage the program office reported.",
+}
+
+function withDeciderConfirmations(s: Submission): Submission {
+  const fd = s.formData as unknown as Record<string, unknown>
+  if (fd.reviewStatus !== "approved") return s
+  const signoff = fd.bureauSignoff as { signedOffByName: string; signedOffByEmail: string; signedOffAt: string } | undefined
+  if (!signoff) return s
+  const decidedMs = new Date(signoff.signedOffAt).getTime()
+  const at = (minutesBefore: number) => new Date(decidedMs - minutesBefore * 60_000).toISOString()
+
+  const entries: GovernanceFieldReviewEntry[] = GOVERNANCE_KEYS.flatMap((field) => {
+    const value = fd[field] as string | string[] | undefined
+    const present = Array.isArray(value) ? value.length > 0 : !!value
+    if (!present) return []
+    return [
+      {
+        field,
+        decision: "confirmed" as const,
+        proposedValue: value!,
+        finalValue: value!,
+        rationale: CONFIRMATION_RATIONALE[field] ?? "",
+      },
+    ]
+  })
+  const governanceCaptureReview: GovernanceCaptureReview = {
+    entries,
+    byName: signoff.signedOffByName,
+    byEmail: signoff.signedOffByEmail,
+    at: at(45),
+  }
+  const rmfProfileReview = {
+    decision: "confirmed" as const,
+    proposedOverall: resolveRmfProfile(s, es2).profile.overall,
+    byName: signoff.signedOffByName,
+    byEmail: signoff.signedOffByEmail,
+    at: at(30),
+  }
+  return { ...s, formData: { ...fd, governanceCaptureReview, rmfProfileReview } as unknown as FormData }
+}
+
+export const es2SeedSubmissions: Submission[] = [...BASE_SEED.map(reschedule), ...es2CpeSeedSubmissions]
+  .map(withDeciderConfirmations)
+  .map(withPlainReason)
