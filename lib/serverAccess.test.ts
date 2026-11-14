@@ -106,7 +106,7 @@ describe("authorizeWrite", () => {
   it("an unchanged existing sign-off keeps its original timestamp", () => {
     const so = { bureau: "noaa", decision: "approved", signedOffByName: "R", signedOffByEmail: "r@x", signedOffAt: "2026-01-02T00:00:00.000Z" }
     const rec = sub("a", { businessUnit: "noaa", fd: { reviewStatus: "approved", bureauSignoff: so } })
-    const r = authorizeWrite({ session: sess({ role: "admin" }), existing: rec, formData: { reviewStatus: "approved", bureauSignoff: so, note: 1 }, now: NOW })
+    const r = authorizeWrite({ session: sess({ role: "admin" }), existing: rec, formData: { reviewStatus: "approved", bureauSignoff: so }, now: NOW })
     expect(r.ok && (r.formData.bureauSignoff as any).signedOffAt).toBe(so.signedOffAt)
   })
   it("department approval and rationalization decisions are stamped by the server", () => {
@@ -134,5 +134,54 @@ describe("authorizeWrite", () => {
     const census = sub("c", { businessUnit: "census" })
     expect(authorizeWrite({ session: sess({ role: "admin" }), existing: census, formData: { reviewStatus: "approved" }, now: NOW }).ok).toBe(true)
     expect(authorizeWrite({ session: sess({ role: "admin", businessUnit: "os" }), existing: census, formData: { reviewStatus: "approved" }, now: NOW }).ok).toBe(true)
+  })
+})
+
+describe("authorizeWrite: decided records are locked", () => {
+  const signoff = { bureau: "noaa", decision: "approved", signedOffByName: "R", signedOffByEmail: "r@x.gov", signedOffAt: "t" }
+  const rec = (status: string, extra: Record<string, unknown> = {}) =>
+    sub("d", {
+      ownerEmail: "alice@x.gov",
+      businessUnit: "noaa",
+      fd: { reviewStatus: status, submitterEmail: "alice@x.gov", highImpact: "not_high_impact", comments: [], ...extra },
+    })
+  const reviewer = sess({ role: "reviewer", email: "r@x.gov", name: "R", businessUnit: "noaa" })
+  const admin = sess({ role: "admin", email: "a@x.gov", name: "A" })
+  const edit = (existing: Submission, patch: Record<string, unknown>, session = reviewer) =>
+    authorizeWrite({ session, existing, formData: { ...(existing.formData as object), ...patch }, now: NOW, bureauTier: true })
+
+  for (const status of ["approved", "rejected"]) {
+    const locked = rec(status, { bureauSignoff: signoff })
+    it(`refuses a governance edit on a ${status} record with a clear error`, () => {
+      const r = edit(locked, { highImpact: "high_impact" })
+      expect(r).toMatchObject({ ok: false, status: 409 })
+      expect((r as { error: string }).error).toMatch(/decided|locked|signed off/i)
+    })
+    it(`refuses an RMF confirm on a ${status} record`, () => {
+      expect(edit(locked, { rmfProfileReview: { decision: "confirmed" } }).ok).toBe(false)
+    })
+    it(`refuses moving a ${status} record back to needs_info (Send & request info)`, () => {
+      expect(edit(locked, { reviewStatus: "needs_info" }).ok).toBe(false)
+    })
+    it(`admin may reopen a ${status} record on purpose (status change away from decided)`, () => {
+      expect(edit(locked, { reviewStatus: "in_review" }, admin).ok).toBe(true)
+    })
+    it(`admin may not edit governance while a ${status} record stays decided`, () => {
+      expect(edit(locked, { highImpact: "high_impact" }, admin).ok).toBe(false)
+    })
+    it(`still lets a comment be added to a ${status} record`, () => {
+      const c = { id: "c1", body: "hi", authorRole: "reviewer", authorName: "x", createdAt: "t" }
+      expect(edit(locked, { comments: [c] }).ok).toBe(true)
+    })
+  }
+
+  it("allows the same governance edit on an in-review record", () => {
+    expect(edit(rec("in_review"), { highImpact: "high_impact" }).ok).toBe(true)
+  })
+  it("allows the approving write itself (in review -> approved)", () => {
+    expect(edit(rec("in_review"), { reviewStatus: "approved", bureauSignoff: signoff }).ok).toBe(true)
+  })
+  it("a decision not yet signed off on a bureau-tier tenant is still reversible", () => {
+    expect(edit(rec("approved"), { reviewStatus: "in_review" }).ok).toBe(true)
   })
 })

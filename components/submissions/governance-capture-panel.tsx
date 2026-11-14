@@ -22,7 +22,7 @@ import type { Submission } from "@/lib/submissions"
 import { patchSubmissionFormData } from "@/lib/submissions"
 import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { isFieldVisible } from "@/lib/formConfig"
-import { formatDisplayDate } from "@/lib/dateFormat"
+import { formatKeystoneDate } from "@/lib/dateFormat"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import {
   GOVERNANCE_FIELD_KEYS,
@@ -229,7 +229,7 @@ export function GovernanceCapturePanel({
       {review && (
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5" />
-          Last saved by {review.byName} on {formatDisplayDate(review.at)} — {confirmedCount} confirmed as
+          Last saved by {review.byName} on {formatKeystoneDate(review.at)} — {confirmedCount} confirmed as
           drafted, {overriddenCount} overridden.
         </p>
       )}

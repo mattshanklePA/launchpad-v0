@@ -18,7 +18,7 @@ import {
 } from "@/lib/nistRmf"
 import type { ResolvedRmfProfile } from "@/lib/rmfProfileReview"
 import { cn } from "@/lib/utils"
-import { formatDisplayDate } from "@/lib/dateFormat"
+import { formatKeystoneDate } from "@/lib/dateFormat"
 
 export function RmfPanel({
   resolvedRmf,
@@ -55,7 +55,7 @@ export function RmfPanel({
           {resolvedRmf.review.decision === "overridden"
             ? `Overridden to "${RMF_OVERALL_LABELS[resolvedRmf.review.overriddenOverall || resolvedRmf.review.proposedOverall]}" (proposed "${RMF_OVERALL_LABELS[resolvedRmf.review.proposedOverall]}")`
             : "Confirmed as proposed"}
-          {" "}by {resolvedRmf.review.byName}, {formatDisplayDate(resolvedRmf.review.at)}
+          {" "}by {resolvedRmf.review.byName}, {formatKeystoneDate(resolvedRmf.review.at)}
           {resolvedRmf.review.notes ? ` — "${resolvedRmf.review.notes}"` : ""}
         </p>
       )}

@@ -38,6 +38,8 @@ import type { FormData } from "@/lib/steps"
 import { determineHighImpact } from "@/lib/highImpactDetermination"
 import { determineTopicArea } from "@/lib/useCaseTopicArea"
 import { determineAiClassification } from "@/lib/aiClassificationDetermination"
+import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 
 /** A proposed value for one field, plus the one-line reason a submitter sees before confirming or overriding it. */
 export type AutofillProposal<T> = {
@@ -73,6 +75,7 @@ export function proposeAiClassification(
 /** Proposes `isWithheld` (OMB's four-way "should this be withheld?" field #5) — defaults to "No" unless a security signal already on the form suggests a withholding reason. Always returns a proposal; the default itself is the safe answer, not a guess. */
 export function proposeIsWithheld(
   fd: Pick<FormData, "nationalSecuritySystem" | "securityClassification">,
+  tenant: TenantConfig = getTenant(),
 ): AutofillProposal<FormData["isWithheld"]> {
   if (fd.nationalSecuritySystem === "yes") {
     return {
@@ -88,7 +91,7 @@ export function proposeIsWithheld(
   }
   return {
     value: "no",
-    rationale: "No FOIA-protected interest, legal restriction, or security classification identified yet — defaults to OMB's \"No.\"",
+    rationale: tenantCopy(tenant).isWithheldDefaultRationale,
   }
 }
 

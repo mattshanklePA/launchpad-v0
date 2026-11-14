@@ -138,6 +138,7 @@ describe("every API route enforces the session guard", () => {
       "app/api/export/approval/route.ts",
       "app/api/export/omb/route.ts",
       "app/api/form-config/route.ts",
+      "app/api/public-summary/route.ts",
       "app/api/seed/route.ts",
       "app/api/session/route.ts",
       "app/api/submissions/route.ts",
@@ -146,7 +147,8 @@ describe("every API route enforces the session guard", () => {
       "app/api/users/route.ts",
     ]
     expect(files).toEqual(covered)
-    // login is the one intentionally open route; exercised in its own test.
+    // login and public-summary are the intentionally open routes; each has its own test
+    // (public-summary/route.test.ts proves it returns two counts and nothing else).
     expect(typeof login.POST).toBe("function")
   })
 })

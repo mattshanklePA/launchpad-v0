@@ -36,6 +36,8 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/h
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { StatusPill } from "@/components/ui/status-pill"
 import { cn } from "@/lib/utils"
+import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import {
   kpiStatusAccentClass,
   kpiStatusKeystone,
@@ -166,7 +168,7 @@ export function DrilldownDialogContent({ label, items, id = "" }: { label: strin
       </DialogHeader>
       {empty ? (
         <div className="flex flex-col items-center gap-2 px-6 py-11 text-center">
-          <p className="font-heading text-base font-bold text-foreground">Nothing off-plumb</p>
+          <p className="font-heading text-base font-bold text-foreground">{tenantCopy(getTenant()).nothingNeedsAttention}</p>
           <p className="max-w-[40ch] text-[13.5px] text-muted-foreground">
             Every use case behind this number is inside its gates. Check back after the next intake.
           </p>

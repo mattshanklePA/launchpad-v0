@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/components/ui/status-pill"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { Session } from "@/lib/auth"
 import { hasAdminAccess } from "@/lib/auth"
 import type { Submission } from "@/lib/submissions"
@@ -107,12 +108,12 @@ export function CommandCenter({
   const rows = rowItems(actionItems, hero)
   const heroCluster = hero
     ? buildHeroCluster(
-        kpiDrilldown.duplicates.filter((d) => d.cardField === "Pending rationalization"),
+        kpiDrilldown.duplicates.filter((d) => d.cardField === tenantCopy(tenant).pendingClusterField),
         tenant,
       )
     : null
 
-  const decisionCenterCount = decisionCenterCandidates(submissions, scopeViewer(session)).length
+  const decisionCenterCount = decisionCenterCandidates(submissions, scopeViewer(session), scope).length
 
   const railEyebrow = scoped
     ? `${splitLabelCode(scopeLabel(scope, tenant)).code ?? scopeLabel(scope, tenant)} at a glance`
@@ -144,7 +145,7 @@ export function CommandCenter({
   // just unassigned ones).
   const hasCriticalItem = actionItems.some((i) => i.severity === "critical")
   const wantsReviewerCount = dashboardActions.filter((a) => a.kind === "unassigned").length
-  const plumb = plumbLine(hasCriticalItem, wantsReviewerCount)
+  const plumb = plumbLine(hasCriticalItem, wantsReviewerCount, tenant)
 
   return (
     <div className="flex flex-col gap-[22px] lg:flex-row lg:items-start">

@@ -31,6 +31,7 @@ const ACTIONS: Array<[string, () => Promise<unknown>, "any" | "reviewer"]> = [
   ["validateAndRefineInput", () => actions.validateAndRefineInput(fd, 1, []), "any"],
   ["suggestIdeaOverview", () => actions.suggestIdeaOverview(fd), "any"],
   ["assistReviewer", () => actions.assistReviewer(fd), "any"],
+  ["getPlumbRead", () => actions.getPlumbRead("s1", fd), "any"],
   ["draftGovernanceFields", () => actions.draftGovernanceFields(fd), "any"],
   ["assessCluster", () => assessCluster([sub, sub]), "reviewer"],
   ["compareSubmissions", () => compareSubmissions([sub, sub]), "reviewer"],

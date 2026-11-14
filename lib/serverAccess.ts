@@ -9,6 +9,8 @@
 import type { Submission } from "@/lib/submissions"
 import type { SessionClaims } from "@/lib/session/token"
 import { getOwnerEmail, visibleSubmissions } from "@/lib/reviewWorkflow"
+import { isDecisionLocked } from "@/lib/decisionLock"
+import { tenantHasBureauTier } from "@/lib/rationalization"
 
 export function viewerFromSession(session: SessionClaims) {
   return {
@@ -25,7 +27,7 @@ export function visibleToSession(all: Submission[], session: SessionClaims): Sub
 
 export type WriteDecision =
   | { ok: true; formData: Record<string, unknown> }
-  | { ok: false; status: 403; error: string }
+  | { ok: false; status: 403 | 409; error: string }
 
 type Json = Record<string, unknown>
 
@@ -50,16 +52,33 @@ function stampComments(incoming: unknown, existing: unknown, session: SessionCla
   )
 }
 
+const LOCKED_ERROR =
+  "This record has been decided and signed off, so it is locked. Contact the office to reopen it."
+
 export function authorizeWrite(args: {
   session: SessionClaims
   existing: Submission | null
   formData: Json
   now: string
+  /** Defaults to the active tenant; injectable for tests. */
+  bureauTier?: boolean
 }): WriteDecision {
   const { session, existing, now } = args
   const incoming: Json = { ...args.formData }
   const prev: Json = existing ? obj(existing.formData) : {}
   const me = session.email.toLowerCase()
+
+  // Decided records are locked (#271): only comments may be added. The one way
+  // out is an admin reopening on purpose, i.e. moving the status away from the
+  // decision; that write may carry other changes with it.
+  if (existing && isDecisionLocked(prev, args.bureauTier ?? tenantHasBureauTier())) {
+    const reopening = session.role === "admin" && String(incoming.reviewStatus ?? prev.reviewStatus) !== String(prev.reviewStatus)
+    if (!reopening) {
+      for (const k of new Set([...Object.keys(prev), ...Object.keys(incoming)])) {
+        if (k !== "comments" && !same(incoming[k], prev[k])) return { ok: false, status: 409, error: LOCKED_ERROR }
+      }
+    }
+  }
 
   if (session.role === "submitter") {
     if (existing && getOwnerEmail(existing) !== me) return deny("You can only change your own submissions")

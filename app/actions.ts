@@ -12,12 +12,15 @@ import {
   type AlignmentSuggestion,
 } from "@/lib/strategicFocusAreas"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { proposeHighImpact, proposeTopicArea, proposeAiClassification, proposeHasPii } from "@/lib/ombAutofill"
 import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
 import { scoutFieldsForStep, draftFieldFallback } from "@/lib/scoutFieldPlan"
-import { buildSubmissionContext, buildQuestionModeGuidance } from "@/lib/scoutPrompt"
+import { buildSubmissionContext, buildSubmitterFitGuidance, buildQuestionModeGuidance } from "@/lib/scoutPrompt"
 import { readinessFallback } from "@/lib/readinessFallback"
 import type { ReadinessFinding } from "@/lib/readinessPresentation"
+import { plumbReadInput, resolvePlumbRead, type PlumbRead, type PlumbReadResult } from "@/lib/plumbRead"
+import { loadSavedPlumbRead, savePlumbRead } from "@/lib/savedPlumbRead"
 
 type Message = {
   role: "user" | "assistant"
@@ -32,6 +35,7 @@ type Message = {
 // AI strategy revision.
 // ============================================================
 const TENANT = getTenant()
+const ENOUGH = tenantCopy(TENANT).haveEnoughOption
 
 // Strategic frameworks for the active tenant, injected into every Scout prompt.
 const USPTO_STRATEGIC_CONTEXT = TENANT.strategicContext
@@ -577,7 +581,7 @@ export async function validateAndRefineInput(
             }),
           )
           .describe(
-            "If mode=question: 4-5 options. Use 2-3 specific likely answers FIRST, then 'Other (let me type my own)', then 'I have enough, give me the scaffold'. If mode=scaffold: empty array.",
+            "If mode=question: 4-5 options. Use 2-3 specific likely answers FIRST, then 'Other (let me type my own)', then '" + ENOUGH + "'. If mode=scaffold: empty array.",
           ),
         fields: fieldsSchema.describe(
           "If mode=scaffold: one drafted value + rationale per named output field for this step. If mode=question: every field's value and rationale are empty strings.",
@@ -596,6 +600,8 @@ ${HUMANIZATION_GUIDELINES}
 ═══ SUBMISSION CONTEXT (carry these through every coaching turn) ═══
 ${submissionContext}
 
+SUBMITTER FIT: ${buildSubmitterFitGuidance(formData, TENANT)}
+
 CURRENT STEP: ${currentStepInfo.title}
 
 EVALUATION CRITERIA (what "strong" looks like for this step):
@@ -611,8 +617,8 @@ Q&A turns completed so far in this session: ${assistantTurns}
 ═══ INTERACTION MODEL ═══
 
 EACH RESPONSE IS EITHER mode="question" OR mode="scaffold". You decide based on:
-- If turns so far is 0-2 AND the submitter has not selected "I have enough, give me the scaffold" → prefer mode="question"
-- If turns so far is ≥3 OR the most recent user message in history is "I have enough, give me the scaffold" → produce mode="scaffold"
+- If turns so far is 0-2 AND the submitter has not selected "${ENOUGH}" → prefer mode="question"
+- If turns so far is ≥3 OR the most recent user message in history is "${ENOUGH}" → produce mode="scaffold"
 - If the submitter's draft text is already substantive and well-grounded → you may skip directly to mode="scaffold"
 
 ${buildQuestionModeGuidance(TENANT)}
@@ -656,7 +662,7 @@ Remember: Your job is to make the submitter THINK HARDER, not to give them less 
             ? object.options
             : [
                 { label: "Other (let me type my own)", isRecommended: false },
-                { label: "I have enough, give me the scaffold", isRecommended: false },
+                { label: ENOUGH, isRecommended: false },
               ],
       }
     }
@@ -757,28 +763,28 @@ ${HUMANIZATION_GUIDELINES}`,
 // ============================================================
 export async function assistReviewer(
   formData: FormData,
-): Promise<{
-  verdict: string
-  strengths: string[]
-  gaps: string[]
-  suggestedDisposition: "approve" | "request_info" | "reject"
-  draftRequestInfo: string
-}> {
+): Promise<PlumbRead> {
   requireActionSession()
-  const summary = `
-Title: ${formData.useCaseTitle || "Untitled"}
-Problem: ${formData.problemDefinition || formData.coreProblem || "[Not provided]"}
-Solution: ${formData.solutionSummary || formData.proposedSolution || "[Not provided]"}
-Business value: ${formData.businessValueSummary || formData.businessValue || "[Not provided]"}
-Cost/time savings: ${formData.costSavings || "[Not provided]"}
-Users impacted: ${formData.impactedUsersCount || "[Not provided]"}
-Strategic alignment: ${formData.alignmentSummary || formData.relevantOkrs || (Array.isArray(formData.usptoFocusArea) ? formData.usptoFocusArea.join(", ") : "") || "[Not provided]"}
-Implementation complexity: ${formData.implementationComplexity || "[Not provided]"}
-Success metrics: ${formData.metricsSummary || formData.successMetrics || "[Not provided]"}
-Timeline: ${formData.timelineForResults || "[Not provided]"}
-AI risk — PII: ${formData.involvesSensitiveData || "?"}; model sourcing: ${formData.aiModelSourcing || "?"}; drives decisions about people: ${formData.aiDecisionalImpact || "?"}; mandatory human review: ${formData.aiHumanReview || "?"}
-Prior readiness verdict: ${formData.readinessScore || "n/a"}
-`
+  return (await produceAssistRead(formData)).read
+}
+
+// Opens the record's Plumb read (issue #272): the saved read when there is one
+// (and, for undecided records, the content has not changed), otherwise a new
+// read that is then saved. Decided records never re-read unless `force`.
+export async function getPlumbRead(
+  submissionId: string,
+  formData: FormData,
+  force = false,
+): Promise<PlumbReadResult> {
+  requireActionSession()
+  return resolvePlumbRead(
+    { submissionId, formData: formData as Record<string, unknown>, force },
+    { load: loadSavedPlumbRead, save: savePlumbRead, produce: (fd) => produceAssistRead(fd as FormData) },
+  )
+}
+
+async function produceAssistRead(formData: FormData): Promise<{ read: PlumbRead; ok: boolean }> {
+  const summary = plumbReadInput(formData as Record<string, unknown>)
 
   try {
     const { object } = await generateObjectResilient("assistReviewer", {
@@ -809,15 +815,18 @@ You are ADVISORY ONLY. The human reviewer makes the decision; never imply you ar
       ],
     })
     return {
-      verdict: object.verdict,
-      strengths: object.strengths,
-      gaps: object.gaps,
-      suggestedDisposition: object.suggestedDisposition,
-      draftRequestInfo: object.draftRequestInfo,
+      ok: true,
+      read: {
+        verdict: object.verdict,
+        strengths: object.strengths,
+        gaps: object.gaps,
+        suggestedDisposition: object.suggestedDisposition,
+        draftRequestInfo: object.draftRequestInfo,
+      },
     }
   } catch (error) {
     console.error("assistReviewer failed, returning fallback:", error)
-    return {
+    return { ok: false, read: {
       verdict:
         `${TENANT.assistantName} is temporarily unavailable. Review the submission against problem clarity, quantified value, strategic alignment, feasibility, and the AI risk answers.`,
       strengths: [],
@@ -825,7 +834,7 @@ You are ADVISORY ONLY. The human reviewer makes the decision; never imply you ar
       suggestedDisposition: "request_info",
       draftRequestInfo:
         "Thanks for the submission. Could you add a measurable baseline for your success metric and confirm the AI model sourcing before we score this?",
-    }
+    } }
   }
 }
 

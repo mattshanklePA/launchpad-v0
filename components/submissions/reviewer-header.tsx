@@ -11,6 +11,9 @@ import { DecisionChip } from "@/components/submissions/disposition-controls"
 import { LIFECYCLE_STAGE_LABEL, STATUS_LABEL, type LifecycleStage, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import { formatKeystoneDate } from "@/components/dashboard/command-center-data"
 import type { KeystoneStatus } from "@/lib/statusTokens"
+import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
+import { formatDays } from "@/lib/timeToDecision"
 import { cn } from "@/lib/utils"
 
 // Mirrors lib/reviewWorkflow.ts's statusBadgeClasses mapping, but as a
@@ -36,6 +39,7 @@ export function ReviewerHeader({
   decidedAt,
   decidedByName,
   decidedByUnitShort,
+  daysToDecision,
 }: {
   slugTail: string
   lifecycleStage: LifecycleStage
@@ -49,12 +53,17 @@ export function ReviewerHeader({
   decidedAt?: string
   decidedByName?: string
   decidedByUnitShort?: string
+  /** Whole days from submitted to decided; pass only where `features.timeToDecision` is on. */
+  daysToDecision?: number
 }) {
   const meta = [
     unitLabel,
     submitterName,
     `submitted ${formatKeystoneDate(submittedAt)}`,
     decidedAt ? `decided ${formatKeystoneDate(decidedAt)}` : null,
+    decidedAt && daysToDecision !== undefined && getTenant().features.timeToDecision
+      ? tenantCopy().decidedInLabel.replace("{days}", formatDays(daysToDecision))
+      : null,
   ].filter(Boolean).join(" · ")
 
   return (

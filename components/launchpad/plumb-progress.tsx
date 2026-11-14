@@ -105,7 +105,7 @@ export function PlumbProgress({
           </KindTag>
         </div>
         <span className="text-[12.5px] text-muted-foreground">
-          Step {currentStageIndex} of 4 · about {secondsRemaining} seconds
+          About {secondsRemaining} seconds left
         </span>
       </div>
 

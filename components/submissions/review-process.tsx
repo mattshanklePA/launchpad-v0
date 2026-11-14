@@ -162,7 +162,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
   const current = steps.find((s) => s.key === currentStepKey) ?? steps[0]
   const totalSteps = steps.length
   const clusterCount = cluster?.memberIds.length ?? 0
-  const eyebrow = `Review · ${uniqueSlugTail(submission.id)} · step ${current.index} of ${totalSteps}${blockReason ? " · blocks approval on step 1" : ""}`
+  const eyebrow = `Review · ${uniqueSlugTail(submission.id)}${blockReason ? " · blocks approval on step 1" : ""}`
 
   const clusterOfficeCount = cluster?.bureaus.length ?? 0
   const leads: Record<ReviewStepKey, string> = {
@@ -284,7 +284,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
       <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed border-border-default px-4 py-3">
         {previous ? (
           <Button variant="ghost" size="sm" onClick={() => onNavigateStep(previous.key)}>
-            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />Previous
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />Previous: {stepTitle(previous.key, clusterCount)}
           </Button>
         ) : (
           <span />

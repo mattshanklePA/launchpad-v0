@@ -22,6 +22,7 @@ import { getBusinessUnit } from "@/lib/reviewWorkflow"
 import { similarity } from "@/lib/similarity"
 import { isCrossBureauDuplicatePair } from "@/lib/crossBureauDuplicates"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 
 export type RationalizationDecision = "consolidated" | "keep_separate"
 
@@ -158,7 +159,9 @@ export function isRationalizationPending(s: Submission, clusters: Rationalizatio
 // see docs/ARCHITECTURE.md. The cluster/duplicate machinery around it keeps
 // its "bureau" naming: those are internal identifiers, never rendered.
 const blockReason = (tenant: TenantConfig): string =>
-  `Rationalization pending — this cross-${tenant.tierLabels.unit.toLowerCase()} duplicate cluster must be marked consolidated or keep-separate before approval.`
+  tenant.copy?.pendingDecisionLabel
+    ? `${tenantCopy(tenant).pendingDecisionLabel}. This cross-${tenant.tierLabels.unit.toLowerCase()} duplicate cluster must be marked consolidated or ${tenantCopy(tenant).keepSeparate} before approval.`
+    : `Rationalization pending — this cross-${tenant.tierLabels.unit.toLowerCase()} duplicate cluster must be marked consolidated or keep-separate before approval.`
 
 /** True when `s` may be moved to "approved" given its cluster's decision state. */
 export function canApprove(s: Submission, clusters: RationalizationCluster[]): boolean {

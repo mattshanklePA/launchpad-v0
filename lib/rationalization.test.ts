@@ -3,6 +3,7 @@ import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 import { doc } from "@/lib/tenant/doc"
 import { uspto } from "@/lib/tenant/uspto"
 import { dow } from "@/lib/tenant/dow"
+import { es2 as es2Tenant } from "@/lib/tenant/es2"
 import type { Submission } from "@/lib/submissions"
 import {
   clusterDuplicates,
@@ -123,7 +124,8 @@ describe("approve-gate predicate", () => {
     expect(clusterForSubmission(s, clusters)).toBe(cluster)
     expect(isRationalizationPending(s, clusters)).toBe(true)
     expect(canApprove(s, clusters)).toBe(false)
-    expect(rationalizationBlockReason(s, clusters)).toMatch(/rationalization pending/i)
+    expect(rationalizationBlockReason(s, clusters, uspto)).toMatch(/rationalization pending/i)
+    expect(rationalizationBlockReason(s, clusters, es2Tenant)).toMatch(/waiting on a decision: combine or keep separate/i)
     expect(rationalizationBlockReason(s, clusters, doc)).toContain("cross-bureau duplicate cluster")
   })
 

@@ -16,6 +16,7 @@
 // Only `term` and `definition` resolve through the tenant.
 
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 
 export type GlossaryTermKey =
   | "crossBureauRationalization"
@@ -46,9 +47,9 @@ export function getGlossary(tenant: TenantConfig = getTenant()): Record<Glossary
   const inventory = tenant.inventoryLabel
   const inventoryShort = tenant.inventoryShortLabel
   const authority = tenant.riskFramework.label
-  return {
+  const entries: Record<GlossaryTermKey, GlossaryEntry> = {
     crossBureauRationalization: {
-      term: `Cross-${unit} rationalization`,
+      term: tenantCopy(tenant).crossRationalizationTerm,
       definition:
         `A check for AI use cases that look like the same effort being built more than once across different ${unitPlural}, so a reviewer can decide whether to consolidate them or keep them separate before approving.`,
     },
@@ -103,11 +104,15 @@ export function getGlossary(tenant: TenantConfig = getTenant()): Record<Glossary
         "This use case has enough information on file for a reviewer to decide without asking the submitter for more.",
     },
     rmfAtRisk: {
-      term: "RMF at risk",
+      term: tenantCopy(tenant).rmfAtRiskLabel,
       definition:
         "At least one NIST AI RMF function (Govern, Map, Measure, or Manage) has a governance gap serious enough to need attention before this use case can move forward.",
     },
   }
+  for (const [key, override] of Object.entries(tenant.glossaryOverrides ?? {})) {
+    if (key in entries) entries[key as GlossaryTermKey] = { ...entries[key as GlossaryTermKey], ...override }
+  }
+  return entries
 }
 
 /**

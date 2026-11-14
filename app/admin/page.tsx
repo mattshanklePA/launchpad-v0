@@ -3,7 +3,7 @@
 import { Fragment, useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { getSession, hasAdminAccess, isAdmin, logout, ensureSeeded, type Session } from "@/lib/auth"
-import { formatDisplayDate } from "@/lib/dateFormat"
+import { formatKeystoneDate } from "@/lib/dateFormat"
 import { UserManagement } from "@/components/admin/user-management"
 import { useToast } from "@/components/ui/use-toast"
 import { errToDetail } from "@/lib/errToDetail"
@@ -474,7 +474,7 @@ function AdminPageInner() {
     title: s.formData.useCaseTitle || "Untitled idea",
     submitter: s.formData.submitterName || "Anonymous",
     department: officeLabel(s.formData.submitterOffice || ""),
-    lastUpdated: formatDisplayDate(s.submittedAt),
+    lastUpdated: formatKeystoneDate(s.submittedAt),
     status: "needs_review" as const,
     completionRate: 100,
     step: 11,
@@ -840,7 +840,7 @@ function AdminPageInner() {
                               New idea: {s.formData.useCaseTitle || "Untitled idea"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {formatDisplayDate(s.submittedAt)}
+                              {formatKeystoneDate(s.submittedAt)}
                             </p>
                           </div>
                         </div>

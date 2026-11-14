@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Submit an idea, already have this</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#006BA1}a:hover{color:#1E252C}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:3px;border:1px solid #D6CEBE;background:#FFFFFF;color:#2A333C;white-space:nowrap}
+.th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #D6CEBE;background:#FFFFFF;white-space:nowrap}
+.td{padding:12px;border-bottom:1px solid #E7E1D6;font-size:14px;color:#2A333C;vertical-align:middle}
+.num{font-family:'JetBrains Mono',monospace;font-size:13px}
+.rank{display:inline-block;min-width:34px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#E7E1D6;color:#2A333C;border-radius:3px;padding:4px 6px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;margin:0 0 4px}
+.val{font-size:14px;line-height:1.45;color:#2A333C;margin:0}
+.meta{font-size:12px;color:#4A545E;margin-top:3px}
+.sec{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sec h2{font-family:'Chivo',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.012em;margin:0}
+.sec .ctx{font-size:13px;color:#4A545E}
+.sec .rule{flex:1 1 80px;height:2px;background:#C77D3A}
+.panel{background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px}
+.pad{padding:20px 22px}
+.btn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 14px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;cursor:pointer;text-decoration:none}
+.btn-p{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 16px;border:1px solid #006BA1;border-radius:5px;background:#006BA1;color:#FFFFFF;cursor:pointer;text-decoration:none}
+.btn-p:hover{background:#1E252C;color:#FFFFFF}
+.h3{font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0}
+.big{font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em}
+.q{margin:0;font-size:14px;color:#4A545E}
+.badge{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px}
+.nav a{color:#F4F2EC;text-decoration:none;font-size:14px;font-weight:500;padding:10px 2px;border-bottom:3px solid transparent}
+.nav a.on{font-weight:700;border-bottom-color:#C77D3A}
+.note{display:flex;gap:16px;align-items:flex-start}
+.field{font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:9px 11px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;width:100%;box-sizing:border-box}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #E7E1D6;font-size:14px}
+</style>
+</helmet>
+<div style="min-height:100vh;position:relative;background:#F4F2EC;font-family:'Hanken Grotesk',sans-serif;color:#2A333C">
+<header style="background:#1E252C;border-bottom:3px solid #C77D3A">
+  <div style="padding:14px 32px 6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M9 6h16l-4 22h-8z" fill="#C77D3A"></path><path d="M9 6h16l-1 5H10z" fill="#DCA061"></path></svg>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;color:#DCA061">SUBMIT AN IDEA · GUIDED · STEP 3 OF 6</span>
+      <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:22px;letter-spacing:-.02em;color:#F4F2EC">What would it do?</span>
+    </div>
+    <div style="flex:1"></div>
+    <div role="group" aria-label="How you want to fill it in" style="display:flex;border:1px solid #3B4650;border-radius:5px;overflow:hidden"><a href="Intake-Ready-Check.dc.html" aria-current="true" style="font-size:13px;font-weight:600;padding:8px 14px;text-decoration:none;background:#F4F2EC;color:#1E252C">Guided</a><a href="Form-Step2.dc.html" aria-current="false" style="font-size:13px;font-weight:500;padding:8px 14px;text-decoration:none;background:transparent;color:#F4F2EC">Form</a></div><button style="font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:1px solid #97A0A9;border-radius:5px;background:transparent;color:#F4F2EC">Save and finish later</button>
+  </div>
+  <nav class="nav" aria-label="Main" style="padding:0 32px;display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap"><a href="Portfolio-Report.dc.html" class="">Portfolio</a><a href="Action-Center.dc.html" class="">My work</a><a href="Decision-Center.dc.html" class="">Decision Center</a><a href="Intake-Ready-Check.dc.html" class="on">Submit an idea</a><span style="flex:1"></span><span style="font-size:13px;color:#C9CED3;padding:10px 0">Avery Lang · reviewer, AT&amp;R</span></nav>
+</header>
+<div style="background:#E7E1D6;border-bottom:1px solid #D6CEBE;padding:8px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;background:#2A333C;color:#F4F2EC;padding:3px 8px;border-radius:3px">SAMPLE DATA</span>
+  <span style="font-size:13px;color:#4A545E">Every idea, office and number on this page is sample data for the demo.</span>
+</div>
+<main style="max-width:1320px;margin:0 auto;padding:32px 32px 48px;display:flex;flex-direction:column;gap:24px">
+<ol aria-label="Steps, step 3 of 6" style="list-style:none;margin:0;padding:0;display:flex;gap:22px;flex-wrap:wrap"><li style="display:flex;align-items:center;gap:8px;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:12px;height:12px;border-radius:50%;background:#2A333C;border:2px solid #2A333C;box-sizing:border-box"></span>1. Who you are (done)</li><li style="display:flex;align-items:center;gap:8px;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:12px;height:12px;border-radius:50%;background:#2A333C;border:2px solid #2A333C;box-sizing:border-box"></span>2. The problem (done)</li><li style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700"><span aria-hidden="true" style="width:12px;height:12px;border-radius:50%;background:#C77D3A;border:2px solid #2A333C;box-sizing:border-box"></span>3. Your solution</li><li style="display:flex;align-items:center;gap:8px;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:12px;height:12px;border-radius:50%;background:#FFFFFF;border:2px solid #2A333C;box-sizing:border-box"></span>4. Constraints</li><li style="display:flex;align-items:center;gap:8px;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:12px;height:12px;border-radius:50%;background:#FFFFFF;border:2px solid #2A333C;box-sizing:border-box"></span>5. Name it</li><li style="display:flex;align-items:center;gap:8px;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:12px;height:12px;border-radius:50%;background:#FFFFFF;border:2px solid #2A333C;box-sizing:border-box"></span>6. Review and send</li></ol><div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start"><div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px"><div style="display:flex;gap:12px;align-items:flex-start"><svg width="22" height="40" viewBox="0 0 22 40" aria-hidden="true"><line x1="11" y1="0" x2="11" y2="26" stroke="#2A333C" stroke-width="1.5"></line><path d="M5 26h12l-6 12z" fill="#0086CA"></path></svg><div style="background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px;padding:12px 14px;max-width:560px"><p class="lbl">Plumb</p><p class="val">What is broken today? Write it roughly. I will ask what a reviewer would ask.</p></div></div><div style="display:flex;gap:12px;align-items:flex-start"><span class="badge" style="width:22px;height:22px">A</span><div style="background:#E7E1D6;border:1px solid #D6CEBE;border-radius:8px;padding:12px 14px;max-width:560px"><p class="lbl">Avery Lang</p><p class="val">Closeout files are checked by hand before archiving, so missing items only show up during the audit.</p></div></div><div style="display:flex;gap:12px;align-items:flex-start"><svg width="22" height="40" viewBox="0 0 22 40" aria-hidden="true"><line x1="11" y1="0" x2="11" y2="26" stroke="#2A333C" stroke-width="1.5"></line><path d="M5 26h12l-6 12z" fill="#0086CA"></path></svg><div style="background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px;padding:12px 14px;max-width:560px"><p class="lbl">Plumb</p><p class="val">How many closeout files go through this a month?</p></div></div><div style="display:flex;gap:12px;align-items:flex-start"><span class="badge" style="width:22px;height:22px">A</span><div style="background:#E7E1D6;border:1px solid #D6CEBE;border-radius:8px;padding:12px 14px;max-width:560px"><p class="lbl">Avery Lang</p><p class="val">Between 100 and 500.</p></div></div><div style="display:flex;gap:12px;align-items:flex-start"><svg width="22" height="40" viewBox="0 0 22 40" aria-hidden="true"><line x1="11" y1="0" x2="11" y2="26" stroke="#2A333C" stroke-width="1.5"></line><path d="M5 26h12l-6 12z" fill="#0086CA"></path></svg><div style="background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px;padding:12px 14px;max-width:560px"><p class="lbl">Plumb</p><p class="val">Last one: are the errors in certain file types, or spread evenly? If they cluster, the tool can start narrow and prove itself faster.</p></div></div></div><aside style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:16px"><div class="panel pad" style="border-top:3px solid #006BA1;display:flex;flex-direction:column;gap:12px">
+<p class="h3">Something similar may already exist</p><p class="q">The portfolio already owns or approved these. Checked against approved ideas and tools in use.</p><div style="border-top:1px solid #E7E1D6;padding-top:10px"><p style="margin:0;font-weight:600">Contract file completeness check</p><p class="meta">Owned by LOG-FIN · in use since June 2026</p><p class="val" style="margin-top:4px">Matched because: both check files for missing required items before archiving.</p></div><div style="border-top:1px solid #E7E1D6;padding-top:10px"><p style="margin:0;font-weight:600">Closeout checklist assistant</p><p class="meta">Owned by BTS · approved 2 Aug 2026</p><p class="val" style="margin-top:4px">Matched because: same users (contract specialists) and the same data (contract files).</p></div><fieldset style="border:0;padding:0;margin:6px 0 0;display:flex;flex-direction:column;gap:8px"><legend class="lbl">What do you want to do?</legend>
+<label style="display:flex;gap:8px;font-size:14px"><input type="radio" name="d"> Use that instead. Keystone sends its owner a short note and saves this as a request to reuse.</label>
+<label style="display:flex;gap:8px;font-size:14px"><input type="radio" name="d" checked=""> Mine is different.</label>
+<div style="padding-left:24px"><label class="lbl" for="diff">How is it different? (required)</label><input id="diff" class="field" value="Ours runs on ACWS files, which the LOG-FIN tool cannot read."></div>
+<label style="display:flex;gap:8px;font-size:14px"><input type="radio" name="d"> Not sure. Let the reviewer decide.</label></fieldset>
+<p class="meta">The reviewer sees what you chose.</p></div></aside></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

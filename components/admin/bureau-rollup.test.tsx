@@ -9,6 +9,8 @@ import { createRoot, type Root } from "react-dom/client"
 import { BureauRollup } from "./bureau-rollup"
 import { initialFormData, type FormData } from "@/lib/steps"
 import type { Submission } from "@/lib/submissions"
+import { getTenant } from "@/lib/tenant"
+import { businessUnitLabel } from "@/lib/reviewWorkflow"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -66,6 +68,50 @@ describe("BureauRollup legend", () => {
     withTenant("uspto", () => {
       const text = render(<BureauRollup submissions={submissions} />).textContent ?? ""
       expect(text).toContain("Consolidated into one OMB entry")
+    })
+  })
+})
+
+// F3-6 item 4: the roll-up built its rows from the submissions it was given, so
+// an office with no ideas vanished ("across 4 program offices" with 5
+// configured). Every configured unit gets a row, zeros included.
+describe("BureauRollup lists every configured unit", () => {
+  it.each(["uspto", "doc", "dow", "es2"])("%s: a configured unit with no ideas still has a row", (id) => {
+    withTenant(id, () => {
+      const configured = getTenant().unit.options
+      const withIdea = configured[0].value
+      const el = render(
+        <BureauRollup
+          submissions={[
+            { id: "z1", submittedAt: "2026-01-01T00:00:00.000Z", status: "submitted", businessUnit: withIdea, formData: { ...initialFormData } as FormData },
+          ]}
+        />,
+      )
+      const rows = Array.from(el.querySelectorAll("tbody tr")).map((r) => r.textContent ?? "")
+      for (const o of configured) {
+        expect(rows.some((r) => r.includes(businessUnitLabel(o.value)))).toBe(true)
+      }
+      expect(el.textContent).toContain(`across ${configured.length} `)
+    })
+  })
+
+  it("still renders a row for an idea filed under a unit the tenant does not configure", () => {
+    withTenant("es2", () => {
+      const el = render(
+        <BureauRollup
+          submissions={[
+            { id: "z2", submittedAt: "2026-01-01T00:00:00.000Z", status: "submitted", businessUnit: "legacy_unit", formData: { ...initialFormData } as FormData },
+          ]}
+        />,
+      )
+      expect(el.textContent).toContain("legacy_unit")
+    })
+  })
+
+  it("renders the table for a tenant with no ideas at all", () => {
+    withTenant("doc", () => {
+      const el = render(<BureauRollup submissions={[]} />)
+      expect(el.querySelectorAll("tbody tr").length).toBeGreaterThan(getTenant().unit.options.length)
     })
   })
 })

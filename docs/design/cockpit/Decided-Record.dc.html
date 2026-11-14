@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Decided record</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#006BA1}a:hover{color:#1E252C}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:3px;border:1px solid #D6CEBE;background:#FFFFFF;color:#2A333C;white-space:nowrap}
+.th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #D6CEBE;background:#FFFFFF;white-space:nowrap}
+.td{padding:12px;border-bottom:1px solid #E7E1D6;font-size:14px;color:#2A333C;vertical-align:middle}
+.num{font-family:'JetBrains Mono',monospace;font-size:13px}
+.rank{display:inline-block;min-width:34px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#E7E1D6;color:#2A333C;border-radius:3px;padding:4px 6px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;margin:0 0 4px}
+.val{font-size:14px;line-height:1.45;color:#2A333C;margin:0}
+.meta{font-size:12px;color:#4A545E;margin-top:3px}
+.sec{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sec h2{font-family:'Chivo',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.012em;margin:0}
+.sec .ctx{font-size:13px;color:#4A545E}
+.sec .rule{flex:1 1 80px;height:2px;background:#C77D3A}
+.panel{background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px}
+.pad{padding:20px 22px}
+.btn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 14px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;cursor:pointer;text-decoration:none}
+.btn-p{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 16px;border:1px solid #006BA1;border-radius:5px;background:#006BA1;color:#FFFFFF;cursor:pointer;text-decoration:none}
+.btn-p:hover{background:#1E252C;color:#FFFFFF}
+.h3{font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0}
+.big{font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em}
+.q{margin:0;font-size:14px;color:#4A545E}
+.badge{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px}
+.nav a{color:#F4F2EC;text-decoration:none;font-size:14px;font-weight:500;padding:10px 2px;border-bottom:3px solid transparent}
+.nav a.on{font-weight:700;border-bottom-color:#C77D3A}
+.note{display:flex;gap:16px;align-items:flex-start}
+.field{font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:9px 11px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;width:100%;box-sizing:border-box}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #E7E1D6;font-size:14px}
+</style>
+</helmet>
+<div style="min-height:100vh;position:relative;background:#F4F2EC;font-family:'Hanken Grotesk',sans-serif;color:#2A333C">
+<header style="background:#1E252C;border-bottom:3px solid #C77D3A">
+  <div style="padding:14px 32px 6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M9 6h16l-4 22h-8z" fill="#C77D3A"></path><path d="M9 6h16l-1 5H10z" fill="#DCA061"></path></svg>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;color:#DCA061">BTS · KS-3104 · DECIDED</span>
+      <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:22px;letter-spacing:-.02em;color:#F4F2EC">Supplier past-performance risk scoring before award</span>
+    </div>
+    <div style="flex:1"></div>
+    <button style="font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:1px solid #97A0A9;border-radius:5px;background:transparent;color:#F4F2EC">Download record</button>
+  </div>
+  <nav class="nav" aria-label="Main" style="padding:0 32px;display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap"><a href="Portfolio-Report.dc.html" class="">Portfolio</a><a href="Action-Center.dc.html" class="on">My work</a><a href="Decision-Center.dc.html" class="">Decision Center</a><a href="Intake-Ready-Check.dc.html" class="">Submit an idea</a><span style="flex:1"></span><span style="font-size:13px;color:#C9CED3;padding:10px 0">Avery Lang · reviewer, AT&amp;R</span></nav>
+</header>
+<div style="background:#E7E1D6;border-bottom:1px solid #D6CEBE;padding:8px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;background:#2A333C;color:#F4F2EC;padding:3px 8px;border-radius:3px">SAMPLE DATA</span>
+  <span style="font-size:13px;color:#4A545E">Every idea, office and number on this page is sample data for the demo.</span>
+</div>
+<main style="max-width:1320px;margin:0 auto;padding:32px 32px 48px;display:flex;flex-direction:column;gap:24px">
+<div class="panel pad" style="border-top:3px solid #C24A3A;display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:220px"><p class="lbl">The decision</p><span class="tag" style="border-color:#C24A3A;color:#A23A2C"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="#C24A3A" stroke-width="1.8"></path></svg>Not approved</span></div>
+<div style="flex:1;min-width:260px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px 32px"><div><p class="lbl">Decided by</p><p class="val">Avery Lang, reviewer, AT&amp;R</p></div><div><p class="lbl">Date</p><p class="val">18 Aug 2026</p></div><div><p class="lbl">Record</p><p class="val">Final and locked after program office sign-off</p></div></div></div>
+<span class="tag" style=""><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5" width="8" height="6" fill="#2A333C"></rect><path d="M4 5V3.5a2 2 0 0 1 4 0V5" fill="none" stroke="#2A333C" stroke-width="1.4"></path></svg>Locked</span></div>
+<div role="tablist" style="display:flex;gap:24px;border-bottom:1px solid #D6CEBE"><button role="tab" aria-selected="true" style="font:600 15px 'Hanken Grotesk',sans-serif;background:none;border:0;border-bottom:3px solid #C77D3A;padding:10px 0;color:#2A333C">The decision</button><button role="tab" aria-selected="false" style="font:500 15px 'Hanken Grotesk',sans-serif;background:none;border:0;padding:10px 0;color:#4A545E">Review record</button><button role="tab" aria-selected="false" style="font:500 15px 'Hanken Grotesk',sans-serif;background:none;border:0;padding:10px 0;color:#4A545E">Conversation</button></div>
+<div class="panel pad"><p class="lbl">Why it was not approved</p><p style="margin:0;font-size:16px;line-height:1.6;max-width:900px">It duplicates the vendor risk-scoring effort already in build under AT&amp;R. The scoring model belongs in one program. Resubmit if the before-award scope differs from theirs.</p></div>
+<div class="panel pad note"><svg width="22" height="40" viewBox="0 0 22 40" aria-hidden="true"><line x1="11" y1="0" x2="11" y2="26" stroke="#2A333C" stroke-width="1.5"></line><path d="M5 26h12l-6 12z" fill="#0086CA"></path></svg><div><p class="lbl">Plumb's read · advice, given 17 Aug 2026</p><p style="margin:0;font-size:15px;line-height:1.6;max-width:880px">Plumb advised not approving it as a duplicate. The reviewer's decision agrees.</p></div></div>
+<div class="sec"><h2>Review record</h2><span class="ctx">every answer, who gave it and when · read only</span><span class="rule" aria-hidden="true"></span></div>
+<div class="panel" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px"><thead><tr><th class="th">Step</th><th class="th">Answer</th><th class="th">Who</th><th class="th">When</th></tr></thead><tbody><tr style=""><td class="td">Are these one effort?</td><td class="td">Separate, linked to the AT&amp;R model</td><td class="td">Avery Lang</td><td class="td">17 Aug 2026</td></tr><tr style=""><td class="td">Is this high impact?</td><td class="td">Yes, shapes which companies win work</td><td class="td">Avery Lang</td><td class="td">17 Aug 2026</td></tr><tr style=""><td class="td">Does the risk profile hold?</td><td class="td">Holds once a testing plan is added</td><td class="td">Avery Lang</td><td class="td">18 Aug 2026</td></tr><tr style=""><td class="td">Inventory fields</td><td class="td">Confirmed</td><td class="td">Avery Lang</td><td class="td">18 Aug 2026</td></tr><tr style=""><td class="td">Decision</td><td class="td">Not approved</td><td class="td">Avery Lang</td><td class="td">18 Aug 2026</td></tr></tbody></table></div>
+<div class="sec"><h2>Conversation with the submitter</h2><span class="ctx">2 messages</span><span class="rule" aria-hidden="true"></span></div>
+<div class="panel pad" style="display:flex;flex-direction:column;gap:14px"><div><p class="lbl">Avery Lang · reviewer · 18 Aug</p><p class="val">Not approved as a duplicate of the AT&amp;R effort. If your before-award scope needs something theirs will not cover, resubmit with that difference up front.</p></div><div><p class="lbl">Andre Duval · submitter · 18 Aug</p><p class="val">Understood. We will work with the AT&amp;R team on the shared model.</p></div></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

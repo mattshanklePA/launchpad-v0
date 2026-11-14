@@ -164,9 +164,11 @@ export function DashboardShell({
                 <SidebarGroupLabel className={GROUP_LABEL_CLASS}>My view</SidebarGroupLabel>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton disabled tooltip="Personal dashboard - coming soon" className={`cursor-not-allowed ${SIDEBAR_ITEM_TEXT_CLASS}`}>
-                      <User />
-                      <span>Personal</span>
+                    <SidebarMenuButton asChild tooltip="Ideas you submitted" className={SIDEBAR_ITEM_TEXT_CLASS}>
+                      <Link href="/my-ideas">
+                        <User />
+                        <span>Personal</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
@@ -257,7 +259,7 @@ export function DashboardShell({
             )}
           </div>
         </header>
-        <div className="flex-1 px-6 py-6 md:px-10 lg:px-14 lg:py-8">{children}</div>
+        <div className="min-w-0 flex-1 px-6 py-6 md:px-10 lg:px-14 lg:py-8">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   )

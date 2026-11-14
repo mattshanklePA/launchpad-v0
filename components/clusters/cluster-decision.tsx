@@ -6,6 +6,8 @@
 // lib/rationalizationActions.ts so neither surface duplicates the write.
 // Exported so RD-6 (issue #206, reviewer-path step 1) can reuse it.
 
+import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
@@ -67,7 +69,7 @@ export function ClusterDecision({
     try {
       await undoRationalizationDecision(cluster)
       await onDecided()
-      toast({ title: "Decision undone", description: "The cluster is pending rationalization again." })
+      toast({ title: "Decision undone", description: `The cluster is ${tenantCopy(getTenant()).pendingDecisionPhrase} again.` })
     } catch (error) {
       toast({
         variant: "destructive",

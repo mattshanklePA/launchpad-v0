@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import { buildSubmissionContext, buildQuestionModeGuidance, exampleUserGroups } from "@/lib/scoutPrompt"
+import { buildSubmissionContext, buildQuestionModeGuidance, buildSubmitterFitGuidance, exampleUserGroups } from "@/lib/scoutPrompt"
 import { initialFormData, type FormData } from "@/lib/steps"
 import { ALL_TENANTS } from "@/lib/tenant"
 import { doc } from "@/lib/tenant/doc"
@@ -181,5 +181,40 @@ describe("QUESTION MODE example user groups come from the tenant (ES2-9 #4)", ()
       expect(groups, `${tenant.id} includes Other`).not.toContain("Other")
       for (const g of groups) expect(configured.has(g), `${tenant.id}: ${g}`).toBe(true)
     }
+  })
+})
+
+// Issue #268: guided mode asked every submitter about contracting workflows.
+describe("buildSubmitterFitGuidance — questions fit the submitter's office and role (#268)", () => {
+  const roleless = form({})
+
+  it("names the submitter's role and program office in words, from the tenant's labels", () => {
+    const g = buildSubmitterFitGuidance(
+      form({ submitterRole: "contracting_officer", submitterOffice: "atr" }),
+      es2,
+    )
+    expect(g).toContain("Contracting Officer")
+    expect(g).toContain(es2.unit.options.find((o) => o.value === "atr")!.label)
+  })
+
+  it("forbids assuming contracting when the role and office are not contracting", () => {
+    const g = buildSubmitterFitGuidance(form({ submitterRole: "product_owner", submitterOffice: "atr" }), es2)
+    expect(g).toMatch(/do not assume/i)
+    expect(g).toMatch(/contracting/i)
+    expect(g).toContain("their own work")
+  })
+
+  it("does not tell a contracting officer to avoid contracting", () => {
+    const g = buildSubmitterFitGuidance(form({ submitterRole: "contracting_officer", submitterOffice: "atr" }), es2)
+    expect(g).not.toMatch(/do not assume/i)
+  })
+
+  it("says so plainly when the session has neither role nor office", () => {
+    expect(buildSubmitterFitGuidance(roleless, es2)).toMatch(/do not assume/i)
+  })
+
+  it("is part of the submission context so every coaching turn carries it", () => {
+    const ctx = buildSubmissionContext(form({ submitterRole: "product_owner", submitterOffice: "atr" }), 2, es2)
+    expect(ctx).toContain("Product Owner")
   })
 })

@@ -4,7 +4,6 @@ import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { getSession } from "@/lib/auth"
-import { formatDisplayDate } from "@/lib/dateFormat"
 import { useDataProvider } from "@/components/data-provider"
 import {
   getSubmissions,
@@ -42,9 +41,10 @@ import {
   departmentFinalApprovalEnabled,
   type SignoffDecision,
 } from "@/lib/bureauSignoff"
-import { assistReviewer, draftGovernanceFields } from "@/app/actions"
+import { getPlumbRead, draftGovernanceFields } from "@/app/actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import {
   rmfBadgeClass,
   rmfFunctionStatusBadgeClass,
@@ -66,6 +66,8 @@ import {
 } from "@/lib/governanceCapture"
 import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { buildActivity } from "@/lib/activity"
+import { LockedGovernanceChecklist } from "@/components/submissions/locked-governance"
+import { isDecisionLocked } from "@/lib/decisionLock"
 import { GovernanceCapturePanel } from "@/components/submissions/governance-capture-panel"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -87,12 +89,13 @@ import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
+import { timeToDecision } from "@/lib/timeToDecision"
 import { formatKeystoneDate, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
 
-type Assist = Awaited<ReturnType<typeof assistReviewer>>
+type Assist = NonNullable<Awaited<ReturnType<typeof getPlumbRead>>["read"]>
 
 const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
   high_impact: "High-impact",
@@ -167,6 +170,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const [ready, setReady] = useState(false)
   const [assist, setAssist] = useState<Assist | null>(null)
   const [assisting, setAssisting] = useState(false)
+  const [assistSavedAt, setAssistSavedAt] = useState<string | null>(null)
   const [comment, setComment] = useState("")
   const [busy, setBusy] = useState(false)
   const [rmfOverrideNote, setRmfOverrideNote] = useState("")
@@ -216,10 +220,25 @@ export function SubmissionDetail({ id }: { id: string }) {
     if (!sub || ranRef.current || !isReviewer) return
     ranRef.current = true
     setAssisting(true)
-    assistReviewer(sub.formData)
-      .then(setAssist)
+    getPlumbRead(sub.id, sub.formData)
+      .then((r) => {
+        setAssist(r.read)
+        setAssistSavedAt(r.savedAt)
+      })
       .finally(() => setAssisting(false))
   }, [sub, isReviewer])
+
+  // Decided records never re-read on their own; this is the "Produce a read" button.
+  const produceRead = () => {
+    if (!sub) return
+    setAssisting(true)
+    getPlumbRead(sub.id, sub.formData, true)
+      .then((r) => {
+        setAssist(r.read)
+        setAssistSavedAt(r.savedAt)
+      })
+      .finally(() => setAssisting(false))
+  }
 
   // RD-6 (issue #207): drives PlumbProgress's "drafting governance fields"
   // stage on the pre-resolution loading page independently of
@@ -503,7 +522,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const rmfStatusClass = resolvedRmf ? (resolvedRmf.review ? STATUS_BADGE_CLASS.healthy : STATUS_BADGE_CLASS.attention) : ""
 
   const rationalizationStatusLabel = blockReason
-    ? "Rationalization pending"
+    ? tenantCopy(tenant).pendingDecisionLabel
     : rationalizationDecision?.decision === "consolidated"
       ? "Consolidated"
       : "Keep separate"
@@ -521,10 +540,13 @@ export function SubmissionDetail({ id }: { id: string }) {
   const decidedByName = signedOff?.signedOffByName
   const decidedByUnitShort = signedOff ? shortBusinessUnitLabel(signedOff.bureau) : undefined
   const reasonText = decided ? decisionReasonText(sub, decidedAt) : ""
+  const locked = isDecisionLocked({ ...(fd as Record<string, unknown>), reviewStatus: status }, tenantHasBureauTier())
   const reversibilityText = signedOff
     ? `Signed off ${formatKeystoneDate(signedOff.signedOffAt)}; contact the office to reopen.`
-    : `Reversible until ${tiers.unit.toLowerCase()} sign-off.`
-  const showDispositionButtons = !signedOff
+    : locked
+      ? "This decision is final; contact the office to reopen."
+      : `Reversible until ${tiers.unit.toLowerCase()} sign-off.`
+  const showDispositionButtons = !locked
   const activity = buildActivity(sub)
 
   const complianceItems: ComplianceGridItem[] = [
@@ -560,6 +582,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           awaitingPlumb ? (
             <ReviewProcessLoading
               submissionId={sub.id}
+              submittedAt={sub.submittedAt}
               totalSteps={reviewSteps.length}
               reviewerName={session?.name || "Reviewer"}
               assistantName={tenant.assistantName}
@@ -625,6 +648,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           decidedAt={decidedAt}
           decidedByName={decidedByName}
           decidedByUnitShort={decidedByUnitShort}
+          daysToDecision={timeToDecision(sub)}
         />
 
         {showBureauTier && deptTierEnabled && isDeptViewer && bureauSignoff && (
@@ -645,7 +669,7 @@ export function SubmissionDetail({ id }: { id: string }) {
             </div>
             {departmentApproval ? (
               <p className="text-sm text-muted-foreground">
-                {departmentApproval.decision === "approved" ? "Approved" : "Rejected"} by {departmentApproval.byName} on {formatDisplayDate(departmentApproval.at)}.
+                {departmentApproval.decision === "approved" ? "Approved" : "Rejected"} by {departmentApproval.byName} on {formatKeystoneDate(departmentApproval.at)}.
               </p>
             ) : (
               <div className="flex flex-wrap items-center gap-2">
@@ -684,14 +708,10 @@ export function SubmissionDetail({ id }: { id: string }) {
                 assistantName={tenant.assistantName}
                 assisting={assisting}
                 assist={assist}
+                assistSavedAt={assistSavedAt}
+                onProduceRead={produceRead}
                 comments={comments}
                 submitterFirstName={(fd.submitterName || "the submitter").split(" ")[0]}
-                comment={comment}
-                onCommentChange={setComment}
-                onSend={() => postComment("needs_info")}
-                sendDisabled={busy || !comment.trim()}
-                onDraftWithPlumb={() => assist?.draftRequestInfo && setComment(assist.draftRequestInfo)}
-                draftDisabled={busy || assisting}
                 onSeeAllConversation={() => changeTab("conversation")}
               />
             ) : (
@@ -741,7 +761,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                         {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}
                       </div>
                       <div>
-                        <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatDisplayDate(c.createdAt)}</span></div>
+                        <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatKeystoneDate(c.createdAt)}</span></div>
                         <div className="text-sm text-muted-foreground">{c.body}</div>
                       </div>
                     </div>
@@ -785,6 +805,22 @@ export function SubmissionDetail({ id }: { id: string }) {
           <TabsContent value="governance" className="space-y-[18px] pt-[18px]">
             {isReviewer && (
               <div className="space-y-[18px]">
+                {decided ? (
+              <LockedGovernanceChecklist
+                  decision={decision!}
+                  highImpact={fd.highImpact}
+                  fieldsSentence={governanceFieldCountsSentence(governanceCounts, tenant.assistantName)}
+                assistantName={tenant.assistantName}
+                examples={governanceExamples.map((e) => ({
+                  key: e.field,
+                  label: FIELD_REGISTRY_BY_KEY[e.field]?.label || e.field,
+                  value: governanceFieldValueLabel(e.field, e.proposedValue),
+                  rationale: e.rationale || "",
+                }))}
+                  resolvedRmf={resolvedRmf ?? undefined}
+                  notConfirmedLabel={decision === "approved" ? tenantCopy(tenant).rmfNotConfirmedApproved : tenantCopy(tenant).rmfNotConfirmedRejected}
+                />
+                ) : (
                 <div className="space-y-3 rounded-lg border border-border-subtle bg-card p-5">
                   <div className="font-heading text-[18px] font-bold text-foreground">Decision checklist</div>
 
@@ -881,7 +917,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                           {resolvedRmf.review.decision === "overridden"
                             ? `Overridden to "${RMF_OVERALL_LABELS[resolvedRmf.review.overriddenOverall || resolvedRmf.review.proposedOverall]}" (proposed "${RMF_OVERALL_LABELS[resolvedRmf.review.proposedOverall]}")`
                             : "Confirmed as proposed"}
-                          {" "}by {resolvedRmf.review.byName}, {formatDisplayDate(resolvedRmf.review.at)}
+                          {" "}by {resolvedRmf.review.byName}, {formatKeystoneDate(resolvedRmf.review.at)}
                           {resolvedRmf.review.notes ? ` — "${resolvedRmf.review.notes}"` : ""}
                         </p>
                       )}
@@ -921,6 +957,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                     </div>
                   )}
                 </div>
+                )}
 
                 {cluster && rationalizationIndex && (
                   <ChecklistItem
@@ -939,8 +976,8 @@ export function SubmissionDetail({ id }: { id: string }) {
                       {blockReason
                         ? `This use case closely matches work filed under another ${tiers.unit.toLowerCase()}.`
                         : rationalizationDecision?.decision === "consolidated"
-                          ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${formatDisplayDate(rationalizationDecision.decidedAt)}.`
-                          : `Marked keep-separate by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${formatDisplayDate(rationalizationDecision.decidedAt)}` : ""}.`}
+                          ? `Consolidated into "${leadSubmission?.formData.useCaseTitle || "the lead use case"}" by ${rationalizationDecision.decidedBy} on ${formatKeystoneDate(rationalizationDecision.decidedAt)}.`
+                          : `Marked ${tenantCopy(tenant).keepSeparate} by ${rationalizationDecision?.decidedBy}${rationalizationDecision ? ` on ${formatKeystoneDate(rationalizationDecision.decidedAt)}` : ""}.`}
                     </p>
                     <ul className="space-y-1.5">
                       {clusterMembers.map((m) => (
@@ -952,7 +989,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                         </li>
                       ))}
                     </ul>
-                    {blockReason && (
+                    {blockReason && !decided && (
                       isDeptViewer ? (
                         <div className="pt-2 border-t">
                           <RationalizationPanel submissions={clusterSubmissionsForPanel} />
@@ -1150,7 +1187,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                     {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}
                   </div>
                   <div>
-                    <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatDisplayDate(c.createdAt)}</span></div>
+                    <div className="text-sm"><span className="font-medium">{c.authorName}</span> <span className="text-xs text-muted-foreground capitalize">· {c.authorRole} · {formatKeystoneDate(c.createdAt)}</span></div>
                     <div className="text-sm text-muted-foreground">{c.body}</div>
                   </div>
                 </div>

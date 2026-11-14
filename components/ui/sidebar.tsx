@@ -146,7 +146,7 @@ export function SidebarTrigger({ className, ...props }: React.ComponentProps<typ
 }
 
 export function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
-  return <main className={cn("flex min-h-svh flex-1 flex-col bg-muted/30", className)} {...props} />
+  return <main className={cn("flex min-h-svh min-w-0 flex-1 flex-col bg-muted/30", className)} {...props} />
 }
 
 export function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {

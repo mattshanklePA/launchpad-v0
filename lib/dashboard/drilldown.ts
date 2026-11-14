@@ -17,8 +17,10 @@ import { determineConsolidation } from "@/lib/ombConsolidation"
 import { clusterDuplicates, isRationalizationPending, tenantHasBureauTier } from "@/lib/rationalization"
 import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { scopedSubmissions, readinessBucket } from "@/lib/dashboard/metrics"
+import { timeToDecision, formatDays } from "@/lib/timeToDecision"
 
 /** One underlying submission behind a KPI count — the compact view model every non-cluster KPI list shares. */
 export type KpiDrilldownItem = {
@@ -41,9 +43,13 @@ export type KpiDrilldown = {
   readiness: KpiDrilldownItem[]
   "high-impact": KpiDrilldownItem[]
   "omb-reportable": KpiDrilldownItem[]
+  /** Ideas whose reportability needs a human look (`status === "review"`) — the list behind the Action Center's "N need a reportability review" row. */
+  "omb-review": KpiDrilldownItem[]
   signoff: KpiDrilldownItem[]
   duplicates: DuplicateClusterDrilldownItem[]
   rmf: KpiDrilldownItem[]
+  /** Decided records with their days to decision; `[]` unless the tenant turns `features.timeToDecision` on. */
+  "time-to-decision": KpiDrilldownItem[]
 }
 
 function toItem(s: Submission, cardField: string): KpiDrilldownItem {
@@ -66,6 +72,7 @@ function toItem(s: Submission, cardField: string): KpiDrilldownItem {
  *   - `readiness` <-> `readinessDistribution(...).ready`
  *   - `high-impact` <-> `highImpactCount(...).count`
  *   - `omb-reportable` <-> `ombReportabilitySummary(...).reportable`
+ *   - `omb-review` <-> `ombReportabilitySummary(...).review`
  *   - `signoff` <-> `awaitingSignoff(...).count`
  *   - `duplicates` <-> `crossBureauDuplicatesSummary(...).clusterCount`
  *   - `rmf` <-> `rmfRollupSummary(...).at_risk`
@@ -97,6 +104,10 @@ export function getKpiDrilldown(
       return toItem(s, `${reason} (${consolidationStatus})`)
     })
 
+  const ombReview = rows
+    .filter((s) => determineReportability(s.formData).status === "review")
+    .map((s) => toItem(s, determineReportability(s.formData).reason))
+
   const signoff = tenantHasBureauTier(tenant)
     ? rows
         .filter((s) => getStatus(s) === "approved" && !getBureauSignoff(s))
@@ -112,7 +123,7 @@ export function getKpiDrilldown(
       const lead = byId.get(c.memberIds[0])!
       const pending = isRationalizationPending(lead, clusters)
       return {
-        ...toItem(lead, pending ? "Pending rationalization" : "Decided"),
+        ...toItem(lead, pending ? tenantCopy(tenant).pendingClusterField : "Decided"),
         bureau: c.bureaus.join(","),
         bureauLabel: c.bureaus.map(businessUnitLabel).join(" / "),
         memberIds: c.memberIds,
@@ -124,13 +135,22 @@ export function getKpiDrilldown(
     .filter(({ resolved }) => resolved.effectiveOverall === "at_risk")
     .map(({ s, resolved }) => toItem(s, resolved.profile.rationale))
 
+  const timeToDecisionItems = tenant.features?.timeToDecision
+    ? rows.flatMap((s) => {
+        const days = timeToDecision(s)
+        return days === undefined ? [] : [toItem(s, formatDays(days))]
+      })
+    : []
+
   return {
     pipeline,
     readiness,
     "high-impact": highImpact,
     "omb-reportable": ombReportable,
+    "omb-review": ombReview,
     signoff,
     duplicates,
     rmf,
+    "time-to-decision": timeToDecisionItems,
   }
 }

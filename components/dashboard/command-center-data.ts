@@ -8,11 +8,12 @@
 // how to word and group what those already computed.
 
 import type { TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import type { DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, STATUS_LABEL, businessUnitLabel, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import { clusterHref } from "@/lib/rationalization"
-import { DISPLAY_TIME_ZONE } from "@/lib/dateFormat"
+import { DISPLAY_TIME_ZONE, formatKeystoneDate } from "@/lib/dateFormat"
 import { kpiDrilldownEntryHref } from "./kpi-card-data"
 import type { ActionItem } from "./action-center-data"
 import type { KeystoneStatus } from "@/lib/statusTokens"
@@ -39,12 +40,7 @@ export function splitLeadingCount(title: string): [count: string, rest: string] 
   return m ? [m[1], m[2]] : ["", title]
 }
 
-/** `d Mon yyyy` (e.g. "18 Aug 2026") — the mock's date format throughout the dashboard family. */
-export function formatKeystoneDate(iso: string, timeZone: string = DISPLAY_TIME_ZONE): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric" }).format(d)
-}
+export { formatKeystoneDate } from "@/lib/dateFormat"
 
 /** Splits a `"Name (CODE)"` option label (bureau/office labels throughout `lib/tenant`) into its code and bare name; `code: null` when the label carries no trailing parenthetical. */
 export function splitLabelCode(label: string): { code: string | null; name: string } {
@@ -106,11 +102,12 @@ export function buildHeroCluster(
   const unitPluralLower = tenant.tierLabels.unitPlural.toLowerCase()
   const memberCount = lead.memberIds.length
 
+  const copy = tenantCopy(tenant)
   const headline = `${spellCount(memberCount)} ${unitPluralLower} are building ${lead.title}.`
   const body =
     pendingClusters.length === 1
-      ? "One duplicate cluster is pending rationalization. Nothing in it can be approved until you consolidate it or mark it keep-separate."
-      : `${pendingClusters.length} duplicate clusters are pending rationalization. Nothing in them can be approved until each is consolidated or marked keep-separate.`
+      ? `One duplicate cluster is ${copy.pendingDecisionPhrase}. Nothing in it can be approved until you consolidate it or mark it ${copy.keepSeparate}.`
+      : `${pendingClusters.length} duplicate clusters are ${copy.pendingDecisionPhrase}. Nothing in them can be approved until each is consolidated or marked ${copy.keepSeparate}.`
 
   return {
     headline,

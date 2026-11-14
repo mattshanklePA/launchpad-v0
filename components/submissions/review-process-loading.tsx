@@ -13,9 +13,11 @@ import { Button } from "@/components/ui/button"
 import { ProcessHeaderCard } from "@/components/submissions/review-process"
 import { PlumbProgress } from "@/components/launchpad/plumb-progress"
 import { uniqueSlugTail } from "@/components/dashboard/command-center-data"
+import { submittedLabel } from "@/lib/dateFormat"
 
 export function ReviewProcessLoading({
   submissionId,
+  submittedAt,
   totalSteps,
   reviewerName,
   assistantName,
@@ -24,6 +26,7 @@ export function ReviewProcessLoading({
   onSkipToSteps,
 }: {
   submissionId: string
+  submittedAt: string
   totalSteps: number
   reviewerName: string
   assistantName: string
@@ -34,7 +37,7 @@ export function ReviewProcessLoading({
   return (
     <div className="flex flex-col gap-[18px]">
       <ProcessHeaderCard
-        eyebrow={`Review · ${uniqueSlugTail(submissionId)} · just submitted`}
+        eyebrow={`Review · ${uniqueSlugTail(submissionId)} · ${submittedLabel(submittedAt)}`}
         title={`${assistantName} reads it before you do`}
         lead={`Up to 35 seconds. It checks for duplicates, drafts the governance fields, and writes an advisory recommendation.`}
         stepIndex={null}

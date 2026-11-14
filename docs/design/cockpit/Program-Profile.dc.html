@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Program profile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#006BA1}a:hover{color:#1E252C}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:3px;border:1px solid #D6CEBE;background:#FFFFFF;color:#2A333C;white-space:nowrap}
+.th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #D6CEBE;background:#FFFFFF;white-space:nowrap}
+.td{padding:12px;border-bottom:1px solid #E7E1D6;font-size:14px;color:#2A333C;vertical-align:middle}
+.num{font-family:'JetBrains Mono',monospace;font-size:13px}
+.rank{display:inline-block;min-width:34px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#E7E1D6;color:#2A333C;border-radius:3px;padding:4px 6px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;margin:0 0 4px}
+.val{font-size:14px;line-height:1.45;color:#2A333C;margin:0}
+.meta{font-size:12px;color:#4A545E;margin-top:3px}
+.sec{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sec h2{font-family:'Chivo',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.012em;margin:0}
+.sec .ctx{font-size:13px;color:#4A545E}
+.sec .rule{flex:1 1 80px;height:2px;background:#C77D3A}
+.panel{background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px}
+.pad{padding:20px 22px}
+.btn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 14px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;cursor:pointer;text-decoration:none}
+.btn-p{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 16px;border:1px solid #006BA1;border-radius:5px;background:#006BA1;color:#FFFFFF;cursor:pointer;text-decoration:none}
+.btn-p:hover{background:#1E252C;color:#FFFFFF}
+.h3{font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0}
+.big{font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em}
+.q{margin:0;font-size:14px;color:#4A545E}
+.badge{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px}
+.nav a{color:#F4F2EC;text-decoration:none;font-size:14px;font-weight:500;padding:10px 2px;border-bottom:3px solid transparent}
+.nav a.on{font-weight:700;border-bottom-color:#C77D3A}
+.note{display:flex;gap:16px;align-items:flex-start}
+.field{font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:9px 11px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;width:100%;box-sizing:border-box}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #E7E1D6;font-size:14px}
+</style>
+</helmet>
+<div style="min-height:100vh;position:relative;background:#F4F2EC;font-family:'Hanken Grotesk',sans-serif;color:#2A333C">
+<header style="background:#1E252C;border-bottom:3px solid #C77D3A">
+  <div style="padding:14px 32px 6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M9 6h16l-4 22h-8z" fill="#C77D3A"></path><path d="M9 6h16l-1 5H10z" fill="#DCA061"></path></svg>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;color:#DCA061">AT&amp;R · PROGRAM PROFILE</span>
+      <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:22px;letter-spacing:-.02em;color:#F4F2EC">ACWS</span>
+    </div>
+    <div style="flex:1"></div>
+    
+  </div>
+  <nav class="nav" aria-label="Main" style="padding:0 32px;display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap"><a href="Portfolio-Report.dc.html" class="on">Portfolio</a><a href="Action-Center.dc.html" class="">My work</a><a href="Decision-Center.dc.html" class="">Decision Center</a><a href="Intake-Ready-Check.dc.html" class="">Submit an idea</a><span style="flex:1"></span><span style="font-size:13px;color:#C9CED3;padding:10px 0">Avery Lang · reviewer, AT&amp;R</span></nav>
+</header>
+<div style="background:#E7E1D6;border-bottom:1px solid #D6CEBE;padding:8px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;background:#2A333C;color:#F4F2EC;padding:3px 8px;border-radius:3px">SAMPLE DATA</span>
+  <span style="font-size:13px;color:#4A545E">Every idea, office and number on this page is sample data for the demo.</span>
+</div>
+<main style="max-width:1320px;margin:0 auto;padding:32px 32px 48px;display:flex;flex-direction:column;gap:24px">
+<div class="panel pad" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><p style="margin:0;flex:1;min-width:260px;font-size:14px">Keep these facts current about once a quarter. Keystone uses them to tell whether offices could share one solution.</p><span class="meta" style="margin:0">Last updated 3 Nov 2026 by Ruth Ellery</span><button class="btn-p">Edit</button></div>
+<div class="sec"><h2>ACWS · Army Contract Writing System</h2><span class="ctx">AT&amp;R program</span><span class="rule" aria-hidden="true"></span></div>
+<div class="panel pad"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px 32px"><div><p class="lbl">Where it runs</p><p class="val">Army enterprise cloud, impact level 4</p></div><div><p class="lbl">Built on</p><p class="val">Low-code platform the office already runs</p></div><div><p class="lbl">Main data</p><p class="val">Contract files, clause library, past-performance records</p></div><div><p class="lbl">Connects to</p><p class="val">Army financial system, contract reporting system</p></div><div><p class="lbl">Who to contact</p><p class="val">Ruth Ellery, ACWS program office</p></div><div><p class="lbl">Last updated</p><p class="val">3 Nov 2026</p></div></div></div>
+<div class="sec"><h2>AI ideas from this program</h2><span class="ctx">4 ideas</span><span class="rule" aria-hidden="true"></span></div>
+<div class="panel" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:600px"><thead><tr><th class="th">Idea</th><th class="th" style="width:180px">Status</th></tr></thead><tbody><tr style=""><td class="td"><div style="font-weight:600">Flag incomplete closeout files</div><div class="meta">KS-118</div></td><td class="td"><span class="tag" style=""><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#2A333C" stroke-width="1.5"></circle></svg>In review</span></td></tr><tr style=""><td class="td"><div style="font-weight:600">Vendor past-performance risk scoring</div><div class="meta">KS-104</div></td><td class="td"><span class="tag" style="border-color:#9C5F22;color:#9C5F22"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.5l4.5 4.5-4.5 4.5-4.5-4.5z" fill="#C77D3A"></path></svg>Held by overlap</span></td></tr><tr style=""><td class="td"><div style="font-weight:600">Recommend clauses from requirement text</div><div class="meta">KS-091</div></td><td class="td"><span class="tag" style=""><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#2A333C" stroke-width="1.5"></circle></svg>In review</span></td></tr><tr style=""><td class="td"><div style="font-weight:600">Draft answers to solicitation questions</div><div class="meta">KS-077</div></td><td class="td"><span class="tag" style="border-color:#2E9E7B;color:#1F6F56"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#2E9E7B"></circle></svg>Approved</span></td></tr></tbody></table></div>
+<div class="sec"><h2>All program profiles</h2><span class="ctx">22 programs in 5 offices · 4 have no profile yet</span><span class="rule" aria-hidden="true"></span></div>
+<div class="panel" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:700px"><thead><tr><th class="th">Program</th><th class="th">Office</th><th class="th">Last updated</th><th class="th" style="width:120px"></th></tr></thead><tbody><tr style=""><td class="td">ACWS</td><td class="td">AT&amp;R</td><td class="td">3 Nov 2026</td><td class="td"><a href="#">Open</a></td></tr><tr style=""><td class="td">ATIS</td><td class="td">AT&amp;R</td><td class="td">12 Oct 2026</td><td class="td"><a href="#">Open</a></td></tr><tr style=""><td class="td">ADAMS</td><td class="td">AT&amp;R</td><td class="td"><span class="meta" style="margin:0">No profile yet</span></td><td class="td"><a href="#">Add one</a></td></tr><tr style=""><td class="td">Supply awards</td><td class="td">LOG-FIN</td><td class="td"><span class="meta" style="margin:0">No profile yet</span></td><td class="td"><a href="#">Add one</a></td></tr><tr style=""><td class="td">Clause services</td><td class="td">BTS</td><td class="td">28 Sep 2026</td><td class="td"><a href="#">Open</a></td></tr></tbody></table></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -69,6 +69,15 @@ export const GOVERNANCE_FIELD_KEYS: (keyof FormData)[] = [
   "publicConsultationSteps",
 ]
 
+// The idea-gate required fields (excluding the AI quality gate). Exported so
+// guided mode's placeholder check scans exactly the fields form mode demands.
+export const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
+  "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
+  "coreProblem", "affectedBusinessUnits", "targetAudience", "impactedUsersCount", "targetUserContext",
+  "proposedSolution", "userValue", "businessValue",
+  "useCaseTitle", "useCaseDescription", "isWithheld",
+]
+
 export type MissingReason = "missing" | "not_assessed" | "low_quality"
 
 export type MissingItem = {
@@ -239,12 +248,6 @@ export function getSubmissionReadiness(
   // fields (`severity`, `implementationComplexity`, `userTimeSavings`,
   // `costSavings`) as of issue #162 — none of them are part of the idea
   // completeness percentage anymore.
-  const REQUIRED_FIELD_KEYS: (keyof FormData)[] = [
-    "submitterName", "submitterEmail", "submitterRole", "submitterOffice",
-    "coreProblem", "affectedBusinessUnits", "targetAudience", "impactedUsersCount", "targetUserContext",
-    "proposedSolution", "userValue", "businessValue",
-    "useCaseTitle", "useCaseDescription", "isWithheld",
-  ]
   const enabledRequiredCount = REQUIRED_FIELD_KEYS.filter((k) => isFieldVisible(k, formData)).length
   const totalChecks = enabledRequiredCount + 1 // + 1 for the AI quality gate
   const passed = Math.max(0, totalChecks - missing.length)

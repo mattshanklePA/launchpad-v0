@@ -58,11 +58,9 @@ jobs:
           ANTHROPIC_API_KEY: dummy-anthropic-key
           NEXT_PUBLIC_TENANT: uspto
 
-  # Per-tenant test runs (issue #235) and a non-UTC time-zone run (issue #236).
-  # uspto is already covered by `verify` above (no tenant set). Tenant runs are
-  # non-blocking until their failures are fixed (issue TEST-2); then flip
-  # `blocking` to true for es2 first. The time-zone run blocks now: it passes
-  # today, and a date regression should stop the chain.
+  # Per-tenant test runs (issues #235, #258) and a non-UTC time-zone run (#236).
+  # uspto is already covered by `verify` above (no tenant set). All runs block:
+  # a change that breaks any customer's wording or dates stops the merge.
   tenant-tests:
     name: Tests (${{ matrix.tenant }}, ${{ matrix.tz }})
     runs-on: ubuntu-latest
@@ -71,9 +69,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { tenant: es2, tz: UTC, blocking: false }
-          - { tenant: doc, tz: UTC, blocking: false }
-          - { tenant: dow, tz: UTC, blocking: false }
+          - { tenant: es2, tz: UTC, blocking: true }
+          - { tenant: doc, tz: UTC, blocking: true }
+          - { tenant: dow, tz: UTC, blocking: true }
           - { tenant: uspto, tz: America/New_York, blocking: true }
     steps:
       - uses: actions/checkout@v4

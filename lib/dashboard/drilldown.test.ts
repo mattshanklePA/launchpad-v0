@@ -75,6 +75,7 @@ describe("getKpiDrilldown", () => {
     expect(drilldown.readiness).toHaveLength(metrics.readiness.ready)
     expect(drilldown["high-impact"]).toHaveLength(metrics.highImpact.count)
     expect(drilldown["omb-reportable"]).toHaveLength(metrics.ombReportability.reportable)
+    expect(drilldown["omb-review"]).toHaveLength(metrics.ombReportability.review)
     expect(drilldown.signoff).toHaveLength(metrics.awaitingSignoff.count)
     expect(drilldown.duplicates).toHaveLength(metrics.crossBureauDuplicates.clusterCount)
     expect(drilldown.rmf).toHaveLength(metrics.rmfRollup.at_risk)
@@ -88,6 +89,7 @@ describe("getKpiDrilldown", () => {
     expect(drilldown.readiness).toHaveLength(metrics.readiness.ready)
     expect(drilldown["high-impact"]).toHaveLength(metrics.highImpact.count)
     expect(drilldown["omb-reportable"]).toHaveLength(metrics.ombReportability.reportable)
+    expect(drilldown["omb-review"]).toHaveLength(metrics.ombReportability.review)
     expect(drilldown.signoff).toHaveLength(metrics.awaitingSignoff.count)
     expect(drilldown.rmf).toHaveLength(metrics.rmfRollup.at_risk)
   })
@@ -212,5 +214,11 @@ describe("rmf drilldown", () => {
   it("is scope-correct: a bureau-scoped viewer never gets another bureau's at-risk item", () => {
     const drilldown = getKpiDrilldown({ level: "bureau", businessUnit: "census" }, rmfSubmissions, doc)
     expect(drilldown.rmf).toEqual([])
+  })
+})
+
+describe("getKpiDrilldown time-to-decision (#270)", () => {
+  it("is empty for tenants without features.timeToDecision", () => {
+    expect(getKpiDrilldown(DEPT, submissions, doc)["time-to-decision"]).toEqual([])
   })
 })
