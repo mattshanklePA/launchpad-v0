@@ -70,6 +70,7 @@ let assistResult = {
 let governanceDraftResult: Record<string, { value: string; rationale: string }> = {}
 vi.mock("@/app/actions", () => ({
   assistReviewer: () => Promise.resolve(assistResult),
+  getPlumbRead: () => Promise.resolve({ read: assistResult, savedAt: null, source: "new" }),
   draftGovernanceFields: () => Promise.resolve(governanceDraftResult),
 }))
 
