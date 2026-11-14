@@ -36,7 +36,9 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const showSignoff = tenantHasBureauTier()
   const TABLE_COLS = STATUS_ORDER.length + (showSignoff ? 7 : 6) // unit + statuses + total + high-impact + OMB review + duplicates + consolidated [+ signed off]
 
-  const units = Array.from(new Set(submissions.map(getBusinessUnit).filter(Boolean))).sort((a, b) => {
+  // Every configured unit gets a row, zeros included (F3-6 item 4); a unit an
+  // idea was filed under that the tenant no longer configures still shows.
+  const units = Array.from(new Set([...configOrder, ...submissions.map(getBusinessUnit).filter(Boolean)])).sort((a, b) => {
     const ia = configOrder.indexOf(a)
     const ib = configOrder.indexOf(b)
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)

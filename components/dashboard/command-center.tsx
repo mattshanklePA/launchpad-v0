@@ -113,7 +113,7 @@ export function CommandCenter({
       )
     : null
 
-  const decisionCenterCount = decisionCenterCandidates(submissions, scopeViewer(session)).length
+  const decisionCenterCount = decisionCenterCandidates(submissions, scopeViewer(session), scope).length
 
   const railEyebrow = scoped
     ? `${splitLabelCode(scopeLabel(scope, tenant)).code ?? scopeLabel(scope, tenant)} at a glance`

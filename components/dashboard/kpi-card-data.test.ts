@@ -55,6 +55,7 @@ describe("kpiDrilldownEntriesFor", () => {
     readiness: [],
     "high-impact": [item("h1"), item("h2")],
     "omb-reportable": [],
+    "omb-review": [],
     signoff: [],
     duplicates: [cluster("d1", ["d1", "d2"])],
     rmf: [],
