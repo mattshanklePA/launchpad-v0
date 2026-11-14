@@ -14,6 +14,7 @@ export function HeaderBand({
   nav,
   background,
   className,
+  headingLevel = "h1",
 }: {
   eyebrow: string
   title: string
@@ -23,7 +24,10 @@ export function HeaderBand({
   /** Tenant `theme.primary`; defaults to --ks-basalt-800. */
   background?: string
   className?: string
+  /** Use "h2" where the page already has an h1 (the shell band). */
+  headingLevel?: "h1" | "h2"
 }) {
+  const Heading = headingLevel
   return (
     <header
       data-cockpit="header-band"
@@ -39,9 +43,9 @@ export function HeaderBand({
           <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--ks-amber-light)]">
             {eyebrow}
           </span>
-          <h1 className="ks-page-title text-[var(--ks-chalk)]" style={{ fontSize: 22 }}>
+          <Heading className="ks-page-title text-[var(--ks-chalk)]" style={{ fontSize: 22 }}>
             {title}
-          </h1>
+          </Heading>
           {subtitle ? <p className="m-0 text-[13px] text-[var(--ks-chalk)]">{subtitle}</p> : null}
         </div>
         <div className="flex-1" />
