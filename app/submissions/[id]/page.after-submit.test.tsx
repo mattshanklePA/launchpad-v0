@@ -7,6 +7,8 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { initialFormData } from "@/lib/steps"
+import { getTenant } from "@/lib/tenant"
+import { BandHost } from "@/components/cockpit/test-utils"
 import { setCachedSubmissions } from "@/lib/dataCache"
 import { saveSubmission } from "@/lib/submissions"
 
@@ -35,7 +37,8 @@ vi.mock("@/components/data-provider", () => ({
   useDataProvider: () => ({ loaded: true, refetchSubmissions: () => Promise.resolve() }),
 }))
 vi.mock("@/components/dashboard/dashboard-shell", () => ({
-  DashboardShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DashboardShell: ({ children }: { children: React.ReactNode }) =>
+    getTenant().features.cockpitLook ? <BandHost>{children}</BandHost> : <div>{children}</div>,
 }))
 vi.mock("@/app/actions", () => ({
   assistReviewer: () => Promise.resolve({}),

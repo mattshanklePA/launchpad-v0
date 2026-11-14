@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { act } from "react"
 
+let mockPath = "/decisions"
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: () => {}, replace: () => {} }),
-  usePathname: () => "/decisions",
+  usePathname: () => mockPath,
 }))
 
 if (!window.matchMedia) {
@@ -37,6 +38,10 @@ vi.mock("@/lib/auth", () => ({
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { doc } from "@/lib/tenant/doc"
+import { uspto } from "@/lib/tenant/uspto"
+import { dow } from "@/lib/tenant/dow"
+import { tabIsLit } from "./cockpit-shell"
+import { useCockpitBand } from "./band-context"
 import { es2 } from "@/lib/tenant/es2"
 import type { TenantConfig } from "@/lib/tenant"
 import { render } from "./test-utils"
@@ -68,6 +73,7 @@ function renderShell(tenant: TenantConfig, s: MockSession, extra: { title?: stri
 
 beforeEach(() => {
   mockSession = null
+  mockPath = "/decisions"
 })
 
 describe("DashboardShell switch (NL-2, #283)", () => {
@@ -119,6 +125,87 @@ describe("DashboardShell switch (NL-2, #283)", () => {
       await act(async () => {
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
       })
+    }
+  })
+})
+
+// NL-10 (#311): one band, one width, always a lit tab.
+describe("CockpitShell, one band and one width (NL-10, #311)", () => {
+  const lit = (el: HTMLElement) =>
+    Array.from(el.querySelectorAll("nav a[aria-current]")).map((a) => a.textContent)
+
+  it("lights My work on a record, a cluster and the roll-up", () => {
+    for (const path of ["/submissions/s1", "/clusters/c1", "/rollup", "/home"]) {
+      mockPath = path
+      expect(lit(renderShell(es2, session("admin"))), path).toEqual(["My work"])
+    }
+  })
+
+  it("lights nothing on admin and My ideas, which name themselves in the band eyebrow", () => {
+    for (const path of ["/admin", "/my-ideas"]) {
+      mockPath = path
+      expect(lit(renderShell(es2, session("admin"))), path).toEqual([])
+    }
+  })
+
+  it("keeps Decision Center and Submit lit on their own pages", () => {
+    mockPath = "/submit"
+    expect(lit(renderShell(es2, session("admin")))).toEqual(["Submit an idea"])
+    mockPath = "/decisions"
+    expect(lit(renderShell(es2, session("admin")))).toEqual(["Decision Center"])
+  })
+
+  it("tabIsLit matches whole path segments only", () => {
+    expect(tabIsLit("/submissions-x", "/home")).toBe(false)
+    expect(tabIsLit(null, "/home")).toBe(false)
+  })
+
+  it("links Status by office from the band on every page, for every role", () => {
+    for (const role of ["admin", "submitter"] as const) {
+      const el = renderShell(es2, session(role))
+      const link = Array.from(el.querySelectorAll("header a")).find((a) => a.textContent === "Status by office")
+      expect(link?.getAttribute("href")).toBe("/rollup")
+    }
+  })
+
+  it("has one band and one centered column", () => {
+    const el = renderShell(es2, session("admin"))
+    expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
+    const column = el.querySelector('[data-cockpit="page-column"]')!
+    expect(column.className).toContain("mx-auto")
+    expect(column.className).toContain("max-w-")
+  })
+
+  it("lets a page put its eyebrow and title in that one band", () => {
+    function Page() {
+      useCockpitBand({ eyebrow: "CENSUS · AB12 · IN REVIEW", title: "A long idea title with no cut-off at all" })
+      return <p>body</p>
+    }
+    mockSession = session("admin")
+    const el = render(
+      <DashboardShell baseScope={{ level: "department" }} hierarchy={{ bureaus: [] }} selection={null} onSelect={() => {}} breadcrumb="Whatever" tenant={es2}>
+        <Page />
+      </DashboardShell>,
+    )
+    expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
+    expect(el.querySelector("h1")?.textContent).toBe("A long idea title with no cut-off at all")
+    expect(el.querySelector("header")?.textContent).toContain("CENSUS · AB12 · IN REVIEW")
+  })
+
+  it("doc, uspto and dow: no band, no Status by office link, no cockpit column, band hook does nothing", () => {
+    function Page() {
+      useCockpitBand({ eyebrow: "X", title: "Y" })
+      return <p>body</p>
+    }
+    for (const tenant of [doc, uspto, dow]) {
+      mockSession = session("admin")
+      const el = render(
+        <DashboardShell baseScope={{ level: "department" }} hierarchy={{ bureaus: [] }} selection={null} onSelect={() => {}} breadcrumb="Roll-up" tenant={tenant}>
+          <Page />
+        </DashboardShell>,
+      )
+      expect(el.querySelector("[data-cockpit]"), tenant.id).toBeNull()
+      expect(Array.from(el.querySelectorAll("a")).some((a) => a.textContent === "Status by office"), tenant.id).toBe(false)
     }
   })
 })

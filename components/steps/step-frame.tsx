@@ -16,7 +16,7 @@ import { getTenant } from "@/lib/tenant"
 import { shortBusinessUnitLabel } from "@/components/dashboard/command-center-data"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { SquareTag, SubmitBand, SubmitProgress, submitEyebrow } from "@/components/cockpit"
+import { SquareTag, SubmitBandContent, SubmitProgress, submitEyebrow, submitStepLabels } from "@/components/cockpit"
 import { tenantCopy } from "@/lib/tenant/copy"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, ArrowRight } from "lucide-react"
@@ -99,18 +99,17 @@ export function StepHeader({
   if (tenant.features.cockpitLook) {
     const copy = tenantCopy(tenant)
     return (
-      <div data-cockpit="submit-frame" className="-mx-4 -mt-8 flex flex-col">
-        <SubmitBand
+      <div data-cockpit="submit-frame" className="flex flex-col gap-4">
+        <SubmitBandContent
           eyebrow={submitEyebrow(copy.submitEyebrow, currentStep, WIZARD_STEPS.length)}
           title={title}
           modeToggle={modeToggle}
-          background={tenant.theme.primary}
         />
         <SubmitProgress
-          steps={WIZARD_STEPS.map((s) => ({ label: steps[s - 1].name, done: isStepComplete(s) }))}
+          steps={WIZARD_STEPS.map((s) => ({ label: submitStepLabels(copy.submitStepLabels)[s - 1] ?? steps[s - 1].name, done: isStepComplete(s) }))}
           current={currentStep}
         />
-        <div className="flex items-center justify-between gap-3 px-8 pt-4">
+        <div className="flex items-center justify-between gap-3">
           <p className="m-0 text-[14px] leading-[1.55] text-[var(--ks-ink-700)]">{subtitle}</p>
           <div className="flex items-center gap-3 text-[12px] text-[var(--ks-ink-700)]">
             <span>
@@ -261,8 +260,22 @@ export const pillToggleClass = cn(
 
 export function StepFooterShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border-t border-border-subtle bg-card py-[18px]">
-      <div className="mx-auto flex max-w-[880px] items-center justify-between gap-5 px-4">{children}</div>
+    <div
+      className={
+        getTenant().features.cockpitLook
+          ? "border border-[var(--ks-limestone-dark)] bg-white px-5 py-[18px]"
+          : "border-t border-border-subtle bg-card py-[18px]"
+      }
+    >
+      <div
+        className={
+          getTenant().features.cockpitLook
+            ? "flex items-center justify-between gap-5"
+            : "mx-auto flex max-w-[880px] items-center justify-between gap-5 px-4"
+        }
+      >
+        {children}
+      </div>
     </div>
   )
 }

@@ -88,7 +88,7 @@ import { ReviewProcessLoading } from "@/components/submissions/review-process-lo
 import { buildReviewSteps, defaultReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { SectionTitle } from "@/components/cockpit"
-import { DecisionBlock, KeyFacts, RecordBand, type KeyFact } from "@/components/submissions/record-cockpit"
+import { DecisionBlock, KeyFacts, RecordBandContent, type KeyFact } from "@/components/submissions/record-cockpit"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
@@ -577,12 +577,11 @@ export function SubmissionDetail({ id }: { id: string }) {
   ]
   const cockpitBand = cockpit ? (
     <>
-      <RecordBand
+      <RecordBandContent
         unitLabel={businessUnitLabel(getBusinessUnit(sub))}
         slugTail={uniqueSlugTail(sub.id)}
         status={status}
         title={fd.useCaseTitle || "Untitled idea"}
-        background={tenant.theme.primary}
       />
       <KeyFacts facts={keyFacts} />
     </>
@@ -609,13 +608,12 @@ export function SubmissionDetail({ id }: { id: string }) {
     : []
   const decidedBand = cockpit && decided ? (
     <>
-      <RecordBand
+      <RecordBandContent
         unitLabel={businessUnitLabel(getBusinessUnit(sub))}
         slugTail={uniqueSlugTail(sub.id)}
         status={status}
         statusLabel={copy.decisionEyebrow}
         title={fd.useCaseTitle || "Untitled idea"}
-        background={tenant.theme.primary}
       />
       <DecisionBlock title={copy.decisionBlockTitle} facts={decidedFacts} />
     </>

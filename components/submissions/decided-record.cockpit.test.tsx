@@ -3,13 +3,13 @@
 
 import { describe, it, expect, afterEach } from "vitest"
 import { LockedGovernanceChecklist } from "@/components/submissions/locked-governance"
-import { DecisionBlock, RecordBand } from "@/components/submissions/record-cockpit"
+import { DecisionBlock, RecordBandContent } from "@/components/submissions/record-cockpit"
 import { tenantCopy } from "@/lib/tenant/copy"
 import { es2 } from "@/lib/tenant/es2"
 import { doc } from "@/lib/tenant/doc"
 import { uspto } from "@/lib/tenant/uspto"
 import { dow } from "@/lib/tenant/dow"
-import { render } from "@/components/cockpit/test-utils"
+import { render, BandHost } from "@/components/cockpit/test-utils"
 
 const prev = process.env.NEXT_PUBLIC_TENANT
 afterEach(() => {
@@ -64,9 +64,21 @@ describe("decided record, review record table", () => {
 
 describe("decided record, band and decision block", () => {
   it("band eyebrow reads office · record ID · DECIDED", () => {
-    const el = render(<RecordBand unitLabel="Census" slugTail="ab12cd34" status="approved" statusLabel="Decided" title="Idea" />)
-    expect(el.querySelector("header span")?.textContent).toBe("CENSUS · AB12CD34 · DECIDED")
-    expect(el.querySelector("h2")?.textContent).toBe("Idea")
+    const long = "A very long idea title that would once have been cut off with dots and now wraps in the band instead"
+    const el = render(
+      <BandHost>
+        <RecordBandContent unitLabel="Census" slugTail="ab12cd34" status="approved" statusLabel="Decided" title={long} />
+      </BandHost>,
+    )
+    expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
+    expect(el.querySelector('[data-band="eyebrow"]')?.textContent).toBe("CENSUS · AB12CD34 · DECIDED")
+    expect(el.querySelector("h1")?.textContent).toBe(long)
+  })
+
+  it("draws no band of its own outside the ES2 shell", () => {
+    const el = render(<RecordBandContent unitLabel="Census" slugTail="ab12cd34" status="approved" title="Idea" />)
+    expect(el.querySelector('[data-cockpit="header-band"]')).toBeNull()
+    expect(el.textContent).toBe("")
   })
 
   it("the decision block is a label and value grid with a Locked tag", () => {

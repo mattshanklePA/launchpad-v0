@@ -158,7 +158,8 @@ export function ReviewProcessRail({
             </>
           )}
         </div>
-        <p className="font-heading text-[16.5px] font-bold leading-[1.25] text-foreground">{title}</p>
+        {/* NL-10 (#311): on ES2 the page band already carries the full title. */}
+        {tenant.features.cockpitLook ? null : <p className="font-heading text-[16.5px] font-bold leading-[1.25] text-foreground">{title}</p>}
         <p className="text-[13px] leading-[1.5] text-muted-foreground">
           {unitLabel} · {submitterName} · submitted {formatKeystoneDate(submittedAt)}
         </p>

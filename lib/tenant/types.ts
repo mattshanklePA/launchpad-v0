@@ -89,6 +89,7 @@ export type TenantCopy = {
   recordColWhen: string
   // Submit an idea (NL-8, #289). ES2 only.
   submitEyebrow: string                 // band eyebrow over the step question; {step} and {count} are filled in by the page
+  submitStepLabels: string              // the six step names on the one step line, "|" between them
   submitSentEyebrow: string             // band eyebrow on the page shown after sending
   overlapColLead: string                // overlap group table: heading over the lead / "Make lead" cell
 }

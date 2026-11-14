@@ -65,6 +65,7 @@ export const DEFAULT_COPY: TenantCopy = {
   // NL-8 (#289): submit an idea.
   submitEyebrow: "Submit an idea · Step {step} of {count}",
   submitSentEyebrow: "Submit an idea · Sent",
+  submitStepLabels: "Who you are|The problem|Your solution|Constraints|Name it|Review and send",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

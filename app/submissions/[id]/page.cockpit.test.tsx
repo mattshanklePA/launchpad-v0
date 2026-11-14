@@ -10,6 +10,8 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { initialFormData, type FormData } from "@/lib/steps"
+import { getTenant } from "@/lib/tenant"
+import { BandHost } from "@/components/cockpit/test-utils"
 import type { Submission } from "@/lib/submissions"
 import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
 
@@ -42,11 +44,19 @@ vi.mock("@/components/data-provider", () => ({
   useDataProvider: () => ({ loaded: true, refetchSubmissions: () => Promise.resolve() }),
 }))
 
-vi.mock("@/components/dashboard/dashboard-shell", () => ({
-  DashboardShell: ({ children, breadcrumb }: { children: React.ReactNode; breadcrumb: string }) => (
+// NL-10: on ES2 the page band is the shell's; stand it in so the record's eyebrow and title can be read.
+function BandedShell({ children, breadcrumb }: { children: React.ReactNode; breadcrumb: string }) {
+  const inner = (
     <div data-testid="shell" data-breadcrumb={breadcrumb}>
       {children}
     </div>
+  )
+  return getTenant().features.cockpitLook ? <BandHost>{inner}</BandHost> : inner
+}
+
+vi.mock("@/components/dashboard/dashboard-shell", () => ({
+  DashboardShell: ({ children, breadcrumb }: { children: React.ReactNode; breadcrumb: string }) => (
+    <BandedShell breadcrumb={breadcrumb}>{children}</BandedShell>
   ),
 }))
 
@@ -167,6 +177,7 @@ describe("review record before a decision (NL-6, #287)", () => {
     const el = await open("es2")
     const band = el.querySelector('[data-cockpit="header-band"]')
     expect(band).not.toBeNull()
+    expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
     expect(band!.textContent).toContain("Supplier Past-Performance Risk Scoring Before Award")
     expect(band!.textContent).toContain("IN REVIEW")
     const facts = el.querySelector('[data-cockpit="key-facts"]')!
@@ -190,7 +201,7 @@ describe("review record before a decision (NL-6, #287)", () => {
     const tabs = Array.from(el.querySelectorAll('[role="tab"]'))
     expect(tabs.map((t) => t.textContent?.split("(")[0].trim())).toEqual(["Review", "Governance record", "Conversation"])
     expect(tabs[2].getAttribute("data-state")).toBe("active")
-    expect(el.querySelector('[data-cockpit="header-band"]')).not.toBeNull()
+    expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
   })
 
   it("doc tenant renders the old record: no cockpit pieces", async () => {

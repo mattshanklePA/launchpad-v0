@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { PDFExportButton } from "@/components/steps/pdf-export-button"
 import { getTenant } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
-import { SubmitBand } from "@/components/cockpit"
+import { SubmitBandContent } from "@/components/cockpit"
 
 export function Step11ExportTracking() {
   const { formData, resetForm } = useForm()
@@ -34,12 +34,8 @@ export function Step11ExportTracking() {
     const status = formData.routeTo.includes("draft") ? "Draft" : "Under Review"
     return (
       <div data-cockpit="submit-sent" className="flex flex-col">
-        <SubmitBand
-          eyebrow={tenantCopy(tenant).submitSentEyebrow.toUpperCase()}
-          title="Idea Submitted for Vetting!"
-          background={tenant.theme.primary}
-        />
-        <div className="mx-auto flex w-full max-w-[880px] flex-col gap-6 px-4 py-10">
+        <SubmitBandContent eyebrow={tenantCopy(tenant).submitSentEyebrow.toUpperCase()} title="Idea Submitted for Vetting!" />
+        <div className="flex w-full flex-col gap-6">
           <p className="m-0 text-[14px] text-[var(--ks-ink-700)]">
             Your AI idea has been submitted. The review team will vet it for feasibility, value, and strategic alignment.
           </p>

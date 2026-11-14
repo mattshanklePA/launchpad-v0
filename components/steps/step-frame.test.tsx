@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { initialFormData } from "@/lib/steps"
+import { BandHost } from "@/components/cockpit/test-utils"
 
 const setCurrentStep = vi.fn()
 const mockUseForm = vi.fn()
@@ -225,13 +226,21 @@ describe("StepHeader tenant look (NL-8)", () => {
   it("ES2: band eyebrow, step question as title, six-step progress line, mode switch slot", () => {
     process.env.NEXT_PUBLIC_TENANT = "es2"
     mockUseForm.mockReturnValue({ currentStep: 2, setCurrentStep, formData: { ...initialFormData } })
-    const el = render(<StepHeader modeToggle={<span data-testid="toggle">toggle</span>} />)
-    expect(el.querySelector('[data-cockpit="header-band"]')).toBeTruthy()
-    expect(el.textContent).toContain("SUBMIT AN IDEA · STEP 2 OF 6")
-    expect(el.querySelector("h2")?.textContent).toBe("What's the Problem or Opportunity?")
-    expect(el.querySelectorAll('[data-cockpit="submit-progress"] li').length).toBe(6)
-    expect(el.querySelector('[aria-current="step"]')?.textContent).toContain("Business Problem & Opportunity")
-    expect(el.querySelector('[data-testid="toggle"]')).toBeTruthy()
+    const el = render(
+      <BandHost>
+        <StepHeader modeToggle={<span data-testid="toggle">toggle</span>} />
+      </BandHost>,
+    )
+    // NL-10: exactly one band, the page's; the step frame draws none of its own.
+    expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
+    expect(el.querySelector('[data-band="eyebrow"]')?.textContent).toBe("SUBMIT AN IDEA · STEP 2 OF 6")
+    expect(el.querySelector("h1")?.textContent).toBe("What's the Problem or Opportunity?")
+    const items = Array.from(el.querySelectorAll('[data-cockpit="submit-progress"] li'))
+    expect(items.map((li) => li.textContent?.replace(/\s*\(done\)$/, ""))).toEqual([
+      "1Who you are", "2The problem", "3Your solution", "4Constraints", "5Name it", "6Review and send",
+    ])
+    expect(el.querySelector('[aria-current="step"]')?.textContent).toContain("The problem")
+    expect(el.querySelector('[data-band="right"] [data-testid="toggle"]')).toBeTruthy()
   })
 
   it("doc: still renders the basalt card header with no cockpit band or progress line", () => {
@@ -242,6 +251,7 @@ describe("StepHeader tenant look (NL-8)", () => {
     expect(el.querySelector('[data-cockpit="submit-progress"]')).toBeNull()
     expect(el.textContent).toContain("Step 2 of 6 · Business Problem & Opportunity")
     expect(el.textContent).toContain("Prefer a conversation? Guided mode")
+    expect(el.querySelector('[data-cockpit="submit-frame"]')).toBeNull()
     expect(el.querySelector("h1")?.textContent).toBe("What's the Problem or Opportunity?")
   })
 })

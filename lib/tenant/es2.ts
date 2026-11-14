@@ -352,6 +352,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     // NL-8 (#289): submit an idea.
     submitEyebrow: "Submit an idea · Step {step} of {count}",
     submitSentEyebrow: "Submit an idea · Sent",
+    submitStepLabels: "Who you are|The problem|Your solution|Constraints|Name it|Review and send",
   },
 
   glossaryOverrides: {
