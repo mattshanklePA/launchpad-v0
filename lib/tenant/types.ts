@@ -71,6 +71,9 @@ export type TenantCopy = {
   listColStatus: string
   listColStage: string
   listColLink: string                   // heading over the "Open" links
+  // Decision Center rows (NL-5, #286). ES2 only.
+  decisionDetailRmf: string             // opened-row label over the RMF status line
+  decisionDetailRecord: string          // opened-row label over the "Open submission" link
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

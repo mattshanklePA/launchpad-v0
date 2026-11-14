@@ -46,6 +46,8 @@ export const DEFAULT_COPY: TenantCopy = {
   listColStatus: "Status",
   listColStage: "Stage",
   listColLink: "Open",
+  decisionDetailRmf: "RMF", // NL-5: read only by the ES2 (cockpitLook) Decision Center
+  decisionDetailRecord: "Record",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

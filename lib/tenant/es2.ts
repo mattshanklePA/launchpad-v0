@@ -331,6 +331,8 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     listColStatus: "Status",
     listColStage: "Stage",
     listColLink: "Open",
+    decisionDetailRmf: "RMF",
+    decisionDetailRecord: "Record",
   },
 
   glossaryOverrides: {
