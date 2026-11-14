@@ -4,7 +4,7 @@
 // the old briefing-first card + 19-field expando. The AI briefing itself
 // (compareSubmissions) is unchanged and mocked out here.
 
-import { describe, it, expect, afterEach, vi } from "vitest"
+import { describe, it, expect, afterEach, vi, beforeEach } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { ComparisonView } from "./comparison-view"
@@ -17,6 +17,18 @@ vi.mock("@/app/admin/compare-actions", () => ({
 }))
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+
+// NL-5 (#286) follow-up: these tests cover the sidebar-look markup. ES2 now
+// renders the cockpit kit (features.cockpitLook), covered by
+// decision-center.cockpit.test.tsx, so this file pins the doc tenant.
+const prevTenant = process.env.NEXT_PUBLIC_TENANT
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_TENANT = "doc"
+})
+afterEach(() => {
+  if (prevTenant === undefined) delete process.env.NEXT_PUBLIC_TENANT
+  else process.env.NEXT_PUBLIC_TENANT = prevTenant
+})
 
 let container: HTMLDivElement | null = null
 let root: Root | null = null
