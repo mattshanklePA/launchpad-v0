@@ -53,6 +53,10 @@ export type PortfolioIdea = {
   /** Number behind `days`, used for ordering; undefined for a decision with no time on file. */
   daysValue: number | undefined
   decidedBy: string
+  /** Approved or rejected. */
+  decided: boolean
+  /** Sits in a group of look-alike ideas from more than one office. */
+  inOverlap: boolean
   priority: { labels: string[]; text: string }
   href: string
 }
@@ -199,6 +203,7 @@ export function buildPortfolioReport(
   const levelOf = new Map(set.map((s) => [s.id, computeRiskProfile(s.formData).level]))
   const level = (s: Submission) => levelOf.get(s.id) ?? "unknown"
   const open = set.filter((s) => !isDecided(s))
+  const inAnyGroup = new Set(clusters.flatMap((c) => c.memberIds))
 
   // Priorities the tenant knows about: enterprise and every program office's own.
   const focusById = new Map<string, FocusArea>()
@@ -231,6 +236,8 @@ export function buildPortfolioReport(
       reason: plainReason(s, lv, tenant, copy),
       days,
       daysValue,
+      decided,
+      inOverlap: inAnyGroup.has(s.id),
       decidedBy: decided ? getBureauSignoff(s)?.signedOffByName || copy.portfolioNotRecorded : copy.portfolioNotYet,
       priority: { labels, text: labels.length ? labels.join(", ") : copy.portfolioNoPriority },
       href: `/submissions/${s.id}`,

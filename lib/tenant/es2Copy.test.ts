@@ -146,3 +146,42 @@ describe("NL-13 (#314): record band place name", () => {
     vi.unstubAllEnvs()
   })
 })
+
+// F5-2 (#319): the portfolio report screen's wording. Every report key, as ES2
+// renders it, and the sentences the screen builds from them, must pass the same
+// banned-phrase list plus the model-vendor rule. Only ES2 renders /report.
+describe("F5-2 (#319): portfolio report copy", () => {
+  const VENDOR = /\bAnthropic\b|\bClaude\b|\bSonnet\b|\bOpus\b|\bHaiku\b|\bOpenAI\b|\bChatGPT\b|\bGPT-?\d\w*\b|\bGemini\b|\bLlama\b|\bMistral\b|\bCohere\b|\bRMF\b|minimum practices/i
+  const reportKeys = () => Object.keys(tenantCopy(es2)).filter((k) => /^report[A-Z]/.test(k)) as (keyof ReturnType<typeof tenantCopy>)[]
+
+  it("has the report keys, none of them empty", () => {
+    const keys = reportKeys()
+    expect(keys.length).toBeGreaterThan(60)
+    const c = tenantCopy(es2)
+    for (const k of keys) expect(c[k].trim(), k).not.toBe("")
+  })
+
+  it("renders no banned phrase, em dash or vendor name in any report string", () => {
+    const c = tenantCopy(es2)
+    const hits: string[] = []
+    for (const k of reportKeys()) {
+      for (const b of [...BANNED, { name: "vendor, RMF or minimum practices", re: VENDOR }]) {
+        if (b.re.test(c[k])) hits.push(`[${b.name}] ${k}: ${c[k]}`)
+      }
+    }
+    expect(hits).toEqual([])
+  })
+
+  it("says the plain things the issue asks for", () => {
+    const c = tenantCopy(es2)
+    expect(c.reportEyebrow).toBe("CPE ES2 · ENTERPRISE SOFTWARE AND SERVICES")
+    expect(c.reportTitle).toBe("AI portfolio")
+    expect(c.reportRiskQuestion).toBe("Which ideas carry high risk, and why?")
+    expect(c.reportDecisionsQuestion).toBe("Are leaders deciding, and how fast?")
+    expect(c.reportOverlapQuestion).toBe("Are offices building the same thing twice?")
+    expect(c.reportLeaderEmpty).toBe("Nothing is waiting on a leader today.")
+    expect(c.reportNotePending).toBe("Plumb's read is added in the next step.")
+    expect(c.reportFooter).toBe("Prepared from Keystone on {date}. Internal. Not an official Army record.")
+    expect(c.reportComingNext).toBe("Coming next")
+  })
+})
