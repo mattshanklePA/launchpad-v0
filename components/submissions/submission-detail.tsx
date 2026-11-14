@@ -41,7 +41,7 @@ import {
   departmentFinalApprovalEnabled,
   type SignoffDecision,
 } from "@/lib/bureauSignoff"
-import { assistReviewer, draftGovernanceFields } from "@/app/actions"
+import { getPlumbRead, draftGovernanceFields } from "@/app/actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
@@ -95,7 +95,7 @@ import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
 
-type Assist = Awaited<ReturnType<typeof assistReviewer>>
+type Assist = NonNullable<Awaited<ReturnType<typeof getPlumbRead>>["read"]>
 
 const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
   high_impact: "High-impact",
@@ -170,6 +170,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const [ready, setReady] = useState(false)
   const [assist, setAssist] = useState<Assist | null>(null)
   const [assisting, setAssisting] = useState(false)
+  const [assistSavedAt, setAssistSavedAt] = useState<string | null>(null)
   const [comment, setComment] = useState("")
   const [busy, setBusy] = useState(false)
   const [rmfOverrideNote, setRmfOverrideNote] = useState("")
@@ -219,10 +220,25 @@ export function SubmissionDetail({ id }: { id: string }) {
     if (!sub || ranRef.current || !isReviewer) return
     ranRef.current = true
     setAssisting(true)
-    assistReviewer(sub.formData)
-      .then(setAssist)
+    getPlumbRead(sub.id, sub.formData)
+      .then((r) => {
+        setAssist(r.read)
+        setAssistSavedAt(r.savedAt)
+      })
       .finally(() => setAssisting(false))
   }, [sub, isReviewer])
+
+  // Decided records never re-read on their own; this is the "Produce a read" button.
+  const produceRead = () => {
+    if (!sub) return
+    setAssisting(true)
+    getPlumbRead(sub.id, sub.formData, true)
+      .then((r) => {
+        setAssist(r.read)
+        setAssistSavedAt(r.savedAt)
+      })
+      .finally(() => setAssisting(false))
+  }
 
   // RD-6 (issue #207): drives PlumbProgress's "drafting governance fields"
   // stage on the pre-resolution loading page independently of
@@ -692,6 +708,8 @@ export function SubmissionDetail({ id }: { id: string }) {
                 assistantName={tenant.assistantName}
                 assisting={assisting}
                 assist={assist}
+                assistSavedAt={assistSavedAt}
+                onProduceRead={produceRead}
                 comments={comments}
                 submitterFirstName={(fd.submitterName || "the submitter").split(" ")[0]}
                 onSeeAllConversation={() => changeTab("conversation")}

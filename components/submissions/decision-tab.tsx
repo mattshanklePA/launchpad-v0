@@ -15,9 +15,9 @@ import { DispositionControls } from "@/components/submissions/disposition-contro
 import type { SubmissionComment, SubmissionStatus } from "@/lib/reviewWorkflow"
 import { formatKeystoneDate } from "@/components/dashboard/command-center-data"
 import { cn } from "@/lib/utils"
-import type { assistReviewer } from "@/app/actions"
+import type { getPlumbRead } from "@/app/actions"
 
-type Assist = Awaited<ReturnType<typeof assistReviewer>>
+type Assist = NonNullable<Awaited<ReturnType<typeof getPlumbRead>>["read"]>
 
 const DISPOSITION_GERUND: Record<Assist["suggestedDisposition"], string> = {
   approve: "approving",
@@ -46,6 +46,8 @@ export function DecisionTab({
   assistantName,
   assisting,
   assist,
+  assistSavedAt = null,
+  onProduceRead,
   comments,
   submitterFirstName,
   onSeeAllConversation,
@@ -62,6 +64,10 @@ export function DecisionTab({
   assistantName: string
   assisting: boolean
   assist: Assist | null
+  /** ISO time the shown read was produced; null when it was not saved. */
+  assistSavedAt?: string | null
+  /** Produce a read on a decided record that has none saved (the only way one is made there). */
+  onProduceRead?: () => void
   comments: SubmissionComment[]
   submitterFirstName: string
   onSeeAllConversation: () => void
@@ -114,9 +120,21 @@ export function DecisionTab({
         {assisting ? (
           <p className="text-[14.5px] text-muted-foreground">{assistantName} is reading this submission…</p>
         ) : assist ? (
-          <p className="text-[14.5px] leading-[1.6] text-foreground">
-            {assist.verdict} {agreement}
-          </p>
+          <>
+            {assistSavedAt && (
+              <p className="text-[12.5px] text-muted-foreground">{assistantName}&apos;s read from {formatKeystoneDate(assistSavedAt)}</p>
+            )}
+            <p className="text-[14.5px] leading-[1.6] text-foreground">
+              {assist.verdict} {agreement}
+            </p>
+          </>
+        ) : onProduceRead ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-[14.5px] text-muted-foreground">No saved read</p>
+            <button type="button" className="text-[13px] font-semibold text-primary hover:underline" onClick={onProduceRead}>
+              Produce a read
+            </button>
+          </div>
         ) : null}
 
         {hasAnalysis && showAnalysis && assist && (

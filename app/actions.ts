@@ -19,6 +19,8 @@ import { scoutFieldsForStep, draftFieldFallback } from "@/lib/scoutFieldPlan"
 import { buildSubmissionContext, buildSubmitterFitGuidance, buildQuestionModeGuidance } from "@/lib/scoutPrompt"
 import { readinessFallback } from "@/lib/readinessFallback"
 import type { ReadinessFinding } from "@/lib/readinessPresentation"
+import { plumbReadInput, resolvePlumbRead, type PlumbRead, type PlumbReadResult } from "@/lib/plumbRead"
+import { loadSavedPlumbRead, savePlumbRead } from "@/lib/savedPlumbRead"
 
 type Message = {
   role: "user" | "assistant"
@@ -761,28 +763,28 @@ ${HUMANIZATION_GUIDELINES}`,
 // ============================================================
 export async function assistReviewer(
   formData: FormData,
-): Promise<{
-  verdict: string
-  strengths: string[]
-  gaps: string[]
-  suggestedDisposition: "approve" | "request_info" | "reject"
-  draftRequestInfo: string
-}> {
+): Promise<PlumbRead> {
   requireActionSession()
-  const summary = `
-Title: ${formData.useCaseTitle || "Untitled"}
-Problem: ${formData.problemDefinition || formData.coreProblem || "[Not provided]"}
-Solution: ${formData.solutionSummary || formData.proposedSolution || "[Not provided]"}
-Business value: ${formData.businessValueSummary || formData.businessValue || "[Not provided]"}
-Cost/time savings: ${formData.costSavings || "[Not provided]"}
-Users impacted: ${formData.impactedUsersCount || "[Not provided]"}
-Strategic alignment: ${formData.alignmentSummary || formData.relevantOkrs || (Array.isArray(formData.usptoFocusArea) ? formData.usptoFocusArea.join(", ") : "") || "[Not provided]"}
-Implementation complexity: ${formData.implementationComplexity || "[Not provided]"}
-Success metrics: ${formData.metricsSummary || formData.successMetrics || "[Not provided]"}
-Timeline: ${formData.timelineForResults || "[Not provided]"}
-AI risk — PII: ${formData.involvesSensitiveData || "?"}; model sourcing: ${formData.aiModelSourcing || "?"}; drives decisions about people: ${formData.aiDecisionalImpact || "?"}; mandatory human review: ${formData.aiHumanReview || "?"}
-Prior readiness verdict: ${formData.readinessScore || "n/a"}
-`
+  return (await produceAssistRead(formData)).read
+}
+
+// Opens the record's Plumb read (issue #272): the saved read when there is one
+// (and, for undecided records, the content has not changed), otherwise a new
+// read that is then saved. Decided records never re-read unless `force`.
+export async function getPlumbRead(
+  submissionId: string,
+  formData: FormData,
+  force = false,
+): Promise<PlumbReadResult> {
+  requireActionSession()
+  return resolvePlumbRead(
+    { submissionId, formData: formData as Record<string, unknown>, force },
+    { load: loadSavedPlumbRead, save: savePlumbRead, produce: (fd) => produceAssistRead(fd as FormData) },
+  )
+}
+
+async function produceAssistRead(formData: FormData): Promise<{ read: PlumbRead; ok: boolean }> {
+  const summary = plumbReadInput(formData as Record<string, unknown>)
 
   try {
     const { object } = await generateObjectResilient("assistReviewer", {
@@ -813,15 +815,18 @@ You are ADVISORY ONLY. The human reviewer makes the decision; never imply you ar
       ],
     })
     return {
-      verdict: object.verdict,
-      strengths: object.strengths,
-      gaps: object.gaps,
-      suggestedDisposition: object.suggestedDisposition,
-      draftRequestInfo: object.draftRequestInfo,
+      ok: true,
+      read: {
+        verdict: object.verdict,
+        strengths: object.strengths,
+        gaps: object.gaps,
+        suggestedDisposition: object.suggestedDisposition,
+        draftRequestInfo: object.draftRequestInfo,
+      },
     }
   } catch (error) {
     console.error("assistReviewer failed, returning fallback:", error)
-    return {
+    return { ok: false, read: {
       verdict:
         `${TENANT.assistantName} is temporarily unavailable. Review the submission against problem clarity, quantified value, strategic alignment, feasibility, and the AI risk answers.`,
       strengths: [],
@@ -829,7 +834,7 @@ You are ADVISORY ONLY. The human reviewer makes the decision; never imply you ar
       suggestedDisposition: "request_info",
       draftRequestInfo:
         "Thanks for the submission. Could you add a measurable baseline for your success metric and confirm the AI model sourcing before we score this?",
-    }
+    } }
   }
 }
 

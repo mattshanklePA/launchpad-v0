@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest"
+import { describe, it, expect, afterEach, vi } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { LockedGovernanceChecklist } from "@/components/submissions/locked-governance"
@@ -98,3 +98,29 @@ describe("DecisionTab on a decided record", () => {
     expect(el.textContent).toContain("contact the office to reopen")
   })
 })
+
+describe("DecisionTab saved Plumb read (issue #272)", () => {
+  const props = {
+    reasonText: "Because.", decision: "approved" as const, status: "approved" as const, busy: false,
+    onApprove: () => {}, onReject: () => {}, onRequestInfo: () => {}, reversibilityText: "x",
+    showDispositionButtons: false, assisting: false, comments: [], submitterFirstName: "Alex", onSeeAllConversation: () => {},
+  }
+  const read = { verdict: "Looks solid.", strengths: [], gaps: [], suggestedDisposition: "approve" as const, draftRequestInfo: "" }
+
+  it("renders the saved read with its date, using each tenant's assistant name", () => {
+    for (const name of ["Plumb", "Scout"]) {
+      const el = render(<DecisionTab {...props} assistantName={name} assist={read} assistSavedAt="2026-10-01T12:00:00.000Z" />)
+      expect(el.textContent).toMatch(new RegExp(`${name}'s read from .*2026`))
+      expect(el.textContent).toContain("Looks solid.")
+    }
+  })
+  it("shows No saved read with a button when none exists", () => {
+    const onProduceRead = vi.fn()
+    const el = render(<DecisionTab {...props} assistantName="Plumb" assist={null} onProduceRead={onProduceRead} />)
+    expect(el.textContent).toContain("No saved read")
+    const btn = Array.from(el.querySelectorAll("button")).find((b) => b.textContent === "Produce a read")!
+    btn.click()
+    expect(onProduceRead).toHaveBeenCalledTimes(1)
+  })
+})
+

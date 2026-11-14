@@ -39,6 +39,7 @@ vi.mock("@/components/dashboard/dashboard-shell", () => ({
 }))
 vi.mock("@/app/actions", () => ({
   assistReviewer: () => Promise.resolve({}),
+  getPlumbRead: () => Promise.resolve({ read: {}, savedAt: null, source: "new" }),
   draftGovernanceFields: () => Promise.resolve({}),
 }))
 vi.mock("@/app/systemConnector-actions", () => ({ pushApprovedSubmission: () => Promise.resolve() }))
