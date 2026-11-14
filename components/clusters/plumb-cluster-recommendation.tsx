@@ -12,8 +12,7 @@
 // instead of the full reasons/tradeoff card the dedicated cluster page uses.
 
 import { useEffect, useRef, useState } from "react"
-import { KindTag } from "@/components/ui/kind-tag"
-import { GlossaryTerm } from "@/components/launchpad/glossary-term"
+import { AdvisoryTag } from "@/components/cockpit/advisory-tag"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { ClusterSignals } from "@/components/clusters/cluster-signals"
 import type { Submission } from "@/lib/submissions"
@@ -101,9 +100,7 @@ export function PlumbClusterRecommendation({
       <div className="flex items-center gap-2">
         <PlumbMark className="h-4 w-4" />
         <p className="ks-microlabel">Plumb recommends</p>
-        <KindTag>
-          <GlossaryTerm term="advisory">Advisory</GlossaryTerm>
-        </KindTag>
+        <AdvisoryTag glossary />
       </div>
 
       <h2 className="font-heading text-[20px] font-bold leading-[1.2] tracking-[-0.018em] text-foreground">{assessment.headline}</h2>

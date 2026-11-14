@@ -5,6 +5,7 @@
 
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import { KeystoneMark } from "./keystone-mark"
 
 export function HeaderBand({
   eyebrow,
@@ -35,10 +36,7 @@ export function HeaderBand({
       style={{ background: background ?? "var(--ks-basalt-800)" }}
     >
       <div className="flex flex-wrap items-center gap-4">
-        <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" className="shrink-0">
-          <path d="M9 6h16l-4 22h-8z" fill="var(--ks-amber)" />
-          <path d="M9 6h16l-1 5H10z" fill="var(--ks-amber-light)" />
-        </svg>
+        <KeystoneMark />
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--ks-amber-light)]">
             {eyebrow}

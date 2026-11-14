@@ -26,6 +26,7 @@ import { getTenant } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
 import {
   clusterDuplicates,
+  clusterHref,
   getRationalization,
   type RationalizationCluster,
   type RationalizationDecision,
@@ -36,6 +37,8 @@ import { formatKeystoneDate } from "@/lib/dateFormat"
 import { useDataProvider } from "@/components/data-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { SectionTitle } from "@/components/cockpit/section-title"
+import { SquareTag } from "@/components/cockpit/square-tag"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 /** The decision recorded on this cluster's members, if any (every member carries the same record). */
@@ -67,6 +70,87 @@ export function RationalizationPanel({ submissions }: { submissions: Submission[
     })
     await refetchSubmissions()
     setBusyClusterId(null)
+  }
+
+  if (getTenant().features.cockpitLook) {
+    // NL-11 (#312), ES2 only: one plain table. Choosing a lead and deciding
+    // happen on the cluster page's own controls, one click away.
+    const th =
+      "border-b border-[var(--ks-limestone-dark)] bg-white px-3 py-2.5 text-left font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)] whitespace-nowrap"
+    const td = "border-b border-[var(--ks-limestone)] px-3 py-3 align-top text-sm text-[var(--ks-ink-900)]"
+    const title = `Cross-${getTenant().tierLabels.unit.toLowerCase()} rationalization`
+    return (
+      <section id="rationalization" aria-label={title} className="flex flex-col gap-4">
+        <SectionTitle
+          title={title}
+          context={`${clusters.length} duplicate cluster${clusters.length === 1 ? "" : "s"} · ${decidedCount} rationalized`}
+        />
+        <div className="overflow-x-auto border border-[var(--ks-limestone-dark)] bg-white">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={th}>Status</th>
+                <th className={th}>Match</th>
+                <th className={th}>Use cases</th>
+                <th className={th}>Decision</th>
+                <th className={th}>
+                  <span className="sr-only">Open</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {clusters.map((cluster) => {
+                const decision = decisionFor(cluster, byId)
+                const members = cluster.memberIds.map((id) => byId.get(id)).filter((s): s is Submission => !!s)
+                const lead = decision?.leadSubmissionId ? byId.get(decision.leadSubmissionId) : undefined
+                return (
+                  <tr key={cluster.id}>
+                    <td className={td}>
+                      <SquareTag tone={decision ? "healthy" : "attention"}>
+                        {decision
+                          ? decision.decision === "consolidated"
+                            ? "Consolidated"
+                            : "Keep separate"
+                          : tenantCopy(getTenant()).pendingDecisionLabel}
+                      </SquareTag>
+                    </td>
+                    <td className={`${td} font-mono`}>{Math.round(cluster.maxSimilarity * 100)}%</td>
+                    <td className={td}>
+                      <ul className="m-0 list-none space-y-1 p-0">
+                        {members.map((m) => (
+                          <li key={m.id}>
+                            <Link
+                              href={`/submissions/${m.id}`}
+                              className="font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+                            >
+                              {m.formData.useCaseTitle || "Untitled idea"}
+                            </Link>{" "}
+                            <span className="text-xs text-[var(--ks-ink-700)]">{businessUnitLabel(getBusinessUnit(m))}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+                    <td className={`${td} text-xs text-[var(--ks-ink-700)]`}>
+                      {decision
+                        ? `${decision.decision === "consolidated" && lead ? `Lead: ${lead.formData.useCaseTitle || "Untitled idea"}. ` : ""}By ${decision.decidedBy} on ${formatKeystoneDate(decision.decidedAt)}`
+                        : "–"}
+                    </td>
+                    <td className={td}>
+                      <Link
+                        href={clusterHref(cluster.id)}
+                        className="whitespace-nowrap text-[13px] font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+                      >
+                        Open the cluster
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
   }
 
   return (

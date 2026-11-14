@@ -1,3 +1,6 @@
+import { getTenant } from "@/lib/tenant"
+import { KeystoneMark } from "@/components/cockpit/keystone-mark"
+
 /**
  * The Plumb assistant mark (brand/keystone/plumb-assistant.svg) — a plumb
  * line with the bob in Active Blue. Represents the in-app AI assistant
@@ -6,6 +9,9 @@
  * comes from `getTenant().assistantName`, this is only the shared mark.
  */
 export function PlumbMark({ className }: { className?: string }) {
+  // NL-11 (#312), ES2 only: the Keystone mark the band carries. Other tenants
+  // keep the plumb-line mark.
+  if (getTenant().features.cockpitLook) return <KeystoneMark className={className} />
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
       <g fill="none" stroke="#2A333C" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round">
