@@ -135,3 +135,44 @@ describe("/rollup", () => {
     expect(el.textContent).not.toContain("consolidates to")
   })
 })
+
+// NL-4 (#285): ES2 gets the K3 title with today's context line; doc keeps the band.
+describe("/rollup header by tenant (NL-4)", () => {
+  const admin = { userId: "u1", email: "admin@x.gov", name: "Admin", role: "admin" as const, loggedInAt: new Date().toISOString() }
+  const withTenant = (id: string, run: () => void) => {
+    const prev = process.env.NEXT_PUBLIC_TENANT
+    process.env.NEXT_PUBLIC_TENANT = id
+    try {
+      run()
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+      else process.env.NEXT_PUBLIC_TENANT = prev
+    }
+  }
+
+  it("es2: K3 title, same context line and export link, no basalt band", () => {
+    withTenant("es2", () => {
+      mockSession = admin
+      submissions = [{ id: "s1", formData: { useCaseTitle: "Patent Triage Assistant", highImpact: "not_high_impact" } }]
+      const el = render(<RollupPage />)
+      const title = el.querySelector('[data-cockpit="section-title"]')
+      expect(title?.textContent).toContain("Every use case, by program office and status")
+      expect(title?.textContent).toContain("1 use case")
+      expect(title?.textContent).toContain(" · as of ")
+      expect(el.querySelector('a[href="/api/export/approval"]')?.textContent).toBe("Export approval report")
+      expect(el.querySelector("h1")).toBeNull()
+    })
+  })
+
+  it("doc: renders the band and heading as today", () => {
+    withTenant("doc", () => {
+      mockSession = admin
+      submissions = []
+      const el = render(<RollupPage />)
+      expect(el.querySelector('[data-cockpit="section-title"]')).toBeNull()
+      expect(el.querySelector("h1")?.textContent).toBe("Bureau roll-up")
+      expect(el.textContent).toContain("Every use case, by bureau and status")
+      expect(el.querySelector(".bg-keystone-basalt600")).not.toBeNull()
+    })
+  })
+})

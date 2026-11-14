@@ -35,6 +35,8 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card"
 import { GlossaryTerm } from "@/components/launchpad/glossary-term"
 import { StatusPill } from "@/components/ui/status-pill"
+import { SectionTitle } from "@/components/cockpit/section-title"
+import { SquareTag } from "@/components/cockpit/square-tag"
 import { cn } from "@/lib/utils"
 import { getTenant } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
@@ -148,7 +150,91 @@ function DrilldownRow({ item }: { item: KpiDrilldownEntry }) {
  * rows with no KPI card of their own (unassigned, needs-info); either falls
  * back to the same default hint when it names nothing more specific.
  */
+const COCKPIT_LINK =
+  "inline-flex items-center gap-1 text-sm font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+const COCKPIT_TH =
+  "border-b border-[var(--ks-limestone-dark)] bg-white px-3 py-2.5 text-left font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)]"
+const COCKPIT_TD = "border-b border-[var(--ks-limestone)] px-3 py-3 align-middle text-sm text-[var(--ks-ink-900)]"
+
+/**
+ * NL-4 (#285), ES2 only (`features.cockpitLook`): the same list and links in
+ * the cockpit kit — K3 title, K5 rows, K6 tags. Square corners and no shadow
+ * on the dialog; the overlay is the one existing.
+ */
+function CockpitDrilldownDialogContent({ label, items, id }: { label: string; items: KpiDrilldownEntry[]; id: string }) {
+  const tenant = getTenant()
+  const copy = tenantCopy(tenant)
+  const empty = items.length === 0
+  return (
+    <DialogContent
+      overlayClassName="bg-[rgba(42,51,60,0.55)]"
+      className="max-h-[80vh] gap-0 overflow-x-hidden overflow-y-auto rounded-none bg-white p-0 shadow-none sm:max-w-[760px] sm:rounded-none"
+    >
+      <DialogHeader className="space-y-0 border-b border-[var(--ks-limestone-dark)] px-6 py-5 pr-12">
+        <SectionTitle as={DialogTitle} title={`${items.length} use case${items.length === 1 ? "" : "s"}`} context={label} />
+        <DialogDescription className="sr-only">
+          {empty ? "Nothing here right now." : `${items.length} record${items.length === 1 ? "" : "s"} behind ${label}.`}
+        </DialogDescription>
+      </DialogHeader>
+      {empty ? (
+        <div className="flex flex-col items-start gap-2 px-6 py-8">
+          <p className="font-[family-name:var(--font-head)] text-base font-bold text-[var(--ks-ink-900)]">{copy.nothingNeedsAttention}</p>
+          <p className="max-w-[40ch] text-[13.5px] text-[var(--ks-ink-700)]">
+            Every use case behind this number is inside its gates. Check back after the next intake.
+          </p>
+        </div>
+      ) : (
+        <div data-cockpit="drilldown-table" className="min-w-0 overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={COCKPIT_TH}>{copy.listColIdea}</th>
+                <th className={COCKPIT_TH}>{tenant.tierLabels.unit}</th>
+                <th className={COCKPIT_TH}>{copy.listColStage}</th>
+                <th className={COCKPIT_TH}>{copy.listColLink}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => {
+                const cluster = isDuplicateClusterEntry(item)
+                const memberCount = memberCountLabel(item)
+                const { badge, descriptor } = presentCardField(item)
+                return (
+                  <tr key={item.id}>
+                    <td className={cn(COCKPIT_TD, "min-w-[200px]")}>
+                      <p className="m-0 font-semibold" title={item.title}>
+                        {item.title}
+                      </p>
+                      {descriptor && <p className="m-0 mt-[3px] text-xs text-[var(--ks-ink-700)]">{descriptor}</p>}
+                    </td>
+                    <td className={COCKPIT_TD}>{item.bureauLabel}</td>
+                    <td className={COCKPIT_TD}>
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <SquareTag>{item.stage}</SquareTag>
+                        {memberCount && <SquareTag>{memberCount}</SquareTag>}
+                        {badge && <SquareTag>{badge}</SquareTag>}
+                      </span>
+                    </td>
+                    <td className={COCKPIT_TD}>
+                      <Link href={kpiDrilldownEntryHref(item)} className={COCKPIT_LINK}>
+                        {cluster ? "Open cluster" : "Open submission"}
+                        <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="border-t border-[var(--ks-limestone-dark)] px-6 py-3 text-[12.5px] text-[var(--ks-ink-700)]">{drilldownFooterHint(id)}</p>
+    </DialogContent>
+  )
+}
+
 export function DrilldownDialogContent({ label, items, id = "" }: { label: string; items: KpiDrilldownEntry[]; id?: string }) {
+  if (getTenant().features.cockpitLook) return <CockpitDrilldownDialogContent label={label} items={items} id={id} />
   const empty = items.length === 0
   return (
     <DialogContent

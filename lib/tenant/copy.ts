@@ -41,6 +41,11 @@ export const DEFAULT_COPY: TenantCopy = {
   homeColWhy: "Why it matters",
   homeExpandAll: "Expand all",
   homeCollapseAll: "Collapse all",
+  listColNo: "No.", // NL-4: read only by the ES2 (cockpitLook) use-case lists
+  listColIdea: "Use case",
+  listColStatus: "Status",
+  listColStage: "Stage",
+  listColLink: "Open",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

@@ -69,4 +69,32 @@ describe("CockpitHome (NL-3, #284)", () => {
     expect(tags.length).toBeGreaterThan(0)
     tags.forEach((t) => expect(t.textContent?.trim()).not.toBe(""))
   })
+
+  it("one program or office: its ideas as a K5 table with the same title, status and link (NL-4, #285)", () => {
+    const el = render(
+      <CockpitHome
+        tenant={es2}
+        actionItems={[]}
+        kpiCards={cards}
+        drilldown={drilldown}
+        headerMeta="of 3 enterprise-wide"
+        scopedRows={[
+          { id: "s1", title: "Idea One", meta: "Pat · submitted 1 Jan 2026", href: "/submissions/s1", statusKeystone: "neutral", statusLabel: "In review" },
+          { id: "s2", title: "Idea Two", meta: "Sam · in duplicate cluster", href: "/clusters/c1", statusKeystone: "alert", statusLabel: "Blocked" },
+        ]}
+        scopedRowsTitle="Use cases in this program office"
+        railEyebrow="ACWS at a glance"
+        rollupLabel="Program roll-up"
+        plumb="Nothing is blocked."
+      />,
+    )
+    const table = el.querySelector('[data-cockpit="ranked-table"]')!
+    expect(table).not.toBeNull()
+    expect(table.textContent).toContain("Idea One")
+    expect(table.textContent).toContain("Pat · submitted 1 Jan 2026")
+    expect(table.textContent).toContain("In review")
+    expect(table.textContent).toContain("Blocked")
+    expect(Array.from(table.querySelectorAll("a")).map((a) => a.getAttribute("href"))).toEqual(["/submissions/s1", "/clusters/c1"])
+    expect(table.querySelectorAll('[data-cockpit="square-tag"]')).toHaveLength(2)
+  })
 })
