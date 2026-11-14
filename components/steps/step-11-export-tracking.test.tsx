@@ -14,7 +14,8 @@ vi.mock("@/components/steps/pdf-export-button", () => ({
 }))
 
 import { Step11ExportTracking } from "./step-11-export-tracking"
-import { ALL_TENANTS } from "@/lib/tenant"
+import { ALL_TENANTS, getTenant } from "@/lib/tenant"
+import { BandHost } from "@/components/cockpit/test-utils"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -49,7 +50,9 @@ function renderAs(tenantId: string): string {
   const prev = process.env.NEXT_PUBLIC_TENANT
   process.env.NEXT_PUBLIC_TENANT = tenantId
   try {
-    return render(<Step11ExportTracking />).textContent ?? ""
+    // NL-10: on ES2 the title sits in the page band, so stand the band in.
+    const screen = <Step11ExportTracking />
+    return render(getTenant().features.cockpitLook ? <BandHost>{screen}</BandHost> : screen).textContent ?? ""
   } finally {
     if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
     else process.env.NEXT_PUBLIC_TENANT = prev

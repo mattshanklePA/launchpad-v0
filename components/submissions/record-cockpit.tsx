@@ -5,7 +5,7 @@
 // strings) and nothing here reads, saves or calls anything.
 
 import type { ReactNode } from "react"
-import { HeaderBand, SectionTitle, SquareTag, type SquareTagTone } from "@/components/cockpit"
+import { SectionTitle, SquareTag, useCockpitBand, type SquareTagTone } from "@/components/cockpit"
 import { STATUS_LABEL, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import type { KeystoneStatus } from "@/lib/statusTokens"
 
@@ -22,31 +22,29 @@ export function StatusTag({ status }: { status: SubmissionStatus }) {
   return <SquareTag tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</SquareTag>
 }
 
-/** K1 band for the record: eyebrow "office · record ID · status", title is the idea's title. */
-export function RecordBand({
+/**
+ * NL-10 (#311): the record's eyebrow "office · record ID · status" and its full
+ * idea title go in the page band (no second band, no cut-off). Renders nothing itself.
+ */
+export function RecordBandContent({
   unitLabel,
   slugTail,
   status,
   title,
-  background,
   statusLabel,
 }: {
   unitLabel: string
   slugTail: string
   status: SubmissionStatus
   title: string
-  background?: string
   /** Replaces the status word in the eyebrow (NL-7: "Decided" once the record is final). */
   statusLabel?: string
 }) {
-  return (
-    <HeaderBand
-      eyebrow={`${unitLabel} · ${slugTail} · ${statusLabel ?? STATUS_LABEL[status]}`.toUpperCase()}
-      title={title}
-      headingLevel="h2"
-      background={background}
-    />
-  )
+  useCockpitBand({
+    eyebrow: `${unitLabel} · ${slugTail} · ${statusLabel ?? STATUS_LABEL[status]}`.toUpperCase(),
+    title,
+  })
+  return null
 }
 
 export type KeyFact = { label: string; value: ReactNode; reason?: string; tone?: SquareTagTone; tag?: boolean }

@@ -13,6 +13,7 @@ import { Step4TechnicalConstraints } from "./steps/step-4-technical-constraints"
 import { Step10ReviewSubmit } from "./steps/step-10-review-submit"
 import { Step11ExportTracking } from "./steps/step-11-export-tracking"
 import { Button } from "@/components/ui/button"
+import { getTenant } from "@/lib/tenant"
 
 export function FormContainer({
   onSwitchToGuided,
@@ -98,7 +99,13 @@ export function FormContainer({
           </div>
         </div>
       )}
-      <div className="mx-auto flex max-w-[880px] flex-col gap-[22px] px-4 pb-6 pt-8">
+      <div
+        className={
+          getTenant().features.cockpitLook
+            ? "flex flex-col gap-[22px] pb-6"
+            : "mx-auto flex max-w-[880px] flex-col gap-[22px] px-4 pb-6 pt-8"
+        }
+      >
         {/* mode="wait" holds the outgoing step's exit animation on screen
             before mounting the next one — never two steps' content on screen
             at once — so the total swap is exit + enter, sequential. At the

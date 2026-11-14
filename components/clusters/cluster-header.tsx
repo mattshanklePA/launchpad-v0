@@ -9,7 +9,7 @@ import type { Submission } from "@/lib/submissions"
 import type { RationalizationCluster, Rationalization } from "@/lib/rationalization"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
-import { HeaderBand } from "@/components/cockpit"
+import { useCockpitBand } from "@/components/cockpit"
 import { spellCount, formatKeystoneDate } from "@/components/dashboard/command-center-data"
 
 /**
@@ -58,15 +58,10 @@ export function ClusterHeader({
   const title = `${spellCount(count)} use cases, one problem`
   const explanation = `All ${countWord} ${shortDescription(members, tenant)}. Decide whether they are one effort with a lead, or ${countWord} efforts that stay separate. Neither choice touches the submissions themselves.`
 
+  // NL-10 (#311): on ES2 the page band carries the eyebrow and title; the sentence stays in the page.
+  useCockpitBand(cockpit ? { eyebrow: eyebrow.toUpperCase(), title: `${spellCount(count)} ideas, one problem` } : null)
   if (cockpit) {
-    return (
-      <HeaderBand
-        eyebrow={eyebrow.toUpperCase()}
-        title={title}
-        subtitle={explanation}
-        background={tenant.theme.primary}
-      />
-    )
+    return <p data-cockpit="cluster-explanation" className="m-0 max-w-[68ch] text-[14px] leading-[1.55] text-[var(--ks-ink-700)]">{explanation}</p>
   }
 
   return (

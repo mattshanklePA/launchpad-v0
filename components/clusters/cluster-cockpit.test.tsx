@@ -7,7 +7,7 @@ import { ClusterMembers } from "./cluster-members"
 import { ClusterHeader } from "./cluster-header"
 import { initialFormData, type FormData } from "@/lib/steps"
 import type { Submission } from "@/lib/submissions"
-import { render } from "@/components/cockpit/test-utils"
+import { render, BandHost } from "@/components/cockpit/test-utils"
 
 const prev = process.env.NEXT_PUBLIC_TENANT
 afterEach(() => {
@@ -50,9 +50,14 @@ describe("overlap group", () => {
 
   it("ES2: band carries today's heading", () => {
     process.env.NEXT_PUBLIC_TENANT = "es2"
-    const el = render(<ClusterHeader cluster={cluster} members={members} decision={undefined} cockpit />)
-    expect(el.querySelector('[data-cockpit="header-band"]')).not.toBeNull()
-    expect(el.querySelector("h1")?.textContent).toBe("Two use cases, one problem")
+    const el = render(
+      <BandHost>
+        <ClusterHeader cluster={cluster} members={members} decision={undefined} cockpit />
+      </BandHost>,
+    )
+    expect(el.querySelectorAll('[data-cockpit="header-band"]').length).toBe(1)
+    expect(el.querySelector("h1")?.textContent).toBe("Two ideas, one problem")
+    expect(el.querySelector('[data-band="eyebrow"]')?.textContent).toMatch(/ · \d+% MATCH$/)
   })
 
   it("doc: the old cards and header, no table or band", () => {

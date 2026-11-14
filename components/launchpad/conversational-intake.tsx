@@ -48,13 +48,12 @@ import { saveSubmission } from "@/lib/submissions"
 import { getGuidedSubmitGate, withGuidedAliases } from "@/lib/guidedSubmitGate"
 import { getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { cn } from "@/lib/utils"
-import { SubmitBand, SubmitProgress, submitEyebrow } from "@/components/cockpit"
+import { SubmitBandContent, SubmitProgress, submitEyebrow, submitStepLabels } from "@/components/cockpit"
 import { tenantCopy } from "@/lib/tenant/copy"
 import type { FormData } from "@/lib/steps"
 import {
   INTAKE_TOPICS,
-  activeIntakeTopics,
-  isTopicCaptured,
+  guidedStepProgress,
   nextIntakeTopic,
   type IntakeTopic,
   type IntakeTopicId,
@@ -285,25 +284,23 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
   // progress line as the form, built from this flow's own topics (its own
   // count, not the form's six).
   const cockpit = tenant.features.cockpitLook
-  const flowTopics = activeIntakeTopics(formData.submitterOffice)
-  const nextTopic = nextIntakeTopic(formData)
-  const currentTopicIndex = nextTopic ? flowTopics.findIndex((t) => t.id === nextTopic.id) + 1 : flowTopics.length
+  const guided = guidedStepProgress(formData)
+  const stepLabels = submitStepLabels(tenantCopy(tenant).submitStepLabels)
 
   return (
-    <div className={cn("mx-auto max-w-[1600px]", cockpit ? "" : "px-4 py-8")}>
+    <div className={cn(cockpit ? "" : "mx-auto max-w-[1600px] px-4 py-8")}>
       {cockpit ? (
         <div data-cockpit="submit-frame" className="mb-6 flex flex-col">
-          <SubmitBand
-            eyebrow={submitEyebrow(tenantCopy(tenant).submitEyebrow, Math.max(currentTopicIndex, 1), flowTopics.length)}
+          <SubmitBandContent
+            eyebrow={submitEyebrow(tenantCopy(tenant).submitEyebrow, guided.current, stepLabels.length)}
             title={`Tell ${tenant.assistantName} about your idea`}
             modeToggle={modeToggle}
-            background={tenant.theme.primary}
           />
           <SubmitProgress
-            steps={flowTopics.map((t) => ({ label: t.label, done: isTopicCaptured(t, formData) }))}
-            current={Math.max(currentTopicIndex, 1)}
+            steps={stepLabels.map((label, i) => ({ label, done: guided.done[i] }))}
+            current={guided.current}
           />
-          <p className="m-0 max-w-2xl px-8 pt-4 text-[14px] text-[var(--ks-ink-700)]">
+          <p className="m-0 max-w-2xl pt-4 text-[14px] text-[var(--ks-ink-700)]">
             Answer a few quick questions, mostly by tapping the suggested answers. {tenant.assistantName} keeps a
             running record of what it's captured on the right — edit anything there at any time.
           </p>
@@ -317,7 +314,7 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
         </p>
       </div>
       )}
-      <div className={cockpit ? "px-8" : undefined}>
+      <div>
 
       <TooltipProvider>
         <div className="grid lg:grid-cols-12 gap-8">

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { INTAKE_TOPICS, isTopicCaptured, nextIntakeTopic, intakeMinimumMet } from "@/lib/intakeFlow"
+import { INTAKE_TOPICS, isTopicCaptured, nextIntakeTopic, intakeMinimumMet, guidedStepProgress } from "@/lib/intakeFlow"
 import { initialFormData, type FormData } from "@/lib/steps"
 
 function withFields(patch: Partial<FormData>): FormData {
@@ -75,5 +75,23 @@ describe("intakeMinimumMet", () => {
       businessValue: "Business benefit.",
     })
     expect(intakeMinimumMet(fd)).toBe(true)
+  })
+})
+
+// NL-10 (#311): guided maps its four chat topics onto the form's six steps.
+describe("guidedStepProgress", () => {
+  const problem = { problemDefinition: "Backlog.", affectedBusinessUnits: ["x"], deliveryAudience: "internal" } as Partial<FormData>
+  it("starts on step 2, The problem, with nothing done", () => {
+    expect(guidedStepProgress(withFields({}))).toEqual({ current: 2, done: [false, false, false, false, false, false] })
+  })
+  it("stays on step 2 until problem, units and audience are all captured", () => {
+    expect(guidedStepProgress(withFields({ problemDefinition: "Backlog." })).current).toBe(2)
+  })
+  it("moves to step 3 once the problem topics are captured, marking step 2 done", () => {
+    expect(guidedStepProgress(withFields(problem))).toEqual({ current: 3, done: [false, true, false, false, false, false] })
+  })
+  it("lands on step 6, Review and send, once every topic is captured", () => {
+    const all = withFields({ ...problem, solutionSummary: "a", userValue: "b", businessValue: "c", submitterName: "Sam" })
+    expect(guidedStepProgress(all)).toEqual({ current: 6, done: [true, true, true, false, false, false] })
   })
 })
