@@ -10,6 +10,7 @@ import { determineConsolidation, CONSOLIDATION_CATEGORIES } from "@/lib/ombConso
 import { computeRmfProfile, RMF_FUNCTION_ORDER } from "@/lib/nistRmf"
 import { STATUS_ORDER, getBusinessUnit } from "@/lib/reviewWorkflow"
 import type { Submission } from "@/lib/submissions"
+import { officeRollupRows } from "@/lib/officeRollup"
 
 // Golden-state test for the ES2 one-click demo reset (app/api/seed/route.ts and
 // the admin "Reset Demo Data" tool). The seed is a demo script, not sample
@@ -36,8 +37,8 @@ const officeValuesByUnit = new Map(
 )
 
 describe("es2SeedSubmissions golden state", () => {
-  it("has 15 deterministic, uniquely-identified submissions", () => {
-    expect(S).toHaveLength(15)
+  it("has 16 deterministic, uniquely-identified submissions", () => {
+    expect(S).toHaveLength(16)
     const ids = S.map((s) => s.id)
     expect(new Set(ids).size).toBe(ids.length)
     for (const id of ids) expect(id).toMatch(/^es2-/)
@@ -438,5 +439,25 @@ describe("db/migrations/es2/0001_es2_users_seed.sql job roles (ES2-13)", () => {
       const guarded = catchUp.match(/and job_role is null;/g) ?? []
       expect(all.length).toBe(guarded.length)
     })
+  })
+})
+
+// F4-1 (#224): ADAMS, the fifth AT&R program, has a seeded idea so it is not an
+// empty row on the AT&R roll-up, and it stays out of the duplicate group.
+describe("ADAMS (fifth AT&R program)", () => {
+  const adams = S.filter((s) => s.formData.submitterOffice === "atr" && s.formData.submitterSubOffice === "adams")
+
+  it("has at least one seeded submission", () => {
+    expect(adams.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("shows as its own row on the AT&R roll-up", () => {
+    const row = officeRollupRows(S, "atr", es2).find((r) => r.value === "adams")
+    expect(row).toBeDefined()
+    expect(row!.total).toBeGreaterThanOrEqual(1)
+  })
+
+  it("is not part of the cross-program duplicate group", () => {
+    for (const a of adams) expect(DUPLICATE_GROUP).not.toContain(a.id)
   })
 })

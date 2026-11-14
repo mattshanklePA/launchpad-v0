@@ -27,7 +27,7 @@ import type { TenantConfig } from "./types"
 //
 // The `unit.options` and `offices` VALUES below are load-bearing: the seed data
 // and db/migrations/es2/0000_es2_base_schema.sql's column comments reference
-// them. The five program-office labels and the four AT&R program labels are
+// them. The five program-office labels and the five AT&R program labels are
 // verbatim from the organization's own published org chart — including
 // "Training and Readiness" rather than an ampersand, and the en dash in the
 // FMS-ACES name. Do not restyle them.
@@ -160,6 +160,8 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
           { value: "atis", label: "Army Training Information System (ATIS)" },
           { value: "fmsaces", label: "Foreign Military Sales – Army Case Execution System (FMS-ACES)" },
           { value: "digitalmarket", label: "Digital Market" },
+          // F4-1 (#224): the fifth AT&R program, added after the 19 Aug demo.
+          { value: "adams", label: "Army Acquisition Talent Management System (ADAMS)" },
         ],
         focusAreas: [
           { id: "atr_contract_speed", label: "Faster, more accurate contract actions", category: "AT&R",
