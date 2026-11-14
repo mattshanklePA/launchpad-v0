@@ -271,6 +271,21 @@ describe("buildPortfolioReport: every idea", () => {
   })
 })
 
+describe("buildPortfolioReport: flags the screen filters read (F5-2)", () => {
+  it("marks decided ideas and ideas that sit in a look-alike group", () => {
+    const r = report()
+    const byId = new Map(r.ideas.map((i) => [i.id, i]))
+    expect(r.ideas.filter((i) => i.decided).map((i) => i.id).sort()).toEqual(["a2", "h1", "h2", "l1"])
+    expect(r.ideas.filter((i) => i.inOverlap).map((i) => i.id).sort()).toEqual(["d1", "d2"])
+    expect(byId.get("a1")).toMatchObject({ decided: false, inOverlap: false })
+  })
+
+  it("with an office, an idea in a group that spans offices still counts as overlapping", () => {
+    const r = buildPortfolioReport(SET, es2, NOW, "logfin")
+    expect(r.ideas.filter((i) => i.inOverlap).map((i) => i.id)).toEqual(["d1"])
+  })
+})
+
 describe("buildPortfolioReport: days use the fixed New York day", () => {
   it("2 Nov 23:00 in New York is 1 day before 3 Nov 23:00, whatever the viewer's zone", () => {
     const s = idea({ id: "z1", office: "atr", status: "submitted", risk: "low", submitted: "2026-11-01T03:00:00Z", words: "zulu" })
