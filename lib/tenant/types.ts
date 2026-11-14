@@ -65,6 +65,12 @@ export type TenantCopy = {
   homeColWhy: string
   homeExpandAll: string                 // ranked table open/close-all links
   homeCollapseAll: string
+  // Use-case lists (NL-4, #285): the one-program table and the drilldown dialog. ES2 only.
+  listColNo: string                     // row number heading
+  listColIdea: string                   // use case name heading
+  listColStatus: string
+  listColStage: string
+  listColLink: string                   // heading over the "Open" links
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

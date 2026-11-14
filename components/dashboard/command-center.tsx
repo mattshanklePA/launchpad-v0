@@ -321,6 +321,37 @@ function ScopedBanner({
 
   // The ES2 header band already carries the page's h1.
   const Heading = tenant.features.cockpitLook ? "h2" : "h1"
+  // NL-4 (#285), ES2 only: the program or office name is the title; the one
+  // line below it is today's "here of the enterprise's N" note, unchanged.
+  if (tenant.features.cockpitLook) {
+    return (
+      <div
+        data-cockpit="scope-band"
+        className="flex flex-col gap-3 border border-[var(--ks-limestone-dark)] border-t-[3px] border-t-[var(--ks-amber)] bg-white p-6 md:flex-row md:items-end md:justify-between"
+      >
+        <div className="space-y-2">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--ks-amber-dark)]">
+            You are looking at one {scopedUnitWord(scope, tenant)}
+          </p>
+          <Heading className="font-[family-name:var(--font-head)] text-[27px] font-black leading-[1.1] tracking-[-0.024em] text-[var(--ks-ink-900)]">
+            {code ? `${code} · ${name}` : name}
+          </Heading>
+          <p className="text-[13.5px] text-[var(--ks-ink-700)]">
+            {parentLabel} · {here} of the enterprise's {enterpriseTotal} use cases live here
+          </p>
+        </div>
+        {back && (
+          <button
+            type="button"
+            onClick={() => onSelect(back.target)}
+            className="shrink-0 text-[13px] font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+          >
+            {back.label}
+          </button>
+        )}
+      </div>
+    )
+  }
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm md:flex-row md:items-end md:justify-between">
       <div className="space-y-2">

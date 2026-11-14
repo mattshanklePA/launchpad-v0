@@ -325,6 +325,12 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     homeColWhy: "Why it matters",
     homeExpandAll: "Expand all",
     homeCollapseAll: "Collapse all",
+    // NL-4 (#285): one-program list and drilldown dialog headings.
+    listColNo: "No.",
+    listColIdea: "Use case",
+    listColStatus: "Status",
+    listColStage: "Stage",
+    listColLink: "Open",
   },
 
   glossaryOverrides: {

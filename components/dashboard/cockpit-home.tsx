@@ -190,20 +190,40 @@ export function CockpitHome({
       {scopedRows && scopedRowsTitle && (
         <section className="flex flex-col gap-4">
           <SectionTitle title={scopedRowsTitle} />
-          <div className="divide-y divide-[var(--ks-limestone)] border border-[var(--ks-limestone-dark)] bg-white">
-            {scopedRows.map((row) => (
-              <div key={row.id} className="flex flex-wrap items-center gap-4 px-5 py-3.5">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[14.5px] font-semibold text-[var(--ks-ink-900)]">{row.title}</p>
-                  <p className="mt-0.5 text-[13px] text-[var(--ks-ink-700)]">{row.meta}</p>
-                </div>
-                <SquareTag tone={row.statusKeystone as SquareTagTone}>{row.statusLabel}</SquareTag>
-                <Link href={row.href} className={cn(LINK, "shrink-0")}>
-                  Open
-                </Link>
-              </div>
-            ))}
-          </div>
+          <RankedTable
+            groups={[{ id: "scoped", rows: scopedRows }]}
+            columns={[
+              {
+                key: "status",
+                header: copy.listColStatus,
+                render: (row) => <SquareTag tone={row.statusKeystone as SquareTagTone}>{row.statusLabel}</SquareTag>,
+              },
+              {
+                key: "open",
+                header: copy.listColLink,
+                render: (row) => (
+                  // Clicks on the link must not open the row.
+                  <span onClick={(e) => e.stopPropagation()}>
+                    <Link href={row.href} className={cn(LINK, "shrink-0")}>
+                      Open
+                    </Link>
+                  </span>
+                ),
+              },
+            ]}
+            getRowId={(row) => row.id}
+            getRank={(row) => String(scopedRows.indexOf(row) + 1)}
+            getName={(row) => row.title}
+            getReference={(row) => row.meta}
+            getDetails={(row) => [
+              { label: copy.listColIdea, value: row.title },
+              { label: copy.listColStatus, value: row.statusLabel },
+            ]}
+            rankHeader={copy.listColNo}
+            nameHeader={copy.listColIdea}
+            expandAllLabel={copy.homeExpandAll}
+            collapseAllLabel={copy.homeCollapseAll}
+          />
         </section>
       )}
 

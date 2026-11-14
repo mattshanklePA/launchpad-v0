@@ -57,3 +57,55 @@ describe("KpiCard", () => {
     expect(el.textContent).toContain("Recommended high-impact")
   })
 })
+
+// NL-4 (#285): the drilldown dialog on ES2 only.
+import { Dialog } from "@/components/ui/dialog"
+import { DrilldownDialogContent } from "./kpi-card"
+
+function withTenant(id: string, run: () => void) {
+  const prev = process.env.NEXT_PUBLIC_TENANT
+  process.env.NEXT_PUBLIC_TENANT = id
+  try {
+    run()
+  } finally {
+    if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = prev
+  }
+}
+
+describe("DrilldownDialogContent (NL-4)", () => {
+  const items = [item("1"), item("2")]
+  const open = () =>
+    render(
+      <Dialog open>
+        <DrilldownDialogContent label="High-impact" items={items} id="high-impact" />
+      </Dialog>,
+    )
+  const dialog = () => document.body.querySelector('[role="dialog"]') as HTMLElement
+
+  it("es2: K3 title, K5 rows, K6 tags, square, no shadow, same links", () => {
+    withTenant("es2", () => {
+      open()
+      const d = dialog()
+      expect(d.querySelector('[data-cockpit="section-title"]')).not.toBeNull()
+      expect(d.querySelector('[data-cockpit="drilldown-table"]')).not.toBeNull()
+      expect(d.querySelectorAll('[data-cockpit="square-tag"]').length).toBeGreaterThanOrEqual(items.length)
+      expect(d.className).not.toMatch(/rounded-(lg|xl)|shadow-(sm|md|lg|xl)/)
+      expect(d.className).toContain("shadow-none")
+      const hrefs = Array.from(d.querySelectorAll("a")).map((a) => a.getAttribute("href"))
+      expect(hrefs).toEqual(items.map((i) => `/submissions/${i.id}`))
+      expect(d.textContent).toContain("2 use cases")
+    })
+  })
+
+  it("doc: renders as today", () => {
+    withTenant("doc", () => {
+      open()
+      const d = dialog()
+      expect(d.querySelector('[data-cockpit="section-title"]')).toBeNull()
+      expect(d.querySelector('[data-cockpit="square-tag"]')).toBeNull()
+      expect(d.className).toContain("rounded-xl")
+      expect(d.className).toContain("shadow-lg")
+    })
+  })
+})
