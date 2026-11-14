@@ -20,6 +20,7 @@ import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
 import type { DashboardScope } from "@/lib/dashboard/scope"
 import { scopedSubmissions, readinessBucket } from "@/lib/dashboard/metrics"
+import { timeToDecision, formatDays } from "@/lib/timeToDecision"
 
 /** One underlying submission behind a KPI count — the compact view model every non-cluster KPI list shares. */
 export type KpiDrilldownItem = {
@@ -45,6 +46,8 @@ export type KpiDrilldown = {
   signoff: KpiDrilldownItem[]
   duplicates: DuplicateClusterDrilldownItem[]
   rmf: KpiDrilldownItem[]
+  /** Decided records with their days to decision; `[]` unless the tenant turns `features.timeToDecision` on. */
+  "time-to-decision": KpiDrilldownItem[]
 }
 
 function toItem(s: Submission, cardField: string): KpiDrilldownItem {
@@ -125,6 +128,13 @@ export function getKpiDrilldown(
     .filter(({ resolved }) => resolved.effectiveOverall === "at_risk")
     .map(({ s, resolved }) => toItem(s, resolved.profile.rationale))
 
+  const timeToDecisionItems = tenant.features?.timeToDecision
+    ? rows.flatMap((s) => {
+        const days = timeToDecision(s)
+        return days === undefined ? [] : [toItem(s, formatDays(days))]
+      })
+    : []
+
   return {
     pipeline,
     readiness,
@@ -133,5 +143,6 @@ export function getKpiDrilldown(
     signoff,
     duplicates,
     rmf,
+    "time-to-decision": timeToDecisionItems,
   }
 }

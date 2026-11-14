@@ -26,6 +26,11 @@ export const DEFAULT_COPY: TenantCopy = {
   haveEnoughOption: "I have enough, give me the scaffold",
   reviseDraftPlaceholder: "Ask a follow-up or request a revised scaffold...",
   affectedUnitsPrompt: "Which business units, systems, or groups does this affect? Tap all that apply, then Continue.",
+  timeToDecisionLabel: "Median time to decision",
+  timeToDecisionAcross: "across {count} decisions",
+  timeToDecisionAcrossOne: "across 1 decision",
+  timeToDecisionEmpty: "No decisions yet",
+  decidedInLabel: "Decided in {days}",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

@@ -13,6 +13,7 @@ import type { DashboardAction } from "@/lib/dashboard/actions"
 import type { KpiDrilldown, KpiDrilldownItem } from "@/lib/dashboard/drilldown"
 import { STATUS_LABEL } from "@/lib/reviewWorkflow"
 import { sendDashboardActionNotification } from "@/app/dashboard-actions"
+import { formatDays } from "@/lib/timeToDecision"
 import type { KpiCardData } from "./kpi-card-data"
 import type { ActionDrilldown, ActionItem, ActionOutcome } from "./action-center-data"
 import type { EntitySelection } from "./entity-tree-data"
@@ -148,6 +149,24 @@ export function buildKpiCards(
       status: rmfRollup.at_risk > 0 ? "critical" : rmfRollup.attention > 0 ? "warning" : "neutral",
       glossary: "rmfAtRisk",
       subtitle: "NIST AI RMF gap needs attention",
+    })
+  }
+
+  // F3-3 (#270): median time to decision, only where the tenant turns it on (ES2).
+  if (tenant.features?.timeToDecision && metrics.timeToDecision) {
+    const copy = tenantCopy(tenant)
+    const { medianDays, decisions } = metrics.timeToDecision
+    cards.push({
+      id: "time-to-decision",
+      label: copy.timeToDecisionLabel,
+      value: medianDays === null ? copy.timeToDecisionEmpty : formatDays(medianDays),
+      status: "neutral",
+      subtitle:
+        medianDays === null
+          ? undefined
+          : decisions === 1
+            ? copy.timeToDecisionAcrossOne
+            : copy.timeToDecisionAcross.replace("{count}", String(decisions)),
     })
   }
 

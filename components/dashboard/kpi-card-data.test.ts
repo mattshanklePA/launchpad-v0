@@ -58,6 +58,7 @@ describe("kpiDrilldownEntriesFor", () => {
     signoff: [],
     duplicates: [cluster("d1", ["d1", "d2"])],
     rmf: [],
+    "time-to-decision": [],
   }
 
   it("returns [] when no drilldown has loaded yet", () => {

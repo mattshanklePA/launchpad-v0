@@ -4,10 +4,17 @@
 // only authoritative statement of what the record is; the prefix just
 // duplicated (and sometimes contradicted) it.
 
-import { describe, it, expect, afterEach } from "vitest"
+import { describe, it, expect, afterEach, vi } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { ReviewerHeader } from "./reviewer-header"
+
+const tenantFlag = vi.hoisted(() => ({ on: true }))
+vi.mock("@/lib/tenant", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/tenant")>()
+  const base = actual.ALL_TENANTS.find((t) => t.id === "es2")!
+  return { ...actual, getTenant: () => ({ ...base, features: { ...base.features, timeToDecision: tenantFlag.on } }) }
+})
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -62,5 +69,37 @@ describe("ReviewerHeader eyebrow", () => {
       />,
     )
     expect(eyebrowText(el)).toBe("SOURCE-SELECTION-SCORING · Use Case")
+  })
+})
+
+describe("ReviewerHeader decided-in line (#270)", () => {
+  const decided = (days?: number) => (
+    <ReviewerHeader
+      slugTail="X"
+      lifecycleStage="use_case"
+      title="T"
+      unitLabel="U"
+      submitterName="Jane"
+      submittedAt="2026-11-01T15:00:00.000Z"
+      status="approved"
+      decision="approved"
+      decidedAt="2026-11-03T15:00:00.000Z"
+      daysToDecision={days}
+    />
+  )
+
+  it("renders 'Decided in N days' next to the decision date", () => {
+    tenantFlag.on = true
+    expect(render(decided(2)).textContent).toContain("Decided in 2 days")
+  })
+
+  it("renders nothing extra when the tenant feature is off", () => {
+    tenantFlag.on = false
+    expect(render(decided(2)).textContent).not.toContain("Decided in")
+  })
+
+  it("renders nothing extra when there is no day count", () => {
+    tenantFlag.on = true
+    expect(render(decided(undefined)).textContent).not.toContain("Decided in")
   })
 })

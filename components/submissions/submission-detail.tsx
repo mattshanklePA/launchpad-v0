@@ -87,6 +87,7 @@ import { PlumbMark } from "@/components/branding/plumb-mark"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
+import { timeToDecision } from "@/lib/timeToDecision"
 import { formatKeystoneDate, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
@@ -626,6 +627,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           decidedAt={decidedAt}
           decidedByName={decidedByName}
           decidedByUnitShort={decidedByUnitShort}
+          daysToDecision={timeToDecision(sub)}
         />
 
         {showBureauTier && deptTierEnabled && isDeptViewer && bureauSignoff && (

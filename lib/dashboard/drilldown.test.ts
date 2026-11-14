@@ -214,3 +214,9 @@ describe("rmf drilldown", () => {
     expect(drilldown.rmf).toEqual([])
   })
 })
+
+describe("getKpiDrilldown time-to-decision (#270)", () => {
+  it("is empty for tenants without features.timeToDecision", () => {
+    expect(getKpiDrilldown(DEPT, submissions, doc)["time-to-decision"]).toEqual([])
+  })
+})

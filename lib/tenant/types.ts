@@ -47,6 +47,12 @@ export type TenantCopy = {
   haveEnoughOption: string              // Plumb's "stop asking, draft it" chip
   reviseDraftPlaceholder: string        // chat box placeholder after a draft
   affectedUnitsPrompt: string           // guided intake question on affected units
+  // Time to decision (F3-3, #270). Rendered only where `features.timeToDecision` is on (ES2).
+  timeToDecisionLabel: string           // dashboard tile label
+  timeToDecisionAcross: string          // tile subtitle, "{count}" = number of decisions
+  timeToDecisionAcrossOne: string       // same, for exactly one decision
+  timeToDecisionEmpty: string           // tile value when nothing is decided yet
+  decidedInLabel: string                // decided record header, "{days}" = "N days"
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }
