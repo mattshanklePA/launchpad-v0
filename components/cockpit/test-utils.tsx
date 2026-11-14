@@ -5,21 +5,26 @@ import { afterEach } from "vitest"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
-let container: HTMLDivElement | null = null
-let root: Root | null = null
+// Every root a test creates is unmounted after it. Keeping only the last one
+// leaked earlier roots when a test rendered twice: React then ran scheduled
+// work after the test environment was torn down ("window is not defined"),
+// which failed whole test runs at random.
+const mounted: { container: HTMLDivElement; root: Root }[] = []
 
 afterEach(() => {
-  if (root) act(() => root!.unmount())
-  container?.remove()
-  container = null
-  root = null
+  while (mounted.length) {
+    const { container, root } = mounted.pop()!
+    act(() => root.unmount())
+    container.remove()
+  }
 })
 
 export function render(ui: ReactElement) {
-  container = document.createElement("div")
+  const container = document.createElement("div")
   document.body.appendChild(container)
-  root = createRoot(container)
-  act(() => root!.render(ui))
+  const root = createRoot(container)
+  mounted.push({ container, root })
+  act(() => root.render(ui))
   return container
 }
 
