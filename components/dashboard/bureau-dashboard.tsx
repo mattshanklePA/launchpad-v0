@@ -28,6 +28,7 @@ import type { EntitySelection } from "@/components/dashboard/entity-tree"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { CommandCenter } from "@/components/dashboard/command-center"
 import { scopeLabel } from "./department-dashboard-data"
+import { homeBandTitle } from "./home-headline"
 import { bureauHierarchy, resolveBureauDrillScope } from "./bureau-dashboard-data"
 
 export function BureauDashboard() {
@@ -47,7 +48,7 @@ export function BureauDashboard() {
   const currentScopeLabel = scopeLabel(scope, tenant)
 
   return (
-    <DashboardShell baseScope={baseScope} hierarchy={hierarchy} selection={selection} onSelect={setSelection} breadcrumb={currentScopeLabel}>
+    <DashboardShell baseScope={baseScope} hierarchy={hierarchy} selection={selection} onSelect={setSelection} breadcrumb={currentScopeLabel} title={homeBandTitle(scope, submissions, tenant)}>
       <CommandCenter tenant={tenant} session={session} scope={scope} selection={selection} onSelect={setSelection} submissions={submissions} />
     </DashboardShell>
   )

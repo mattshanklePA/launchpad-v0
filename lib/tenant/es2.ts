@@ -318,6 +318,13 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     // NL-2 (#283): the strip under the header band.
     sampleDataTag: "SAMPLE DATA",
     sampleDataNotice: "Every idea, office and number on this page is sample data for the demo.",
+    // NL-3 (#284): My work home.
+    homeLeadLabel: "Do this first",
+    homeColCount: "Count",
+    homeColWhat: "What",
+    homeColWhy: "Why it matters",
+    homeExpandAll: "Expand all",
+    homeCollapseAll: "Collapse all",
   },
 
   glossaryOverrides: {

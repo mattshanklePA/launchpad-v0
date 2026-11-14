@@ -58,6 +58,13 @@ export type TenantCopy = {
   // Sample-data strip (NL-2, #283). Rendered only where `features.sampleDataStrip` is on (ES2).
   sampleDataTag: string                 // square tag at the left of the strip
   sampleDataNotice: string              // the one sentence beside it
+  // My work home (NL-3, #284). Rendered only where `features.cockpitLook` is on (ES2).
+  homeLeadLabel: string                 // eyebrow over the lead action item
+  homeColCount: string                  // ranked table column heading
+  homeColWhat: string
+  homeColWhy: string
+  homeExpandAll: string                 // ranked table open/close-all links
+  homeCollapseAll: string
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }
