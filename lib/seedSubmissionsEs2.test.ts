@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi, afterEach } from "vitest"
 import fs from "node:fs"
 import path from "node:path"
 import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
@@ -13,7 +13,7 @@ import type { Submission } from "@/lib/submissions"
 import { officeRollupRows } from "@/lib/officeRollup"
 import { decisionCenterCandidates } from "@/lib/decisionCenter"
 import { computeRiskProfile } from "@/lib/riskProfile"
-import { getDecidedAt } from "@/lib/timeToDecision"
+import { getDecidedAt, medianTimeToDecision } from "@/lib/timeToDecision"
 import { getBureauSignoff } from "@/lib/bureauSignoff"
 
 // Golden-state test for the ES2 one-click demo reset (app/api/seed/route.ts and
@@ -41,18 +41,23 @@ const officeValuesByUnit = new Map(
 )
 
 describe("es2SeedSubmissions golden state", () => {
-  it("has 16 deterministic, uniquely-identified submissions", () => {
-    expect(S).toHaveLength(16)
+  // F4-3 (#304): was exactly 16; the CPE-wide set is 40 to 44 (item 1 below).
+  it("has 40 to 44 deterministic, uniquely-identified submissions", () => {
+    expect(S.length).toBeGreaterThanOrEqual(40)
+    expect(S.length).toBeLessThanOrEqual(44)
     const ids = S.map((s) => s.id)
     expect(new Set(ids).size).toBe(ids.length)
     for (const id of ids) expect(id).toMatch(/^es2-/)
   })
 
-  it("spreads across every pipeline status, with exactly one draft and two rejected", () => {
+  // F4-3 (#304): was exactly two rejected; the CPE-wide set has 4 to 6.
+  it("spreads across every pipeline status, with exactly one draft and four to six rejected", () => {
     const statuses = S.map((s) => s.formData.reviewStatus)
     for (const st of STATUS_ORDER) expect(new Set(statuses).has(st), st).toBe(true)
     expect(statuses.filter((s) => s === "draft")).toHaveLength(1)
-    expect(statuses.filter((s) => s === "rejected")).toHaveLength(2)
+    const rejected = statuses.filter((s) => s === "rejected").length
+    expect(rejected).toBeGreaterThanOrEqual(4)
+    expect(rejected).toBeLessThanOrEqual(6)
   })
 
   it("gives every submission an owner email on the demo domain", () => {
@@ -101,11 +106,13 @@ describe("cross-program duplicate group (items 10-12)", () => {
     expect(new Set(group.map((s) => s.formData.submitterEmail)).size).toBe(3)
   })
 
-  it("forms exactly one cluster, and it is this group", () => {
+  // F4-3 (#304): was "exactly one cluster". Now one of exactly three (item 7).
+  it("is one of the clusters, exactly as written", () => {
     const clusters = clusterDuplicates(S, es2)
-    expect(clusters).toHaveLength(1)
-    expect([...clusters[0].memberIds].sort()).toEqual([...DUPLICATE_GROUP].sort())
-    expect(clusters[0].bureaus.length).toBe(3)
+    const mine = clusters.find((c) => c.memberIds.includes(DUPLICATE_GROUP[0]))
+    expect(mine).toBeDefined()
+    expect([...mine!.memberIds].sort()).toEqual([...DUPLICATE_GROUP].sort())
+    expect(mine!.bureaus.length).toBe(3)
   })
 
   // THE ASSERTION THAT CATCHES THE DESIGN ERROR: a submission matching a
@@ -213,9 +220,11 @@ describe("lifecycle completeness", () => {
     expect(S.filter((s) => s.formData.reviewStatus === "approved" && s.formData.stageOfDevelopment === "deployed")).toEqual([])
   })
 
-  it("gives the two rejected items the decisional-AI + no-human-review shape and a recorded reason", () => {
-    const rejected = S.filter((s) => s.formData.reviewStatus === "rejected")
-    expect(rejected).toHaveLength(2)
+  // F4-3 (#304): scoped to the two original rejected ids; the CPE-wide set adds
+  // rejected records with other reasons (checked by the F4-2 rules).
+  it("gives the two original rejected items the decisional-AI + no-human-review shape and a recorded reason", () => {
+    const rejected = ["es2-acws-source-selection-scoring", "es2-atis-promotion-screening"].map(byId)
+    for (const s of rejected) expect(s.formData.reviewStatus, s.id).toBe("rejected")
     for (const s of rejected) {
       expect(s.formData.aiDecisionalImpact, s.id).toBe("yes")
       expect(s.formData.aiHumanReview, s.id).toBe("no")
@@ -553,5 +562,117 @@ describe("ES2 demo data rules (F4-2)", () => {
     const FORBIDDEN =
       /\bAnthropic\b|\bClaude\b|\bSonnet\b|\bOpus\b|\bHaiku\b|\bOpenAI\b|\bChatGPT\b|\bGPT-?\d\w*\b|\bGemini\b|\bLlama\b|\bMistral\b|\bCohere\b/i
     for (const { id, text } of strings) expect(text, id).not.toMatch(FORBIDDEN)
+  })
+})
+
+// F4-3 (#304): the CPE-wide picture. The people on 10 Dec run the whole
+// portfolio, so every office has ideas, decisions are already made, and the
+// time-to-decision number is real.
+describe("CPE-wide ES2 demo data (F4-3)", () => {
+  const OFFICES = ["atr", "hrfm", "logfin", "bts", "cerp"]
+  const byOffice = (unit: string) => S.filter((s) => getBusinessUnit(s) === unit)
+  const decided = S.filter((s) => ["approved", "rejected"].includes(String(s.formData.reviewStatus)))
+  const high = S.filter((s) => computeRiskProfile(s.formData).level === "high")
+  const DAY = 86_400_000
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.resetModules()
+  })
+
+  it("1. has 40 to 44 ideas", () => {
+    expect(S.length).toBeGreaterThanOrEqual(40)
+    expect(S.length).toBeLessThanOrEqual(44)
+  })
+
+  it("2. every program office has at least 3 ideas, and every AT&R program has at least one", () => {
+    for (const unit of OFFICES) expect(byOffice(unit).length, unit).toBeGreaterThanOrEqual(3)
+    const atrPrograms = (es2.unit.options.find((o) => o.value === "atr")!.offices || []).map((o) => o.value)
+    expect(atrPrograms).toContain("adams")
+    for (const p of atrPrograms) {
+      expect(S.filter((s) => s.formData.submitterSubOffice === p).length, p).toBeGreaterThanOrEqual(1)
+    }
+  })
+
+  it("3. dates are worked out from 'now': 8 or more different weeks, newest within 7 days, for two different 'now' values", async () => {
+    for (const now of [Date.UTC(2026, 11, 1, 15), Date.UTC(2027, 2, 9, 3)]) {
+      vi.useFakeTimers()
+      vi.setSystemTime(now)
+      vi.resetModules()
+      const { es2SeedSubmissions: fresh } = await import("@/lib/seedSubmissionsEs2")
+      const ages = fresh.map((s) => now - new Date(s.submittedAt).getTime())
+      for (const a of ages) expect(a).toBeGreaterThanOrEqual(0)
+      expect(Math.min(...ages)).toBeLessThan(7 * DAY)
+      expect(new Set(ages.map((a) => Math.floor(a / (7 * DAY)))).size).toBeGreaterThanOrEqual(8)
+      vi.useRealTimers()
+    }
+  })
+
+  it("4. 13 to 15 decided across at least four offices, 8 to 10 approved, 4 to 6 not approved, median 9 to 13 days", () => {
+    expect(decided.length).toBeGreaterThanOrEqual(13)
+    expect(decided.length).toBeLessThanOrEqual(15)
+    expect(new Set(decided.map(getBusinessUnit)).size).toBeGreaterThanOrEqual(4)
+    const approved = decided.filter((s) => s.formData.reviewStatus === "approved").length
+    expect(approved).toBeGreaterThanOrEqual(8)
+    expect(approved).toBeLessThanOrEqual(10)
+    const rejected = decided.length - approved
+    expect(rejected).toBeGreaterThanOrEqual(4)
+    expect(rejected).toBeLessThanOrEqual(6)
+    for (const s of decided) {
+      expect(getBureauSignoff(s)?.signedOffByName, `${s.id} decider`).toBeTruthy()
+      const comments = s.formData.comments as { body?: string }[] | undefined
+      expect(comments?.[0]?.body?.trim(), `${s.id} reason`).toBeTruthy()
+    }
+    const median = medianTimeToDecision(S)
+    expect(median).toBeGreaterThanOrEqual(9)
+    expect(median).toBeLessThanOrEqual(13)
+  })
+
+  it("5. 5 to 7 high risk, in at least three offices, at least two of them not approved", () => {
+    expect(high.length).toBeGreaterThanOrEqual(5)
+    expect(high.length).toBeLessThanOrEqual(7)
+    expect(new Set(high.map(getBusinessUnit)).size).toBeGreaterThanOrEqual(3)
+    expect(high.filter((s) => s.formData.reviewStatus === "rejected").length).toBeGreaterThanOrEqual(2)
+  })
+
+  it("6. every record has a one-line plain reason for its risk level", () => {
+    for (const s of S) {
+      const reason = (s.formData as unknown as Record<string, unknown>).riskPlainReason
+      expect(typeof reason, `${s.id} riskPlainReason`).toBe("string")
+      const text = String(reason)
+      expect(text.trim().length, s.id).toBeGreaterThan(10)
+      expect(text.length, s.id).toBeLessThanOrEqual(90)
+      expect(text, s.id).not.toMatch(/\n/)
+    }
+  })
+
+  it("7. exactly 3 duplicate clusters, 7 to 9 ideas, each across at least two offices, the supplier past-performance cluster kept", () => {
+    const clusters = clusterDuplicates(S, es2)
+    expect(clusters).toHaveLength(3)
+    const members = clusters.flatMap((c) => c.memberIds)
+    expect(members.length).toBeGreaterThanOrEqual(7)
+    expect(members.length).toBeLessThanOrEqual(9)
+    for (const c of clusters) expect(c.bureaus.length, c.memberIds.join(",")).toBeGreaterThanOrEqual(2)
+    expect(clusters.some((c) => [...c.memberIds].sort().join() === [...DUPLICATE_GROUP].sort().join())).toBe(true)
+  })
+
+  it("8. a status mix, with at least 3 Decision Center candidates from at least two offices", () => {
+    const statuses = new Set(S.map((s) => String(s.formData.reviewStatus)))
+    for (const st of ["submitted", "in_review", "needs_info", "approved", "rejected"]) expect(statuses.has(st), st).toBe(true)
+    const candidates = decisionCenterCandidates(S, { role: "admin" })
+    expect(candidates.length).toBeGreaterThanOrEqual(3)
+    expect(new Set(candidates.map(getBusinessUnit)).size).toBeGreaterThanOrEqual(2)
+  })
+
+  it("keeps the target split from the approved mock, within a small margin", () => {
+    const target: Record<string, [number, number, number]> = {
+      atr: [15, 2, 5], hrfm: [9, 3, 3], logfin: [8, 1, 3], bts: [7, 0, 2], cerp: [3, 0, 1],
+    }
+    for (const [unit, [ideas, hi, dec]] of Object.entries(target)) {
+      const rows = byOffice(unit)
+      expect(Math.abs(rows.length - ideas), `${unit} ideas`).toBeLessThanOrEqual(2)
+      expect(Math.abs(rows.filter((s) => high.includes(s)).length - hi), `${unit} high`).toBeLessThanOrEqual(1)
+      expect(Math.abs(rows.filter((s) => decided.includes(s)).length - dec), `${unit} decided`).toBeLessThanOrEqual(1)
+    }
   })
 })

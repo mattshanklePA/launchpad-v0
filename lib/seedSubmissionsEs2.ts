@@ -46,6 +46,7 @@
 import type { FormData } from "@/lib/steps"
 import { initialFormData } from "@/lib/steps"
 import { type Submission } from "@/lib/submissions"
+import { es2CpeSeedSubmissions } from "@/lib/seedSubmissionsEs2Cpe"
 
 function mk(partial: Partial<FormData>): FormData {
   return { ...initialFormData, ...partial }
@@ -53,7 +54,7 @@ function mk(partial: Partial<FormData>): FormData {
 
 const hoursAgo = (h: number) => new Date(Date.now() - 1000 * 60 * 60 * h).toISOString()
 
-export const es2SeedSubmissions: Submission[] = [
+const BASE_SEED: Submission[] = [
   // 1) AT&R / ACWS — the clean win, and the seed's high-impact example in
   // pilot. It is not "deployed": an approved idea is a Decision Center funding
   // candidate (lib/decisionCenter.ts), and a deployed one waiting on a funding
@@ -1251,3 +1252,80 @@ export const es2SeedSubmissions: Submission[] = [
     } as Partial<FormData>),
   },
 ]
+
+// ─── F4-3 (#304): spread the original records over the weeks before the reset ─
+// The originals were all filed within a few days. These offsets (days before
+// "now") spread them across about nine weeks and give the decided ones a real
+// time to decision (median about 11 days across the whole set). Only dates
+// change; no text does.
+const DAY_HOURS = 24
+const SCHEDULE: Record<string, { submitted: number; decided?: number }> = {
+  "es2-acws-clause-recommendation": { submitted: 60, decided: 47 },
+  "es2-acws-source-selection-scoring": { submitted: 63, decided: 49 },
+  "es2-acws-closeout-completeness": { submitted: 16 },
+  "es2-acws-migration-data-quality": { submitted: 55, decided: 45 },
+  "es2-atis-course-content-refresh": { submitted: 50, decided: 39 },
+  "es2-atis-readiness-gap-prediction": { submitted: 21 },
+  "es2-atis-promotion-screening": { submitted: 46, decided: 31 },
+  "es2-fmsaces-case-translation": { submitted: 12 },
+  "es2-fmsaces-requisition-backlog": { submitted: 6 },
+  "es2-adams-career-path-gap-analysis": { submitted: 4 },
+  "es2-digitalmarket-vendor-past-performance": { submitted: 9 },
+  "es2-logfin-supplier-past-performance": { submitted: 8 },
+  "es2-bts-supplier-risk-scoring": { submitted: 7 },
+  "es2-hrfm-meeting-transcription": { submitted: 40, decided: 32 },
+  "es2-logfin-meeting-transcription": { submitted: 5 },
+}
+
+function reschedule(s: Submission): Submission {
+  const plan = SCHEDULE[s.id]
+  if (!plan) return s
+  const fd = { ...(s.formData as unknown as Record<string, unknown>) }
+  if (plan.decided !== undefined) {
+    const at = hoursAgo(plan.decided * DAY_HOURS)
+    const signoff = fd.bureauSignoff as Record<string, unknown> | undefined
+    if (signoff) fd.bureauSignoff = { ...signoff, signedOffAt: at }
+    const comments = fd.comments as Record<string, unknown>[] | undefined
+    if (comments) fd.comments = comments.map((c) => ({ ...c, createdAt: at }))
+  }
+  return { ...s, submittedAt: hoursAgo(plan.submitted * DAY_HOURS), formData: fd as unknown as FormData }
+}
+
+// ─── F4-3 (#304): one plain line per record on why it sits at its risk level ─
+// Stored on each record as `riskPlainReason` (not part of the shared FormData
+// type, like `comments` and `bureauSignoff`). The portfolio report prints it.
+const NOT_ASSESSED = "Not assessed yet; a reviewer has not answered the risk questions."
+const PLAIN_REASON: Record<string, string> = {
+  "es2-acws-clause-recommendation": "Suggests clauses only; the specialist accepts or rejects each one.",
+  "es2-acws-source-selection-scoring": "Would decide award ratings with no person checking them.",
+  "es2-acws-closeout-completeness": "Checks files only; a contracting officer makes every call.",
+  "es2-acws-migration-data-quality": "Flags bad records for a person to fix; no decisions about people.",
+  "es2-atis-course-content-refresh": "Drafts course updates; training developers approve every change.",
+  "es2-atis-readiness-gap-prediction": "Uses personnel data, so access must be controlled; a person decides.",
+  "es2-atis-promotion-screening": "Scores people for promotion; a person must decide.",
+  "es2-fmsaces-case-translation": "Uses partner case data; a case manager reviews every translation.",
+  "es2-hrfm-meeting-transcription": "Meeting notes with names in them; a person reviews before sharing.",
+  "es2-logfin-unliquidated-obligations": "Orders a review list; analysts still decide every action.",
+  "es2-logfin-invoice-mismatch-notes": "Explains a mismatch; the technician still resolves it.",
+  "es2-logfin-automatic-vendor-holds": "Would hold a business's payments with no person confirming.",
+  "es2-logfin-depot-parts-forecast": "Forecasts parts demand; item managers place the orders.",
+  "es2-hrfm-personnel-action-completeness": "Reads personnel records; the specialist still decides what to send.",
+  "es2-hrfm-reenlistment-eligibility": "Would decide a Soldier's eligibility with no person reviewing it.",
+  "es2-hrfm-assignment-matching": "Would issue assignment orders with no officer approving each one.",
+  "es2-hrfm-bonus-eligibility": "Would start incentive payments with no pay specialist checking.",
+  "es2-hrfm-hiring-package-status": "Reads hiring records to explain status; it decides nothing.",
+  "es2-bts-license-right-sizing": "Lists unused seats; license owners decide what to release.",
+  "es2-bts-policy-chat-front-end": "Low risk, but repeats a tool the enterprise already has.",
+  "es2-bts-access-review-evidence": "Collects evidence; the system owner signs the review.",
+  "es2-bts-legacy-interface-inventory": "Builds a list for owners to confirm; no decisions about people.",
+  "es2-cerp-material-master-cleanup": "Data stewards confirm every merge before anything changes.",
+  "es2-cerp-interface-failure-warning": "Sends alerts to operations; people decide whether to rerun.",
+  "es2-atis-instructor-feedback-themes": "Groups comments for course owners; no decisions about people.",
+}
+
+function withPlainReason(s: Submission): Submission {
+  const reason = PLAIN_REASON[s.id] ?? NOT_ASSESSED
+  return { ...s, formData: { ...s.formData, riskPlainReason: reason } as unknown as FormData }
+}
+
+export const es2SeedSubmissions: Submission[] = [...BASE_SEED.map(reschedule), ...es2CpeSeedSubmissions].map(withPlainReason)
