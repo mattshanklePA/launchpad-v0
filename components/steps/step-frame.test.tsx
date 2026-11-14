@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, vi } from "vitest"
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { initialFormData } from "@/lib/steps"
@@ -36,6 +36,12 @@ function render(ui: ReactElement) {
 }
 
 describe("StepHeader", () => {
+  // These cases check the basalt card header. ES2 renders the cockpit band
+  // instead (NL-8, see "StepHeader tenant look" below), so pin the doc tenant.
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_TENANT = "doc"
+  })
+
   it("shows the eyebrow, title, and phase progress for step 2 of 6", () => {
     mockUseForm.mockReturnValue({
       currentStep: 2,
