@@ -48,6 +48,20 @@ export const DEFAULT_COPY: TenantCopy = {
   listColLink: "Open",
   decisionDetailRmf: "RMF", // NL-5: read only by the ES2 (cockpitLook) Decision Center
   decisionDetailRecord: "Record",
+  // NL-7 (#288): decided record and overlap group.
+  decisionBlockTitle: "The decision",
+  decisionEyebrow: "Decided",
+  decisionFactDecision: "Decision",
+  decisionFactBy: "Decided by",
+  decisionFactDate: "Date",
+  decisionFactDays: "Decided in",
+  decisionFactLock: "Lock",
+  decisionLockedTag: "Locked",
+  recordColStep: "Step",
+  recordColAnswer: "Answer",
+  recordColWho: "Who",
+  recordColWhen: "When",
+  overlapColLead: "Lead",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

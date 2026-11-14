@@ -74,6 +74,20 @@ export type TenantCopy = {
   // Decision Center rows (NL-5, #286). ES2 only.
   decisionDetailRmf: string             // opened-row label over the RMF status line
   decisionDetailRecord: string          // opened-row label over the "Open submission" link
+  // Decided record and overlap group (NL-7, #288). ES2 only.
+  decisionBlockTitle: string            // heading over the decided record's label and value grid
+  decisionEyebrow: string               // last word of the band eyebrow once the record is decided
+  decisionFactDecision: string          // grid labels
+  decisionFactBy: string
+  decisionFactDate: string
+  decisionFactDays: string
+  decisionFactLock: string
+  decisionLockedTag: string             // square tag beside the locked line
+  recordColStep: string                 // read-only review record table headings
+  recordColAnswer: string
+  recordColWho: string
+  recordColWhen: string
+  overlapColLead: string                // overlap group table: heading over the lead / "Make lead" cell
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

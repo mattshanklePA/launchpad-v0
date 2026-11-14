@@ -5,7 +5,7 @@
 // strings) and nothing here reads, saves or calls anything.
 
 import type { ReactNode } from "react"
-import { HeaderBand, SquareTag, type SquareTagTone } from "@/components/cockpit"
+import { HeaderBand, SectionTitle, SquareTag, type SquareTagTone } from "@/components/cockpit"
 import { STATUS_LABEL, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import type { KeystoneStatus } from "@/lib/statusTokens"
 
@@ -29,16 +29,19 @@ export function RecordBand({
   status,
   title,
   background,
+  statusLabel,
 }: {
   unitLabel: string
   slugTail: string
   status: SubmissionStatus
   title: string
   background?: string
+  /** Replaces the status word in the eyebrow (NL-7: "Decided" once the record is final). */
+  statusLabel?: string
 }) {
   return (
     <HeaderBand
-      eyebrow={`${unitLabel} · ${slugTail} · ${STATUS_LABEL[status]}`.toUpperCase()}
+      eyebrow={`${unitLabel} · ${slugTail} · ${statusLabel ?? STATUS_LABEL[status]}`.toUpperCase()}
       title={title}
       headingLevel="h2"
       background={background}
@@ -65,5 +68,20 @@ export function KeyFacts({ facts }: { facts: KeyFact[] }) {
         </div>
       ))}
     </dl>
+  )
+}
+
+/**
+ * NL-7 (#288): "The decision" block on a decided record. A K3 title over a K5
+ * label and value grid; the lock line sits beside a K6 "Locked" tag when the
+ * server-side lock (lib/decisionLock.ts) applies. Presentation only: the caller
+ * passes values it already shows today, and omits facts it does not have.
+ */
+export function DecisionBlock({ title, facts }: { title: string; facts: KeyFact[] }) {
+  return (
+    <section data-cockpit="decision-block" className="space-y-3">
+      <SectionTitle title={title} />
+      <KeyFacts facts={facts} />
+    </section>
   )
 }
