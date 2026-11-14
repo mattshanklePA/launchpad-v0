@@ -8,9 +8,10 @@ import { UserManagement } from "@/components/admin/user-management"
 import { useToast } from "@/components/ui/use-toast"
 import { errToDetail } from "@/lib/errToDetail"
 import { LogOut, Loader2 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { TenantCard as Card } from "@/components/cockpit/tenant-card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { TenantBadge as Badge } from "@/components/cockpit/tenant-badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SectionTitle } from "@/components/cockpit/section-title"
 import { cn } from "@/lib/utils"
@@ -730,11 +731,15 @@ function AdminPageInner() {
   }
 
   const cockpit = !!tenant.features.cockpitLook
+  // NL-11 (#312): no pills or rounded tiles on ES2.
+  const RF = cockpit ? "" : "rounded-full"
+  const RL = cockpit ? "" : "rounded-lg"
   const page = (
     <div className={tenant.features.cockpitLook ? "" : "min-h-screen bg-gray-50"}>
       {!tenant.features.cockpitLook && <Header />}
 
       <div className="container py-8">
+        {!cockpit && (
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
@@ -755,6 +760,7 @@ function AdminPageInner() {
             </div>
           )}
         </div>
+        )}
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
           <TabsList className={cockpit ? COCKPIT_TABS_LIST : "grid w-full grid-cols-7"}>
@@ -825,7 +831,7 @@ function AdminPageInner() {
                       return (
                         <Fragment key={st}>
                           <div className="flex-1 min-w-[140px]">
-                            <div className={`${style.bg} border-2 ${style.border} rounded-lg p-4 text-center`}>
+                            <div className={`${style.bg} border-2 ${style.border} ${RL} p-4 text-center`}>
                               <div className={`text-2xl font-bold ${style.text}`}>{n}</div>
                               <div className={`text-sm font-medium ${style.subtext}`}>{STATUS_LABEL[st]}</div>
                               <div className={`text-xs ${style.subtext} mt-1`}>{pct}% of submitted</div>
@@ -854,7 +860,7 @@ function AdminPageInner() {
                     <div className="space-y-4">
                       {recentSubmissions.map((s) => (
                         <div key={s.id} className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className={`w-2 h-2 bg-blue-500 ${RF}`}></div>
                           <div className="flex-1">
                             <p className="text-sm font-medium">
                               New idea: {s.formData.useCaseTitle || "Untitled idea"}
@@ -990,9 +996,9 @@ function AdminPageInner() {
                         <span>Progress</span>
                         <span>{okr.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className={`w-full bg-gray-200 ${RF} h-2`}>
                         <div
-                          className="bg-uspto-blue-primary h-2 rounded-full"
+                          className={`bg-uspto-blue-primary h-2 ${RF}`}
                           style={{ width: `${okr.progress}%` }}
                         ></div>
                       </div>
@@ -1012,7 +1018,7 @@ function AdminPageInner() {
               />
             )}
             {selectedForCompare.size > 0 && !showComparison && (
-              <div className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/40 bg-primary/5">
+              <div className={`flex items-center justify-between p-3 ${RL} border-2 border-primary/40 bg-primary/5`}>
                 <p className="text-sm">
                   <span className="font-semibold">{selectedForCompare.size}</span> selected for comparison
                   {selectedForCompare.size === 1 && ", pick 1 more to compare"}
@@ -1036,7 +1042,7 @@ function AdminPageInner() {
             <div className="flex justify-between items-center">
               <AdminHeading cockpit={cockpit} title="Idea Pipeline" />
               <div className="flex gap-2">
-                <div className="flex border rounded-md">
+                <div className={cn("flex border", !cockpit && "rounded-md")}>
                   <Button
                     variant={draftsViewMode === "cards" ? "default" : "ghost"}
                     size="sm"
@@ -1085,9 +1091,9 @@ function AdminPageInner() {
                               <span>Completion Rate</span>
                               <span>{draft.completionRate}%</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className={`w-full bg-gray-200 ${RF} h-2`}>
                               <div
-                                className="bg-green-500 h-2 rounded-full"
+                                className={`bg-green-500 h-2 ${RF}`}
                                 style={{ width: `${draft.completionRate}%` }}
                               ></div>
                             </div>
@@ -1149,9 +1155,9 @@ function AdminPageInner() {
                           <TableCell>{getStatusBadge(draft.status)}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div className={`w-16 bg-gray-200 ${RF} h-2`}>
                                 <div
-                                  className="bg-green-500 h-2 rounded-full"
+                                  className={`bg-green-500 h-2 ${RF}`}
                                   style={{ width: `${draft.completionRate}%` }}
                                 ></div>
                               </div>
@@ -1201,9 +1207,9 @@ function AdminPageInner() {
                           <span className="font-medium">{bu}</span>
                           <span className="text-muted-foreground">{count}</span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className={`w-full bg-gray-100 ${RF} h-2.5`}>
                           <div
-                            className="bg-uspto-blue-primary h-2.5 rounded-full transition-all"
+                            className={`bg-uspto-blue-primary h-2.5 ${RF} transition-all`}
                             style={{ width: `${(count / maxBuCount) * 100}%` }}
                           />
                         </div>
@@ -1223,7 +1229,7 @@ function AdminPageInner() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div className={`flex h-3 w-full overflow-hidden ${RF} bg-gray-100`}>
                       {readinessRows.map((r) => {
                         const n = readinessCounts[r.key] || 0
                         if (n === 0) return null
@@ -1244,7 +1250,7 @@ function AdminPageInner() {
                         return (
                           <div key={r.key} className="flex items-center justify-between text-sm">
                             <span className="flex items-center gap-2">
-                              <span className={`inline-block h-2.5 w-2.5 rounded-full ${r.color}`} />
+                              <span className={`inline-block h-2.5 w-2.5 ${RF} ${r.color}`} />
                               {r.label}
                             </span>
                             <span className="text-muted-foreground">
@@ -1312,10 +1318,10 @@ function AdminPageInner() {
               )}
 
               {/* Demo data controls — one-click reset to the tenant's golden demo state */}
-              <Card className="border-amber-200 bg-amber-50/30">
+              <Card className={cockpit ? undefined : "border-amber-200 bg-amber-50/30"}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-600" />
+                    {cockpit ? null : <Sparkles className="w-5 h-5 text-amber-600" />}
                     Demo Data
                   </CardTitle>
                   <CardDescription>

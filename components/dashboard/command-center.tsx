@@ -19,6 +19,7 @@
 // Followed the mock, since docs/design/README.md names the numbered mocks the
 // source of truth.
 
+import { KeystoneMark } from "@/components/cockpit/keystone-mark"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -268,7 +269,11 @@ export function CommandCenter({
 
         <div className="flex flex-col gap-2.5 border-t border-border-subtle pt-4">
           <div className="flex items-start gap-2">
-            <Image src="/keystone/plumb-assistant.svg" alt="" width={16} height={16} className="mt-0.5 shrink-0" />
+            {tenant.features.cockpitLook ? (
+              <KeystoneMark size={16} className="mt-0.5 shrink-0" />
+            ) : (
+              <Image src="/keystone/plumb-assistant.svg" alt="" width={16} height={16} className="mt-0.5 shrink-0" />
+            )}
             <div className="text-[13px] leading-relaxed text-foreground">
               <p className="ks-microlabel mb-0.5">Plumb</p>
               {plumb}

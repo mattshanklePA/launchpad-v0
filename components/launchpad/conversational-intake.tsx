@@ -511,7 +511,7 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
                     <div className="flex items-start gap-3">
                       <PlumbMark className="h-5 w-5 flex-shrink-0 mt-1" />
                       <div className="rounded-lg p-3 bg-gray-100 text-sm">
-                        <Sparkles className="h-4 w-4 inline animate-pulse mr-1" />
+                        {cockpit ? null : <Sparkles className="h-4 w-4 inline animate-pulse mr-1" />}
                         {tenant.assistantName} is thinking...
                       </div>
                     </div>

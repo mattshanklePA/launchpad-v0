@@ -72,9 +72,12 @@ function RollupPageInner() {
             <div className="min-w-0 flex-1">
               <SectionTitle title={`Every use case, by ${tenant.unit.label.toLowerCase()} and status`} context={contextLine} />
             </div>
-            <Button asChild variant="secondary" className="shrink-0 rounded-none shadow-none">
-              <a href="/api/export/approval">Export approval report</a>
-            </Button>
+            <a
+              href="/api/export/approval"
+              className="shrink-0 border border-[var(--ks-basalt)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--ks-basalt)] hover:bg-[var(--ks-limestone)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+            >
+              Export approval report
+            </a>
           </div>
         ) : (
         <div className="flex flex-col gap-2 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm md:flex-row md:items-end md:justify-between">
@@ -95,7 +98,14 @@ function RollupPageInner() {
         <BureauRollup submissions={submissions} />
 
         {pendingClusterItem && leadCluster && (
-          <div className="flex items-center gap-5 rounded-md border border-border-subtle border-l-[3px] border-l-attention bg-card p-4">
+          <div
+            data-cockpit="cluster-callout"
+            className={
+              cockpit
+                ? "flex items-center gap-5 border border-[var(--ks-limestone-dark)] border-l-[4px] border-l-[var(--ks-amber)] bg-white p-4"
+                : "flex items-center gap-5 rounded-md border border-border-subtle border-l-[3px] border-l-attention bg-card p-4"
+            }
+          >
             <div className="min-w-0 flex-1">
               <p className="text-[14.5px] font-semibold text-foreground">{pendingClusterItem.title}</p>
               <p className="mt-0.5 text-[13px] text-muted-foreground">{leadCluster.bureauLabel}</p>

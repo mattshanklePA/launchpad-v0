@@ -25,7 +25,7 @@ export function AiProposedHint<T>({
     if (!flagWhenEmpty) return null
     return (
       <p className="flex items-start gap-1.5 text-xs text-amber-700">
-        <Sparkles className="h-3 w-3 mt-0.5 flex-shrink-0" />
+        {tenant.features.cockpitLook ? null : <Sparkles className="h-3 w-3 mt-0.5 flex-shrink-0" />}
         <span>{tenant.assistantName} couldn&apos;t confidently propose a value here — please select one.</span>
       </p>
     )
@@ -33,7 +33,7 @@ export function AiProposedHint<T>({
 
   return (
     <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-      <Sparkles className="h-3 w-3 mt-0.5 flex-shrink-0 text-uspto-blue-primary" />
+      {tenant.features.cockpitLook ? null : <Sparkles className="h-3 w-3 mt-0.5 flex-shrink-0 text-uspto-blue-primary" />}
       <span>
         <strong className="font-medium text-uspto-gray-text">{tenant.assistantName} proposed this</strong> — {proposal.rationale}{" "}
         Not sure? Change the answer above.

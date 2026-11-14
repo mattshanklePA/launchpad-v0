@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TenantCard as Card } from "@/components/cockpit/tenant-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { TenantBadge as Badge } from "@/components/cockpit/tenant-badge"
 import {
   Select,
   SelectContent,
@@ -207,7 +209,7 @@ export function UserManagement() {
       </CardHeader>
       <CardContent className="space-y-4">
         {showAddForm && (
-          <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+          <div className={cn("border p-4 bg-muted/30 space-y-3", !getTenant().features.cockpitLook && "rounded-lg")}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="newName">Name</Label>
@@ -320,7 +322,7 @@ export function UserManagement() {
             return (
               <div
                 key={u.id}
-                className="flex flex-col gap-3 p-3 border rounded-lg"
+                className={cn("flex flex-col gap-3 p-3 border", !getTenant().features.cockpitLook && "rounded-lg")}
               >
                 {/* Top row: name / access role / delete */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">

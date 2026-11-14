@@ -91,7 +91,7 @@ export function Step2UseCaseOverview() {
         <p className="text-sm text-muted-foreground">
           {drafting ? (
             <span className="flex items-center gap-2 text-primary">
-              <Sparkles className="h-4 w-4 animate-pulse" /> {tenant.assistantName} is drafting your title and summary…
+              {tenant.features.cockpitLook ? null : <Sparkles className="h-4 w-4 animate-pulse" />} {tenant.assistantName} is drafting your title and summary…
             </span>
           ) : (
             `${tenant.assistantName} drafted these from everything you entered. Review and edit before submitting.`
@@ -105,7 +105,7 @@ export function Step2UseCaseOverview() {
           onClick={() => draft("manual")}
           disabled={drafting || !hasContext}
         >
-          {drafting ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Wand2 className="mr-1 h-3 w-3" />}
+          {drafting ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : tenant.features.cockpitLook ? null : <Wand2 className="mr-1 h-3 w-3" />}
           Re-draft with {tenant.assistantName}
         </Button>
       </div>

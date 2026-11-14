@@ -165,7 +165,6 @@ export function ComparisonView({ submissions, onClose, Heading = "h2" }: Compari
             Back to candidates
           </button>
           <Button onClick={handleGenerateBrief} disabled={isLoading}>
-            <Sparkles className="w-4 h-4 mr-2" />
             Generate Executive Briefing
           </Button>
         </div>

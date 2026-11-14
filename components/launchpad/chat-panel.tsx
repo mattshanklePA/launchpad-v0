@@ -300,7 +300,7 @@ export function AIdChatPanel({ step, onApplySuggestion, summaryField }: LaunchPa
         <div className="rounded-md border border-border-subtle bg-card p-6 text-center">
           <p className="mb-3 text-sm text-muted-foreground">{getStepContext(step).emptyMessage}</p>
           <Button onClick={handleInitialClick} disabled={isLoading || !hasDraft}>
-            <Wand2 className="mr-2 h-4 w-4" />
+            {tenant.features.cockpitLook ? null : <Wand2 className="mr-2 h-4 w-4" />}
             {isLoading ? "Thinking..." : getStepContext(step).buttonLabel}
           </Button>
           {!hasDraft && (
@@ -387,7 +387,7 @@ export function AIdChatPanel({ step, onApplySuggestion, summaryField }: LaunchPa
 
       {isLoading && (
         <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-          <Sparkles className="h-4 w-4 animate-pulse" />
+          {tenant.features.cockpitLook ? null : <Sparkles className="h-4 w-4 animate-pulse" />}
           {tenant.assistantName} is thinking...
         </div>
       )}
@@ -518,7 +518,7 @@ export function AIdChatPanel({ step, onApplySuggestion, summaryField }: LaunchPa
               onClick={handleWriteSummaryClick}
               disabled={isLoading || (messages.length === 0 && !hasDraft)}
             >
-              <Wand2 className="mr-2 h-4 w-4" />
+              {tenant.features.cockpitLook ? null : <Wand2 className="mr-2 h-4 w-4" />}
               Have {tenant.assistantName} write the summary
             </Button>
           )}

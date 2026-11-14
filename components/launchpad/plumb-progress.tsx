@@ -26,8 +26,7 @@
 import { useEffect, useState } from "react"
 import { Check } from "lucide-react"
 import { PlumbMark } from "@/components/branding/plumb-mark"
-import { KindTag } from "@/components/ui/kind-tag"
-import { GlossaryTerm } from "@/components/launchpad/glossary-term"
+import { AdvisoryTag } from "@/components/cockpit/advisory-tag"
 import { cn } from "@/lib/utils"
 
 /** Shared min-height so a loading card and the resolved card it swaps for never shift the page around it. */
@@ -100,9 +99,7 @@ export function PlumbProgress({
         <div className="flex items-center gap-2">
           <PlumbMark className="h-[15px] w-[15px] shrink-0" />
           <span className="ks-microlabel">{assistantName} · reading this submission</span>
-          <KindTag>
-            <GlossaryTerm term="advisory">Advisory</GlossaryTerm>
-          </KindTag>
+          <AdvisoryTag glossary />
         </div>
         <span className="text-[12.5px] text-muted-foreground">
           About {secondsRemaining} seconds left
