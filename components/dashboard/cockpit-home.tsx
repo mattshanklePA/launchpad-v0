@@ -17,9 +17,9 @@ import { tenantCopy } from "@/lib/tenant/copy"
 import type { KpiDrilldown } from "@/lib/dashboard/drilldown"
 import { MeasurePanel, MeasureRow, RankedTable, SectionTitle, SquareTag, type SquareTagTone } from "@/components/cockpit"
 import { DrilldownDialogContent } from "./kpi-card"
-import { splitLeadingCount } from "./command-center-data"
+import { countFromTitle, splitLeadingCount } from "./command-center-data"
 import { sortActionItemsBySeverity, type ActionItem } from "./action-center-data"
-import { kpiDrilldownEntriesFor, kpiStatusKeystone, sortKpiCardsByPriority, type KpiCardData } from "./kpi-card-data"
+import { kpiDrilldownEntriesFor, kpiDrilldownEntryHref, kpiMeaningLine, kpiStatusKeystone, sortKpiCardsByPriority, type KpiCardData } from "./kpi-card-data"
 import { STATUS_DEFAULT_LABEL, type KeystoneStatus } from "@/lib/statusTokens"
 
 const FOCUS =
@@ -159,14 +159,32 @@ export function CockpitHome({
               },
             ]}
             getRowId={(item) => item.id}
-            getRank={(item) => splitLeadingCount(item.title)[0] || "–"}
+            getRank={(item) => countFromTitle(item.title)}
             getName={(item) => splitLeadingCount(item.title)[1]}
-            getDetails={(item) => [
-              { label: copy.homeColWhat, value: item.title },
-              { label: copy.homeColWhy, value: whyText(item) || "–" },
-            ]}
+            // A row opens only when it has more to show: the ideas behind its count.
+            getDetails={(item) =>
+              item.drilldown && item.drilldown.items.length > 0
+                ? [
+                    {
+                      label: item.drilldown.label,
+                      value: (
+                        <ul className="m-0 list-none space-y-1 p-0">
+                          {item.drilldown.items.map((entry) => (
+                            <li key={entry.id}>
+                              <Link href={kpiDrilldownEntryHref(entry)} className={LINK}>
+                                {entry.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ),
+                    },
+                  ]
+                : []
+            }
             rankHeader={copy.homeColCount}
             nameHeader={copy.homeColWhat}
+            skipEmptyDetails
             expandAllLabel={copy.homeExpandAll}
             collapseAllLabel={copy.homeCollapseAll}
           />
@@ -215,12 +233,11 @@ export function CockpitHome({
             getRank={(row) => String(scopedRows.indexOf(row) + 1)}
             getName={(row) => row.title}
             getReference={(row) => row.meta}
-            getDetails={(row) => [
-              { label: copy.listColIdea, value: row.title },
-              { label: copy.listColStatus, value: row.statusLabel },
-            ]}
+            // The row already shows the idea, its status and its link; nothing more to open.
+            getDetails={() => []}
             rankHeader={copy.listColNo}
             nameHeader={copy.listColIdea}
+            skipEmptyDetails
             expandAllLabel={copy.homeExpandAll}
             collapseAllLabel={copy.homeCollapseAll}
           />
@@ -322,7 +339,7 @@ function KpiPanel({
   ) : (
     card.value
   )
-  const meaning = [card.delta?.value, enterprise !== undefined ? `of ${enterprise} enterprise-wide` : null].filter(Boolean).join(" · ")
+  const meaning = kpiMeaningLine(card, enterprise)
   return (
     <MeasurePanel
       number={n}

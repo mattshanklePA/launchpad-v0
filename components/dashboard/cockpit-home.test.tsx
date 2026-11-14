@@ -5,6 +5,9 @@ import { es2 } from "@/lib/tenant/es2"
 import { render } from "@/components/cockpit/test-utils"
 import type { KpiDrilldown } from "@/lib/dashboard/drilldown"
 import type { KpiCardData } from "./kpi-card-data"
+import { kpiMeaningLine } from "./kpi-card-data"
+import { doc } from "@/lib/tenant/doc"
+import type { ActionItem } from "./action-center-data"
 
 const drilldown = {
   pipeline: [{ id: "a", title: "Idea A", bureau: "x", bureauLabel: "X", stage: "In review", cardField: "f" }],
@@ -96,5 +99,92 @@ describe("CockpitHome (NL-3, #284)", () => {
     expect(table.textContent).toContain("Blocked")
     expect(Array.from(table.querySelectorAll("a")).map((a) => a.getAttribute("href"))).toEqual(["/submissions/s1", "/clusters/c1"])
     expect(table.querySelectorAll('[data-cockpit="square-tag"]')).toHaveLength(2)
+  })
+})
+
+describe("CockpitHome rows and panels (NL-12, #313)", () => {
+  const withList: ActionItem = {
+    id: "unassigned",
+    title: "9 submissions with no reviewer assigned",
+    severity: "warning",
+    drilldown: {
+      label: "No reviewer assigned",
+      items: [{ id: "s1", title: "Idea One", bureau: "x", bureauLabel: "X", stage: "Unassigned", cardField: "f" }],
+    },
+  }
+  const noList: ActionItem = { id: "signoff", title: "2 approved use cases awaiting directorate sign-off", severity: "warning" }
+  const lead: ActionItem = { id: "lead", title: "1 cluster pending", severity: "critical" }
+  const inventory: ActionItem = {
+    id: "omb-review",
+    title: "Check if it goes in the AI inventory: 10 submissions",
+    severity: "info",
+    drilldown: { label: "Needs review", items: [{ id: "s2", title: "Idea Two", bureau: "x", bureauLabel: "X", stage: "s", cardField: "f" }] },
+  }
+
+  it("a row opens only when it has a list of ideas behind its count, and that list links to each idea", async () => {
+    const el = renderHome([lead, withList, noList, inventory])
+    const rows = Array.from(el.querySelectorAll("tbody tr"))
+    const byText = (t: string) => rows.find((r) => r.textContent?.includes(t))!
+    expect(byText("awaiting directorate").getAttribute("aria-expanded")).toBeNull()
+    expect(byText("no reviewer assigned").getAttribute("aria-expanded")).toBe("false")
+    await act(async () => {
+      byText("no reviewer assigned").dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+    const detail = el.querySelector("tbody tr[id]")!
+    expect(detail.querySelector('a[href="/submissions/s1"]')?.textContent).toBe("Idea One")
+    // The detail never repeats the row's own words.
+    expect(detail.textContent).not.toContain("9 submissions with no reviewer assigned")
+  })
+
+  it("every Count cell shows its number, even when the number is not first", () => {
+    const el = renderHome([lead, withList, noList, inventory])
+    const counts = Array.from(el.querySelectorAll("tbody tr[tabindex], tbody tr:not([id])")).map((r) => r.querySelector("td")?.textContent)
+    expect(counts).toEqual(["9", "2", "10"])
+    expect(counts).not.toContain("–")
+  })
+
+  it("Expand all is absent when no row has anything to open", () => {
+    const el = renderHome([lead, noList])
+    expect(Array.from(el.querySelectorAll("button")).some((b) => b.textContent === "Expand all")).toBe(false)
+  })
+
+  it("the Risk framework panel's big number agrees with its line", () => {
+    const rmf: KpiCardData = { id: "rmf", label: "Risk framework needs attention", value: 5, status: "warning", subtitle: "NIST AI RMF gap needs attention" }
+    const el = render(
+      <CockpitHome tenant={es2} actionItems={[]} kpiCards={[rmf]} drilldown={drilldown} headerMeta="x" railEyebrow="Where" rollupLabel="r" plumb="p" />,
+    )
+    const text = el.querySelector('[data-cockpit="measure-panel"]')!.textContent!
+    expect(text).toContain("5")
+    expect(text).toContain("use cases need attention on the risk framework")
+    expect(text).not.toMatch(/\b0\b/)
+  })
+
+  it("every panel kind has a line, high-impact included", () => {
+    for (const id of ["pipeline", "duplicates", "high-impact", "rmf", "time-to-decision"]) {
+      expect(kpiMeaningLine({ id, label: id, value: 3 }).length).toBeGreaterThan(0)
+    }
+    expect(kpiMeaningLine({ id: "high-impact", label: "x", value: 2 })).toBe("use cases recommended as high-impact")
+  })
+
+  it("scoped idea rows do not open (their detail was a repeat)", () => {
+    const el = render(
+      <CockpitHome
+        tenant={es2}
+        actionItems={[]}
+        kpiCards={cards}
+        drilldown={drilldown}
+        headerMeta="x"
+        scopedRows={[{ id: "s1", title: "Idea One", meta: "m", href: "/submissions/s1", statusKeystone: "neutral", statusLabel: "In review" }]}
+        scopedRowsTitle="Use cases in this program office"
+        railEyebrow="r"
+        rollupLabel="r"
+        plumb="p"
+      />,
+    )
+    expect(el.querySelector("tbody tr[aria-expanded]")).toBeNull()
+  })
+
+  it("doc keeps the old work-list and KPI rail, not the cockpit home", () => {
+    expect(doc.features.cockpitLook).toBe(false)
   })
 })

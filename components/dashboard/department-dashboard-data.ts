@@ -141,11 +141,16 @@ export function buildKpiCards(
   }
 
   if (rmfEnabled) {
+    // NL-12 (#313), ES2 only: the panel's number is the count that needs
+    // attention (at risk or needs a closer look), so it agrees with its line.
+    // Other tenants keep the at-risk count and its "N need attention" delta.
+    const needsAttention = !!tenant.features?.cockpitLook
     cards.push({
       id: "rmf",
       label: tenantCopy(tenant).rmfAtRiskLabel,
-      value: rmfRollup.at_risk,
-      delta: rmfRollup.attention > 0 ? { value: `${rmfRollup.attention} need attention`, direction: "down" } : undefined,
+      value: needsAttention ? rmfRollup.at_risk + rmfRollup.attention : rmfRollup.at_risk,
+      delta:
+        !needsAttention && rmfRollup.attention > 0 ? { value: `${rmfRollup.attention} need attention`, direction: "down" } : undefined,
       status: rmfRollup.at_risk > 0 ? "critical" : rmfRollup.attention > 0 ? "warning" : "neutral",
       glossary: "rmfAtRisk",
       subtitle: "NIST AI RMF gap needs attention",
