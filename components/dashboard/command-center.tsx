@@ -40,6 +40,7 @@ import { tenantHasBureauTier, clusterDuplicates, clusterForSubmission, isRationa
 import { buildKpiCards, buildActionItems, scopeLabel, worklistSummaryLabel } from "./department-dashboard-data"
 import { KpiRailList } from "./kpi-card"
 import { ActionCenter } from "./action-center"
+import { CockpitHome } from "./cockpit-home"
 import {
   buildHeroCluster,
   findHeroItem,
@@ -146,6 +147,33 @@ export function CommandCenter({
   const hasCriticalItem = actionItems.some((i) => i.severity === "critical")
   const wantsReviewerCount = dashboardActions.filter((a) => a.kind === "unassigned").length
   const plumb = plumbLine(hasCriticalItem, wantsReviewerCount, tenant)
+
+  // NL-3 (#284): ES2 only. Same items, numbers and drilldowns, cockpit layout.
+  if (tenant.features.cockpitLook) {
+    return (
+      <CockpitHome
+        tenant={tenant}
+        actionItems={actionItems}
+        kpiCards={kpiCards}
+        drilldown={kpiDrilldown}
+        enterpriseKpiById={scoped ? enterpriseKpiById : undefined}
+        banner={
+          scoped ? (
+            <ScopedBanner scope={scope} tenant={tenant} selection={selection} onSelect={onSelect} metrics={metrics} deptMetrics={deptMetrics} />
+          ) : undefined
+        }
+        headerMeta={headerMeta}
+        decisionCenter={admin ? { count: decisionCenterCount } : undefined}
+        scopedRows={scoped ? scopedRows : undefined}
+        scopedRowsTitle={
+          scoped ? `Use cases in this ${tenant.tierLabels[scope.level === "office" ? "subUnit" : "unit"].toLowerCase()}` : undefined
+        }
+        railEyebrow={railEyebrow}
+        rollupLabel={`${tenant.unit.label} roll-up`}
+        plumb={plumb}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col gap-[22px] lg:flex-row lg:items-start">
@@ -291,13 +319,15 @@ function ScopedBanner({
         ? { label: "Back to enterprise view", target: null }
         : null
 
+  // The ES2 header band already carries the page's h1.
+  const Heading = tenant.features.cockpitLook ? "h2" : "h1"
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm md:flex-row md:items-end md:justify-between">
       <div className="space-y-2">
         <p className="ks-microlabel text-keystone-amberLight">You are looking at one {scopedUnitWord(scope, tenant)}</p>
-        <h1 className="font-heading text-[27px] font-black leading-[1.1] tracking-[-0.024em] text-white">
+        <Heading className="font-heading text-[27px] font-black leading-[1.1] tracking-[-0.024em] text-white">
           {code ? `${code} · ${name}` : name}
-        </h1>
+        </Heading>
         <p className="text-[13.5px] text-white/72">
           {parentLabel} · {here} of the enterprise's {enterpriseTotal} use cases live here
         </p>

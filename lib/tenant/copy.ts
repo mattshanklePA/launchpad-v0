@@ -35,6 +35,12 @@ export const DEFAULT_COPY: TenantCopy = {
   rmfNotConfirmedRejected: "Not confirmed before the decision",
   sampleDataTag: "", // empty: no tenant but ES2 renders the strip
   sampleDataNotice: "",
+  homeLeadLabel: "Do this first", // NL-3: read only by the ES2 (cockpitLook) home
+  homeColCount: "Count",
+  homeColWhat: "What",
+  homeColWhy: "Why it matters",
+  homeExpandAll: "Expand all",
+  homeCollapseAll: "Collapse all",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

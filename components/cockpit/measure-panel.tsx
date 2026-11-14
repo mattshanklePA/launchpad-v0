@@ -23,6 +23,7 @@ export function MeasurePanel({
   meaning,
   track,
   link,
+  action,
   accent = "basalt",
   className,
 }: {
@@ -35,7 +36,9 @@ export function MeasurePanel({
   meaning: ReactNode
   /** Usually a K6 Track. */
   track?: ReactNode
-  link: { href: string; label: string }
+  link?: { href: string; label: string }
+  /** Used instead of `link` when the drilldown opens a dialog rather than a page. */
+  action?: ReactNode
   accent?: MeasureAccent
   className?: string
 }) {
@@ -63,12 +66,15 @@ export function MeasurePanel({
         <span className="pb-1 text-sm leading-[1.4] text-[var(--ks-ink-900)]">{meaning}</span>
       </div>
       {track}
+      {action}
+      {link ? (
       <Link
         href={link.href}
         className="w-fit text-sm font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
       >
         {link.label}
       </Link>
+      ) : null}
     </article>
   )
 }
