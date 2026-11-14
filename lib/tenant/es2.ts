@@ -408,5 +408,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     cockpitLook: true,
     // NL-2 (#283): "SAMPLE DATA" strip under the band. ES2 only.
     sampleDataStrip: true,
+    // F5-1 (#318): executive portfolio report numbers. ES2 only.
+    portfolioReport: true,
   },
 }

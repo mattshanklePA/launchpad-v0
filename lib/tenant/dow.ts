@@ -172,5 +172,5 @@ Push back on these anti-patterns: vague "modernization" or "efficiency" with no 
   humanReviewCitation: "Governable / DoDD 3000.09",
 
   theme: { primary: "#355E93", primaryForeground: "#ffffff" },
-  features: { decisionCenter: true, rallyExport: false, scout: true, cockpitLook: false },
+  features: { decisionCenter: true, rallyExport: false, scout: true, cockpitLook: false, portfolioReport: false },
 }

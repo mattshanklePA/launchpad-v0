@@ -33,7 +33,7 @@ export function getDecidedAt(s: Submission): string | undefined {
 }
 
 /** The calendar day of `iso` in the display zone as a UTC day number, or NaN if invalid. */
-function displayDayNumber(iso: string): number {
+export function displayDayNumber(iso: string): number {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return NaN
   const parts = new Intl.DateTimeFormat("en-US", {

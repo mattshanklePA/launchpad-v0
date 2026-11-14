@@ -102,6 +102,24 @@ export type TenantCopy = {
   similarWordingLabel: string           // record compliance value, "{count}" = matches
   similarWordingHint: string            // hover text for it
   noOtherMessages: string               // decided record, conversation with no other messages
+  // F5-1 (#318): executive portfolio report. Read only where `features.portfolioReport` is on (ES2).
+  portfolioRiskHigh: string
+  portfolioRiskMedium: string
+  portfolioRiskLow: string
+  portfolioRiskUnassessed: string
+  portfolioReasonHigh: string
+  portfolioReasonMedium: string
+  portfolioReasonLow: string
+  portfolioReasonUnassessed: string
+  portfolioWaitOverlap: string
+  portfolioWaitHighRisk: string
+  portfolioListAnd: string
+  portfolioDaysOpen: string
+  portfolioDaysToDecide: string
+  portfolioNotYet: string
+  portfolioNotRecorded: string
+  portfolioNoPriority: string
+  portfolioNoOffice: string
   submitStepLabels: string              // the six step names on the one step line, "|" between them
   submitSentEyebrow: string             // band eyebrow on the page shown after sending
   overlapColLead: string                // overlap group table: heading over the lead / "Make lead" cell
