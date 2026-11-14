@@ -9,8 +9,6 @@
 
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { KindTag } from "@/components/ui/kind-tag"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { DispositionControls } from "@/components/submissions/disposition-controls"
@@ -50,12 +48,6 @@ export function DecisionTab({
   assist,
   comments,
   submitterFirstName,
-  comment,
-  onCommentChange,
-  onSend,
-  sendDisabled,
-  onDraftWithPlumb,
-  draftDisabled,
   onSeeAllConversation,
 }: {
   reasonText: string
@@ -72,12 +64,6 @@ export function DecisionTab({
   assist: Assist | null
   comments: SubmissionComment[]
   submitterFirstName: string
-  comment: string
-  onCommentChange: (v: string) => void
-  onSend: () => void
-  sendDisabled: boolean
-  onDraftWithPlumb: () => void
-  draftDisabled: boolean
   onSeeAllConversation: () => void
 }) {
   const [showAnalysis, setShowAnalysis] = useState(false)
@@ -172,23 +158,6 @@ export function DecisionTab({
               <div className="max-w-[68ch] text-[14px] leading-[1.6]">{c.body}</div>
             </div>
           ))}
-        </div>
-        <div className="space-y-2 border-t border-border-subtle pt-2.5">
-          <Textarea
-            id="comment-box"
-            value={comment}
-            onChange={(e) => onCommentChange(e.target.value)}
-            placeholder={`Reply to ${submitterFirstName}…`}
-            rows={2}
-          />
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled={draftDisabled} onClick={onDraftWithPlumb}>
-              <PlumbMark className="mr-1.5 h-3.5 w-3.5" />Draft with {assistantName}
-            </Button>
-            <Button size="sm" disabled={sendDisabled} onClick={onSend}>
-              Send &amp; request info
-            </Button>
-          </div>
         </div>
       </div>
     </div>

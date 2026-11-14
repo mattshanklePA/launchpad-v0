@@ -66,6 +66,8 @@ import {
 } from "@/lib/governanceCapture"
 import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { buildActivity } from "@/lib/activity"
+import { LockedGovernanceChecklist } from "@/components/submissions/locked-governance"
+import { isDecisionLocked } from "@/lib/decisionLock"
 import { GovernanceCapturePanel } from "@/components/submissions/governance-capture-panel"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -522,10 +524,13 @@ export function SubmissionDetail({ id }: { id: string }) {
   const decidedByName = signedOff?.signedOffByName
   const decidedByUnitShort = signedOff ? shortBusinessUnitLabel(signedOff.bureau) : undefined
   const reasonText = decided ? decisionReasonText(sub, decidedAt) : ""
+  const locked = isDecisionLocked({ ...(fd as Record<string, unknown>), reviewStatus: status }, tenantHasBureauTier())
   const reversibilityText = signedOff
     ? `Signed off ${formatKeystoneDate(signedOff.signedOffAt)}; contact the office to reopen.`
-    : `Reversible until ${tiers.unit.toLowerCase()} sign-off.`
-  const showDispositionButtons = !signedOff
+    : locked
+      ? "This decision is final; contact the office to reopen."
+      : `Reversible until ${tiers.unit.toLowerCase()} sign-off.`
+  const showDispositionButtons = !locked
   const activity = buildActivity(sub)
 
   const complianceItems: ComplianceGridItem[] = [
@@ -689,12 +694,6 @@ export function SubmissionDetail({ id }: { id: string }) {
                 assist={assist}
                 comments={comments}
                 submitterFirstName={(fd.submitterName || "the submitter").split(" ")[0]}
-                comment={comment}
-                onCommentChange={setComment}
-                onSend={() => postComment("needs_info")}
-                sendDisabled={busy || !comment.trim()}
-                onDraftWithPlumb={() => assist?.draftRequestInfo && setComment(assist.draftRequestInfo)}
-                draftDisabled={busy || assisting}
                 onSeeAllConversation={() => changeTab("conversation")}
               />
             ) : (
@@ -788,6 +787,22 @@ export function SubmissionDetail({ id }: { id: string }) {
           <TabsContent value="governance" className="space-y-[18px] pt-[18px]">
             {isReviewer && (
               <div className="space-y-[18px]">
+                {decided ? (
+              <LockedGovernanceChecklist
+                  decision={decision!}
+                  highImpact={fd.highImpact}
+                  fieldsSentence={governanceFieldCountsSentence(governanceCounts, tenant.assistantName)}
+                assistantName={tenant.assistantName}
+                examples={governanceExamples.map((e) => ({
+                  key: e.field,
+                  label: FIELD_REGISTRY_BY_KEY[e.field]?.label || e.field,
+                  value: governanceFieldValueLabel(e.field, e.proposedValue),
+                  rationale: e.rationale || "",
+                }))}
+                  resolvedRmf={resolvedRmf ?? undefined}
+                  notConfirmedLabel={decision === "approved" ? tenantCopy(tenant).rmfNotConfirmedApproved : tenantCopy(tenant).rmfNotConfirmedRejected}
+                />
+                ) : (
                 <div className="space-y-3 rounded-lg border border-border-subtle bg-card p-5">
                   <div className="font-heading text-[18px] font-bold text-foreground">Decision checklist</div>
 
@@ -924,6 +939,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                     </div>
                   )}
                 </div>
+                )}
 
                 {cluster && rationalizationIndex && (
                   <ChecklistItem
@@ -955,7 +971,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                         </li>
                       ))}
                     </ul>
-                    {blockReason && (
+                    {blockReason && !decided && (
                       isDeptViewer ? (
                         <div className="pt-2 border-t">
                           <RationalizationPanel submissions={clusterSubmissionsForPanel} />

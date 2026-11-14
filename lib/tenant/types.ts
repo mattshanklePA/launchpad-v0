@@ -53,6 +53,8 @@ export type TenantCopy = {
   timeToDecisionAcrossOne: string       // same, for exactly one decision
   timeToDecisionEmpty: string           // tile value when nothing is decided yet
   decidedInLabel: string                // decided record header, "{days}" = "N days"
+  rmfNotConfirmedApproved: string       // locked checklist: risk framework never confirmed, record approved
+  rmfNotConfirmedRejected: string       // same, record rejected
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }
