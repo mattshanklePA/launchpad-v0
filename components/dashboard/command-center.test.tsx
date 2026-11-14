@@ -27,6 +27,7 @@ const emptyMetrics = (scope: DashboardScope, total = 0): DashboardMetrics =>
     bureauRollup: [],
     officeRollup: [],
     rmfRollup: { on_track: 0, attention: 0, at_risk: 0, unknown: 0, total: 0 },
+    timeToDecision: { medianDays: null, decisions: 0 },
   }) as DashboardMetrics
 
 const emptyDrilldown: KpiDrilldown = {
@@ -37,6 +38,7 @@ const emptyDrilldown: KpiDrilldown = {
   signoff: [],
   duplicates: [],
   rmf: [],
+  "time-to-decision": [],
 }
 
 let scopedActionItems: ActionItem[] = []

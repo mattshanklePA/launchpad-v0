@@ -62,6 +62,7 @@ function kpiDrilldown(overrides: Partial<KpiDrilldown> = {}): KpiDrilldown {
     signoff: [],
     duplicates: [],
     rmf: [],
+    "time-to-decision": [],
     ...overrides,
   }
 }
@@ -133,6 +134,7 @@ function baseMetrics(overrides: Partial<DashboardMetrics> = {}): DashboardMetric
     bureauRollup: [],
     officeRollup: [],
     rmfRollup: { on_track: 5, attention: 3, at_risk: 0, unknown: 2, total: 10 },
+    timeToDecision: { medianDays: null, decisions: 0 },
     ...overrides,
   }
 }
@@ -336,11 +338,11 @@ describe("buildKpiCards", () => {
   })
 
   // ES2-15 A3: the two cards the demo clicks plus the two that carry the
-  // governance story.
-  it("renders the es2 strip as pipeline, duplicates, high-impact, rmf", () => {
+  // governance story. F3-3 (#270) appends the median-time-to-decision tile.
+  it("renders the es2 strip as pipeline, duplicates, high-impact, rmf, time-to-decision", () => {
     const tenant = ALL_TENANTS.find((t) => t.id === "es2")!
     const cards = buildKpiCards(baseMetrics(), tenantHasBureauTier(tenant), !!tenant.features.rmf, tenant)
-    expect(cards.map((c) => c.id)).toEqual(["pipeline", "duplicates", "high-impact", "rmf"])
+    expect(cards.map((c) => c.id)).toEqual(["pipeline", "duplicates", "high-impact", "rmf", "time-to-decision"])
   })
 })
 
@@ -577,5 +579,40 @@ describe("computeHealthScore", () => {
   it("weights needs-work at half and ignores early-stage/not-assessed", () => {
     // 4 ready + 3 needs_work(half) + 2 early + 1 not_assessed, total 10
     expect(computeHealthScore(baseMetrics())).toBe(Math.round((4 * 100 + 3 * 50) / 10))
+  })
+})
+
+// F3-3 (#270). The median-time-to-decision tile is behind features.timeToDecision,
+// on for ES2 only. uspto, doc and dow must not gain a card.
+describe("time-to-decision tile (#270)", () => {
+  const withTtd = (medianDays: number | null, decisions: number) =>
+    baseMetrics({ timeToDecision: { medianDays, decisions } } as Partial<DashboardMetrics>)
+  const byId = (tenant: TenantConfig, m: DashboardMetrics) =>
+    Object.fromEntries(buildKpiCards(m, tenantHasBureauTier(tenant), !!tenant.features.rmf, tenant).map((c) => [c.id, c]))
+  const es2t = ALL_TENANTS.find((t) => t.id === "es2")!
+
+  it("shows 'N days' with 'across M decisions' under it for es2", () => {
+    const card = byId(es2t, withTtd(3, 7))["time-to-decision"]
+    expect(card.label).toBe("Median time to decision")
+    expect(card.value).toBe("3 days")
+    expect(card.subtitle).toBe("across 7 decisions")
+  })
+
+  it("says '1 day' and 'across 1 decision' in the singular", () => {
+    const card = byId(es2t, withTtd(1, 1))["time-to-decision"]
+    expect(card.value).toBe("1 day")
+    expect(card.subtitle).toBe("across 1 decision")
+  })
+
+  it("shows 'No decisions yet' when nothing is decided", () => {
+    const card = byId(es2t, withTtd(null, 0))["time-to-decision"]
+    expect(card.value).toBe("No decisions yet")
+    expect(card.subtitle).toBeUndefined()
+  })
+
+  it("adds no card for uspto, doc or dow", () => {
+    for (const t of ALL_TENANTS.filter((t) => t.id !== "es2")) {
+      expect(Object.keys(byId(t, withTtd(3, 7))), t.id).not.toContain("time-to-decision")
+    }
   })
 })

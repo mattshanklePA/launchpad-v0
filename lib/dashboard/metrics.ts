@@ -30,6 +30,7 @@ import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 import type { RmfRiskLevel } from "@/lib/nistRmf"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import type { DashboardScope } from "@/lib/dashboard/scope"
+import { decidedDays, medianTimeToDecision } from "@/lib/timeToDecision"
 
 /**
  * Restricts `submissions` to the slice a scope's cards may count — the same
@@ -245,6 +246,14 @@ export function officeRollupRowsForScope(
   return officeRollupRows(scopedSubmissions(scope, submissions), scope.businessUnit, tenant)
 }
 
+export type TimeToDecisionCard = { medianDays: number | null; decisions: number }
+
+/** Median whole days to decision across the scope's decided records (lib/timeToDecision.ts); `medianDays` is null when none are decided. */
+export function timeToDecisionSummary(scope: DashboardScope, submissions: Submission[]): TimeToDecisionCard {
+  const rows = scopedSubmissions(scope, submissions)
+  return { medianDays: medianTimeToDecision(rows) ?? null, decisions: decidedDays(rows).length }
+}
+
 export type DashboardMetrics = {
   scope: DashboardScope
   pipelineStatus: PipelineStatusCard
@@ -256,6 +265,7 @@ export type DashboardMetrics = {
   bureauRollup: BureauRollupRow[]
   officeRollup: OfficeRollupRow[]
   rmfRollup: RmfRollupCard
+  timeToDecision: TimeToDecisionCard
 }
 
 /** Computes every Command Center card for one scope in a single pass. */
@@ -275,5 +285,6 @@ export function getDashboardMetrics(
     bureauRollup: bureauRollupRows(scope, submissions, tenant),
     officeRollup: officeRollupRowsForScope(scope, submissions, tenant),
     rmfRollup: rmfRollupSummary(scope, submissions, tenant),
+    timeToDecision: timeToDecisionSummary(scope, submissions),
   }
 }

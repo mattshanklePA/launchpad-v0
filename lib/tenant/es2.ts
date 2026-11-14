@@ -139,7 +139,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
   // high-impact determination and NIST AI RMF posture. `signoff` and
   // `omb-reportable` still reach a reviewer as Action Center rows and roll-up
   // columns; `readiness` still reaches them as the decision-readiness gauge.
-  dashboardKpiCardIds: ["pipeline", "duplicates", "high-impact", "rmf"],
+  dashboardKpiCardIds: ["pipeline", "duplicates", "high-impact", "rmf", "time-to-decision"],
 
   tierLabels: {
     department: "Enterprise",
@@ -343,5 +343,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     aiHubExport: false,
     departmentFinalApproval: false,
     rmf: true,
+    // F3-3 (#270): median time to decision tile + "Decided in N days" on the record. ES2 only.
+    timeToDecision: true,
   },
 }
