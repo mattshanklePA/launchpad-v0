@@ -154,17 +154,28 @@ describe("/rollup header by tenant (NL-4)", () => {
     }
   }
 
-  it("es2: K3 title, same context line and export link, no basalt band", () => {
+  it("es2: sends an admin to /report and renders no roll-up (F5-3, #320)", () => {
     withTenant("es2", () => {
       mockSession = admin
-      submissions = [{ id: "s1", formData: { useCaseTitle: "Patent Triage Assistant", highImpact: "not_high_impact" } }]
       const el = render(<RollupPage />)
-      const title = el.querySelector('[data-cockpit="section-title"]')
-      expect(title?.textContent).toContain("Every use case, by program office and status")
-      expect(title?.textContent).toContain("1 use case")
-      expect(title?.textContent).toContain(" · as of ")
-      expect(el.querySelector('a[href="/api/export/approval"]')?.textContent).toBe("Export approval report")
-      expect(el.querySelector("h1")).toBeNull()
+      expect(replaced).toBe("/report")
+      expect(el.querySelector('[data-testid="bureau-rollup"]')).toBeNull()
+    })
+  })
+
+  it("es2: a submitter goes home, not to /report, so there is no loop (F5-3, #320)", () => {
+    withTenant("es2", () => {
+      mockSession = { ...admin, role: "submitter" }
+      render(<RollupPage />)
+      expect(replaced).toBe("/home")
+    })
+  })
+
+  it("es2: a signed-out visitor goes to login, then on (F5-3, #320)", () => {
+    withTenant("es2", () => {
+      mockSession = null
+      render(<RollupPage />)
+      expect(replaced).toBe("/login?next=%2Frollup")
     })
   })
 
