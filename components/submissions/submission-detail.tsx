@@ -20,6 +20,7 @@ import {
   businessUnitLabel,
   visibleSubmissions,
   getLifecycleStage,
+  STATUS_LABEL,
 } from "@/lib/reviewWorkflow"
 import { findSimilar } from "@/lib/similarity"
 import { determineReportability, type ReportabilityStatus } from "@/lib/ombReportability"
@@ -86,6 +87,8 @@ import { ReviewProcessRail } from "@/components/submissions/review-process-rail"
 import { ReviewProcessLoading } from "@/components/submissions/review-process-loading"
 import { buildReviewSteps, defaultReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { PlumbMark } from "@/components/branding/plumb-mark"
+import { SectionTitle } from "@/components/cockpit"
+import { KeyFacts, RecordBand, type KeyFact } from "@/components/submissions/record-cockpit"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
@@ -109,6 +112,10 @@ const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
 // shared default, so the base component itself isn't touched.
 const TABS_LIST_CLASS = "h-auto w-full items-center justify-start gap-1 rounded-none border-b border-border bg-transparent p-0"
 const TAB_TRIGGER_CLASS = "h-auto shrink-0 rounded-none border-b-2 border-transparent px-4 py-2.5 font-heading text-[14px] font-semibold text-muted-foreground shadow-none data-[state=active]:border-keystone-activeBlue data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+
+// NL-6 (#287): ES2 cockpit tabs: square, amber rule under the active tab.
+const COCKPIT_TABS_LIST_CLASS = "h-auto w-full items-center justify-start gap-1 rounded-none border-b border-[var(--ks-limestone-dark)] bg-transparent p-0"
+const COCKPIT_TAB_TRIGGER_CLASS = "h-auto shrink-0 rounded-none border-b-[3px] border-transparent px-4 py-2.5 font-heading text-[14px] font-semibold text-[var(--ks-ink-700)] shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--ks-active-blue)] data-[state=active]:border-[var(--ks-amber)] data-[state=active]:bg-transparent data-[state=active]:text-[var(--ks-ink-900)] data-[state=active]:shadow-none"
 
 function newCommentId() {
   return `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -549,6 +556,38 @@ export function SubmissionDetail({ id }: { id: string }) {
   const showDispositionButtons = !locked
   const activity = buildActivity(sub)
 
+  // NL-6 (#287): ES2 only. The same values the page already shows, regrouped.
+  const cockpit = !!tenant.features.cockpitLook
+  const keyFacts: KeyFact[] = [
+    ...(resolvedRmf
+      ? [{
+          label: "Risk level",
+          value: RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall],
+          reason: resolvedRmf.profile.rationale,
+          tag: true,
+          tone: (resolvedRmf.effectiveOverall === "on_track" ? "healthy"
+            : resolvedRmf.effectiveOverall === "attention" ? "attention"
+            : resolvedRmf.effectiveOverall === "at_risk" ? "alert" : "neutral") as KeyFact["tone"],
+        }]
+      : []),
+    { label: "Status", value: STATUS_LABEL[status], tag: true, tone: status === "in_review" ? "attention" : status === "needs_info" ? "alert" : "neutral" },
+    { label: "Office", value: businessUnitLabel(getBusinessUnit(sub)) },
+    { label: "Owner", value: getAssigneeName(sub) || fd.submitterName || "Anonymous" },
+    { label: "Submitted", value: formatKeystoneDate(sub.submittedAt) },
+  ]
+  const cockpitBand = cockpit ? (
+    <>
+      <RecordBand
+        unitLabel={businessUnitLabel(getBusinessUnit(sub))}
+        slugTail={uniqueSlugTail(sub.id)}
+        status={status}
+        title={fd.useCaseTitle || "Untitled idea"}
+        background={tenant.theme.primary}
+      />
+      <KeyFacts facts={keyFacts} />
+    </>
+  ) : null
+
   const complianceItems: ComplianceGridItem[] = [
     {
       eyebrow: `${tiers.department} reporting mode`,
@@ -577,6 +616,8 @@ export function SubmissionDetail({ id }: { id: string }) {
     <div className="flex flex-col items-stretch gap-[18px] lg:flex-row lg:items-start">
       <div className={cn(PRIMARY_COLUMN_CLASS, "min-w-0 flex-1 space-y-[18px]")}>
         <Link href="/home" className="text-sm text-uspto-blue-primary hover:underline"><ArrowLeft className="w-4 h-4 inline mr-1" />Back</Link>
+
+        {cockpit && !decided ? cockpitBand : null}
 
         {isReviewer && !decided ? (
           awaitingPlumb ? (
@@ -636,7 +677,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           )
         ) : (
           <>
-        <ReviewerHeader
+        {cockpit && !decided ? null : <ReviewerHeader
           slugTail={uniqueSlugTail(sub.id)}
           lifecycleStage={getLifecycleStage(sub)}
           title={fd.useCaseTitle || "Untitled idea"}
@@ -649,7 +690,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           decidedByName={decidedByName}
           decidedByUnitShort={decidedByUnitShort}
           daysToDecision={timeToDecision(sub)}
-        />
+        />}
 
         {showBureauTier && deptTierEnabled && isDeptViewer && bureauSignoff && (
           <div className={cn("rounded-lg border border-l-4 bg-card p-4 space-y-2", departmentApproval ? "border-l-healthy" : "border-l-attention")}>
@@ -685,10 +726,10 @@ export function SubmissionDetail({ id }: { id: string }) {
         )}
 
         <Tabs value={tab} onValueChange={changeTab}>
-          <TabsList className={TABS_LIST_CLASS}>
-            <TabsTrigger value="decision" className={TAB_TRIGGER_CLASS}>{decided ? "The decision" : "Review"}</TabsTrigger>
-            <TabsTrigger value="governance" className={TAB_TRIGGER_CLASS}>Governance record</TabsTrigger>
-            <TabsTrigger value="conversation" className={TAB_TRIGGER_CLASS}>
+          <TabsList className={cockpit && !decided ? COCKPIT_TABS_LIST_CLASS : TABS_LIST_CLASS}>
+            <TabsTrigger value="decision" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>{decided ? "The decision" : "Review"}</TabsTrigger>
+            <TabsTrigger value="governance" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>Governance record</TabsTrigger>
+            <TabsTrigger value="conversation" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>
               Conversation <span className="ml-1 font-mono text-[11px] text-muted-foreground">({comments.length})</span>
             </TabsTrigger>
           </TabsList>
@@ -725,7 +766,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               <>
                 {/* This branch only ever renders for a submitter viewing their own undecided submission — a reviewer takes the `isReviewer && !decided` branch above (RD-6, issue #207's guided process) instead, so nothing reviewer-only belongs here. */}
                 <div className="rounded-lg border bg-card p-4 space-y-3">
-                  <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>
+                  {cockpit ? <SectionTitle title="Submission" /> : <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>}
                   {([
                     [
                       `Affected ${tenant.tierLabels.unitPlural}`,
@@ -753,7 +794,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                 </div>
 
                 <div className="rounded-lg border bg-card p-4 space-y-3">
-                  <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>
+                  {cockpit ? <SectionTitle title="Conversation with submitter" /> : <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>}
                   {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
                   {comments.map((c) => (
                     <div key={c.id} className="flex gap-2">

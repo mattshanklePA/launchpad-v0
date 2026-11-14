@@ -32,6 +32,7 @@ import type { RationalizationCluster, Rationalization } from "@/lib/rationalizat
 import { nextReviewStep, previousReviewStep, type ReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { PLUMB_PROGRESS_MIN_HEIGHT_CLASS } from "@/components/launchpad/plumb-progress"
 import { spellCount, uniqueSlugTail } from "@/components/dashboard/command-center-data"
+import { SectionTitle } from "@/components/cockpit"
 import { cn } from "@/lib/utils"
 
 export const STEP_TITLE: Record<ReviewStepKey, string> = {
@@ -109,6 +110,16 @@ export type ReviewProcessProps = {
   draftDisabled: boolean
 }
 
+/** NL-6 (#287): on ES2 the band above carries the record; the step is a K3 section title with today's lead line. */
+export function CockpitStepTitle({ title, lead, stepIndex, totalSteps }: { title: string; lead: string; stepIndex: number | null; totalSteps: number }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <SectionTitle title={title} context={stepIndex === null ? "Reading" : `Step ${stepIndex} of ${totalSteps}`} />
+      <p className="m-0 text-[14px] leading-[1.55] text-[var(--ks-ink-700)]">{lead}</p>
+    </div>
+  )
+}
+
 export function ProcessHeaderCard({
   eyebrow,
   title,
@@ -182,21 +193,26 @@ export function ReviewProcess(props: ReviewProcessProps) {
     governance: `Ready to decide once every field's set.`,
   }
 
+  const cockpit = !!tenant.features.cockpitLook
   const leadId = cluster ? (rationalizationDecision?.leadSubmissionId || selectedLeadId || cluster.memberIds[0]) : ""
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <ProcessHeaderCard
-        eyebrow={eyebrow}
-        title={stepTitle(current.key, clusterCount)}
-        lead={leads[current.key]}
-        stepIndex={current.index}
-        totalSteps={totalSteps}
-        reviewerName={reviewerName}
-      />
+      {cockpit ? (
+        <CockpitStepTitle title={stepTitle(current.key, clusterCount)} lead={leads[current.key]} stepIndex={current.index} totalSteps={totalSteps} />
+      ) : (
+        <ProcessHeaderCard
+          eyebrow={eyebrow}
+          title={stepTitle(current.key, clusterCount)}
+          lead={leads[current.key]}
+          stepIndex={current.index}
+          totalSteps={totalSteps}
+          reviewerName={reviewerName}
+        />
+      )}
 
       {/* PLUMB_PROGRESS_MIN_HEIGHT_CLASS matches ReviewProcessLoading's PlumbProgress card so the loading→resolved swap (mock 09) never shifts the page. */}
-      <div className={cn("rounded-lg border border-border-subtle bg-card p-6 shadow-sm", PLUMB_PROGRESS_MIN_HEIGHT_CLASS)}>
+      <div className={cn(cockpit ? "border border-[var(--ks-limestone-dark)] bg-white p-6" : "rounded-lg border border-border-subtle bg-card p-6 shadow-sm", PLUMB_PROGRESS_MIN_HEIGHT_CLASS)}>
         {current.key === "cluster" && cluster && (
           <div className="flex flex-col gap-4">
             <PlumbClusterRecommendation members={clusterAllMembers} compact maxSimilarity={cluster.maxSimilarity} />

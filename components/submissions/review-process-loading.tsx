@@ -10,9 +10,10 @@
 // start working the steps; only the advisory read is still in flight.
 
 import { Button } from "@/components/ui/button"
-import { ProcessHeaderCard } from "@/components/submissions/review-process"
+import { CockpitStepTitle, ProcessHeaderCard } from "@/components/submissions/review-process"
 import { PlumbProgress } from "@/components/launchpad/plumb-progress"
 import { uniqueSlugTail } from "@/components/dashboard/command-center-data"
+import { getTenant } from "@/lib/tenant"
 import { submittedLabel } from "@/lib/dateFormat"
 
 export function ReviewProcessLoading({
@@ -36,14 +37,23 @@ export function ReviewProcessLoading({
 }) {
   return (
     <div className="flex flex-col gap-[18px]">
-      <ProcessHeaderCard
-        eyebrow={`Review · ${uniqueSlugTail(submissionId)} · ${submittedLabel(submittedAt)}`}
-        title={`${assistantName} reads it before you do`}
-        lead={`Up to 35 seconds. It checks for duplicates, drafts the governance fields, and writes an advisory recommendation.`}
-        stepIndex={null}
-        totalSteps={totalSteps}
-        reviewerName={reviewerName}
-      />
+      {getTenant().features.cockpitLook ? (
+        <CockpitStepTitle
+          title={`${assistantName} reads it before you do`}
+          lead={`Up to 35 seconds. It checks for duplicates, drafts the governance fields, and writes an advisory recommendation.`}
+          stepIndex={null}
+          totalSteps={totalSteps}
+        />
+      ) : (
+        <ProcessHeaderCard
+          eyebrow={`Review · ${uniqueSlugTail(submissionId)} · ${submittedLabel(submittedAt)}`}
+          title={`${assistantName} reads it before you do`}
+          lead={`Up to 35 seconds. It checks for duplicates, drafts the governance fields, and writes an advisory recommendation.`}
+          stepIndex={null}
+          totalSteps={totalSteps}
+          reviewerName={reviewerName}
+        />
+      )}
 
       <PlumbProgress assistantName={assistantName} governanceDone={governanceDone} recommendationDone={recommendationDone} />
 
