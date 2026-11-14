@@ -44,6 +44,7 @@ export function RankedTable<T>({
   expandAllLabel,
   collapseAllLabel,
   toolbar,
+  skipEmptyDetails = false,
   className,
 }: {
   groups: RankedGroup<T>[]
@@ -59,13 +60,18 @@ export function RankedTable<T>({
   collapseAllLabel: string
   /** Caller-supplied filters or sort controls. */
   toolbar?: ReactNode
+  /** Rows whose `getDetails` is empty do not open, and Expand all counts only the rows that do. */
+  skipEmptyDetails?: boolean
   className?: string
 }) {
   const baseId = useId()
   const [open, setOpen] = useState<Set<string>>(() => new Set())
-  const allIds = groups.flatMap((g) => g.rows.map(getRowId))
+  // With `skipEmptyDetails`, a row with nothing to show beyond its own cells does not open (NL-12, #313).
+  const canOpen = (row: T) => !skipEmptyDetails || getDetails(row).length > 0
+  const allIds = groups.flatMap((g) => g.rows.filter(canOpen).map(getRowId))
   const allOpen = allIds.length > 0 && allIds.every((id) => open.has(id))
   const colSpan = columns.length + 2
+  const anyOpenable = allIds.length > 0
 
   const toggle = (id: string) =>
     setOpen((prev) => {
@@ -90,6 +96,7 @@ export function RankedTable<T>({
     >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ks-limestone-dark)] px-4 py-2.5">
         <div className="flex flex-wrap items-center gap-3">{toolbar}</div>
+        {anyOpenable ? (
         <button
           type="button"
           onClick={() => setOpen(allOpen ? new Set() : new Set(allIds))}
@@ -97,6 +104,7 @@ export function RankedTable<T>({
         >
           {allOpen ? collapseAllLabel : expandAllLabel}
         </button>
+        ) : null}
       </div>
       <table className="w-full border-collapse">
         <thead>
@@ -124,19 +132,20 @@ export function RankedTable<T>({
             ) : null}
             {g.rows.flatMap((row) => {
               const id = getRowId(row)
-              const isOpen = open.has(id)
+              const openable = canOpen(row)
+              const isOpen = openable && open.has(id)
               const detailId = `${baseId}-${id}`
               const reference = getReference?.(row)
               return [
                 <tr
                   key={id}
-                  tabIndex={0}
-                  aria-expanded={isOpen}
+                  tabIndex={openable ? 0 : undefined}
+                  aria-expanded={openable ? isOpen : undefined}
                   aria-controls={isOpen ? detailId : undefined}
-                  onClick={() => toggle(id)}
-                  onKeyDown={(e) => onKeyDown(e, id)}
+                  onClick={openable ? () => toggle(id) : undefined}
+                  onKeyDown={openable ? (e) => onKeyDown(e, id) : undefined}
                   className={cn(
-                    "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]",
+                    openable && "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]",
                     isOpen && "bg-[var(--ks-limestone)]",
                   )}
                 >

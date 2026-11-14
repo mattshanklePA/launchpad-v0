@@ -159,3 +159,35 @@ const DEFAULT_DRILLDOWN_FOOTER_HINT = "Counts refresh as reviewers record decisi
 export function drilldownFooterHint(id: string): string {
   return DRILLDOWN_FOOTER_HINT[id] ?? DEFAULT_DRILLDOWN_FOOTER_HINT
 }
+
+/**
+ * ES2 "Where the portfolio stands" panels (NL-12, #313): the one line beside the
+ * big number says what that number counts, so the two always agree. Existing
+ * card fields only; `enterprise` is the enterprise-wide figure at office or
+ * program scope.
+ */
+export function kpiMeaningLine(card: KpiCardData, enterprise?: string | number): string {
+  const n = Number(card.value)
+  const plural = n !== 1
+  let line: string
+  switch (card.id) {
+    case "pipeline":
+      line = plural ? "use cases in the pipeline" : "use case in the pipeline"
+      break
+    case "duplicates":
+      line = `${plural ? "groups" : "group"} of look-alike use cases${card.delta ? `, ${card.delta.value}` : ""}`
+      break
+    case "high-impact":
+      line = plural ? "use cases recommended as high-impact" : "use case recommended as high-impact"
+      break
+    case "rmf":
+      line = plural ? "use cases need attention on the risk framework" : "use case needs attention on the risk framework"
+      break
+    case "time-to-decision":
+      line = "from submission to decision, middle value"
+      break
+    default:
+      line = [card.delta?.value].filter(Boolean).join(" ")
+  }
+  return enterprise !== undefined ? `${line} · of ${enterprise} enterprise-wide` : line
+}

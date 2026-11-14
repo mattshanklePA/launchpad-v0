@@ -82,6 +82,27 @@ describe("Decision Center on ES2", () => {
     expect(el.querySelector('a[href="/submissions/a"]')?.textContent).toBe("Open submission")
   })
 
+  it("NL-12: says Compare once in the header, keeps an accessible name on each box, and no value wraps", () => {
+    process.env.NEXT_PUBLIC_TENANT = "es2"
+    const el = render(<DecisionCenter submissions={[sub("a"), sub("b")]} />)
+    const heads = Array.from(el.querySelectorAll("th")).map((t) => t.textContent)
+    expect(heads.filter((h) => h === "Compare")).toHaveLength(1)
+    const boxes = Array.from(el.querySelectorAll('button[role="checkbox"]'))
+    expect(boxes.map((b) => b.getAttribute("aria-label"))).toEqual(["Compare Use case a", "Compare Use case b"])
+    // The word is not repeated in each row's checkbox cell.
+    const rowCells = Array.from(el.querySelectorAll("tbody tr[tabindex] td")).map((td) => td.textContent)
+    expect(rowCells.some((t) => t === "Compare")).toBe(false)
+    expect(el.querySelector("td .whitespace-nowrap")).not.toBeNull()
+  })
+
+  it("NL-12: drops the Stage column when every candidate shows the same stage, keeps it when they differ", () => {
+    process.env.NEXT_PUBLIC_TENANT = "es2"
+    const same = render(<DecisionCenter submissions={[sub("a"), sub("b")]} />)
+    expect(Array.from(same.querySelectorAll("th")).map((t) => t.textContent)).not.toContain("Stage")
+    const differ = render(<DecisionCenter submissions={[sub("a"), { ...sub("b"), status: "in_review" } as Submission]} />)
+    expect(Array.from(differ.querySelectorAll("th")).map((t) => t.textContent)).toContain("Stage")
+  })
+
   it("caps selection at four", () => {
     process.env.NEXT_PUBLIC_TENANT = "es2"
     const el = render(<DecisionCenter submissions={["a", "b", "c", "d", "e"].map((id) => sub(id))} />)
@@ -121,6 +142,13 @@ describe("Decision Center on doc (unchanged)", () => {
     expect(el.textContent).toContain("2 candidates await a funding decision")
     expect(el.textContent).toContain("Open submission")
     expect(el.querySelector(".bg-keystone-basalt600")).not.toBeNull()
+  })
+
+  it("NL-12: keeps its per-card Compare label and no accessible-name override", () => {
+    process.env.NEXT_PUBLIC_TENANT = "doc"
+    const el = render(<DecisionCenter submissions={[sub("a"), sub("b")]} />)
+    expect(el.querySelectorAll('button[role="checkbox"][aria-label^="Compare "]')).toHaveLength(0)
+    expect((el.textContent?.match(/Compare/g) ?? []).length).toBeGreaterThanOrEqual(2)
   })
 
   it("compare view keeps the old basalt band and pills", () => {

@@ -245,13 +245,17 @@ function CockpitDecisionList({
   const count = ranked.length
   const limitReached = selected.size >= 4
   const rankOf = new Map(ranked.map((s, i) => [s.id, i + 1]))
-  const stat = (v: string) => <span className="text-sm font-semibold">{v}</span>
+  // Value cells never wrap: "50 to 500" or "3 to 6 months" stays on one line.
+  const stat = (v: string) => <span className="whitespace-nowrap text-sm font-semibold">{v}</span>
+  // NL-12 (#313): a Stage column that says the same thing on every row is noise.
+  const stages = new Set(ranked.map((s) => getLifecycleStage(s)))
+  const showStage = stages.size > 1
 
   const columns: RankedColumn<Submission>[] = [
     {
       key: "compare",
       header: "Compare",
-      width: 90,
+      width: 80,
       render: (s) => {
         const isSelected = selected.has(s.id)
         const disabled = !isSelected && limitReached
@@ -259,19 +263,23 @@ function CockpitDecisionList({
         return (
           // The row opens on click; the checkbox must not.
           <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-            <Label
-              htmlFor={id}
-              className={`flex items-center gap-1.5 text-[12.5px] font-normal ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+            {/* The column header says "Compare" once; the checkbox keeps an accessible name. */}
+            <Checkbox
+              id={id}
+              checked={isSelected}
+              disabled={disabled}
+              onCheckedChange={() => onToggleSelect(s.id)}
+              aria-label={`Compare ${s.formData.useCaseTitle || "Untitled idea"}`}
               title={disabled ? "Maximum of 4 candidates selected" : isSelected ? "Remove from comparison" : "Select for comparison"}
-            >
-              <Checkbox id={id} checked={isSelected} disabled={disabled} onCheckedChange={() => onToggleSelect(s.id)} />
-              Compare
-            </Label>
+              className={disabled ? "cursor-not-allowed" : "cursor-pointer"}
+            />
           </span>
         )
       },
     },
-    { key: "stage", header: copy.listColStage, render: (s) => <SquareTag tone="neutral">{LIFECYCLE_STAGE_LABEL[getLifecycleStage(s)]}</SquareTag> },
+    ...(showStage
+      ? [{ key: "stage", header: copy.listColStage, render: (s: Submission) => <SquareTag tone="neutral">{LIFECYCLE_STAGE_LABEL[getLifecycleStage(s)]}</SquareTag> }]
+      : []),
     {
       key: "readiness",
       header: "Readiness",

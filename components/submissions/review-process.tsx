@@ -30,7 +30,7 @@ import type { ResolvedRmfProfile } from "@/lib/rmfProfileReview"
 import type { RmfRiskLevel } from "@/lib/nistRmf"
 import type { RationalizationCluster, Rationalization } from "@/lib/rationalization"
 import { nextReviewStep, previousReviewStep, type ReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
-import { PLUMB_PROGRESS_MIN_HEIGHT_CLASS } from "@/components/launchpad/plumb-progress"
+import { PLUMB_PROGRESS_MIN_HEIGHT_CLASS, PlumbProgress } from "@/components/launchpad/plumb-progress"
 import { spellCount, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import { SectionTitle } from "@/components/cockpit"
 import { cn } from "@/lib/utils"
@@ -108,6 +108,16 @@ export type ReviewProcessProps = {
   sendDisabled: boolean
   onDraftWithPlumb: () => void
   draftDisabled: boolean
+
+  /**
+   * NL-12 (#313), ES2 only: Plumb's read is still in flight. The page keeps its
+   * step and layout; the read fills the box when it lands. Ignored elsewhere
+   * (other tenants swap to ReviewProcessLoading instead).
+   */
+  reading?: boolean
+  governanceDone?: boolean
+  recommendationDone?: boolean
+  onSkipToSteps?: () => void
 }
 
 /** NL-6 (#287): on ES2 the band above carries the record; the step is a K3 section title with today's lead line. */
@@ -166,6 +176,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
     governanceApplicableCount, draftedByPlumb, confirmedByReviewer, byName, byEmail, onGovernanceSaved,
     blockReason, onApprove, onRequestInfo, onReject,
     comment, onCommentChange, onSend, sendDisabled, onDraftWithPlumb, draftDisabled,
+    reading, governanceDone, recommendationDone, onSkipToSteps,
   } = props
 
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
@@ -194,6 +205,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
   }
 
   const cockpit = !!tenant.features.cockpitLook
+  const showReading = cockpit && !!reading
   const leadId = cluster ? (rationalizationDecision?.leadSubmissionId || selectedLeadId || cluster.memberIds[0]) : ""
 
   return (
@@ -213,7 +225,16 @@ export function ReviewProcess(props: ReviewProcessProps) {
 
       {/* PLUMB_PROGRESS_MIN_HEIGHT_CLASS matches ReviewProcessLoading's PlumbProgress card so the loading→resolved swap (mock 09) never shifts the page. */}
       <div className={cn(cockpit ? "border border-[var(--ks-limestone-dark)] bg-white p-6" : "rounded-lg border border-border-subtle bg-card p-6 shadow-sm", PLUMB_PROGRESS_MIN_HEIGHT_CLASS)}>
-        {current.key === "cluster" && cluster && (
+        {showReading && (
+          <PlumbProgress
+            assistantName={assistantName}
+            governanceDone={!!governanceDone}
+            recommendationDone={!!recommendationDone}
+            className="min-h-0 rounded-none border-0 bg-transparent p-0 shadow-none"
+          />
+        )}
+
+        {!showReading && current.key === "cluster" && cluster && (
           <div className="flex flex-col gap-4">
             <PlumbClusterRecommendation members={clusterAllMembers} compact maxSimilarity={cluster.maxSimilarity} />
             <ClusterMembers
@@ -227,11 +248,11 @@ export function ReviewProcess(props: ReviewProcessProps) {
           </div>
         )}
 
-        {current.key === "high_impact" && (
+        {!showReading && current.key === "high_impact" && (
           <HighImpactPanel fd={fd} highImpactRec={highImpactRec} busy={busy} onSetHighImpact={onSetHighImpact} />
         )}
 
-        {current.key === "rmf" && resolvedRmf && (
+        {!showReading && current.key === "rmf" && resolvedRmf && (
           <RmfPanel
             resolvedRmf={resolvedRmf}
             busy={busy}
@@ -244,7 +265,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
           />
         )}
 
-        {current.key === "governance" && (
+        {!showReading && current.key === "governance" && (
           <div className="flex flex-col gap-3">
             <p className="text-[13px] text-muted-foreground">
               All {governanceApplicableCount} fields · {draftedByPlumb} drafted by {assistantName}, {confirmedByReviewer} confirmed by the reviewer.
@@ -261,7 +282,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
           </div>
         )}
 
-        {current.key === "disposition" && (
+        {!showReading && current.key === "disposition" && (
           <div className="flex flex-col gap-4">
             <DispositionControls status={status} busy={busy} blockReason={blockReason} onApprove={onApprove} onRequestInfo={onRequestInfo} onReject={onReject} />
             {blockReason && (
@@ -320,6 +341,21 @@ export function ReviewProcess(props: ReviewProcessProps) {
           </span>
         )}
       </div>
+
+      {/* Last on purpose: it leaves when the read lands, and nothing above it moves. */}
+      {showReading && onSkipToSteps && (
+        <div className="flex flex-wrap items-center gap-4 border border-[var(--ks-limestone-dark)] bg-white p-4">
+          <div className="min-w-0 flex-1">
+            <p className="m-0 text-[14.5px] font-semibold text-[var(--ks-ink-900)]">You don&apos;t have to wait</p>
+            <p className="m-0 mt-0.5 text-[13px] text-[var(--ks-ink-700)]">
+              The submission is ready to read now, and your decision buttons stay live. {assistantName}&apos;s read arrives as advice, not a gate.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={onSkipToSteps}>
+            Read the submission
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

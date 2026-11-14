@@ -255,6 +255,21 @@ describe("buildKpiCards", () => {
     expect(buildKpiCards(baseMetrics(), true, false).map((c) => c.id)).not.toContain("rmf")
   })
 
+  // NL-12 (#313): ES2's big number is the count that needs attention; doc keeps at-risk plus its delta.
+  it("ES2: the RMF card's number is at risk plus needs attention, with no conflicting delta", () => {
+    const metrics = baseMetrics({ rmfRollup: { on_track: 1, attention: 5, at_risk: 2, unknown: 0, total: 8 } })
+    const card = buildKpiCards(metrics, true, true, ALL_TENANTS.find((t) => t.id === "es2")!).find((c) => c.id === "rmf")!
+    expect(card.value).toBe(7)
+    expect(card.delta).toBeUndefined()
+  })
+
+  it("doc: the RMF card is unchanged (at-risk count, N need attention delta)", () => {
+    const metrics = baseMetrics({ rmfRollup: { on_track: 1, attention: 5, at_risk: 2, unknown: 0, total: 8 } })
+    const card = buildKpiCards(metrics, true, true, ALL_TENANTS.find((t) => t.id === "doc")!).find((c) => c.id === "rmf")!
+    expect(card.value).toBe(2)
+    expect(card.delta?.value).toBe("5 need attention")
+  })
+
   it("appends the RMF card when rmfEnabled is true", () => {
     const cards = buildKpiCards(baseMetrics(), false, true)
     expect(cards.map((c) => c.id)).toEqual(["pipeline", "readiness", "high-impact", "omb-reportable", "rmf"])

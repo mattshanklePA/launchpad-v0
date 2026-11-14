@@ -197,6 +197,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const ranRef = useRef(false)
   const govDraftRanRef = useRef(false)
   const rationalizationRef = useRef<HTMLLIElement>(null)
+  const pinnedStepRef = useRef<ReviewStepKey | null>(null)
 
   const session = typeof window !== "undefined" ? getSession() : null
   const role = session?.role || "submitter"
@@ -400,7 +401,10 @@ export function SubmissionDetail({ id }: { id: string }) {
     governanceSettled: governanceComplete,
     dispositionSettled: status === "needs_info",
   })
-  const currentReviewStepKey = currentStepKey ?? defaultReviewStep(reviewSteps)
+  // NL-12 (#313), ES2 only: the first step is picked once and kept. Elsewhere
+  // the default tracks the first unsettled step as it changes.
+  if (tenant.features.cockpitLook && pinnedStepRef.current === null) pinnedStepRef.current = defaultReviewStep(reviewSteps)
+  const currentReviewStepKey = currentStepKey ?? (tenant.features.cockpitLook ? pinnedStepRef.current : null) ?? defaultReviewStep(reviewSteps)
   const navigateToStep = (key: ReviewStepKey) => {
     setForceShowSteps(true)
     setCurrentStepKey(key)
@@ -652,7 +656,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         {decidedBand}
 
         {isReviewer && !decided ? (
-          awaitingPlumb ? (
+          awaitingPlumb && !cockpit ? (
             <ReviewProcessLoading
               submissionId={sub.id}
               submittedAt={sub.submittedAt}
@@ -675,6 +679,10 @@ export function SubmissionDetail({ id }: { id: string }) {
               steps={reviewSteps}
               currentStepKey={currentReviewStepKey}
               onNavigateStep={navigateToStep}
+              reading={awaitingPlumb}
+              governanceDone={governanceDraft !== null}
+              recommendationDone={!assisting}
+              onSkipToSteps={() => setForceShowSteps(true)}
               cluster={cluster}
               clusterAllMembers={clusterSubmissionsForPanel}
               rationalizationDecision={rationalizationDecision}

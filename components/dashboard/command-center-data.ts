@@ -40,6 +40,11 @@ export function splitLeadingCount(title: string): [count: string, rest: string] 
   return m ? [m[1], m[2]] : ["", title]
 }
 
+/** The number a row's Count cell shows: the title's first number wherever it sits ("Check if it goes in the AI inventory: 10 submissions" -> "10"), or "–" if there is none. */
+export function countFromTitle(title: string): string {
+  return title.match(/\d+/)?.[0] ?? "–"
+}
+
 export { formatKeystoneDate } from "@/lib/dateFormat"
 
 /** Splits a `"Name (CODE)"` option label (bureau/office labels throughout `lib/tenant`) into its code and bare name; `code: null` when the label carries no trailing parenthetical. */

@@ -132,7 +132,10 @@ export function getKpiDrilldown(
 
   const rmf = rows
     .map((s) => ({ s, resolved: resolveRmfProfile(s, tenant) }))
-    .filter(({ resolved }) => resolved.effectiveOverall === "at_risk")
+    // ES2 (cockpitLook): the card counts at risk plus needs attention, so its list does too (NL-12, #313).
+    .filter(({ resolved }) =>
+      resolved.effectiveOverall === "at_risk" || (!!tenant.features?.cockpitLook && resolved.effectiveOverall === "attention"),
+    )
     .map(({ s, resolved }) => toItem(s, resolved.profile.rationale))
 
   const timeToDecisionItems = tenant.features?.timeToDecision
