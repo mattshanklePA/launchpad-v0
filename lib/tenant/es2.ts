@@ -345,5 +345,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     rmf: true,
     // F3-3 (#270): median time to decision tile + "Decided in N days" on the record. ES2 only.
     timeToDecision: true,
+    // NL-1 (#282): new cockpit look. Off everywhere for now; the next issue turns it on for ES2.
+    cockpitLook: false,
   },
 }

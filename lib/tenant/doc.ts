@@ -329,5 +329,5 @@ A serious AI idea names the federal priority and the Department mission it advan
   // rmf: surfaces the NIST AI RMF profile (lib/nistRmf.ts's computeRmfProfile)
   // in the submission detail view and Decision Center — DoC only; unset
   // (false) for USPTO/DoW, which have no NIST RMF framing to show.
-  features: { decisionCenter: true, rallyExport: false, scout: true, aiHubExport: true, departmentFinalApproval: true, rmf: true },
+  features: { decisionCenter: true, rallyExport: false, scout: true, aiHubExport: true, departmentFinalApproval: true, rmf: true, cockpitLook: false },
 }

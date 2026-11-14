@@ -549,3 +549,12 @@ describe("protected primary admin is per tenant (CLEAN-1, #237)", () => {
     expect(isPrimaryAdminEmail("avery.lang@es2.demo")).toBe(false)
   })
 })
+
+describe("cockpitLook feature flag (NL-1, #282)", () => {
+  it("is false on every tenant until the ES2 switch-on issue", () => {
+    expect(uspto.features.cockpitLook).toBe(false)
+    expect(doc.features.cockpitLook).toBe(false)
+    expect(dow.features.cockpitLook).toBe(false)
+    expect(es2.features.cockpitLook).toBe(false)
+  })
+})
