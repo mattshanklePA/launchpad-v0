@@ -4,7 +4,7 @@
 // 2-candidate floor. No change to readyForDecision's ranking, the selection
 // rules (max 4), or any value shown — see decision-center.tsx.
 
-import { describe, it, expect, afterEach } from "vitest"
+import { describe, it, expect, afterEach, beforeEach } from "vitest"
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import {
@@ -20,6 +20,18 @@ import type { Submission } from "@/lib/submissions"
 import type { ResolvedRmfProfile } from "@/lib/rmfProfileReview"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+
+// NL-5 (#286) follow-up: these tests cover the sidebar-look markup. ES2 now
+// renders the cockpit kit (features.cockpitLook), covered by
+// decision-center.cockpit.test.tsx, so this file pins the doc tenant.
+const prevTenant = process.env.NEXT_PUBLIC_TENANT
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_TENANT = "doc"
+})
+afterEach(() => {
+  if (prevTenant === undefined) delete process.env.NEXT_PUBLIC_TENANT
+  else process.env.NEXT_PUBLIC_TENANT = prevTenant
+})
 
 let container: HTMLDivElement | null = null
 let root: Root | null = null
