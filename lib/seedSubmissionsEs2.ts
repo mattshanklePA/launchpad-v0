@@ -1,8 +1,8 @@
 // Army CPE ES2 demo seed — the deterministic "golden state" the admin Demo
 // Data reset restores. Used when NEXT_PUBLIC_TENANT=es2. Mirrors the shape of
 // lib/seedSubmissionsDoc.ts, spanning the five ES2 program offices (AT&R,
-// HR-FM, LOG-FIN, BTS, C-ERP) and, under AT&R, its four programs (ACWS, ATIS,
-// FMS-ACES, Digital Market).
+// HR-FM, LOG-FIN, BTS, C-ERP) and, under AT&R, its five programs (ACWS, ATIS,
+// FMS-ACES, Digital Market, ADAMS).
 //
 // This is a demo script, not sample data. Two mechanisms have to fire, and
 // they are mutually exclusive by design, so they need separate groups:
@@ -850,6 +850,58 @@ export const es2SeedSubmissions: Submission[] = [
       implementationComplexity: "low",
       resourcesNeeded: ["infrastructure"],
       dependencies: "Milestone dependency data on requisitions; clearance history.",
+      routeTo: ["governance"],
+      readinessScore: "needs_work",
+    } as Partial<FormData>),
+  },
+
+  // F4-1 (#224) AT&R / ADAMS: submitted, intake only. A workforce idea with no
+  // contracting vocabulary, so it stays out of the duplicate group.
+  {
+    id: "es2-adams-career-path-gap-analysis",
+    submittedAt: hoursAgo(30),
+    formData: mk({
+      submitterName: "Marcus Bell",
+      submitterEmail: "marcus.bell@es2.demo",
+      submitterRole: "analyst",
+      submitterOffice: "atr",
+      submitterSubOffice: "adams",
+      reviewStatus: "submitted",
+      useCaseTitle: "Career Path Gap Finder For The Acquisition Workforce",
+      useCaseDescription:
+        "Compares each acquisition workforce member's training and assignment history with the path to the next certification level, and lists the gaps a supervisor can plan around.",
+      isWithheld: "no",
+      targetAudience: "analyst",
+      impactedUsersCount: "50_500",
+      painPoints:
+        "Supervisors piece together certification progress from several records by hand, so gaps show up late, often just before a deadline.",
+      targetUserContext: "Supervisors and talent managers planning development for the acquisition workforce.",
+      targetUserSummary: "Supervisors with no single view of certification progress.",
+      coreProblem: "There is no single view of how far each person is from the next certification level.",
+      problemImpact: "People miss certification windows that earlier planning would have caught.",
+      affectedBusinessUnits: ["cross_functional"],
+      problemType: ["productivity"],
+      severity: "medium",
+      problemDefinition: "Certification progress is assembled by hand and too late.",
+      proposedSolution:
+        "A gap list per person built from training and assignment history against the published certification path, which a supervisor reviews and turns into a development plan.",
+      keyFunctionality: ["ranking"],
+      solutionSummary: "Per-person certification gap list a supervisor reviews.",
+      deliveryAudience: "internal",
+      userValue: "Supervisors see gaps months ahead instead of days.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["better_decisions"],
+      userValueSummary: "Gaps found early enough to plan.",
+      businessValue: "Fewer missed certification windows across the workforce.",
+      costSavings: "50k_250k",
+      strategicBenefit: ["operational_efficiency"],
+      businessValueSummary: "Fewer missed certification windows.",
+      usptoFocusArea: ["atr_training_currency"],
+      relevantOkrs: "Certification currency; time to next level.",
+      alignmentSummary: "Supports a current, qualified acquisition workforce.",
+      implementationComplexity: "low",
+      resourcesNeeded: ["infrastructure"],
+      dependencies: "Training records and assignment history for the workforce.",
       routeTo: ["governance"],
       readinessScore: "needs_work",
     } as Partial<FormData>),
