@@ -44,3 +44,18 @@ describe("supabaseStore.saveSubmission — cache", () => {
     expect(supabaseStore.getSubmissions().find((s) => s.id === saved.id)).toBeUndefined()
   })
 })
+
+// F4-4 (#305): the server stopped capping the list at 50 in Feature 1 (#231),
+// but this read still cut it to 50. A 60-idea set must come back whole, or the
+// home screen and the landing page disagree after a reset.
+describe("supabaseStore.getSubmissions — no cap", () => {
+  it("returns every cached submission, at 60 ideas", () => {
+    const sixty = Array.from({ length: 60 }, (_, i) => ({
+      id: `s-${i}`,
+      submittedAt: "2026-01-01T00:00:00Z",
+      formData: {},
+    }))
+    setCachedSubmissions(sixty)
+    expect(supabaseStore.getSubmissions()).toHaveLength(60)
+  })
+})
