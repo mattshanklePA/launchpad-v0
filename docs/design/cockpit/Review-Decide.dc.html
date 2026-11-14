@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review step 3</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#006BA1}a:hover{color:#1E252C}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:3px;border:1px solid #D6CEBE;background:#FFFFFF;color:#2A333C;white-space:nowrap}
+.th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #D6CEBE;background:#FFFFFF;white-space:nowrap}
+.td{padding:12px;border-bottom:1px solid #E7E1D6;font-size:14px;color:#2A333C;vertical-align:middle}
+.num{font-family:'JetBrains Mono',monospace;font-size:13px}
+.rank{display:inline-block;min-width:34px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;background:#E7E1D6;color:#2A333C;border-radius:3px;padding:4px 6px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#4A545E;font-weight:700;margin:0 0 4px}
+.val{font-size:14px;line-height:1.45;color:#2A333C;margin:0}
+.meta{font-size:12px;color:#4A545E;margin-top:3px}
+.sec{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.sec h2{font-family:'Chivo',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.012em;margin:0}
+.sec .ctx{font-size:13px;color:#4A545E}
+.sec .rule{flex:1 1 80px;height:2px;background:#C77D3A}
+.panel{background:#FFFFFF;border:1px solid #D6CEBE;border-radius:8px}
+.pad{padding:20px 22px}
+.btn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 14px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;cursor:pointer;text-decoration:none}
+.btn-p{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:600;padding:9px 16px;border:1px solid #006BA1;border-radius:5px;background:#006BA1;color:#FFFFFF;cursor:pointer;text-decoration:none}
+.btn-p:hover{background:#1E252C;color:#FFFFFF}
+.h3{font-family:'Chivo',sans-serif;font-weight:700;font-size:17px;margin:0}
+.big{font-family:'Chivo',sans-serif;font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em}
+.q{margin:0;font-size:14px;color:#4A545E}
+.badge{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;background:#2A333C;color:#F4F2EC;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;border-radius:3px}
+.nav a{color:#F4F2EC;text-decoration:none;font-size:14px;font-weight:500;padding:10px 2px;border-bottom:3px solid transparent}
+.nav a.on{font-weight:700;border-bottom-color:#C77D3A}
+.note{display:flex;gap:16px;align-items:flex-start}
+.field{font-family:'Hanken Grotesk',sans-serif;font-size:14px;padding:9px 11px;border:1px solid #D6CEBE;border-radius:5px;background:#FFFFFF;color:#2A333C;width:100%;box-sizing:border-box}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #E7E1D6;font-size:14px}
+</style>
+</helmet>
+<div style="min-height:100vh;position:relative;background:#F4F2EC;font-family:'Hanken Grotesk',sans-serif;color:#2A333C">
+<header style="background:#1E252C;border-bottom:3px solid #C77D3A">
+  <div style="padding:14px 32px 6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M9 6h16l-4 22h-8z" fill="#C77D3A"></path><path d="M9 6h16l-1 5H10z" fill="#DCA061"></path></svg>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;color:#DCA061">REVIEW · KS-3104 · STEP 3 OF 5</span>
+      <span style="font-family:'Chivo',sans-serif;font-weight:900;font-size:22px;letter-spacing:-.02em;color:#F4F2EC">Does the risk profile hold?</span>
+    </div>
+    <div style="flex:1"></div>
+    
+  </div>
+  <nav class="nav" aria-label="Main" style="padding:0 32px;display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap"><a href="Portfolio-Report.dc.html" class="">Portfolio</a><a href="Action-Center.dc.html" class="on">My work</a><a href="Decision-Center.dc.html" class="">Decision Center</a><a href="Intake-Ready-Check.dc.html" class="">Submit an idea</a><span style="flex:1"></span><span style="font-size:13px;color:#C9CED3;padding:10px 0">Avery Lang · reviewer, AT&amp;R</span></nav>
+</header>
+<div style="background:#E7E1D6;border-bottom:1px solid #D6CEBE;padding:8px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;background:#2A333C;color:#F4F2EC;padding:3px 8px;border-radius:3px">SAMPLE DATA</span>
+  <span style="font-size:13px;color:#4A545E">Every idea, office and number on this page is sample data for the demo.</span>
+</div>
+<main style="max-width:1320px;margin:0 auto;padding:32px 32px 48px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start"><div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px"><div class="panel pad" style="display:flex;flex-direction:column;gap:12px">
+<p class="lbl">What the risk profile says</p><p class="val">Uses contract records. A person confirms every flag. The program office can switch it off.</p>
+<div style="background:#F4F2EC;border:1px solid #D6CEBE;border-radius:5px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0.5l4.5 4.5-4.5 4.5-4.5-4.5z" fill="#C77D3A"></path></svg><p class="val"><strong>Needs attention:</strong> no plan for testing after launch.</p></div></div>
+<div class="panel pad" style="border-top:3px solid #006BA1;display:flex;flex-direction:column;gap:10px"><div style="display:flex;gap:12px;align-items:center"><svg width="22" height="40" viewBox="0 0 22 40" aria-hidden="true"><line x1="11" y1="0" x2="11" y2="26" stroke="#2A333C" stroke-width="1.5"></line><path d="M5 26h12l-6 12z" fill="#0086CA"></path></svg><div><span class="tag" style="background:#006BA1;color:#FFFFFF;border-color:#006BA1">PLUMB ADVICE</span><p class="h3" style="margin-top:6px">Suggests: the profile holds, with one fix</p></div></div>
+<ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.6"><li>A person confirms every flag before it affects an award.</li><li>The data is already used for this purpose today.</li><li>The office can switch it off without a new release.</li></ul>
+<p class="val"><strong>Not sure about:</strong> whether results will be checked after launch. Ask the submitter for a testing plan.</p></div>
+<div class="panel pad"><fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px"><legend class="h3" style="margin-bottom:8px">Your answer</legend><p class="q">Nothing is selected until you choose.</p>
+<label style="display:flex;gap:8px;font-size:15px"><input type="radio" name="a"> The profile holds</label>
+<label style="display:flex;gap:8px;font-size:15px"><input type="radio" name="a"> The profile holds once the testing plan is added</label>
+<label style="display:flex;gap:8px;font-size:15px"><input type="radio" name="a"> The profile does not hold</label></fieldset>
+<label class="lbl" for="why" style="display:block;margin-top:14px">Your reason (required if you disagree with Plumb)</label><input id="why" class="field" placeholder="One line">
+<div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap"><button class="btn-p">Save and go to step 4</button><button class="btn">Back to step 2</button></div></div></div><aside style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:16px"><div class="panel pad"><p class="lbl">Your review</p><ol style="list-style:none;margin:0;padding:0"><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#2A333C"></span>Are these one effort?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#2A333C"></span>Is this high impact?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;font-weight:700"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#C77D3A"></span>Does the risk profile hold?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#FFFFFF"></span>Are the inventory fields right?</li><li style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:14px;color:#4A545E"><span aria-hidden="true" style="width:10px;height:10px;border-radius:50%;border:2px solid #2A333C;background:#FFFFFF"></span>Decide</li></ol></div><div class="panel pad"><p class="lbl">The submission</p><span class="tag" style=""><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#2A333C" stroke-width="1.5"></circle></svg>In review</span><p class="h3" style="margin-top:10px">Supplier past-performance risk scoring before award</p><p class="meta">KS-3104 · BTS · Andre Duval · submitted 17 Aug 2026</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px 32px"><div><p class="lbl">Problem</p><p class="val">Award decisions rely on past-performance reports that take weeks to pull together.</p></div><div><p class="lbl">Who uses it</p><p class="val">Contracting officers before award, about 60 people.</p></div><div><p class="lbl">Data</p><p class="val">Past-performance records and contract history.</p></div></div>
+<p style="margin:12px 0 0"><a href="#">Read the full submission</a></p></div></aside></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1450}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
