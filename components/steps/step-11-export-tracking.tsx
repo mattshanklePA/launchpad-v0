@@ -6,6 +6,8 @@ import { CheckCircle, Rocket, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { PDFExportButton } from "@/components/steps/pdf-export-button"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
+import { SubmitBand } from "@/components/cockpit"
 
 export function Step11ExportTracking() {
   const { formData, resetForm } = useForm()
@@ -26,6 +28,42 @@ export function Step11ExportTracking() {
     resetForm()
     // resetForm sets currentStep back to 1, no navigation needed —
     // the FormContainer will re-render Step 1 automatically.
+  }
+
+  if (tenant.features.cockpitLook) {
+    const status = formData.routeTo.includes("draft") ? "Draft" : "Under Review"
+    return (
+      <div data-cockpit="submit-sent" className="flex flex-col">
+        <SubmitBand
+          eyebrow={tenantCopy(tenant).submitSentEyebrow.toUpperCase()}
+          title="Idea Submitted for Vetting!"
+          background={tenant.theme.primary}
+        />
+        <div className="mx-auto flex w-full max-w-[880px] flex-col gap-6 px-4 py-10">
+          <p className="m-0 text-[14px] text-[var(--ks-ink-700)]">
+            Your AI idea has been submitted. The review team will vet it for feasibility, value, and strategic alignment.
+          </p>
+          <section className="border border-[var(--ks-limestone-dark)] bg-white p-6">
+            <h2 className="ks-section-head m-0 text-[var(--ks-ink-900)]">What Happens Next</h2>
+            <p className="mt-2 text-[14px] text-[var(--ks-ink-700)]">
+              Your idea is now marked as: <span className="font-bold text-[var(--ks-ink-900)]">{status}</span>
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <PDFExportButton formData={formData} variant="secondary" label="Download Submission as PDF" />
+            </div>
+          </section>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button variant="outline" onClick={handleStartNewIdea}>
+              <Plus className="mr-2 h-4 w-4" />
+              Start a New Idea
+            </Button>
+            <Button variant="link" onClick={handleReturnToDashboard}>
+              Return to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
