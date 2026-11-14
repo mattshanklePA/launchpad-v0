@@ -551,10 +551,17 @@ describe("protected primary admin is per tenant (CLEAN-1, #237)", () => {
 })
 
 describe("cockpitLook feature flag (NL-1, #282)", () => {
-  it("is false on every tenant until the ES2 switch-on issue", () => {
+  it("is on for ES2 only (NL-2, #283)", () => {
     expect(uspto.features.cockpitLook).toBe(false)
     expect(doc.features.cockpitLook).toBe(false)
     expect(dow.features.cockpitLook).toBe(false)
-    expect(es2.features.cockpitLook).toBe(false)
+    expect(es2.features.cockpitLook).toBe(true)
+  })
+
+  it("shows the sample-data strip on ES2 only, with its two strings", () => {
+    expect(es2.features.sampleDataStrip).toBe(true)
+    for (const t of [uspto, doc, dow]) expect(t.features.sampleDataStrip).toBeFalsy()
+    expect(es2.copy?.sampleDataTag).toBe("SAMPLE DATA")
+    expect(es2.copy?.sampleDataNotice).toBe("Every idea, office and number on this page is sample data for the demo.")
   })
 })

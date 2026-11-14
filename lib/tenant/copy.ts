@@ -33,6 +33,8 @@ export const DEFAULT_COPY: TenantCopy = {
   decidedInLabel: "Decided in {days}",
   rmfNotConfirmedApproved: "Not confirmed before approval",
   rmfNotConfirmedRejected: "Not confirmed before the decision",
+  sampleDataTag: "", // empty: no tenant but ES2 renders the strip
+  sampleDataNotice: "",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

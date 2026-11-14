@@ -43,6 +43,8 @@ import {
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Header } from "@/components/layout/header"
+import { CockpitShell } from "@/components/cockpit/cockpit-shell"
+import { getDashboardScope } from "@/lib/dashboard/scope"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
@@ -710,9 +712,9 @@ function AdminPageInner() {
     return <div className="min-h-screen bg-gray-50" />
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+  const page = (
+    <div className={tenant.features.cockpitLook ? "" : "min-h-screen bg-gray-50"}>
+      {!tenant.features.cockpitLook && <Header />}
 
       <div className="container py-8">
         <div className="mb-8 flex items-start justify-between gap-4">
@@ -1347,5 +1349,21 @@ function AdminPageInner() {
         </Tabs>
       </div>
     </div>
+  )
+
+  // NL-2 (#283): on ES2 the page sits inside the same band as every other
+  // signed-in page. Every other tenant keeps its own Header, untouched.
+  if (!tenant.features.cockpitLook) return page
+  return (
+    <CockpitShell
+      baseScope={getDashboardScope(session)}
+      hierarchy={{ bureaus: [] }}
+      selection={null}
+      onSelect={() => {}}
+      breadcrumb="Admin"
+      tenant={tenant}
+    >
+      {page}
+    </CockpitShell>
   )
 }

@@ -55,6 +55,9 @@ export type TenantCopy = {
   decidedInLabel: string                // decided record header, "{days}" = "N days"
   rmfNotConfirmedApproved: string       // locked checklist: risk framework never confirmed, record approved
   rmfNotConfirmedRejected: string       // same, record rejected
+  // Sample-data strip (NL-2, #283). Rendered only where `features.sampleDataStrip` is on (ES2).
+  sampleDataTag: string                 // square tag at the left of the strip
+  sampleDataNotice: string              // the one sentence beside it
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

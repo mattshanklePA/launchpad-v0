@@ -315,6 +315,9 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     haveEnoughOption: "I have enough, write the draft",
     reviseDraftPlaceholder: "Ask a follow-up or request a revised draft...",
     affectedUnitsPrompt: "Which program offices, systems, or groups does this affect? Tap all that apply, then Continue.",
+    // NL-2 (#283): the strip under the header band.
+    sampleDataTag: "SAMPLE DATA",
+    sampleDataNotice: "Every idea, office and number on this page is sample data for the demo.",
   },
 
   glossaryOverrides: {
@@ -345,7 +348,9 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     rmf: true,
     // F3-3 (#270): median time to decision tile + "Decided in N days" on the record. ES2 only.
     timeToDecision: true,
-    // NL-1 (#282): new cockpit look. Off everywhere for now; the next issue turns it on for ES2.
-    cockpitLook: false,
+    // NL-1 (#282) / NL-2 (#283): new cockpit look, header band and tabs. ES2 only.
+    cockpitLook: true,
+    // NL-2 (#283): "SAMPLE DATA" strip under the band. ES2 only.
+    sampleDataStrip: true,
   },
 }
