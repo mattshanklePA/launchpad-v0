@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SectionTitle } from "@/components/cockpit/section-title"
+import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -295,6 +297,21 @@ const RESET_STAGE_LABEL: Record<ResetStage, string> = {
   clearing: "Clearing submissions…",
   seeding: "Re-seeding demo data…",
   refreshing: "Refreshing…",
+}
+
+
+// NL-9 (#290): ES2-only (features.cockpitLook) restyle of the admin tab strip,
+// section headings and table heads. Other tenants keep today's markup.
+const COCKPIT_TABS_LIST =
+  "flex h-auto w-full flex-wrap justify-start gap-1 rounded-none border-b-2 border-[var(--ks-amber)] bg-transparent p-0"
+const COCKPIT_TAB =
+  "rounded-none border-b-[3px] border-transparent px-4 py-2 text-[var(--ks-ink-900)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)] focus-visible:ring-0 data-[state=active]:border-[var(--ks-basalt)] data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none"
+const COCKPIT_TH =
+  "bg-white font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)]"
+
+function AdminHeading({ cockpit, title }: { cockpit: boolean; title: string }) {
+  if (cockpit) return <SectionTitle title={title} />
+  return <h2 className="text-2xl font-bold">{title}</h2>
 }
 
 export default function AdminPage() {
@@ -709,9 +726,10 @@ function AdminPageInner() {
   // shared data cache has loaded — prevents a flash where toggles/submissions
   // render from an empty cache (everything appears "on" / no submissions).
   if (!authChecked || !dataLoaded) {
-    return <div className="min-h-screen bg-gray-50" />
+    return <div className={cn("min-h-screen", tenant.features.cockpitLook ? "bg-[var(--surface-canvas)]" : "bg-gray-50")} />
   }
 
+  const cockpit = !!tenant.features.cockpitLook
   const page = (
     <div className={tenant.features.cockpitLook ? "" : "min-h-screen bg-gray-50"}>
       {!tenant.features.cockpitLook && <Header />}
@@ -739,14 +757,14 @@ function AdminPageInner() {
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="okrs">{tenant.okrsLabel}</TabsTrigger>
-            <TabsTrigger value="drafts">Submissions</TabsTrigger>
-            <TabsTrigger value="submitted">Decision Center</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="formconfig">Form Config</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className={cockpit ? COCKPIT_TABS_LIST : "grid w-full grid-cols-7"}>
+            <TabsTrigger value="overview" className={cockpit ? COCKPIT_TAB : undefined}>Overview</TabsTrigger>
+            <TabsTrigger value="okrs" className={cockpit ? COCKPIT_TAB : undefined}>{tenant.okrsLabel}</TabsTrigger>
+            <TabsTrigger value="drafts" className={cockpit ? COCKPIT_TAB : undefined}>Submissions</TabsTrigger>
+            <TabsTrigger value="submitted" className={cockpit ? COCKPIT_TAB : undefined}>Decision Center</TabsTrigger>
+            <TabsTrigger value="analytics" className={cockpit ? COCKPIT_TAB : undefined}>Analytics</TabsTrigger>
+            <TabsTrigger value="formconfig" className={cockpit ? COCKPIT_TAB : undefined}>Form Config</TabsTrigger>
+            <TabsTrigger value="settings" className={cockpit ? COCKPIT_TAB : undefined}>Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -877,7 +895,7 @@ function AdminPageInner() {
 
           <TabsContent value="okrs" className="space-y-6">
             <div className="flex justify-between items-center gap-3">
-              <h2 className="text-2xl font-bold">{tenant.okrsLabel} Management</h2>
+              <AdminHeading cockpit={cockpit} title={`${tenant.okrsLabel} Management`} />
               <div className="flex items-center gap-2">
                 {bureausWithFocusAreas.length > 0 && (
                   <Select value={okrBureau || "__department__"} onValueChange={(v) => setOkrBureau(v === "__department__" ? "" : v)}>
@@ -1016,7 +1034,7 @@ function AdminPageInner() {
               </div>
             )}
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Idea Pipeline</h2>
+              <AdminHeading cockpit={cockpit} title="Idea Pipeline" />
               <div className="flex gap-2">
                 <div className="flex border rounded-md">
                   <Button
@@ -1107,15 +1125,15 @@ function AdminPageInner() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[300px]">Title</TableHead>
-                        <TableHead>Submitter</TableHead>
-                        <TableHead>{tenant.tierLabels.unit}</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Progress</TableHead>
-                        <TableHead>Last Updated</TableHead>
-                        <TableHead>Classification</TableHead>
-                        <TableHead>Readiness</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className={cn("w-[300px]", cockpit && COCKPIT_TH)}>Title</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Submitter</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>{tenant.tierLabels.unit}</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Status</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Progress</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Last Updated</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Classification</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Readiness</TableHead>
+                        <TableHead className={cn("text-right", cockpit && COCKPIT_TH)}>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1167,7 +1185,7 @@ function AdminPageInner() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <h2 className="text-2xl font-bold">Platform Analytics</h2>
+            <AdminHeading cockpit={cockpit} title="Platform Analytics" />
 
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
@@ -1243,13 +1261,13 @@ function AdminPageInner() {
           </TabsContent>
 
           <TabsContent value="formconfig" className="space-y-6">
-            <h2 className="text-2xl font-bold">Form Configuration</h2>
+            <AdminHeading cockpit={cockpit} title="Form Configuration" />
             <p className="text-sm text-muted-foreground -mt-4 max-w-3xl">{formConfigLockedNote(tenant)}</p>
             <FormConfigPanel />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <h2 className="text-2xl font-bold">System Settings</h2>
+            <AdminHeading cockpit={cockpit} title="System Settings" />
 
             <div className="grid gap-6">
               <Card>

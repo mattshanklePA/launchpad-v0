@@ -22,3 +22,26 @@ These supersede the numbered screens 00 to 10 in docs/design. Sample data only.
 | Review-Decide.dc.html | Review step, the person decides (D3) |
 | Decided-Record.dc.html | Decided record, locked |
 | Program-Profile.dc.html | Program profile (D5) |
+
+## New look (cockpit style)
+
+The new look is built from six kit pieces in `components/cockpit/`:
+
+| Piece | Component |
+|---|---|
+| K1 | `HeaderBand`: dark band with eyebrow, title, tabs, office picker and user line |
+| K2 | `SampleDataStrip`: the sample-data notice under the band |
+| K3 | `SectionTitle`: title, one context line, amber rule |
+| K4 | `MeasurePanel` and `MeasureRow` |
+| K5 | `RankedTable`: dense ranked rows that open in place |
+| K6 | `SquareTag` and `Track`: square-cornered tags (always with a word) and the planned/actual line |
+
+`CockpitShell` puts K1 and K2 around every signed-in page. `DashboardShell` picks it
+instead of the sidebar when the tenant's `features.cockpitLook` is true.
+
+Turn it on for another tenant with one line in its setup file (`lib/tenant/<tenant>.ts`),
+inside `features`: `cockpitLook: true`. Add `sampleDataStrip: true` as well if that
+tenant should show the sample-data strip (its text is in `lib/tenant/copy.ts`).
+Today only ES2 has it on. `components/cockpit/cockpit-look.sweep.test.tsx` checks that
+uspto, doc and dow keep the sidebar, and that the kit uses no `shadow-`, no non-Keystone
+hex color, and `rounded-full` only on the track dots.
