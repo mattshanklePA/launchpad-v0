@@ -125,7 +125,8 @@ export type TenantCopy = {
   reportOfficeLabel: string
   reportAllOffices: string
   reportDownloadPdf: string
-  reportComingNext: string
+  reportDownloadCsv: string
+  reportDownloadFailed: string
   reportCopyLink: string
   reportLinkCopied: string
   reportScopeWhole: string
@@ -200,6 +201,18 @@ export type TenantCopy = {
   reportNotePending: string
   reportFooter: string
   reportFooterDemo: string
+  reportPdfKicker: string
+  reportPdfTitle: string
+  reportPdfInternal: string
+  reportPdfPrepared: string
+  reportPdfOfficeOnly: string
+  reportPdfPage: string
+  reportPdfLeaderLine: string
+  reportPdfPlumbNote: string
+  reportCsvFigures: string
+  reportCsvColumnsSummary: string
+  reportCsvColumnsOffices: string
+  reportCsvColumnsIdeas: string
   reportLoading: string
   reportEmptyOfficeTitle: string
   reportEmptyOfficeBody: string

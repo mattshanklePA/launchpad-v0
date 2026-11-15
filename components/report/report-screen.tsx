@@ -25,9 +25,26 @@ const BTN = `min-h-[44px] border px-[18px] text-[15px] font-semibold ${FOCUS}`
 
 type State = { kind: "loading" } | { kind: "error" } | { kind: "ready"; data: ReportResponse }
 
-function Controls({ data, office, onOffice }: { data: ReportResponse | null; office: string; onOffice: (id: string) => void }) {
+function Controls({ data, ready, office, onOffice }: { data: ReportResponse | null; ready: boolean; office: string; onOffice: (id: string) => void }) {
   const copy = tenantCopy(getTenant())
   const [copied, setCopied] = useState(false)
+  const [failed, setFailed] = useState(false)
+  // Both files are the current view: the report on screen, with the office picked, if any.
+  const download = async (kind: "pdf" | "csv") => {
+    if (!data) return
+    setFailed(false)
+    try {
+      if (kind === "pdf") {
+        const { generatePortfolioReportPDF } = await import("@/lib/portfolioReportPdf")
+        generatePortfolioReportPDF(data.report, { now: data.now, demo: data.demo })
+      } else {
+        const { downloadPortfolioReportCsv } = await import("@/lib/portfolioReportCsv")
+        downloadPortfolioReportCsv(data.report, { now: data.now })
+      }
+    } catch {
+      setFailed(true)
+    }
+  }
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href)
@@ -55,23 +72,33 @@ function Controls({ data, office, onOffice }: { data: ReportResponse | null; off
           </select>
         </label>
       ) : null}
-      <span className="flex items-center gap-2 text-[13px] text-[var(--ks-chalk)]">
-        <button
-          type="button"
-          disabled
-          aria-describedby="report-pdf-note"
-          className="border border-white/30 px-3 py-1.5 text-[13px] font-semibold text-[var(--ks-chalk)] opacity-70"
-        >
-          {copy.reportDownloadPdf}
-        </button>
-        <span id="report-pdf-note">{copy.reportComingNext}</span>
-      </span>
+      <button
+        type="button"
+        disabled={!ready}
+        onClick={() => download("pdf")}
+        className={`border border-white/30 px-3 py-1.5 text-[13px] font-semibold text-[var(--ks-chalk)] disabled:opacity-70 ${FOCUS}`}
+      >
+        {copy.reportDownloadPdf}
+      </button>
+      <button
+        type="button"
+        disabled={!ready}
+        onClick={() => download("csv")}
+        className={`border border-white/30 px-3 py-1.5 text-[13px] font-semibold text-[var(--ks-chalk)] disabled:opacity-70 ${FOCUS}`}
+      >
+        {copy.reportDownloadCsv}
+      </button>
       <button type="button" onClick={copyLink} className={`px-1 text-[13px] text-[var(--ks-chalk)] underline ${FOCUS}`}>
         {copy.reportCopyLink}
       </button>
       <span role="status" className="text-[13px] text-[var(--ks-chalk)]">
         {copied ? copy.reportLinkCopied : ""}
       </span>
+      {failed ? (
+        <span role="alert" className="text-[13px] text-[var(--ks-chalk)]">
+          {copy.reportDownloadFailed}
+        </span>
+      ) : null}
     </>
   )
 }
@@ -115,7 +142,7 @@ function ReportBody() {
     [router, pathname],
   )
 
-  const controls = <Controls data={last} office={office} onOffice={onOffice} />
+  const controls = <Controls data={last} ready={state.kind === "ready"} office={office} onOffice={onOffice} />
   const placed: ReactNode = band?.rightSlot ? (
     createPortal(controls, band.rightSlot)
   ) : (

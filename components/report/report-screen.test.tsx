@@ -39,6 +39,11 @@ vi.mock("@/components/dashboard/dashboard-shell", () => ({
   DashboardShell: ({ children }: { children: React.ReactNode }) => <BandHost>{children}</BandHost>,
 }))
 
+const pdfMock = vi.fn()
+const csvMock = vi.fn()
+vi.mock("@/lib/portfolioReportPdf", () => ({ generatePortfolioReportPDF: (...a: unknown[]) => pdfMock(...a) }))
+vi.mock("@/lib/portfolioReportCsv", () => ({ downloadPortfolioReportCsv: (...a: unknown[]) => csvMock(...a) }))
+
 import { ReportScreen } from "./report-screen"
 
 const NOW = Date.parse("2026-12-10T17:00:00Z")
@@ -82,7 +87,7 @@ describe("ReportScreen (ES2)", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/report")
   })
 
-  it("puts the labelled picker, a disabled Download PDF with Coming next, and Copy link on the band", async () => {
+  it("puts the labelled picker, Download PDF, Download numbers (CSV) and Copy link on the band", async () => {
     fetchMock.mockResolvedValue(ok(body()))
     const c = render(<ReportScreen />)
     await flush()
@@ -92,10 +97,46 @@ describe("ReportScreen (ES2)", () => {
     expect(options[0]).toBe("All five offices")
     expect(options).toHaveLength(6)
     const pdf = [...band.querySelectorAll("button")].find((b) => text(b) === "Download PDF") as HTMLButtonElement
-    expect(pdf.disabled).toBe(true)
-    expect(text(band)).toContain("Coming next")
+    expect(pdf.disabled).toBe(false)
+    expect(text(band)).not.toContain("Coming next")
+    expect([...band.querySelectorAll("button")].some((b) => text(b) === "Download numbers (CSV)")).toBe(true)
     expect([...band.querySelectorAll("button")].some((b) => text(b) === "Copy link")).toBe(true)
     expect(text(band)).not.toContain("Last 90 days")
+  })
+
+  it("Download PDF and Download numbers (CSV) hand over the report on screen, the picked office included", async () => {
+    search = "office=hrfm"
+    const b = body("hrfm")
+    fetchMock.mockResolvedValue(ok(b))
+    pdfMock.mockReset()
+    csvMock.mockReset()
+    const c = render(<ReportScreen />)
+    await flush()
+    const press = async (label: string) => {
+      const btn = [...c.querySelectorAll("button")].find((x) => text(x) === label)!
+      await act(async () => void btn.click())
+    }
+    await press("Download PDF")
+    expect(pdfMock).toHaveBeenCalledTimes(1)
+    expect(pdfMock.mock.calls[0][0].officeId).toBe("hrfm")
+    expect(pdfMock.mock.calls[0][1]).toEqual({ now: b.now, demo: b.demo })
+    await press("Download numbers (CSV)")
+    expect(csvMock).toHaveBeenCalledTimes(1)
+    expect(csvMock.mock.calls[0][0].officeId).toBe("hrfm")
+  })
+
+  it("says so, once, if the file cannot be made", async () => {
+    fetchMock.mockResolvedValue(ok(body()))
+    pdfMock.mockReset()
+    pdfMock.mockImplementation(() => {
+      throw new Error("no")
+    })
+    const c = render(<ReportScreen />)
+    await flush()
+    const btn = [...c.querySelectorAll("button")].find((x) => text(x) === "Download PDF")!
+    await act(async () => void btn.click())
+    expect(text(c)).toContain("The file did not download. Nothing was changed. Try again.")
+    pdfMock.mockReset()
   })
 
   it("picking an office changes the address; the office in the address is what is fetched", async () => {
