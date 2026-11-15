@@ -1,8 +1,8 @@
 // Army CPE ES2 demo seed — the deterministic "golden state" the admin Demo
 // Data reset restores. Used when NEXT_PUBLIC_TENANT=es2. Mirrors the shape of
 // lib/seedSubmissionsDoc.ts, spanning the five ES2 program offices (AT&R,
-// HR-FM, LOG-FIN, BTS, C-ERP) and, under AT&R, its four programs (ACWS, ATIS,
-// FMS-ACES, Digital Market).
+// HR-FM, LOG-FIN, BTS, C-ERP) and, under AT&R, its five programs (ACWS, ATIS,
+// FMS-ACES, Digital Market, ADAMS).
 //
 // This is a demo script, not sample data. Two mechanisms have to fire, and
 // they are mutually exclusive by design, so they need separate groups:
@@ -46,6 +46,10 @@
 import type { FormData } from "@/lib/steps"
 import { initialFormData } from "@/lib/steps"
 import { type Submission } from "@/lib/submissions"
+import { es2CpeSeedSubmissions } from "@/lib/seedSubmissionsEs2Cpe"
+import { es2 } from "@/lib/tenant/es2"
+import type { GovernanceCaptureReview, GovernanceFieldReviewEntry } from "@/lib/governanceCapture"
+import { resolveRmfProfile } from "@/lib/rmfProfileReview"
 
 function mk(partial: Partial<FormData>): FormData {
   return { ...initialFormData, ...partial }
@@ -53,10 +57,12 @@ function mk(partial: Partial<FormData>): FormData {
 
 const hoursAgo = (h: number) => new Date(Date.now() - 1000 * 60 * 60 * h).toISOString()
 
-export const es2SeedSubmissions: Submission[] = [
-  // 1) AT&R / ACWS — the clean win, and the seed's high-impact + deployed
-  // example, so all nine M-25-21 minimum-practice fields render and RMF
-  // Measure/Manage become applicable rather than not_yet_applicable.
+const BASE_SEED: Submission[] = [
+  // 1) AT&R / ACWS — the clean win, and the seed's high-impact example in
+  // pilot. It is not "deployed": an approved idea is a Decision Center funding
+  // candidate (lib/decisionCenter.ts), and a deployed one waiting on a funding
+  // decision contradicts itself on screen (F4-2, #303). Pilot still makes RMF
+  // Measure/Manage applicable.
   {
     id: "es2-acws-clause-recommendation",
     submittedAt: hoursAgo(96),
@@ -129,7 +135,7 @@ export const es2SeedSubmissions: Submission[] = [
       aiDecisionalImpact: "no",
       aiModelSourcing: "american_built",
       aiHumanReview: "yes",
-      stageOfDevelopment: "deployed",
+      stageOfDevelopment: "pilot",
       highImpact: "high_impact",
       highImpactFactors: ["resource_allocation"],
       highImpactJustification:
@@ -141,6 +147,7 @@ export const es2SeedSubmissions: Submission[] = [
       hasATO: "yes",
       atoSystemName: "Contract Writing System",
       systemSource: "contract",
+      systemSourceVendorName: "Contract writing system vendor",
       operationalDate: "2026-02-01",
       trainingDataDescription: "Current regulation text plus historical clause selections, with acceptance decisions retained for evaluation.",
       hasPii: "no",
@@ -162,7 +169,7 @@ export const es2SeedSubmissions: Submission[] = [
       humanOversightAppealNote: "A specialist can reject any recommendation without justification, and the rejection is recorded.",
       publicConsultationSteps: ["direct_usability_testing"],
       feasibilitySummary:
-        "Deployed and accredited. The bar is citation groundedness and keeping the regulation corpus current; both are monitored.",
+        "In pilot inside an accredited system. The bar is citation groundedness and keeping the regulation corpus current; both are monitored.",
       successMetrics: "Recommendation acceptance rate, missed-clause findings at review, cycle time per package, specialist-rated citation accuracy.",
       keyMetrics: ["quality_improvement", "time_saved", "adoption_rate"],
       timelineForResults: "6_12",
@@ -170,9 +177,9 @@ export const es2SeedSubmissions: Submission[] = [
       routeTo: ["governance"],
       reviewerNotes: "Advisory by design with citations and an accept/reject record. Minimum practices are on file.",
       readinessScore: "ready",
-      readinessSummary: "Complete, accredited, and monitored. The strongest example of the pattern the enterprise wants.",
+      readinessSummary: "Complete, in pilot, and monitored. The strongest example of the pattern the enterprise wants.",
       executiveSummary:
-        "Specialists hand-check clause applicability against long regulation text, and misses surface late. This deployed recommender proposes candidate clauses with the regulation citation attached and logs what the specialist accepted or rejected. Advisory only, American-built, inside the accredited boundary, with testing, monitoring and an appeal path on file.",
+        "Specialists hand-check clause applicability against long regulation text, and misses surface late. This pilot recommender proposes candidate clauses with the regulation citation attached and logs what the specialist accepted or rejected. Advisory only, American-built, inside the accredited boundary, with testing, monitoring and an appeal path on file.",
     } as Partial<FormData>),
   },
 
@@ -274,7 +281,7 @@ export const es2SeedSubmissions: Submission[] = [
       successMetrics: "Evaluation days per acquisition; rating variance between evaluators.",
       keyMetrics: ["time_saved", "quality_improvement"],
       timelineForResults: "6_12",
-      metricsSummary: "Measured on evaluation days and rating variance — neither addresses the governance objection.",
+      metricsSummary: "Measured on evaluation days and rating variance. Neither addresses the governance objection.",
       routeTo: ["governance"],
       reviewerNotes: "Decisional AI on award outcomes with human review answered 'no'. Blocked until the board evaluates independently and the tool is advisory.",
       readinessScore: "needs_work",
@@ -375,6 +382,15 @@ export const es2SeedSubmissions: Submission[] = [
         signedOffByEmail: "alan.brooks@es2.demo",
         signedOffAt: hoursAgo(78),
       },
+      comments: [
+        {
+          id: "c-acws-migration-1",
+          authorName: "Alan Brooks",
+          authorRole: "reviewer",
+          body: "Approved for continued pilot. The ranking only orders the review queue, an analyst confirms every correction, and no decision about a person depends on it.",
+          createdAt: hoursAgo(78),
+        },
+      ],
       useCaseTitle: "Migration Data-Quality Triage Across Transferred Contract Files",
       useCaseDescription:
         "Ranks transferred contract files by how likely their data is wrong, so the cleanup team works the worst records first instead of sampling at random. Advisory: a person confirms every correction.",
@@ -468,6 +484,15 @@ export const es2SeedSubmissions: Submission[] = [
         signedOffByEmail: "alan.brooks@es2.demo",
         signedOffAt: hoursAgo(64),
       },
+      comments: [
+        {
+          id: "c-atis-course-refresh-1",
+          authorName: "Alan Brooks",
+          authorRole: "reviewer",
+          body: "Approved for continued pilot. The tool only flags course content that may be out of date, an instructor decides every change, and no decision about a student depends on it.",
+          createdAt: hoursAgo(64),
+        },
+      ],
       useCaseTitle: "Course Content Refresh When Doctrine Changes",
       useCaseDescription:
         "Watches published doctrine for changes and flags the course lessons that cite the changed passage, so a training developer knows what to revise instead of re-reading the catalog.",
@@ -855,6 +880,58 @@ export const es2SeedSubmissions: Submission[] = [
     } as Partial<FormData>),
   },
 
+  // F4-1 (#224) AT&R / ADAMS: submitted, intake only. A workforce idea with no
+  // contracting vocabulary, so it stays out of the duplicate group.
+  {
+    id: "es2-adams-career-path-gap-analysis",
+    submittedAt: hoursAgo(30),
+    formData: mk({
+      submitterName: "Marcus Bell",
+      submitterEmail: "marcus.bell@es2.demo",
+      submitterRole: "analyst",
+      submitterOffice: "atr",
+      submitterSubOffice: "adams",
+      reviewStatus: "submitted",
+      useCaseTitle: "Career Path Gap Finder For The Acquisition Workforce",
+      useCaseDescription:
+        "Compares each acquisition workforce member's training and assignment history with the path to the next certification level, and lists the gaps a supervisor can plan around.",
+      isWithheld: "no",
+      targetAudience: "analyst",
+      impactedUsersCount: "50_500",
+      painPoints:
+        "Supervisors piece together certification progress from several records by hand, so gaps show up late, often just before a deadline.",
+      targetUserContext: "Supervisors and talent managers planning development for the acquisition workforce.",
+      targetUserSummary: "Supervisors with no single view of certification progress.",
+      coreProblem: "There is no single view of how far each person is from the next certification level.",
+      problemImpact: "People miss certification windows that earlier planning would have caught.",
+      affectedBusinessUnits: ["cross_functional"],
+      problemType: ["productivity"],
+      severity: "medium",
+      problemDefinition: "Certification progress is assembled by hand and too late.",
+      proposedSolution:
+        "A gap list per person built from training and assignment history against the published certification path, which a supervisor reviews and turns into a development plan.",
+      keyFunctionality: ["ranking"],
+      solutionSummary: "Per-person certification gap list a supervisor reviews.",
+      deliveryAudience: "internal",
+      userValue: "Supervisors see gaps months ahead instead of days.",
+      userTimeSavings: "1_5",
+      otherUserImprovements: ["better_decisions"],
+      userValueSummary: "Gaps found early enough to plan.",
+      businessValue: "Fewer missed certification windows across the workforce.",
+      costSavings: "50k_250k",
+      strategicBenefit: ["operational_efficiency"],
+      businessValueSummary: "Fewer missed certification windows.",
+      usptoFocusArea: ["atr_training_currency"],
+      relevantOkrs: "Certification currency; time to next level.",
+      alignmentSummary: "Supports a current, qualified acquisition workforce.",
+      implementationComplexity: "low",
+      resourcesNeeded: ["infrastructure"],
+      dependencies: "Training records and assignment history for the workforce.",
+      routeTo: ["governance"],
+      readinessScore: "needs_work",
+    } as Partial<FormData>),
+  },
+
   // 10-12) THE CROSS-PROGRAM DUPLICATE GROUP — three program offices, one
   // idea. Written to share the vendor / past performance / award / risk /
   // score / delivery / history / protest / source selection vocabulary that
@@ -1030,7 +1107,23 @@ export const es2SeedSubmissions: Submission[] = [
       submitterEmail: "renee.calder@es2.demo",
       submitterRole: "it_staff",
       submitterOffice: "hrfm",
-      reviewStatus: "submitted",
+      reviewStatus: "approved",
+      bureauSignoff: {
+        bureau: "hrfm",
+        decision: "approved",
+        signedOffByName: "Jordan Pierce",
+        signedOffByEmail: "jordan.pierce@es2.demo",
+        signedOffAt: hoursAgo(10),
+      },
+      comments: [
+        {
+          id: "c-hrfm-transcription-1",
+          authorName: "Jordan Pierce",
+          authorRole: "reviewer",
+          body: "Approved. This turns on a commercial capability already in the collaboration suite, the chair edits every action-item list before it circulates, and sessions that touch personnel matters follow the existing handling rule.",
+          createdAt: hoursAgo(10),
+        },
+      ],
       useCaseTitle: "Meeting Transcription And Action Items",
       useCaseDescription:
         "Commercial meeting transcription that produces a transcript and a draft action-item list for staff sessions, which the chair edits before it is circulated.",
@@ -1065,8 +1158,24 @@ export const es2SeedSubmissions: Submission[] = [
       implementationComplexity: "low",
       resourcesNeeded: ["infrastructure"],
       dependencies: "Collaboration suite licensing; a handling rule for sessions that touch personnel matters.",
+      involvesSensitiveData: "yes",
+      securityClassification: "controlled",
+      impactLevel: "cui",
+      aiDecisionalImpact: "no",
+      aiModelSourcing: "american_built",
+      aiHumanReview: "yes",
+      disseminatesToPublic: "no",
+      scalable: "yes",
+      topicArea: "administrative_functions",
+      aiClassification: "nlp",
+      stageOfDevelopment: "pre_deployment",
+      highImpact: "not_high_impact",
+      hasATO: "yes",
+      atoSystemName: "Collaboration Suite",
+      systemSource: "vendor",
       routeTo: ["governance"],
-      readinessScore: "needs_work",
+      reviewerNotes: "Advisory, chair-reviewed, no decisions about people. Approved to proceed.",
+      readinessScore: "ready",
     } as Partial<FormData>),
   },
 
@@ -1130,6 +1239,7 @@ export const es2SeedSubmissions: Submission[] = [
       submitterEmail: "victor.hale@es2.demo",
       submitterRole: "product_owner",
       submitterOffice: "atr",
+      submitterSubOffice: "digitalmarket",
       reviewStatus: "draft",
       useCaseTitle: "Schedule Risk Prediction From The Integrated Master Schedule",
       useCaseDescription:
@@ -1150,3 +1260,146 @@ export const es2SeedSubmissions: Submission[] = [
     } as Partial<FormData>),
   },
 ]
+
+// ─── F4-3 (#304): spread the original records over the weeks before the reset ─
+// The originals were all filed within a few days. These offsets (days before
+// "now") spread them across about nine weeks and give the decided ones a real
+// time to decision (median about 11 days across the whole set). Only dates
+// change; no text does.
+const DAY_HOURS = 24
+const SCHEDULE: Record<string, { submitted: number; decided?: number }> = {
+  "es2-acws-clause-recommendation": { submitted: 60, decided: 47 },
+  "es2-acws-source-selection-scoring": { submitted: 63, decided: 49 },
+  "es2-acws-closeout-completeness": { submitted: 16 },
+  "es2-acws-migration-data-quality": { submitted: 55, decided: 45 },
+  "es2-atis-course-content-refresh": { submitted: 50, decided: 39 },
+  "es2-atis-readiness-gap-prediction": { submitted: 21 },
+  "es2-atis-promotion-screening": { submitted: 46, decided: 31 },
+  "es2-fmsaces-case-translation": { submitted: 12 },
+  "es2-fmsaces-requisition-backlog": { submitted: 6 },
+  "es2-adams-career-path-gap-analysis": { submitted: 4 },
+  "es2-digitalmarket-vendor-past-performance": { submitted: 9 },
+  "es2-logfin-supplier-past-performance": { submitted: 8 },
+  "es2-bts-supplier-risk-scoring": { submitted: 7 },
+  "es2-hrfm-meeting-transcription": { submitted: 40, decided: 32 },
+  "es2-logfin-meeting-transcription": { submitted: 5 },
+}
+
+function reschedule(s: Submission): Submission {
+  const plan = SCHEDULE[s.id]
+  if (!plan) return s
+  const fd = { ...(s.formData as unknown as Record<string, unknown>) }
+  if (plan.decided !== undefined) {
+    const at = hoursAgo(plan.decided * DAY_HOURS)
+    const signoff = fd.bureauSignoff as Record<string, unknown> | undefined
+    if (signoff) fd.bureauSignoff = { ...signoff, signedOffAt: at }
+    const comments = fd.comments as Record<string, unknown>[] | undefined
+    if (comments) fd.comments = comments.map((c) => ({ ...c, createdAt: at }))
+  }
+  return { ...s, submittedAt: hoursAgo(plan.submitted * DAY_HOURS), formData: fd as unknown as FormData }
+}
+
+// ─── F4-3 (#304): one plain line per record on why it sits at its risk level ─
+// Stored on each record as `riskPlainReason` (not part of the shared FormData
+// type, like `comments` and `bureauSignoff`). The portfolio report prints it.
+const NOT_ASSESSED = "Not assessed yet; a reviewer has not answered the risk questions."
+const PLAIN_REASON: Record<string, string> = {
+  "es2-acws-clause-recommendation": "Suggests clauses only; the specialist accepts or rejects each one.",
+  "es2-acws-source-selection-scoring": "Would decide award ratings with no person checking them.",
+  "es2-acws-closeout-completeness": "Checks files only; a contracting officer makes every call.",
+  "es2-acws-migration-data-quality": "Flags bad records for a person to fix; no decisions about people.",
+  "es2-atis-course-content-refresh": "Drafts course updates; training developers approve every change.",
+  "es2-atis-readiness-gap-prediction": "Uses personnel data, so access must be controlled; a person decides.",
+  "es2-atis-promotion-screening": "Scores people for promotion; a person must decide.",
+  "es2-fmsaces-case-translation": "Uses partner case data; a case manager reviews every translation.",
+  "es2-hrfm-meeting-transcription": "Meeting notes with names in them; a person reviews before sharing.",
+  "es2-logfin-unliquidated-obligations": "Orders a review list; analysts still decide every action.",
+  "es2-logfin-invoice-mismatch-notes": "Explains a mismatch; the technician still resolves it.",
+  "es2-logfin-automatic-vendor-holds": "Would hold a business's payments with no person confirming.",
+  "es2-logfin-depot-parts-forecast": "Forecasts parts demand; item managers place the orders.",
+  "es2-hrfm-personnel-action-completeness": "Reads personnel records; the specialist still decides what to send.",
+  "es2-hrfm-reenlistment-eligibility": "Would decide a Soldier's eligibility with no person reviewing it.",
+  "es2-hrfm-assignment-matching": "Would issue assignment orders with no officer approving each one.",
+  "es2-hrfm-bonus-eligibility": "Would start incentive payments with no pay specialist checking.",
+  "es2-hrfm-hiring-package-status": "Reads hiring records to explain status; it decides nothing.",
+  "es2-bts-license-right-sizing": "Lists unused seats; license owners decide what to release.",
+  "es2-bts-policy-chat-front-end": "Low risk, but repeats a tool the enterprise already has.",
+  "es2-bts-access-review-evidence": "Collects evidence; the system owner signs the review.",
+  "es2-bts-legacy-interface-inventory": "Builds a list for owners to confirm; no decisions about people.",
+  "es2-cerp-material-master-cleanup": "Data stewards confirm every merge before anything changes.",
+  "es2-cerp-interface-failure-warning": "Sends alerts to operations; people decide whether to rerun.",
+  "es2-atis-instructor-feedback-themes": "Groups comments for course owners; no decisions about people.",
+}
+
+function withPlainReason(s: Submission): Submission {
+  const reason = PLAIN_REASON[s.id] ?? NOT_ASSESSED
+  return { ...s, formData: { ...s.formData, riskPlainReason: reason } as unknown as FormData }
+}
+
+// ─── F4-5 (#310): an approved record carries its decider's confirmations ─────
+// The decision checklist (components/submissions/locked-governance.tsx) reads
+// `rmfProfileReview` and `governanceCaptureReview`. Without them an approved
+// record shows "Not confirmed before approval" and "0 confirmed by the
+// reviewer". So each approved record gets both, written by the person who
+// decided it and timed shortly before the decision. Rejected records stay as
+// they are: the reviewer may have stopped early.
+// The governance fields the checklist counts (GOVERNANCE_FIELD_KEYS in
+// lib/submissionReadiness.ts). Copied, not imported: that module pulls in
+// lib/formConfig.ts, which uses React hooks, and this seed also loads in the
+// server route app/api/seed/route.ts. Only fields with an answer get an entry;
+// the seed test pins that every applicable field is covered.
+const GOVERNANCE_KEYS = [
+  "stageOfDevelopment", "highImpact", "highImpactJustification", "topicArea", "aiClassification",
+  "disseminatesToPublic", "scalable", "hasATO", "atoSystemName", "systemSource", "systemSourceVendorName",
+  "operationalDate", "trainingDataDescription", "hasPii", "demographicFeatures", "customCode",
+  "preDeploymentTesting", "aiImpactAssessmentCompleted", "aiImpactAssessment", "independentReviewConducted",
+  "ongoingMonitoringPlan", "operatorTrainingEstablished", "failSafeMechanism", "humanOversightAppeal",
+  "publicConsultationSteps",
+]
+
+const CONFIRMATION_RATIONALE: Record<string, string> = {
+  highImpact: "Confirmed against the high-impact factors on the record.",
+  stageOfDevelopment: "Confirmed against the stage the program office reported.",
+}
+
+function withDeciderConfirmations(s: Submission): Submission {
+  const fd = s.formData as unknown as Record<string, unknown>
+  if (fd.reviewStatus !== "approved") return s
+  const signoff = fd.bureauSignoff as { signedOffByName: string; signedOffByEmail: string; signedOffAt: string } | undefined
+  if (!signoff) return s
+  const decidedMs = new Date(signoff.signedOffAt).getTime()
+  const at = (minutesBefore: number) => new Date(decidedMs - minutesBefore * 60_000).toISOString()
+
+  const entries: GovernanceFieldReviewEntry[] = GOVERNANCE_KEYS.flatMap((field) => {
+    const value = fd[field] as string | string[] | undefined
+    const present = Array.isArray(value) ? value.length > 0 : !!value
+    if (!present) return []
+    return [
+      {
+        field,
+        decision: "confirmed" as const,
+        proposedValue: value!,
+        finalValue: value!,
+        rationale: CONFIRMATION_RATIONALE[field] ?? "",
+      },
+    ]
+  })
+  const governanceCaptureReview: GovernanceCaptureReview = {
+    entries,
+    byName: signoff.signedOffByName,
+    byEmail: signoff.signedOffByEmail,
+    at: at(45),
+  }
+  const rmfProfileReview = {
+    decision: "confirmed" as const,
+    proposedOverall: resolveRmfProfile(s, es2).profile.overall,
+    byName: signoff.signedOffByName,
+    byEmail: signoff.signedOffByEmail,
+    at: at(30),
+  }
+  return { ...s, formData: { ...fd, governanceCaptureReview, rmfProfileReview } as unknown as FormData }
+}
+
+export const es2SeedSubmissions: Submission[] = [...BASE_SEED.map(reschedule), ...es2CpeSeedSubmissions]
+  .map(withDeciderConfirmations)
+  .map(withPlainReason)

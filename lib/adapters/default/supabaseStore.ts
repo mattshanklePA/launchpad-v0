@@ -13,8 +13,6 @@ import { migrateFormData } from "@/lib/formDataMigrations"
 import { getTenant } from "@/lib/tenant"
 import { buildRmfProfileSnapshotPatch } from "@/lib/rmfProfileReview"
 
-const MAX_SUBMISSIONS = 50 // server caps at 50 in the GET handler too
-
 function generateId(): string {
   return `sub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
@@ -24,7 +22,9 @@ function generateId(): string {
  * Returns empty array until DataProvider's first fetch completes.
  */
 function getSubmissions(): Submission[] {
-  return getCachedSubmissions().slice(0, MAX_SUBMISSIONS).map((s) => ({
+  // F4-4 (#305): no cap. The server stopped capping at 50 in #231; a cap here
+  // made the home screen disagree with the landing page above 50 ideas.
+  return getCachedSubmissions().map((s) => ({
     id: s.id,
     submittedAt: s.submittedAt,
     formData: migrateFormData(s.formData) as FormData,

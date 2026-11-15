@@ -39,7 +39,8 @@ describe("ES2 tenant (ISS-4 — Army CPE ES2)", () => {
     // comments name these exact codes, as does the seed data.
     expect(es2.unit.options.map((o) => o.value)).toEqual(["atr", "hrfm", "logfin", "bts", "cerp"])
     const atr = es2.unit.options.find((o) => o.value === "atr")!
-    expect(atr.offices?.map((o) => o.value)).toEqual(["acws", "atis", "fmsaces", "digitalmarket"])
+    // F4-1 (#224): ADAMS is the fifth AT&R program.
+    expect(atr.offices?.map((o) => o.value)).toEqual(["acws", "atis", "fmsaces", "digitalmarket", "adams"])
     // Only AT&R has a third tier; the rest are program-office level only.
     for (const unit of es2.unit.options.filter((o) => o.value !== "atr")) {
       expect(unit.offices, `${unit.value}.offices`).toBeUndefined()
@@ -60,6 +61,7 @@ describe("ES2 tenant (ISS-4 — Army CPE ES2)", () => {
     expect(atrOffices.atis).toBe("Army Training Information System (ATIS)")
     expect(atrOffices.fmsaces).toBe("Foreign Military Sales – Army Case Execution System (FMS-ACES)")
     expect(atrOffices.digitalmarket).toBe("Digital Market")
+    expect(atrOffices.adams).toBe("Army Acquisition Talent Management System (ADAMS)")
   })
 
   it("gives every program office its own focus areas, which is what turns the bureau tier on", () => {
@@ -547,5 +549,21 @@ describe("protected primary admin is per tenant (CLEAN-1, #237)", () => {
     process.env.NEXT_PUBLIC_TENANT = "uspto"
     expect(isPrimaryAdminEmail("matt.shankle@uspto.gov")).toBe(true)
     expect(isPrimaryAdminEmail("avery.lang@es2.demo")).toBe(false)
+  })
+})
+
+describe("cockpitLook feature flag (NL-1, #282)", () => {
+  it("is on for ES2 only (NL-2, #283)", () => {
+    expect(uspto.features.cockpitLook).toBe(false)
+    expect(doc.features.cockpitLook).toBe(false)
+    expect(dow.features.cockpitLook).toBe(false)
+    expect(es2.features.cockpitLook).toBe(true)
+  })
+
+  it("shows the sample-data strip on ES2 only, with its two strings", () => {
+    expect(es2.features.sampleDataStrip).toBe(true)
+    for (const t of [uspto, doc, dow]) expect(t.features.sampleDataStrip).toBeFalsy()
+    expect(es2.copy?.sampleDataTag).toBe("SAMPLE DATA")
+    expect(es2.copy?.sampleDataNotice).toBe("Every idea, office and number on this page is sample data for the demo.")
   })
 })

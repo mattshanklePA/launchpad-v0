@@ -115,3 +115,74 @@ describe("BureauRollup lists every configured unit", () => {
     })
   })
 })
+
+// NL-4 (#285): ES2 only. Same numbers, cockpit kit pieces (K3 title, K5 table).
+describe("BureauRollup cockpit look (NL-4)", () => {
+  const mixed: Submission[] = [
+    { id: "a1", submittedAt: "2026-01-01T00:00:00.000Z", status: "submitted", businessUnit: "g3", formData: { ...initialFormData } as FormData },
+    { id: "a2", submittedAt: "2026-01-02T00:00:00.000Z", status: "submitted", businessUnit: "g3", formData: { ...initialFormData } as FormData },
+  ]
+
+  it("es2: K3 section title with today's context line, and a table", () => {
+    withTenant("es2", () => {
+      const el = render(<BureauRollup submissions={mixed} />)
+      const title = el.querySelector('[data-cockpit="section-title"]')
+      expect(title).not.toBeNull()
+      expect(title?.textContent).toContain("roll-up")
+      expect(title?.textContent).toMatch(/2 use cases across \d+ program offices/)
+      expect(el.querySelector('[data-cockpit="rollup-table"]')).not.toBeNull()
+    })
+  })
+
+  it("es2: zero is an en dash with screen-reader text 'zero'", () => {
+    withTenant("es2", () => {
+      const el = render(<BureauRollup submissions={mixed} />)
+      const zeros = Array.from(el.querySelectorAll('[data-zero]'))
+      expect(zeros.length).toBeGreaterThan(0)
+      for (const z of zeros) {
+        expect(z.textContent).toBe("–zero")
+        expect(z.querySelector(".sr-only")?.textContent).toBe("zero")
+      }
+    })
+  })
+
+  it("es2: totals row is bold, last, and each column equals the sum of the rows", () => {
+    withTenant("es2", () => {
+      const el = render(<BureauRollup submissions={mixed} />)
+      const rows = Array.from(el.querySelectorAll('[data-cockpit="rollup-table"] tbody > tr[data-unit-row]'))
+      const totals = el.querySelector('[data-cockpit="rollup-table"] tbody > tr[data-totals-row]')
+      expect(totals).not.toBeNull()
+      expect(totals?.className).toContain("font-bold")
+      expect(totals?.previousElementSibling).not.toBeNull()
+      const cell = (tr: Element, i: number) => {
+        const t = (tr.children[i].textContent ?? "").replace("zero", "").trim()
+        return t === "–" ? 0 : Number(t)
+      }
+      const statusAndTotalCols = Array.from(totals!.children).length
+      for (let i = 1; i < statusAndTotalCols; i++) {
+        if ((totals!.children[i].textContent ?? "").includes("/")) continue // signed-off "n/total"
+        const sum = rows.reduce((acc, r) => acc + cell(r, i), 0)
+        expect(cell(totals!, i)).toBe(sum)
+      }
+    })
+  })
+
+  it("es2: square corners, no shadow", () => {
+    withTenant("es2", () => {
+      const el = render(<BureauRollup submissions={mixed} />)
+      expect(el.innerHTML).not.toMatch(/rounded-(lg|md|xl|full)|shadow-(sm|md|lg|xl)/)
+    })
+  })
+
+  it("doc: renders the roll-up as today (no cockpit pieces)", () => {
+    withTenant("doc", () => {
+      const el = render(<BureauRollup submissions={[]} />)
+      expect(el.querySelector('[data-cockpit="section-title"]')).toBeNull()
+      expect(el.querySelector('[data-cockpit="rollup-table"]')).toBeNull()
+      expect(el.querySelector("h2")?.textContent).toBe(`${getTenant().tierLabels.unit} roll-up`)
+      expect(el.querySelector("[data-zero]")).toBeNull()
+      expect(el.textContent).not.toContain("zero")
+      expect(el.querySelector(".rounded-lg")).not.toBeNull()
+    })
+  })
+})

@@ -14,10 +14,12 @@ import { ComparisonView } from "@/components/admin/comparison-view"
 import { computeRiskProfile, type RiskLevel } from "@/lib/riskProfile"
 import { resolveRmfProfile, type ResolvedRmfProfile } from "@/lib/rmfProfileReview"
 import { getTenant } from "@/lib/tenant"
-import { businessUnitLabel } from "@/lib/reviewWorkflow"
+import { businessUnitLabel, getLifecycleStage, LIFECYCLE_STAGE_LABEL } from "@/lib/reviewWorkflow"
 import { formatKeystoneDate, splitLabelCode } from "@/components/dashboard/command-center-data"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
 import type { KeystoneStatus } from "@/lib/statusTokens"
+import { tenantCopy } from "@/lib/tenant/copy"
+import { RankedTable, SectionTitle, SquareTag, type RankedColumn, type RankedDetail } from "@/components/cockpit"
 
 // Higher rank sorts first in the Decision Center list; unassessed drafts (rank 0)
 // always trail the fully-assessed candidates. Mirrors the ranking used for the
@@ -128,6 +130,13 @@ export function rmfCardLabel(resolved: ResolvedRmfProfile): string {
   return resolved.review.decision === "overridden" ? "RMF overridden by reviewer" : "RMF confirmed"
 }
 
+// Today's headline count line, shared by the old basalt band and (NL-5, #286)
+// the ES2 header band title that app/decisions/page.tsx passes to the shell.
+export function decisionHeadline(count: number): string {
+  if (count === 0) return "Decision Center"
+  return count === 1 ? "1 candidate awaits a funding decision" : `${count} candidates await a funding decision`
+}
+
 type DecisionCardProps = {
   submission: Submission
   selected: boolean
@@ -217,6 +226,142 @@ function DecisionCard({ submission, selected, selectionLimitReached, onToggleSel
   )
 }
 
+function CockpitDecisionList({
+  ranked,
+  selected,
+  onToggleSelect,
+  selectionMeta,
+  onCompare,
+}: {
+  ranked: Submission[]
+  selected: Set<string>
+  onToggleSelect: (id: string) => void
+  selectionMeta: string
+  onCompare: () => void
+}) {
+  const tenant = getTenant()
+  const copy = tenantCopy(tenant)
+  const rmfEnabled = !!tenant.features.rmf
+  const count = ranked.length
+  const limitReached = selected.size >= 4
+  const rankOf = new Map(ranked.map((s, i) => [s.id, i + 1]))
+  // Value cells never wrap: "50 to 500" or "3 to 6 months" stays on one line.
+  const stat = (v: string) => <span className="whitespace-nowrap text-sm font-semibold">{v}</span>
+  // NL-12 (#313): a Stage column that says the same thing on every row is noise.
+  const stages = new Set(ranked.map((s) => getLifecycleStage(s)))
+  const showStage = stages.size > 1
+
+  const columns: RankedColumn<Submission>[] = [
+    {
+      key: "compare",
+      header: "Compare",
+      width: 80,
+      render: (s) => {
+        const isSelected = selected.has(s.id)
+        const disabled = !isSelected && limitReached
+        const id = `compare-${s.id}`
+        return (
+          // The row opens on click; the checkbox must not.
+          <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+            {/* The column header says "Compare" once; the checkbox keeps an accessible name. */}
+            <Checkbox
+              id={id}
+              checked={isSelected}
+              disabled={disabled}
+              onCheckedChange={() => onToggleSelect(s.id)}
+              aria-label={`Compare ${s.formData.useCaseTitle || "Untitled idea"}`}
+              title={disabled ? "Maximum of 4 candidates selected" : isSelected ? "Remove from comparison" : "Select for comparison"}
+              className={disabled ? "cursor-not-allowed" : "cursor-pointer"}
+            />
+          </span>
+        )
+      },
+    },
+    ...(showStage
+      ? [{ key: "stage", header: copy.listColStage, render: (s: Submission) => <SquareTag tone="neutral">{LIFECYCLE_STAGE_LABEL[getLifecycleStage(s)]}</SquareTag> }]
+      : []),
+    {
+      key: "readiness",
+      header: "Readiness",
+      render: (s) => (
+        <SquareTag tone={readinessKeystoneStatus(s.formData.readinessScore)}>{readinessPillLabel(s.formData.readinessScore)}</SquareTag>
+      ),
+    },
+    {
+      key: "risk",
+      header: "Risk",
+      render: (s) => {
+        const risk = computeRiskProfile(s.formData)
+        return <SquareTag tone={riskKeystoneStatus(risk.level)}>{riskPillLabel(risk.level)}</SquareTag>
+      },
+    },
+    { key: "users", header: "Users", render: (s) => stat(prettyEnum(s.formData.impactedUsersCount)) },
+    { key: "time", header: "Time saved", render: (s) => stat(prettyEnum(s.formData.userTimeSavings)) },
+    { key: "cost", header: "Cost saved", render: (s) => stat(prettyEnum(s.formData.costSavings)) },
+    { key: "complexity", header: "Complexity", render: (s) => stat(prettyEnum(s.formData.implementationComplexity)) },
+    { key: "timeline", header: "Timeline", render: (s) => stat(prettyEnum(s.formData.timelineForResults)) },
+  ]
+
+  return (
+    <div className={`${PRIMARY_COLUMN_CLASS} space-y-5`}>
+      <SectionTitle title="Decision Center" context={count > 0 ? "Each cleared vetting. Pick two to four to compare, or decide from the table." : undefined} />
+
+      {count === 0 ? (
+        <div className="border border-[var(--ks-limestone-dark)] bg-white px-6 py-12 text-center">
+          <h3 className="font-heading text-lg font-bold text-[var(--ks-ink-900)]">Nothing is waiting on a funding decision.</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--ks-ink-700)]">Use cases arrive here once a reviewer approves them.</p>
+        </div>
+      ) : (
+        <RankedTable
+          groups={[{ id: "ranked", rows: ranked }]}
+          columns={columns}
+          getRowId={(s) => s.id}
+          getRank={(s) => String(rankOf.get(s.id))}
+          getName={(s) => s.formData.useCaseTitle || "Untitled idea"}
+          getReference={(s) => {
+            const d = s.formData
+            const unit = d.submitterOffice ? businessUnitLabel(d.submitterOffice) : "—"
+            const short = d.submitterOffice ? splitLabelCode(unit).code ?? unit : "—"
+            return `${fmt(d.submitterName)} · ${short} · ${formatKeystoneDate(s.submittedAt)}`
+          }}
+          getDetails={(s) => {
+            const d = s.formData
+            const details: RankedDetail[] = [
+              { label: "Strategic alignment", value: fmt(d.alignmentSummary || d.relevantOkrs) },
+              { label: "Feasibility", value: fmt(d.feasibilitySummary || d.dependencies) },
+            ]
+            if (rmfEnabled) details.push({ label: copy.decisionDetailRmf, value: rmfCardLabel(resolveRmfProfile(s)) })
+            details.push({
+              label: copy.decisionDetailRecord,
+              value: (
+                <Link
+                  href={`/submissions/${s.id}`}
+                  className="font-semibold text-[var(--ks-active-blue-dark)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+                >
+                  Open submission
+                </Link>
+              ),
+            })
+            return details
+          }}
+          rankHeader={copy.listColNo}
+          nameHeader={copy.listColIdea}
+          expandAllLabel={copy.homeExpandAll}
+          collapseAllLabel={copy.homeCollapseAll}
+          toolbar={
+            <>
+              <span className="font-mono text-[12.5px] text-[var(--ks-ink-700)]">{selectionMeta}</span>
+              <Button onClick={onCompare} disabled={selected.size < 2}>
+                Compare selected
+              </Button>
+            </>
+          }
+        />
+      )}
+    </div>
+  )
+}
+
 // `submissions` must already be scoped to the viewer (see lib/reviewWorkflow's
 // visibleSubmissions) — this component does not re-scope, so passing the
 // unfiltered list here would leak other bureaus' submissions.
@@ -278,7 +423,7 @@ export function DecisionCenter({
   }
 
   const count = readyForDecision.length
-  const countLead = count === 1 ? "1 candidate awaits a funding decision" : `${count} candidates await a funding decision`
+  const countLead = decisionHeadline(count)
   const selectedCount = selectedForCompare.size
   const selectionMeta =
     selectedCount === 1
@@ -286,6 +431,20 @@ export function DecisionCenter({
       : selectedCount >= 4
         ? `${selectedCount} selected · max 4`
         : `${selectedCount} selected`
+
+  // NL-5 (#286), ES2 only: same ideas, order, selection and compare, in the
+  // cockpit kit (K3 title, K5 ranked table, K6 tags). Other tenants fall through.
+  if (getTenant().features.cockpitLook) {
+    return (
+      <CockpitDecisionList
+        ranked={readyForDecision}
+        selected={selectedForCompare}
+        onToggleSelect={toggleSelect}
+        selectionMeta={selectionMeta}
+        onCompare={() => setShowComparison(true)}
+      />
+    )
+  }
 
   return (
     <div className={`${PRIMARY_COLUMN_CLASS} space-y-5`}>

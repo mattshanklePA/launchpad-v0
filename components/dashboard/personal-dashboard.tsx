@@ -34,6 +34,8 @@ import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/components/ui/status-pill"
 import { LifecycleBadge } from "@/components/ui/lifecycle-badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { SectionTitle, SquareTag } from "@/components/cockpit"
+import { getLifecycleStage, LIFECYCLE_STAGE_LABEL } from "@/lib/reviewWorkflow"
 import { Plus, ArrowRight, MessageSquare, FileText, Sparkles } from "lucide-react"
 
 function detectDraft(): { title: string } | null {
@@ -54,6 +56,17 @@ function detectDraft(): { title: string } | null {
 
 function StatusBadge({ status }: { status: ReturnType<typeof getStatus> }) {
   return <StatusPill status={submissionStatusPillStatus(status)}>{STATUS_LABEL[status]}</StatusPill>
+}
+
+const FOCUS =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+const TH =
+  "border-b border-[var(--ks-limestone-dark)] bg-white px-3 py-2.5 text-left font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)]"
+const TD = "border-b border-[var(--ks-limestone)] p-3 align-middle text-sm text-[var(--ks-ink-900)]"
+
+// NL-9 (#290): ES2 (features.cockpitLook) square-cornered tags, same words.
+function CockpitStatusTag({ status }: { status: ReturnType<typeof getStatus> }) {
+  return <SquareTag tone={submissionStatusPillStatus(status)}>{STATUS_LABEL[status]}</SquareTag>
 }
 
 export function PersonalDashboard() {
@@ -77,6 +90,9 @@ export function PersonalDashboard() {
   const needsInfo = mine.filter((s) => getStatus(s) === "needs_info")
   const submitted = mine.filter((s) => getStatus(s) !== "needs_info")
 
+  const cockpit = !!tenant.features.cockpitLook
+  const ACTION_LINK = `inline-flex border border-[var(--ks-limestone-dark)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--ks-active-blue-dark)] hover:bg-[var(--ks-limestone)] ${FOCUS}`
+
   return (
     <DashboardShell
       baseScope={baseScope}
@@ -86,6 +102,115 @@ export function PersonalDashboard() {
       breadcrumb="My ideas"
       tenant={tenant}
     >
+      {cockpit ? (
+      <div className="space-y-6" data-cockpit="my-ideas">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="text-sm text-[var(--ks-ink-700)]">Track your AI ideas through review.</p>
+          <div className="flex gap-2">
+            <Link href="/submit" className={ACTION_LINK}>
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+              Start a new idea
+            </Link>
+            <Link
+              href="/submit/conversational"
+              className={`inline-flex bg-[var(--ks-basalt)] px-3 py-1.5 text-sm font-semibold text-[var(--ks-chalk)] hover:opacity-90 ${FOCUS}`}
+            >
+              Talk to {tenant.assistantName}
+            </Link>
+          </div>
+        </div>
+
+        {needsInfo.length > 0 && (
+          <section className="space-y-2">
+            <SectionTitle title="Action needed" />
+            <ul className="m-0 list-none space-y-2 p-0">
+              {needsInfo.map((s) => {
+                const comments = getComments(s)
+                const last = comments[comments.length - 1]
+                return (
+                  <li
+                    key={s.id}
+                    className="flex items-start justify-between gap-3 border border-[var(--ks-limestone-dark)] border-l-4 border-l-[var(--ks-alert)] bg-white p-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-[var(--ks-ink-900)]">{s.formData.useCaseTitle || "Untitled idea"}</div>
+                      {last && (
+                        <div className="mt-1 text-sm text-[var(--ks-ink-700)]">
+                          <MessageSquare className="mr-1 -mt-0.5 inline h-3.5 w-3.5" aria-hidden="true" />
+                          {last.authorName}: &ldquo;{last.body}&rdquo;
+                        </div>
+                      )}
+                    </div>
+                    <Link href={`/submissions/${s.id}`} className={ACTION_LINK}>
+                      Open
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
+
+        {draft && (
+          <section className="space-y-2">
+            <SectionTitle title="In progress" />
+            <div className="flex items-center justify-between gap-3 border border-[var(--ks-limestone-dark)] bg-white p-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <FileText className="h-4 w-4 text-[var(--ks-ink-700)]" aria-hidden="true" />
+                <span className="truncate text-sm font-semibold text-[var(--ks-ink-900)]">{draft.title}</span>
+                <SquareTag tone="neutral">Draft</SquareTag>
+              </div>
+              <Link href="/submit?resume=1" className={ACTION_LINK}>
+                Resume
+              </Link>
+            </div>
+          </section>
+        )}
+
+        <section className="space-y-2">
+          <SectionTitle title="Submitted" />
+          {submitted.length === 0 ? (
+            <div className="border border-[var(--ks-limestone-dark)] bg-white p-6 text-center text-sm text-[var(--ks-ink-700)]">
+              No submitted ideas yet. Start one above.
+            </div>
+          ) : (
+            <div className="overflow-x-auto border border-[var(--ks-limestone-dark)] bg-white">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={TH}>Idea</th>
+                    <th className={TH}>Submitted</th>
+                    <th className={TH}>Stage</th>
+                    <th className={TH}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submitted.map((s) => (
+                    <tr key={s.id}>
+                      <td className={TD}>
+                        <Link
+                          href={`/submissions/${s.id}`}
+                          className={`font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline ${FOCUS}`}
+                        >
+                          {s.formData.useCaseTitle || "Untitled idea"}
+                        </Link>
+                      </td>
+                      <td className={`${TD} text-[var(--ks-ink-700)]`}>{formatKeystoneDate(s.submittedAt)}</td>
+                      <td className={TD}>
+                        <SquareTag tone="info">{LIFECYCLE_STAGE_LABEL[getLifecycleStage(s)]}</SquareTag>
+                      </td>
+                      <td className={TD}>
+                        <CockpitStatusTag status={getStatus(s)} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+      ) : (
       <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -189,6 +314,7 @@ export function PersonalDashboard() {
         )}
       </section>
       </div>
+      )}
     </DashboardShell>
   )
 }

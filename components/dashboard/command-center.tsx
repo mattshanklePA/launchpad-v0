@@ -19,6 +19,7 @@
 // Followed the mock, since docs/design/README.md names the numbered mocks the
 // source of truth.
 
+import { KeystoneMark } from "@/components/cockpit/keystone-mark"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ import { tenantHasBureauTier, clusterDuplicates, clusterForSubmission, isRationa
 import { buildKpiCards, buildActionItems, scopeLabel, worklistSummaryLabel } from "./department-dashboard-data"
 import { KpiRailList } from "./kpi-card"
 import { ActionCenter } from "./action-center"
+import { CockpitHome } from "./cockpit-home"
 import {
   buildHeroCluster,
   findHeroItem,
@@ -147,6 +149,33 @@ export function CommandCenter({
   const wantsReviewerCount = dashboardActions.filter((a) => a.kind === "unassigned").length
   const plumb = plumbLine(hasCriticalItem, wantsReviewerCount, tenant)
 
+  // NL-3 (#284): ES2 only. Same items, numbers and drilldowns, cockpit layout.
+  if (tenant.features.cockpitLook) {
+    return (
+      <CockpitHome
+        tenant={tenant}
+        actionItems={actionItems}
+        kpiCards={kpiCards}
+        drilldown={kpiDrilldown}
+        enterpriseKpiById={scoped ? enterpriseKpiById : undefined}
+        banner={
+          scoped ? (
+            <ScopedBanner scope={scope} tenant={tenant} selection={selection} onSelect={onSelect} metrics={metrics} deptMetrics={deptMetrics} />
+          ) : undefined
+        }
+        headerMeta={headerMeta}
+        decisionCenter={admin ? { count: decisionCenterCount } : undefined}
+        scopedRows={scoped ? scopedRows : undefined}
+        scopedRowsTitle={
+          scoped ? `Use cases in this ${tenant.tierLabels[scope.level === "office" ? "subUnit" : "unit"].toLowerCase()}` : undefined
+        }
+        railEyebrow={railEyebrow}
+        rollupLabel={`${tenant.unit.label} roll-up`}
+        plumb={plumb}
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col gap-[22px] lg:flex-row lg:items-start">
       <div className={`min-w-0 flex-1 space-y-[22px] ${PRIMARY_COLUMN_CLASS}`}>
@@ -240,7 +269,11 @@ export function CommandCenter({
 
         <div className="flex flex-col gap-2.5 border-t border-border-subtle pt-4">
           <div className="flex items-start gap-2">
-            <Image src="/keystone/plumb-assistant.svg" alt="" width={16} height={16} className="mt-0.5 shrink-0" />
+            {tenant.features.cockpitLook ? (
+              <KeystoneMark size={16} className="mt-0.5 shrink-0" />
+            ) : (
+              <Image src="/keystone/plumb-assistant.svg" alt="" width={16} height={16} className="mt-0.5 shrink-0" />
+            )}
             <div className="text-[13px] leading-relaxed text-foreground">
               <p className="ks-microlabel mb-0.5">Plumb</p>
               {plumb}
@@ -291,13 +324,46 @@ function ScopedBanner({
         ? { label: "Back to enterprise view", target: null }
         : null
 
+  // The ES2 header band already carries the page's h1.
+  const Heading = tenant.features.cockpitLook ? "h2" : "h1"
+  // NL-4 (#285), ES2 only: the program or office name is the title; the one
+  // line below it is today's "here of the enterprise's N" note, unchanged.
+  if (tenant.features.cockpitLook) {
+    return (
+      <div
+        data-cockpit="scope-band"
+        className="flex flex-col gap-3 border border-[var(--ks-limestone-dark)] border-t-[3px] border-t-[var(--ks-amber)] bg-white p-6 md:flex-row md:items-end md:justify-between"
+      >
+        <div className="space-y-2">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--ks-amber-dark)]">
+            You are looking at one {scopedUnitWord(scope, tenant)}
+          </p>
+          <Heading className="font-[family-name:var(--font-head)] text-[27px] font-black leading-[1.1] tracking-[-0.024em] text-[var(--ks-ink-900)]">
+            {code ? `${code} · ${name}` : name}
+          </Heading>
+          <p className="text-[13.5px] text-[var(--ks-ink-700)]">
+            {parentLabel} · {here} of the enterprise's {enterpriseTotal} use cases live here
+          </p>
+        </div>
+        {back && (
+          <button
+            type="button"
+            onClick={() => onSelect(back.target)}
+            className="shrink-0 text-[13px] font-semibold text-[var(--ks-active-blue-dark)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+          >
+            {back.label}
+          </button>
+        )}
+      </div>
+    )
+  }
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm md:flex-row md:items-end md:justify-between">
       <div className="space-y-2">
         <p className="ks-microlabel text-keystone-amberLight">You are looking at one {scopedUnitWord(scope, tenant)}</p>
-        <h1 className="font-heading text-[27px] font-black leading-[1.1] tracking-[-0.024em] text-white">
+        <Heading className="font-heading text-[27px] font-black leading-[1.1] tracking-[-0.024em] text-white">
           {code ? `${code} · ${name}` : name}
-        </h1>
+        </Heading>
         <p className="text-[13.5px] text-white/72">
           {parentLabel} · {here} of the enterprise's {enterpriseTotal} use cases live here
         </p>

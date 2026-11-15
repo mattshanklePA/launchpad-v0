@@ -10,6 +10,8 @@ export type ComplianceGridItem = {
   eyebrow: string
   value: string
   onClick?: () => void
+  /** Hover text. */
+  hint?: string
 }
 
 export function ComplianceGrid({ items }: { items: ComplianceGridItem[] }) {
@@ -19,11 +21,11 @@ export function ComplianceGrid({ items }: { items: ComplianceGridItem[] }) {
         <div key={item.eyebrow}>
           <div className="ks-microlabel mb-[3px]">{item.eyebrow}</div>
           {item.onClick ? (
-            <button type="button" className="text-left text-[14px] font-semibold text-primary hover:underline" onClick={item.onClick}>
+            <button type="button" title={item.hint || undefined} className="text-left text-[14px] font-semibold text-primary hover:underline" onClick={item.onClick}>
               {item.value}
             </button>
           ) : (
-            <div className="text-[14px] text-foreground">{item.value}</div>
+            <div title={item.hint || undefined} className="text-[14px] text-foreground">{item.value}</div>
           )}
         </div>
       ))}

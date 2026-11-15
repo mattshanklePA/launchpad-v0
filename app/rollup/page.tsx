@@ -10,6 +10,7 @@
 // bureau's roll-up, never the whole department's.
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { RequireAuth } from "@/components/auth/require-auth"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useDataProvider } from "@/components/data-provider"
@@ -30,6 +31,7 @@ import { BureauRollup } from "@/components/admin/bureau-rollup"
 import { ApprovalTransparency } from "@/components/admin/approval-transparency"
 import { RationalizationPanel } from "@/components/admin/rationalization-panel"
 import { Button } from "@/components/ui/button"
+import { SectionTitle } from "@/components/cockpit/section-title"
 
 function RollupPageInner() {
   const { loaded } = useDataProvider()
@@ -54,33 +56,57 @@ function RollupPageInner() {
   const metrics = getDashboardMetrics(scope, allSubmissions, tenant)
   const actionItems = buildActionItems(metrics, bureauTier, [], tenant, kpiDrilldown)
   const pendingClusterItem = actionItems.find((i) => i.id === "duplicates")
+  const cockpit = tenant.features.cockpitLook
+  const contextLine =
+    `${submissions.length} use case${submissions.length === 1 ? "" : "s"}` +
+    (hasConsolidated
+      ? ` · consolidates to ${reportableEntries} ${tenant.inventoryShortLabel} reportable ${reportableEntries === 1 ? "entry" : "entries"}`
+      : "") +
+    ` · as of ${formatKeystoneDate(new Date().toISOString())}`
   const leadCluster = kpiDrilldown.duplicates.find((d) => d.cardField === tenantCopy(tenant).pendingClusterField)
 
   return (
     <DashboardShell baseScope={scope} hierarchy={hierarchy} selection={null} onSelect={() => {}} breadcrumb={`${tenant.unit.label} roll-up`}>
       <div className="space-y-[22px]">
+        {cockpit ? (
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <SectionTitle title={`Every use case, by ${tenant.unit.label.toLowerCase()} and status`} context={contextLine} />
+            </div>
+            <a
+              href="/api/export/approval"
+              className="shrink-0 border border-[var(--ks-basalt)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--ks-basalt)] hover:bg-[var(--ks-limestone)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+            >
+              Export approval report
+            </a>
+          </div>
+        ) : (
         <div className="flex flex-col gap-2 rounded-lg bg-keystone-basalt600 p-6 text-keystone-chalk shadow-sm md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <p className="ks-microlabel text-keystone-amberLight">{tenant.unit.label} roll-up</p>
             <h1 className="ks-page-title text-white">{tenant.unit.label} roll-up</h1>
             <p className="text-[13.5px] text-white/72">Every use case, by {tenant.unit.label.toLowerCase()} and status</p>
             <p className="text-[13.5px] text-white/72">
-              {submissions.length} use case{submissions.length === 1 ? "" : "s"}
-              {hasConsolidated
-                ? ` · consolidates to ${reportableEntries} ${tenant.inventoryShortLabel} reportable ${reportableEntries === 1 ? "entry" : "entries"}`
-                : ""}
-              {" · as of "}{formatKeystoneDate(new Date().toISOString())}
+              {contextLine}
             </p>
           </div>
           <Button asChild variant="secondary" className="shrink-0">
             <a href="/api/export/approval">Export approval report</a>
           </Button>
         </div>
+        )}
 
         <BureauRollup submissions={submissions} />
 
         {pendingClusterItem && leadCluster && (
-          <div className="flex items-center gap-5 rounded-md border border-border-subtle border-l-[3px] border-l-attention bg-card p-4">
+          <div
+            data-cockpit="cluster-callout"
+            className={
+              cockpit
+                ? "flex items-center gap-5 border border-[var(--ks-limestone-dark)] border-l-[4px] border-l-[var(--ks-amber)] bg-white p-4"
+                : "flex items-center gap-5 rounded-md border border-border-subtle border-l-[3px] border-l-attention bg-card p-4"
+            }
+          >
             <div className="min-w-0 flex-1">
               <p className="text-[14.5px] font-semibold text-foreground">{pendingClusterItem.title}</p>
               <p className="mt-0.5 text-[13px] text-muted-foreground">{leadCluster.bureauLabel}</p>
@@ -99,7 +125,25 @@ function RollupPageInner() {
   )
 }
 
+// F5-3 (#320): with the portfolio report on (ES2) this page is folded into
+// /report. The roll-up code above stays for the other sites. Inside RequireAuth
+// so a submitter is sent home first, never to /report and back.
+function GoToReport() {
+  const router = useRouter()
+  useEffect(() => {
+    router.replace("/report")
+  }, [router])
+  return null
+}
+
 export default function RollupPage() {
+  if (getTenant().features.portfolioReport) {
+    return (
+      <RequireAuth requireRole={["admin", "reviewer"]}>
+        <GoToReport />
+      </RequireAuth>
+    )
+  }
   return (
     <RequireAuth requireRole={["admin", "reviewer"]}>
       <RollupPageInner />

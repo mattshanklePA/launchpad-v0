@@ -2,16 +2,20 @@
 
 import { Fragment, useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { accessRedirect } from "@/lib/accessRedirect"
 import { getSession, hasAdminAccess, isAdmin, logout, ensureSeeded, type Session } from "@/lib/auth"
 import { formatKeystoneDate } from "@/lib/dateFormat"
 import { UserManagement } from "@/components/admin/user-management"
 import { useToast } from "@/components/ui/use-toast"
 import { errToDetail } from "@/lib/errToDetail"
 import { LogOut, Loader2 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { TenantCard as Card } from "@/components/cockpit/tenant-card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { TenantBadge as Badge } from "@/components/cockpit/tenant-badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SectionTitle } from "@/components/cockpit/section-title"
+import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,6 +47,8 @@ import {
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Header } from "@/components/layout/header"
+import { CockpitShell } from "@/components/cockpit/cockpit-shell"
+import { getDashboardScope } from "@/lib/dashboard/scope"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
@@ -295,6 +301,21 @@ const RESET_STAGE_LABEL: Record<ResetStage, string> = {
   refreshing: "Refreshing…",
 }
 
+
+// NL-9 (#290): ES2-only (features.cockpitLook) restyle of the admin tab strip,
+// section headings and table heads. Other tenants keep today's markup.
+const COCKPIT_TABS_LIST =
+  "flex h-auto w-full flex-wrap justify-start gap-1 rounded-none border-b-2 border-[var(--ks-amber)] bg-transparent p-0"
+const COCKPIT_TAB =
+  "rounded-none border-b-[3px] border-transparent px-4 py-2 text-[var(--ks-ink-900)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)] focus-visible:ring-0 data-[state=active]:border-[var(--ks-basalt)] data-[state=active]:bg-transparent data-[state=active]:font-bold data-[state=active]:shadow-none"
+const COCKPIT_TH =
+  "bg-white font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)]"
+
+function AdminHeading({ cockpit, title }: { cockpit: boolean; title: string }) {
+  if (cockpit) return <SectionTitle title={title} />
+  return <h2 className="text-2xl font-bold">{title}</h2>
+}
+
 export default function AdminPage() {
   return (
     <DataProvider>
@@ -344,7 +365,9 @@ function AdminPageInner() {
     ensureSeeded()
     const s = getSession()
     if (!hasAdminAccess(s)) {
-      router.replace("/login?next=/admin")
+      // Signed in without access goes home, never to /login (which would send
+      // them straight back here, forever). See lib/accessRedirect.ts.
+      router.replace(accessRedirect(s, ["admin", "reviewer"], "/admin") ?? "/home")
       return
     }
     setSession(s)
@@ -707,14 +730,19 @@ function AdminPageInner() {
   // shared data cache has loaded — prevents a flash where toggles/submissions
   // render from an empty cache (everything appears "on" / no submissions).
   if (!authChecked || !dataLoaded) {
-    return <div className="min-h-screen bg-gray-50" />
+    return <div className={cn("min-h-screen", tenant.features.cockpitLook ? "bg-[var(--surface-canvas)]" : "bg-gray-50")} />
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+  const cockpit = !!tenant.features.cockpitLook
+  // NL-11 (#312): no pills or rounded tiles on ES2.
+  const RF = cockpit ? "" : "rounded-full"
+  const RL = cockpit ? "" : "rounded-lg"
+  const page = (
+    <div className={tenant.features.cockpitLook ? "" : "min-h-screen bg-gray-50"}>
+      {!tenant.features.cockpitLook && <Header />}
 
       <div className="container py-8">
+        {!cockpit && (
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-uspto-gray-text">Administration Dashboard</h1>
@@ -735,16 +763,17 @@ function AdminPageInner() {
             </div>
           )}
         </div>
+        )}
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="okrs">{tenant.okrsLabel}</TabsTrigger>
-            <TabsTrigger value="drafts">Submissions</TabsTrigger>
-            <TabsTrigger value="submitted">Decision Center</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="formconfig">Form Config</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className={cockpit ? COCKPIT_TABS_LIST : "grid w-full grid-cols-7"}>
+            <TabsTrigger value="overview" className={cockpit ? COCKPIT_TAB : undefined}>Overview</TabsTrigger>
+            <TabsTrigger value="okrs" className={cockpit ? COCKPIT_TAB : undefined}>{tenant.okrsLabel}</TabsTrigger>
+            <TabsTrigger value="drafts" className={cockpit ? COCKPIT_TAB : undefined}>Submissions</TabsTrigger>
+            <TabsTrigger value="submitted" className={cockpit ? COCKPIT_TAB : undefined}>Decision Center</TabsTrigger>
+            <TabsTrigger value="analytics" className={cockpit ? COCKPIT_TAB : undefined}>Analytics</TabsTrigger>
+            <TabsTrigger value="formconfig" className={cockpit ? COCKPIT_TAB : undefined}>Form Config</TabsTrigger>
+            <TabsTrigger value="settings" className={cockpit ? COCKPIT_TAB : undefined}>Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -805,7 +834,7 @@ function AdminPageInner() {
                       return (
                         <Fragment key={st}>
                           <div className="flex-1 min-w-[140px]">
-                            <div className={`${style.bg} border-2 ${style.border} rounded-lg p-4 text-center`}>
+                            <div className={`${style.bg} border-2 ${style.border} ${RL} p-4 text-center`}>
                               <div className={`text-2xl font-bold ${style.text}`}>{n}</div>
                               <div className={`text-sm font-medium ${style.subtext}`}>{STATUS_LABEL[st]}</div>
                               <div className={`text-xs ${style.subtext} mt-1`}>{pct}% of submitted</div>
@@ -834,7 +863,7 @@ function AdminPageInner() {
                     <div className="space-y-4">
                       {recentSubmissions.map((s) => (
                         <div key={s.id} className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className={`w-2 h-2 bg-blue-500 ${RF}`}></div>
                           <div className="flex-1">
                             <p className="text-sm font-medium">
                               New idea: {s.formData.useCaseTitle || "Untitled idea"}
@@ -875,7 +904,7 @@ function AdminPageInner() {
 
           <TabsContent value="okrs" className="space-y-6">
             <div className="flex justify-between items-center gap-3">
-              <h2 className="text-2xl font-bold">{tenant.okrsLabel} Management</h2>
+              <AdminHeading cockpit={cockpit} title={`${tenant.okrsLabel} Management`} />
               <div className="flex items-center gap-2">
                 {bureausWithFocusAreas.length > 0 && (
                   <Select value={okrBureau || "__department__"} onValueChange={(v) => setOkrBureau(v === "__department__" ? "" : v)}>
@@ -970,9 +999,9 @@ function AdminPageInner() {
                         <span>Progress</span>
                         <span>{okr.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className={`w-full bg-gray-200 ${RF} h-2`}>
                         <div
-                          className="bg-uspto-blue-primary h-2 rounded-full"
+                          className={`bg-uspto-blue-primary h-2 ${RF}`}
                           style={{ width: `${okr.progress}%` }}
                         ></div>
                       </div>
@@ -992,7 +1021,7 @@ function AdminPageInner() {
               />
             )}
             {selectedForCompare.size > 0 && !showComparison && (
-              <div className="flex items-center justify-between p-3 rounded-lg border-2 border-primary/40 bg-primary/5">
+              <div className={`flex items-center justify-between p-3 ${RL} border-2 border-primary/40 bg-primary/5`}>
                 <p className="text-sm">
                   <span className="font-semibold">{selectedForCompare.size}</span> selected for comparison
                   {selectedForCompare.size === 1 && ", pick 1 more to compare"}
@@ -1014,9 +1043,9 @@ function AdminPageInner() {
               </div>
             )}
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Idea Pipeline</h2>
+              <AdminHeading cockpit={cockpit} title="Idea Pipeline" />
               <div className="flex gap-2">
-                <div className="flex border rounded-md">
+                <div className={cn("flex border", !cockpit && "rounded-md")}>
                   <Button
                     variant={draftsViewMode === "cards" ? "default" : "ghost"}
                     size="sm"
@@ -1065,9 +1094,9 @@ function AdminPageInner() {
                               <span>Completion Rate</span>
                               <span>{draft.completionRate}%</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className={`w-full bg-gray-200 ${RF} h-2`}>
                               <div
-                                className="bg-green-500 h-2 rounded-full"
+                                className={`bg-green-500 h-2 ${RF}`}
                                 style={{ width: `${draft.completionRate}%` }}
                               ></div>
                             </div>
@@ -1105,15 +1134,15 @@ function AdminPageInner() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[300px]">Title</TableHead>
-                        <TableHead>Submitter</TableHead>
-                        <TableHead>{tenant.tierLabels.unit}</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Progress</TableHead>
-                        <TableHead>Last Updated</TableHead>
-                        <TableHead>Classification</TableHead>
-                        <TableHead>Readiness</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className={cn("w-[300px]", cockpit && COCKPIT_TH)}>Title</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Submitter</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>{tenant.tierLabels.unit}</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Status</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Progress</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Last Updated</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Classification</TableHead>
+                        <TableHead className={cockpit ? COCKPIT_TH : undefined}>Readiness</TableHead>
+                        <TableHead className={cn("text-right", cockpit && COCKPIT_TH)}>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1129,9 +1158,9 @@ function AdminPageInner() {
                           <TableCell>{getStatusBadge(draft.status)}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div className={`w-16 bg-gray-200 ${RF} h-2`}>
                                 <div
-                                  className="bg-green-500 h-2 rounded-full"
+                                  className={`bg-green-500 h-2 ${RF}`}
                                   style={{ width: `${draft.completionRate}%` }}
                                 ></div>
                               </div>
@@ -1165,7 +1194,7 @@ function AdminPageInner() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <h2 className="text-2xl font-bold">Platform Analytics</h2>
+            <AdminHeading cockpit={cockpit} title="Platform Analytics" />
 
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
@@ -1181,9 +1210,9 @@ function AdminPageInner() {
                           <span className="font-medium">{bu}</span>
                           <span className="text-muted-foreground">{count}</span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className={`w-full bg-gray-100 ${RF} h-2.5`}>
                           <div
-                            className="bg-uspto-blue-primary h-2.5 rounded-full transition-all"
+                            className={`bg-uspto-blue-primary h-2.5 ${RF} transition-all`}
                             style={{ width: `${(count / maxBuCount) * 100}%` }}
                           />
                         </div>
@@ -1203,7 +1232,7 @@ function AdminPageInner() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div className={`flex h-3 w-full overflow-hidden ${RF} bg-gray-100`}>
                       {readinessRows.map((r) => {
                         const n = readinessCounts[r.key] || 0
                         if (n === 0) return null
@@ -1224,7 +1253,7 @@ function AdminPageInner() {
                         return (
                           <div key={r.key} className="flex items-center justify-between text-sm">
                             <span className="flex items-center gap-2">
-                              <span className={`inline-block h-2.5 w-2.5 rounded-full ${r.color}`} />
+                              <span className={`inline-block h-2.5 w-2.5 ${RF} ${r.color}`} />
                               {r.label}
                             </span>
                             <span className="text-muted-foreground">
@@ -1241,13 +1270,13 @@ function AdminPageInner() {
           </TabsContent>
 
           <TabsContent value="formconfig" className="space-y-6">
-            <h2 className="text-2xl font-bold">Form Configuration</h2>
+            <AdminHeading cockpit={cockpit} title="Form Configuration" />
             <p className="text-sm text-muted-foreground -mt-4 max-w-3xl">{formConfigLockedNote(tenant)}</p>
             <FormConfigPanel />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <h2 className="text-2xl font-bold">System Settings</h2>
+            <AdminHeading cockpit={cockpit} title="System Settings" />
 
             <div className="grid gap-6">
               <Card>
@@ -1292,10 +1321,10 @@ function AdminPageInner() {
               )}
 
               {/* Demo data controls — one-click reset to the tenant's golden demo state */}
-              <Card className="border-amber-200 bg-amber-50/30">
+              <Card className={cockpit ? undefined : "border-amber-200 bg-amber-50/30"}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-600" />
+                    {cockpit ? null : <Sparkles className="w-5 h-5 text-amber-600" />}
                     Demo Data
                   </CardTitle>
                   <CardDescription>
@@ -1347,5 +1376,21 @@ function AdminPageInner() {
         </Tabs>
       </div>
     </div>
+  )
+
+  // NL-2 (#283): on ES2 the page sits inside the same band as every other
+  // signed-in page. Every other tenant keeps its own Header, untouched.
+  if (!tenant.features.cockpitLook) return page
+  return (
+    <CockpitShell
+      baseScope={getDashboardScope(session)}
+      hierarchy={{ bureaus: [] }}
+      selection={null}
+      onSelect={() => {}}
+      breadcrumb="Admin"
+      tenant={tenant}
+    >
+      {page}
+    </CockpitShell>
   )
 }

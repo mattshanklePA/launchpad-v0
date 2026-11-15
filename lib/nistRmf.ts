@@ -12,6 +12,7 @@
 
 import type { FormData } from "@/lib/steps"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { departmentFinalApprovalEnabled } from "@/lib/bureauSignoff"
 import type { BureauSignoff, DepartmentApproval } from "@/lib/bureauSignoff"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
@@ -275,7 +276,7 @@ export function computeRmfProfile(fd: RmfInputs, tenant: TenantConfig = getTenan
     return {
       functions,
       overall: "at_risk",
-      rationale: "At least one RMF function has a governance gap that needs attention.",
+      rationale: tenantCopy(tenant).rmfAtRiskRationale,
       flags,
     }
   }
@@ -285,7 +286,7 @@ export function computeRmfProfile(fd: RmfInputs, tenant: TenantConfig = getTenan
     return {
       functions,
       overall: "attention",
-      rationale: "One or more RMF functions are only partially covered — review the flags for what's missing.",
+      rationale: tenantCopy(tenant).rmfPartialRationale,
       flags,
     }
   }
@@ -293,7 +294,7 @@ export function computeRmfProfile(fd: RmfInputs, tenant: TenantConfig = getTenan
   return {
     functions,
     overall: "on_track",
-    rationale: "Every applicable RMF function is fully covered.",
+    rationale: tenantCopy(tenant).rmfOnTrackRationale,
     flags,
   }
 }

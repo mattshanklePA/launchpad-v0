@@ -77,6 +77,7 @@ vi.mock("./department-dashboard-data", async (importOriginal) => {
 
 import { CommandCenter } from "./command-center"
 import { doc } from "@/lib/tenant/doc"
+import { es2 } from "@/lib/tenant/es2"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -111,10 +112,10 @@ function render(ui: ReactElement) {
 const departmentScope: DashboardScope = { level: "department" }
 const bureauScope: DashboardScope = { level: "bureau", businessUnit: "census" }
 
-function renderCommandCenter(scope: DashboardScope) {
+function renderCommandCenter(scope: DashboardScope, tenant: typeof doc = doc) {
   return render(
     <CommandCenter
-      tenant={doc}
+      tenant={tenant}
       session={{ userId: "u1", email: "a@doc.gov", name: "Admin", role: "admin", loggedInAt: new Date().toISOString() }}
       scope={scope}
       selection={null}
@@ -279,5 +280,38 @@ describe("CommandCenter Plumb line (RD-8, issue #218)", () => {
     const el = renderCommandCenter(bureauScope)
     expect(el.textContent).toContain("5 items want a reviewer")
     expect(el.textContent).not.toContain("8 items want a reviewer")
+  })
+})
+
+describe("CommandCenter cockpit look (NL-3, #284)", () => {
+  const items: ActionItem[] = [
+    { id: "signoff", title: "2 approved use cases awaiting bureau sign-off", severity: "warning", actionLabel: "Nudge sign-off", onAction: async () => ({ status: "sent" as const }) },
+    { id: "omb-review", title: "3 submissions need an OMB reportability review", severity: "info", actionLabel: "Review", drilldown: { label: "OMB reportable", items: [] } },
+  ]
+
+  it("doc tenant renders the old home: action rows, no cockpit pieces", () => {
+    enterpriseActionItems = items
+    const el = renderCommandCenter(departmentScope, doc)
+    expect(el.querySelectorAll("[data-action-row]")).toHaveLength(2)
+    expect(el.textContent).toContain("Then, when you have time")
+    expect(el.textContent).toContain("Today: 2 items need you")
+    expect(el.querySelector("[data-cockpit]")).toBeNull()
+    expect(el.textContent).not.toContain("Why it matters")
+  })
+
+  it("ES2 renders the first item as the lead and the rest in a ranked table, same items and controls", () => {
+    enterpriseActionItems = items
+    const el = renderCommandCenter(departmentScope, es2)
+    expect(el.querySelector("[data-action-row]")).toBeNull()
+    const lead = el.querySelector('[data-cockpit="lead-block"]')!
+    expect(lead.textContent).toContain("Do this first")
+    expect(lead.textContent).toContain("2 approved use cases awaiting bureau sign-off")
+    expect(lead.querySelector("button")?.textContent).toBe("Nudge sign-off")
+    const table = el.querySelector('[data-cockpit="ranked-table"]')!
+    const heads = Array.from(table.querySelectorAll("th")).map((th) => th.textContent)
+    expect(heads).toEqual(["Count", "What", "Why it matters"])
+    expect(table.textContent).toContain("3")
+    expect(table.textContent).toContain("submissions need an OMB reportability review")
+    expect(table.textContent).toContain("Review")
   })
 })

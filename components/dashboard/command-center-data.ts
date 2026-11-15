@@ -11,7 +11,7 @@ import type { TenantConfig } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
 import type { DuplicateClusterDrilldownItem } from "@/lib/dashboard/drilldown"
 import type { Submission } from "@/lib/submissions"
-import { getStatus, STATUS_LABEL, businessUnitLabel, type SubmissionStatus } from "@/lib/reviewWorkflow"
+import { getStatus, STATUS_LABEL, businessUnitLabel, officeLabel, type SubmissionStatus } from "@/lib/reviewWorkflow"
 import { clusterHref } from "@/lib/rationalization"
 import { DISPLAY_TIME_ZONE, formatKeystoneDate } from "@/lib/dateFormat"
 import { kpiDrilldownEntryHref } from "./kpi-card-data"
@@ -38,6 +38,11 @@ export function spellCount(n: number): string {
 export function splitLeadingCount(title: string): [count: string, rest: string] {
   const m = title.match(/^(\d+)\s+(.*)$/)
   return m ? [m[1], m[2]] : ["", title]
+}
+
+/** The number a row's Count cell shows: the title's first number wherever it sits ("Check if it goes in the AI inventory: 10 submissions" -> "10"), or "–" if there is none. */
+export function countFromTitle(title: string): string {
+  return title.match(/\d+/)?.[0] ?? "–"
 }
 
 export { formatKeystoneDate } from "@/lib/dateFormat"
@@ -74,6 +79,19 @@ export function uniqueSlugTail(id: string): string {
   const parts = id.split("-")
   const tail = parts.length > 2 ? parts.slice(2).join("-") : id
   return tail.toUpperCase()
+}
+
+/**
+ * NL-13 (#314): the record band's eyebrow place name. The program's short name
+ * ("ACWS") when the record sits in a program; for an office with no programs,
+ * the office short name ("HR-FM"). Never the record's internal ID.
+ */
+export function recordPlaceShortLabel(unit: string, office: string): string {
+  if (office) {
+    const label = officeLabel(unit, office)
+    return splitLabelCode(label).code ?? label
+  }
+  return shortBusinessUnitLabel(unit)
 }
 
 export type HeroCluster = {

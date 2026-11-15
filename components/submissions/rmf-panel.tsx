@@ -17,6 +17,8 @@ import {
   type RmfRiskLevel,
 } from "@/lib/nistRmf"
 import type { ResolvedRmfProfile } from "@/lib/rmfProfileReview"
+import { SquareTag, type SquareTagTone } from "@/components/cockpit"
+import { getTenant } from "@/lib/tenant"
 import { cn } from "@/lib/utils"
 import { formatKeystoneDate } from "@/lib/dateFormat"
 
@@ -39,16 +41,29 @@ export function RmfPanel({
   onConfirm: () => void
   onOverride: (level: RmfRiskLevel) => void
 }) {
+  let tags: React.ReactNode = null
+  // NL-6 (#287): ES2 shows the level and the proposal state as K6 square tags, beside the reason.
+  if (getTenant().features.cockpitLook) {
+    const tone: SquareTagTone =
+      resolvedRmf.effectiveOverall === "on_track" ? "healthy" : resolvedRmf.effectiveOverall === "attention" ? "attention" : resolvedRmf.effectiveOverall === "at_risk" ? "alert" : "neutral"
+    tags = (
+      <div className="flex flex-wrap items-center gap-2">
+        <SquareTag tone={tone}>{RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}</SquareTag>
+        {resolvedRmf.isProposal && <SquareTag>proposed · awaiting reviewer</SquareTag>}
+        <span className="text-sm text-[var(--ks-ink-900)]">{resolvedRmf.profile.rationale}</span>
+      </div>
+    )
+  }
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="flex flex-wrap items-center gap-2">
+      {tags ?? <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", rmfBadgeClass(resolvedRmf.effectiveOverall))} title={resolvedRmf.profile.rationale}>
           {RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]}
         </Badge>
         {resolvedRmf.isProposal && (
           <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-[0.06em] bg-muted text-muted-foreground">proposed · awaiting reviewer</Badge>
         )}
-      </div>
+      </div>}
       {resolvedRmf.review && (
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
           <ShieldCheck className="w-3.5 h-3.5" />

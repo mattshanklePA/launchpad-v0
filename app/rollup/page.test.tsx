@@ -74,10 +74,26 @@ function render(ui: ReactElement) {
 }
 
 describe("/rollup", () => {
-  it("redirects a non-admin (submitter) session the same way /decisions redirects", () => {
+  // These cases cover the roll-up page itself. On ES2 (features.portfolioReport)
+  // /rollup now sends admins and reviewers to /report (F5-3, covered in the
+  // "by tenant" block below), so pin a tenant that still renders the roll-up.
+  const prevTenant = process.env.NEXT_PUBLIC_TENANT
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_TENANT = "doc"
+  })
+  afterEach(() => {
+    if (prevTenant === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = prevTenant
+  })
+
+  // Was "/login?next=%2Frollup". The login page sends a signed-in person on to
+  // `next`, so that bounced a submitter between the two pages forever and
+  // crashed the browser (ES2 preview, 14 Nov). Signed in without the role now
+  // goes home.
+  it("sends a signed-in submitter home, the same way /decisions does", () => {
     mockSession = { userId: "u1", email: "sub@x.gov", name: "Sub", role: "submitter", loggedInAt: new Date().toISOString() }
     render(<RollupPage />)
-    expect(replaced).toBe("/login?next=%2Frollup")
+    expect(replaced).toBe("/home")
   })
 
   it("redirects a signed-out visitor to login", () => {
@@ -133,5 +149,57 @@ describe("/rollup", () => {
     const el = render(<RollupPage />)
     expect(el.textContent).toContain("1 use case")
     expect(el.textContent).not.toContain("consolidates to")
+  })
+})
+
+// NL-4 (#285): ES2 gets the K3 title with today's context line; doc keeps the band.
+describe("/rollup header by tenant (NL-4)", () => {
+  const admin = { userId: "u1", email: "admin@x.gov", name: "Admin", role: "admin" as const, loggedInAt: new Date().toISOString() }
+  const withTenant = (id: string, run: () => void) => {
+    const prev = process.env.NEXT_PUBLIC_TENANT
+    process.env.NEXT_PUBLIC_TENANT = id
+    try {
+      run()
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+      else process.env.NEXT_PUBLIC_TENANT = prev
+    }
+  }
+
+  it("es2: sends an admin to /report and renders no roll-up (F5-3, #320)", () => {
+    withTenant("es2", () => {
+      mockSession = admin
+      const el = render(<RollupPage />)
+      expect(replaced).toBe("/report")
+      expect(el.querySelector('[data-testid="bureau-rollup"]')).toBeNull()
+    })
+  })
+
+  it("es2: a submitter goes home, not to /report, so there is no loop (F5-3, #320)", () => {
+    withTenant("es2", () => {
+      mockSession = { ...admin, role: "submitter" }
+      render(<RollupPage />)
+      expect(replaced).toBe("/home")
+    })
+  })
+
+  it("es2: a signed-out visitor goes to login, then on (F5-3, #320)", () => {
+    withTenant("es2", () => {
+      mockSession = null
+      render(<RollupPage />)
+      expect(replaced).toBe("/login?next=%2Frollup")
+    })
+  })
+
+  it("doc: renders the band and heading as today", () => {
+    withTenant("doc", () => {
+      mockSession = admin
+      submissions = []
+      const el = render(<RollupPage />)
+      expect(el.querySelector('[data-cockpit="section-title"]')).toBeNull()
+      expect(el.querySelector("h1")?.textContent).toBe("Bureau roll-up")
+      expect(el.textContent).toContain("Every use case, by bureau and status")
+      expect(el.querySelector(".bg-keystone-basalt600")).not.toBeNull()
+    })
   })
 })

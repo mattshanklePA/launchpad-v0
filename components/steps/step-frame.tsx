@@ -16,6 +16,8 @@ import { getTenant } from "@/lib/tenant"
 import { shortBusinessUnitLabel } from "@/components/dashboard/command-center-data"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { SquareTag, SubmitBandContent, SubmitProgress, submitEyebrow, submitStepLabels } from "@/components/cockpit"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
@@ -69,7 +71,14 @@ function wizardHeaderCopy(currentStep: number, formData: FormData, stepInfo: { t
   return { title: stepInfo.title, subtitle: stepInfo.prompt }
 }
 
-export function StepHeader({ onSwitchToGuided }: { onSwitchToGuided?: () => void }) {
+export function StepHeader({
+  onSwitchToGuided,
+  modeToggle,
+}: {
+  onSwitchToGuided?: () => void
+  /** ES2 only: the guided/form switch, shown on the right of the band. */
+  modeToggle?: React.ReactNode
+}) {
   const { currentStep, setCurrentStep, formData } = useForm()
   const steps = getFormSteps(formData.submitterOffice)
   const stepInfo = steps[currentStep - 1]
@@ -85,6 +94,40 @@ export function StepHeader({ onSwitchToGuided }: { onSwitchToGuided?: () => void
   // this chrome-width slot and pushed the Edit link out of alignment.
   const unitLabel = formData.submitterOffice ? shortBusinessUnitLabel(formData.submitterOffice) : undefined
   const { title, subtitle } = wizardHeaderCopy(currentStep, formData, stepInfo)
+
+  const tenant = getTenant()
+  if (tenant.features.cockpitLook) {
+    const copy = tenantCopy(tenant)
+    return (
+      <div data-cockpit="submit-frame" className="flex flex-col gap-4">
+        <SubmitBandContent
+          eyebrow={submitEyebrow(copy.submitEyebrow, currentStep, WIZARD_STEPS.length)}
+          title={title}
+          modeToggle={modeToggle}
+        />
+        <SubmitProgress
+          steps={WIZARD_STEPS.map((s) => ({ label: submitStepLabels(copy.submitStepLabels)[s - 1] ?? steps[s - 1].name, done: isStepComplete(s) }))}
+          current={currentStep}
+        />
+        <div className="flex items-center justify-between gap-3">
+          <p className="m-0 text-[14px] leading-[1.55] text-[var(--ks-ink-700)]">{subtitle}</p>
+          <div className="flex items-center gap-3 text-[12px] text-[var(--ks-ink-700)]">
+            <span>
+              {formData.submitterName || "Submitter"}
+              {unitLabel ? ` · ${unitLabel}` : roleLabel ? ` · ${roleLabel}` : ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentStep(1)}
+              className="text-[var(--ks-active-blue)] underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6 rounded-md bg-keystone-basalt600 px-7 py-6 text-white shadow-sm md:flex-row md:items-end md:justify-between">
@@ -173,7 +216,12 @@ export function Field({
       {label && (
         <Label htmlFor={htmlFor} className="text-[13.5px] font-semibold text-foreground">
           {label}
-          {required && (
+          {required && getTenant().features.cockpitLook && (
+            <SquareTag tone="neutral" className="ml-2 align-middle" icon={<span aria-hidden="true" />}>
+              required
+            </SquareTag>
+          )}
+          {required && !getTenant().features.cockpitLook && (
             <span className="ml-1.5 font-mono text-[9px] font-normal uppercase tracking-[0.08em] text-foreground-faint">
               required
             </span>
@@ -212,8 +260,22 @@ export const pillToggleClass = cn(
 
 export function StepFooterShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border-t border-border-subtle bg-card py-[18px]">
-      <div className="mx-auto flex max-w-[880px] items-center justify-between gap-5 px-4">{children}</div>
+    <div
+      className={
+        getTenant().features.cockpitLook
+          ? "border border-[var(--ks-limestone-dark)] bg-white px-5 py-[18px]"
+          : "border-t border-border-subtle bg-card py-[18px]"
+      }
+    >
+      <div
+        className={
+          getTenant().features.cockpitLook
+            ? "flex items-center justify-between gap-5"
+            : "mx-auto flex max-w-[880px] items-center justify-between gap-5 px-4"
+        }
+      >
+        {children}
+      </div>
     </div>
   )
 }

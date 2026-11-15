@@ -30,6 +30,7 @@
 // logic; it falls out of reading FormData fresh on mount.
 
 import { useEffect, useRef, useState, type FormEvent } from "react"
+import type React from "react"
 import { useRouter } from "next/navigation"
 import { assessReadiness, validateAndRefineInput, type ScoutResponse } from "@/app/actions"
 import { useForm } from "@/context/form-context"
@@ -47,10 +48,12 @@ import { saveSubmission } from "@/lib/submissions"
 import { getGuidedSubmitGate, withGuidedAliases } from "@/lib/guidedSubmitGate"
 import { getSubmissionReadiness } from "@/lib/submissionReadiness"
 import { cn } from "@/lib/utils"
+import { SubmitBandContent, SubmitProgress, submitEyebrow, submitStepLabels } from "@/components/cockpit"
 import { tenantCopy } from "@/lib/tenant/copy"
 import type { FormData } from "@/lib/steps"
 import {
   INTAKE_TOPICS,
+  guidedStepProgress,
   nextIntakeTopic,
   type IntakeTopic,
   type IntakeTopicId,
@@ -107,7 +110,7 @@ function topicApiHistory(messages: ThreadMessage[], topicId: IntakeTopicId): Api
   return history
 }
 
-export function ConversationalIntake() {
+export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactNode } = {}) {
   const { formData, setFormData, resetForm } = useForm()
   const tenant = getTenant()
   const router = useRouter()
@@ -277,8 +280,32 @@ export function ConversationalIntake() {
   }
 
 
+  // NL-8 (#289): on ES2 the guided flow gets the same band and numbered
+  // progress line as the form, built from this flow's own topics (its own
+  // count, not the form's six).
+  const cockpit = tenant.features.cockpitLook
+  const guided = guidedStepProgress(formData)
+  const stepLabels = submitStepLabels(tenantCopy(tenant).submitStepLabels)
+
   return (
-    <div className="max-w-[1600px] mx-auto px-4 py-8">
+    <div className={cn(cockpit ? "" : "mx-auto max-w-[1600px] px-4 py-8")}>
+      {cockpit ? (
+        <div data-cockpit="submit-frame" className="mb-6 flex flex-col">
+          <SubmitBandContent
+            eyebrow={submitEyebrow(tenantCopy(tenant).submitEyebrow, guided.current, stepLabels.length)}
+            title={`Tell ${tenant.assistantName} about your idea`}
+            modeToggle={modeToggle}
+          />
+          <SubmitProgress
+            steps={stepLabels.map((label, i) => ({ label, done: guided.done[i] }))}
+            current={guided.current}
+          />
+          <p className="m-0 max-w-2xl pt-4 text-[14px] text-[var(--ks-ink-700)]">
+            Answer a few quick questions, mostly by tapping the suggested answers. {tenant.assistantName} keeps a
+            running record of what it's captured on the right. Edit anything there at any time.
+          </p>
+        </div>
+      ) : (
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-uspto-gray-text">Tell {tenant.assistantName} about your idea</h1>
         <p className="text-muted-foreground mt-1 max-w-2xl">
@@ -286,6 +313,8 @@ export function ConversationalIntake() {
           running record of what it's captured on the right — edit anything there at any time.
         </p>
       </div>
+      )}
+      <div>
 
       <TooltipProvider>
         <div className="grid lg:grid-cols-12 gap-8">
@@ -482,7 +511,7 @@ export function ConversationalIntake() {
                     <div className="flex items-start gap-3">
                       <PlumbMark className="h-5 w-5 flex-shrink-0 mt-1" />
                       <div className="rounded-lg p-3 bg-gray-100 text-sm">
-                        <Sparkles className="h-4 w-4 inline animate-pulse mr-1" />
+                        {cockpit ? null : <Sparkles className="h-4 w-4 inline animate-pulse mr-1" />}
                         {tenant.assistantName} is thinking...
                       </div>
                     </div>
@@ -505,6 +534,7 @@ export function ConversationalIntake() {
           </div>
         </div>
       </TooltipProvider>
+      </div>
     </div>
   )
 }

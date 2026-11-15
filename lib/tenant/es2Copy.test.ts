@@ -32,6 +32,11 @@ const BANNED: { name: string; re: RegExp }[] = [
   { name: "reportability", re: /reportability/i },
   { name: "keep-separate", re: /keep-separate/i },
   { name: "em dash", re: /—/ },
+  // NL-13 (#314)
+  { name: "RMF functions", re: /RMF functions?/i },
+  { name: "Rationalize", re: /\bRationalize\b/i },
+  { name: "Consolidated (Inventory)", re: /Consolidated \(/ },
+  { name: "duplicate clusters", re: /duplicate clusters/i },
 ]
 
 function leaves(value: unknown, out: string[] = []): string[] {
@@ -68,9 +73,44 @@ describe("ES2 copy and credibility sweep (#269)", () => {
     expect(c.pendingDecisionLabel).toBe("Waiting on a decision: combine or keep separate")
     expect(c.keepSeparate).toBe("keep separate")
     expect(c.nothingNeedsAttention).toBe("Nothing needs attention")
-    expect(c.inventoryCheckLabel).toBe("Check if it goes in the AI inventory")
+    expect(c.inventoryCheckLabel).toBe("Check whether it counts toward the AI inventory")
     expect(c.affectedUnitsPrompt).toContain("program offices")
     expect(c.affectedUnitsPrompt).not.toContain("business units")
+  })
+
+  it("NL-13: plain words from the approved mocks", () => {
+    const c = tenantCopy(es2)
+    expect(c.duplicatesLabel).toBe("Same idea in more than one office")
+    expect(c.duplicatesActionLabel).toBe("Decide")
+    expect(c.consolidatedColumnLabel).toBe("Counted as one inventory entry")
+    expect(c.inventoryEntriesPhrase).toBe("entries in the AI inventory")
+    expect(c.rmfPartialRationale).toBe("Some risk steps are not covered yet. See what is missing.")
+    expect(c.similarWordingLabel).toBe("{count} with similar wording")
+    expect(c.noOtherMessages).toBe("No other messages")
+  })
+
+  it("NL-13: the high-impact glossary line is the CEO's wording, exactly", () => {
+    expect(getGlossary(es2).highImpactDetermination.definition).toBe(
+      "High-impact: an AI use whose output is a main basis for a decision with a legal, material or significant effect on people's rights or safety. Keystone uses the federal civilian definition as its standard. It is not a Department of War rule.",
+    )
+  })
+
+  it("NL-13: the model prompt says line up with, not must satisfy", () => {
+    expect(es2.strategicContext).toContain("line up with the DoW AI Ethical Principles")
+    expect(es2.strategicContext).not.toContain("must satisfy")
+  })
+
+  it("NL-13: USPTO, DoC and DoW copy and glossary are unchanged", () => {
+    for (const t of [uspto, doc, dow]) {
+      const c = tenantCopy(t)
+      expect(c.duplicatesLabel).toBe("")
+      expect(c.duplicatesActionLabel).toBe("Rationalize")
+      expect(c.consolidatedColumnLabel).toBe("Consolidated ({inventoryShort})".replace("{inventoryShort}", t.inventoryShortLabel))
+      expect(c.inventoryEntriesPhrase).toBe(`${t.inventoryShortLabel} reportable entries`)
+      expect(c.rmfPartialRationale).toBe("One or more RMF functions are only partially covered — review the flags for what's missing.")
+      expect(c.inventoryCheckLabel).toBe("")
+      expect(getGlossary(t).highImpactDetermination.definition).toContain("meets the high-impact definition in")
+    }
   })
 
   it("says what the public reporting default is without citing OMB", () => {
@@ -92,5 +132,59 @@ describe("ES2 copy and credibility sweep (#269)", () => {
       expect(plumbLine(false, 0, t)).toBe("Nothing off-plumb. Every use case is inside its gates.")
       expect(landingStrings(t, true)).toContain("See it in 2 minutes")
     }
+  })
+})
+
+describe("NL-13 (#314): record band place name", () => {
+  it("uses the program short name, and the office short name when it has no programs", async () => {
+    vi.resetModules()
+    vi.stubEnv("NEXT_PUBLIC_TENANT", "es2")
+    const { recordPlaceShortLabel } = await import("@/components/dashboard/command-center-data")
+    expect(recordPlaceShortLabel("atr", "acws")).toBe("ACWS")
+    expect(recordPlaceShortLabel("atr", "digitalmarket")).toBe("Digital Market")
+    expect(recordPlaceShortLabel("hrfm", "")).toBe("HR-FM")
+    vi.unstubAllEnvs()
+  })
+})
+
+// F5-2 (#319): the portfolio report screen's wording. Every report key, as ES2
+// renders it, and the sentences the screen builds from them, must pass the same
+// banned-phrase list plus the model-vendor rule. Only ES2 renders /report.
+describe("F5-2 (#319): portfolio report copy", () => {
+  const VENDOR = /\bAnthropic\b|\bClaude\b|\bSonnet\b|\bOpus\b|\bHaiku\b|\bOpenAI\b|\bChatGPT\b|\bGPT-?\d\w*\b|\bGemini\b|\bLlama\b|\bMistral\b|\bCohere\b|\bRMF\b|minimum practices/i
+  const reportKeys = () => Object.keys(tenantCopy(es2)).filter((k) => /^report[A-Z]/.test(k)) as (keyof ReturnType<typeof tenantCopy>)[]
+
+  it("has the report keys, none of them empty", () => {
+    const keys = reportKeys()
+    expect(keys.length).toBeGreaterThan(60)
+    const c = tenantCopy(es2)
+    for (const k of keys) expect(c[k].trim(), k).not.toBe("")
+  })
+
+  it("renders no banned phrase, em dash or vendor name in any report string", () => {
+    const c = tenantCopy(es2)
+    const hits: string[] = []
+    for (const k of reportKeys()) {
+      for (const b of [...BANNED, { name: "vendor, RMF or minimum practices", re: VENDOR }]) {
+        if (b.re.test(c[k])) hits.push(`[${b.name}] ${k}: ${c[k]}`)
+      }
+    }
+    expect(hits).toEqual([])
+  })
+
+  it("says the plain things the issue asks for", () => {
+    const c = tenantCopy(es2)
+    expect(c.reportEyebrow).toBe("CPE ES2 · ENTERPRISE SOFTWARE AND SERVICES")
+    expect(c.reportTitle).toBe("AI portfolio")
+    expect(c.reportRiskQuestion).toBe("Which ideas carry high risk, and why?")
+    expect(c.reportDecisionsQuestion).toBe("Are leaders deciding, and how fast?")
+    expect(c.reportOverlapQuestion).toBe("Are offices building the same thing twice?")
+    expect(c.reportLeaderEmpty).toBe("Nothing is waiting on a leader today.")
+    expect(c.reportNoteWriting).toBe("Plumb is writing. Every number above is ready and does not depend on Plumb.")
+    expect(c.reportNoteError).toBe("Plumb's read is not available right now. The numbers above are complete.")
+    expect(c.reportNoteLabel).toBe("Plumb's read of the portfolio · advice, not a decision · written {when}")
+    expect(c.reportBriefingTitle).toBe("Executive briefing from the Decision Center")
+    expect(c.reportFooter).toBe("Prepared from Keystone on {date}. Internal. Not an official Army record.")
+    expect(c.reportDownloadCsv).toBe("Download numbers (CSV)")
   })
 })

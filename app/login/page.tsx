@@ -12,6 +12,7 @@ import { Rocket, LogIn, AlertCircle, Info, Eye, EyeOff } from "lucide-react"
 import { login, getSession, ensureSeeded } from "@/lib/auth"
 import { LaunchPadLogo } from "@/components/branding/launchpad-logo"
 import { getTenant } from "@/lib/tenant"
+import { landingPathFor } from "@/lib/landingPath"
 
 function LoginForm() {
   const router = useRouter()
@@ -26,7 +27,7 @@ function LoginForm() {
     ensureSeeded()
     const session = getSession()
     if (session) {
-      const next = searchParams.get("next") || "/home"
+      const next = searchParams.get("next") || landingPathFor(session, getTenant())
       router.replace(next)
     }
   }, [router, searchParams])
@@ -41,7 +42,7 @@ function LoginForm() {
       setIsSubmitting(false)
       return
     }
-    const next = searchParams.get("next") || "/home"
+    const next = searchParams.get("next") || landingPathFor(getSession(), getTenant())
     router.replace(next)
   }
 

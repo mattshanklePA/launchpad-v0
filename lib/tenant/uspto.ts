@@ -162,5 +162,5 @@ A serious AI idea names the specific priorities it advances, describes the mecha
     "Prefer American-built or U.S.-hosted models where possible. Foreign or unknown sourcing requires additional review.",
 
   theme: { primary: "#1f4e79", primaryForeground: "#ffffff" },
-  features: { decisionCenter: true, rallyExport: true, scout: true },
+  features: { decisionCenter: true, rallyExport: true, scout: true, cockpitLook: false, portfolioReport: false },
 }

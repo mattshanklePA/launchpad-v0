@@ -9,7 +9,7 @@
 
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { KindTag } from "@/components/ui/kind-tag"
+import { AdvisoryTag } from "@/components/cockpit/advisory-tag"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { DispositionControls } from "@/components/submissions/disposition-controls"
 import type { SubmissionComment, SubmissionStatus } from "@/lib/reviewWorkflow"
@@ -102,7 +102,7 @@ export function DecisionTab({
           <div className="flex items-center gap-2">
             <PlumbMark className="h-[15px] w-[15px] shrink-0" />
             <span className="ks-microlabel">{assistantName}</span>
-            <KindTag>Advisory</KindTag>
+            <AdvisoryTag />
           </div>
           {hasAnalysis && (
             <button

@@ -37,6 +37,7 @@ import * as demoReset from "@/app/api/demo-reset/route"
 import * as aiUsage from "@/app/api/ai-usage/route"
 import * as exportOmb from "@/app/api/export/omb/route"
 import * as exportApproval from "@/app/api/export/approval/route"
+import * as report from "@/app/api/report/route"
 import * as sessionRoute from "@/app/api/session/route"
 
 type Who = "none" | "tampered" | "expired" | "submitter" | "reviewer" | "admin"
@@ -76,7 +77,7 @@ function request(method: string, who: Who): Request {
   })
 }
 
-type Rule = "any" | "admin"
+type Rule = "any" | "admin" | "reviewer"
 // [label, handler, method, who may call it]
 const ROUTES: Array<[string, Handler, string, Rule]> = [
   ["GET /api/users", users.GET as Handler, "GET", "any"],
@@ -94,6 +95,7 @@ const ROUTES: Array<[string, Handler, string, Rule]> = [
   ["GET /api/ai-usage", aiUsage.GET as Handler, "GET", "admin"],
   ["GET /api/export/omb", exportOmb.GET as Handler, "GET", "any"],
   ["GET /api/export/approval", exportApproval.GET as Handler, "GET", "any"],
+  ["GET /api/report", report.GET as Handler, "GET", "reviewer"],
   ["GET /api/session", sessionRoute.GET as Handler, "GET", "any"],
   ["DELETE /api/session", sessionRoute.DELETE as Handler, "DELETE", "any"],
 ]
@@ -101,6 +103,7 @@ const ROUTES: Array<[string, Handler, string, Rule]> = [
 const ALLOWED: Record<Rule, Who[]> = {
   any: ["submitter", "reviewer", "admin"],
   admin: ["admin"],
+  reviewer: ["reviewer", "admin"],
 }
 
 beforeEach(() => {
@@ -139,6 +142,7 @@ describe("every API route enforces the session guard", () => {
       "app/api/export/omb/route.ts",
       "app/api/form-config/route.ts",
       "app/api/public-summary/route.ts",
+      "app/api/report/route.ts",
       "app/api/seed/route.ts",
       "app/api/session/route.ts",
       "app/api/submissions/route.ts",

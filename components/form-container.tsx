@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import type React from "react"
 import { useForm } from "@/context/form-context"
 import { AnimatePresence, motion } from "framer-motion"
 import { StepHeader, StepFooter } from "./steps/step-frame"
@@ -12,8 +13,15 @@ import { Step4TechnicalConstraints } from "./steps/step-4-technical-constraints"
 import { Step10ReviewSubmit } from "./steps/step-10-review-submit"
 import { Step11ExportTracking } from "./steps/step-11-export-tracking"
 import { Button } from "@/components/ui/button"
+import { getTenant } from "@/lib/tenant"
 
-export function FormContainer({ onSwitchToGuided }: { onSwitchToGuided?: () => void }) {
+export function FormContainer({
+  onSwitchToGuided,
+  modeToggle,
+}: {
+  onSwitchToGuided?: () => void
+  modeToggle?: React.ReactNode
+}) {
   const { currentStep, formData, showResumePrompt, continueDraft, startNewForm } = useForm()
 
   // Whenever the step changes (including quick-jumps from the header's Edit
@@ -91,7 +99,13 @@ export function FormContainer({ onSwitchToGuided }: { onSwitchToGuided?: () => v
           </div>
         </div>
       )}
-      <div className="mx-auto flex max-w-[880px] flex-col gap-[22px] px-4 pb-6 pt-8">
+      <div
+        className={
+          getTenant().features.cockpitLook
+            ? "flex flex-col gap-[22px] pb-6"
+            : "mx-auto flex max-w-[880px] flex-col gap-[22px] px-4 pb-6 pt-8"
+        }
+      >
         {/* mode="wait" holds the outgoing step's exit animation on screen
             before mounting the next one — never two steps' content on screen
             at once — so the total swap is exit + enter, sequential. At the
@@ -106,7 +120,7 @@ export function FormContainer({ onSwitchToGuided }: { onSwitchToGuided?: () => v
             transition={{ duration: 0.08 }}
             className="flex flex-col gap-[22px]"
           >
-            <StepHeader onSwitchToGuided={onSwitchToGuided} />
+            <StepHeader onSwitchToGuided={onSwitchToGuided} modeToggle={modeToggle} />
             {renderStepContent()}
           </motion.div>
         </AnimatePresence>

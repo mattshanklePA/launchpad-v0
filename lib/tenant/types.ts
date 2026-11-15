@@ -55,6 +55,189 @@ export type TenantCopy = {
   decidedInLabel: string                // decided record header, "{days}" = "N days"
   rmfNotConfirmedApproved: string       // locked checklist: risk framework never confirmed, record approved
   rmfNotConfirmedRejected: string       // same, record rejected
+  // Sample-data strip (NL-2, #283). Rendered only where `features.sampleDataStrip` is on (ES2).
+  sampleDataTag: string                 // square tag at the left of the strip
+  sampleDataNotice: string              // the one sentence beside it
+  // My work home (NL-3, #284). Rendered only where `features.cockpitLook` is on (ES2).
+  homeLeadLabel: string                 // eyebrow over the lead action item
+  homeColCount: string                  // ranked table column heading
+  homeColWhat: string
+  homeColWhy: string
+  homeExpandAll: string                 // ranked table open/close-all links
+  homeCollapseAll: string
+  // Use-case lists (NL-4, #285): the one-program table and the drilldown dialog. ES2 only.
+  listColNo: string                     // row number heading
+  listColIdea: string                   // use case name heading
+  listColStatus: string
+  listColStage: string
+  listColLink: string                   // heading over the "Open" links
+  // Decision Center rows (NL-5, #286). ES2 only.
+  decisionDetailRmf: string             // opened-row label over the RMF status line
+  decisionDetailRecord: string          // opened-row label over the "Open submission" link
+  // Decided record and overlap group (NL-7, #288). ES2 only.
+  decisionBlockTitle: string            // heading over the decided record's label and value grid
+  decisionEyebrow: string               // last word of the band eyebrow once the record is decided
+  decisionFactDecision: string          // grid labels
+  decisionFactBy: string
+  decisionFactDate: string
+  decisionFactDays: string
+  decisionFactLock: string
+  decisionLockedTag: string             // square tag beside the locked line
+  recordColStep: string                 // read-only review record table headings
+  recordColAnswer: string
+  recordColWho: string
+  recordColWhen: string
+  // Submit an idea (NL-8, #289). ES2 only.
+  submitEyebrow: string                 // band eyebrow over the step question; {step} and {count} are filled in by the page
+  // NL-13 (#314): plain words, read by the ES2 (cockpitLook) screens and the shared builders.
+  duplicatesLabel: string               // duplicates KPI and drilldown title; empty keeps "Cross-{unit} duplicate clusters"
+  duplicatesActionLabel: string         // Action Center button on the duplicates row
+  consolidatedColumnLabel: string       // roll-up column; "{inventoryShort}" = short inventory label
+  inventoryEntriesPhrase: string        // roll-up context, after a count: plural
+  inventoryEntryPhrase: string          // same, after a count of one
+  inventoryCheckEyebrow: string         // record compliance label, "{inventoryShort}" = short inventory label
+  rmfAtRiskRationale: string            // RMF profile line when a step has a gap
+  rmfPartialRationale: string           // RMF profile line when a step is partly covered
+  rmfOnTrackRationale: string           // RMF profile line when every step is covered
+  similarWordingLabel: string           // record compliance value, "{count}" = matches
+  similarWordingHint: string            // hover text for it
+  noOtherMessages: string               // decided record, conversation with no other messages
+  // F5-1 (#318): executive portfolio report. Read only where `features.portfolioReport` is on (ES2).
+  portfolioRiskHigh: string
+  portfolioRiskMedium: string
+  portfolioRiskLow: string
+  portfolioRiskUnassessed: string
+  portfolioReasonHigh: string
+  portfolioReasonMedium: string
+  portfolioReasonLow: string
+  portfolioReasonUnassessed: string
+  portfolioWaitOverlap: string
+  portfolioWaitHighRisk: string
+  portfolioListAnd: string
+  portfolioDaysOpen: string
+  portfolioDaysToDecide: string
+  portfolioNotYet: string
+  portfolioNotRecorded: string
+  portfolioNoPriority: string
+  portfolioNoOffice: string
+  reportEyebrow: string
+  reportTitle: string
+  reportOfficeLabel: string
+  reportAllOffices: string
+  reportDownloadPdf: string
+  reportDownloadCsv: string
+  reportDownloadFailed: string
+  reportCopyLink: string
+  reportLinkCopied: string
+  reportScopeWhole: string
+  reportContext: string
+  reportRiskTitle: string
+  reportRiskQuestion: string
+  reportRiskMeaning: string
+  reportRiskTopReason: string
+  reportRiskLink: string
+  reportRiskTag: string
+  reportDecisionsTitle: string
+  reportDecisionsQuestion: string
+  reportDecisionsMeaning: string
+  reportDecisionsMedian: string
+  reportDecisionsLink: string
+  reportOverlapTitle: string
+  reportOverlapQuestion: string
+  reportOverlapMeaning: string
+  reportOverlapNone: string
+  reportOverlapLargest: string
+  reportOverlapLink: string
+  reportDataCheckLabel: string
+  reportDataCheckComplete: string
+  reportDataCheckNoMeasure: string
+  reportDataCheckNoMeasureOne: string
+  reportDataCheckEmptyOffices: string
+  reportDataCheckEmptyOfficesOne: string
+  reportDataCheckNoPriority: string
+  reportDataCheckNoPriorityOne: string
+  reportLeaderTitle: string
+  reportLeaderContext: string
+  reportLeaderEmpty: string
+  reportColIdea: string
+  reportColWhy: string
+  reportColHolder: string
+  reportColDays: string
+  reportColOpen: string
+  reportOpenLink: string
+  reportHolderReviewer: string
+  reportHolderOffice: string
+  reportOfficesTitle: string
+  reportOfficesContext: string
+  reportOfficesColOffice: string
+  reportOfficesColIdeas: string
+  reportOfficesColHigh: string
+  reportOfficesColReview: string
+  reportOfficesColDecided: string
+  reportOfficesColMedian: string
+  reportOfficesColShare: string
+  reportOfficesTotal: string
+  reportOfficesNone: string
+  reportIdeasTitle: string
+  reportIdeasContext: string
+  reportFilterRisk: string
+  reportFilterOffice: string
+  reportFilterAll: string
+  reportFilterNoPriority: string
+  reportFilterDecided: string
+  reportFilterOverlap: string
+  reportFilterClear: string
+  reportIdeasNone: string
+  reportIdeasColStatus: string
+  reportIdeasColRisk: string
+  reportIdeasColDays: string
+  reportIdeasColDecidedBy: string
+  reportIdeasColPriority: string
+  reportShowAll: string
+  reportShowFewer: string
+  reportGroupSummary: string
+  reportNoteTitle: string
+  reportNoteContext: string
+  reportNoteLabel: string
+  reportNoteWriting: string
+  reportNoteError: string
+  reportNoteRetry: string
+  reportNoteRewrite: string
+  reportBriefingAdd: string
+  reportBriefingAdded: string
+  reportBriefingTitle: string
+  reportBriefingContext: string
+  reportBriefingRemove: string
+  reportBriefingFundFirst: string
+  reportBriefingGap: string
+  reportBriefingDiffer: string
+  reportBriefingBiggestGap: string
+  reportBriefingFundNow: string
+  reportBriefingFundWithConditions: string
+  reportBriefingHold: string
+  reportFooter: string
+  reportFooterDemo: string
+  reportPdfKicker: string
+  reportPdfTitle: string
+  reportPdfInternal: string
+  reportPdfPrepared: string
+  reportPdfOfficeOnly: string
+  reportPdfPage: string
+  reportPdfLeaderLine: string
+  reportPdfPlumbNote: string
+  reportCsvFigures: string
+  reportCsvColumnsSummary: string
+  reportCsvColumnsOffices: string
+  reportCsvColumnsIdeas: string
+  reportLoading: string
+  reportEmptyOfficeTitle: string
+  reportEmptyOfficeBody: string
+  reportBackToAll: string
+  reportError: string
+  reportRetry: string
+  submitStepLabels: string              // the six step names on the one step line, "|" between them
+  submitSentEyebrow: string             // band eyebrow on the page shown after sending
+  overlapColLead: string                // overlap group table: heading over the lead / "Make lead" cell
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

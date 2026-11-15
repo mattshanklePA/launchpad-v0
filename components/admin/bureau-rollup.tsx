@@ -7,7 +7,7 @@
 // row ordering from getTenant().unit.options, so it reads as a "Bureau roll-up"
 // for DoC and a "Business unit roll-up" for USPTO.
 
-import { Fragment, useState } from "react"
+import { Fragment, useState, type ReactNode } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import type { Submission } from "@/lib/submissions"
 import { getStatus, getBusinessUnit, businessUnitLabel, STATUS_ORDER, STATUS_LABEL } from "@/lib/reviewWorkflow"
@@ -18,10 +18,25 @@ import { officesForBureau } from "@/lib/officeRollup"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 import { signoffProgress } from "@/lib/bureauSignoff"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
 import { Badge } from "@/components/ui/badge"
 import { OfficeRollup } from "@/components/admin/office-rollup"
+import { SectionTitle } from "@/components/cockpit/section-title"
+import { SquareTag } from "@/components/cockpit/square-tag"
+import { cn } from "@/lib/utils"
 
 const dash = <span className="text-muted-foreground/40">–</span>
+
+// NL-4 (#285), ES2 only: zero is an en dash with screen-reader text "zero".
+const cockpitZero = (
+  <span data-zero className="text-[var(--ks-ink-700)]">
+    –<span className="sr-only">zero</span>
+  </span>
+)
+
+const TH =
+  "border-b border-[var(--ks-limestone-dark)] bg-white px-3 py-2.5 text-center font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--ks-ink-700)] whitespace-nowrap"
+const TD = "border-b border-[var(--ks-limestone)] px-3 py-3 text-center align-middle text-sm text-[var(--ks-ink-900)]"
 
 export function BureauRollup({ submissions }: { submissions: Submission[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -90,6 +105,119 @@ export function BureauRollup({ submissions }: { submissions: Submission[] }) {
       else next.add(unit)
       return next
     })
+
+  if (getTenant().features.cockpitLook) {
+    const rollupCopy = tenantCopy(getTenant())
+    const zeroOr = (n: number, cell: ReactNode = n) => (n === 0 ? cockpitZero : cell)
+    return (
+      <section aria-label={`${unitLabel} roll-up`} className="flex flex-col gap-4">
+        <SectionTitle
+          title={`${unitLabel} roll-up`}
+          context={`${submissions.length} use cases across ${units.length} ${units.length === 1 ? unitLower : unitPluralLower}${
+            grandConsolidated > 0
+              ? ` · consolidates to ${reportableEntries} ${reportableEntries === 1 ? rollupCopy.inventoryEntryPhrase : rollupCopy.inventoryEntriesPhrase}`
+              : ""
+          }`}
+        />
+        <div data-cockpit="rollup-table" className="overflow-x-auto border border-[var(--ks-limestone-dark)] bg-white">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={cn(TH, "text-left")}>{unitLabel}</th>
+                {STATUS_ORDER.map((st) => (
+                  <th key={st} className={TH}>
+                    {STATUS_LABEL[st]}
+                  </th>
+                ))}
+                <th className={TH}>Total</th>
+                <th className={TH}>High-impact</th>
+                <th className={TH}>{inventoryShort} review needed</th>
+                <th className={TH}>Possible duplicates</th>
+                <th className={TH}>{rollupCopy.consolidatedColumnLabel}</th>
+                {showSignoff && <th className={TH}>Signed off</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {units.map((u) => {
+                const hasOffices = officesForBureau(u).length > 0
+                const isExpanded = expanded.has(u)
+                return (
+                  <Fragment key={u}>
+                    <tr data-unit-row>
+                      <td className={cn(TD, "text-left font-semibold")}>
+                        {hasOffices ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpanded(u)}
+                            className="flex items-center gap-1 text-left hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
+                            aria-expanded={isExpanded}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            ) : (
+                              <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            )}
+                            {businessUnitLabel(u)}
+                          </button>
+                        ) : (
+                          businessUnitLabel(u)
+                        )}
+                      </td>
+                      {STATUS_ORDER.map((st) => (
+                        <td key={st} className={cn(TD, "font-mono")}>
+                          {zeroOr(countFor(u, st))}
+                        </td>
+                      ))}
+                      <td className={cn(TD, "font-mono font-bold")}>{totalFor(u)}</td>
+                      <td className={TD}>{zeroOr(highFor(u), <SquareTag tone="alert">{highFor(u)}</SquareTag>)}</td>
+                      <td className={TD}>{zeroOr(ombReviewFor(u), <SquareTag tone="attention">{ombReviewFor(u)}</SquareTag>)}</td>
+                      <td className={TD}>{zeroOr(duplicatesFor(u), <SquareTag tone="attention">{duplicatesFor(u)}</SquareTag>)}</td>
+                      <td className={TD}>{zeroOr(consolidatedFor(u), <SquareTag tone="info">{consolidatedFor(u)}</SquareTag>)}</td>
+                      {showSignoff && (
+                        <td className={cn(TD, "whitespace-nowrap font-mono")}>
+                          {signedOffFor(u)}/{totalFor(u)}
+                        </td>
+                      )}
+                    </tr>
+                    {hasOffices && isExpanded && (
+                      <tr>
+                        <td colSpan={TABLE_COLS} className="bg-[var(--ks-limestone)] p-3">
+                          <OfficeRollup submissions={submissions} bureau={u} bureauLabel={businessUnitLabel(u)} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })}
+              <tr data-totals-row className="border-t-2 border-[var(--ks-basalt)] font-bold">
+                <td className={cn(TD, "text-left font-bold")}>All {unitPluralLower}</td>
+                {STATUS_ORDER.map((st) => (
+                  <td key={st} className={cn(TD, "font-mono font-bold")}>
+                    {zeroOr(grand(st))}
+                  </td>
+                ))}
+                <td className={cn(TD, "font-mono font-bold")}>{submissions.length}</td>
+                <td className={cn(TD, "font-mono font-bold")}>{zeroOr(grandHigh)}</td>
+                <td className={cn(TD, "font-mono font-bold")}>{zeroOr(grandOmbReview)}</td>
+                <td className={cn(TD, "font-mono font-bold")}>{zeroOr(grandDuplicates)}</td>
+                <td className={cn(TD, "font-mono font-bold")}>{zeroOr(grandConsolidated)}</td>
+                {showSignoff && (
+                  <td className={cn(TD, "whitespace-nowrap font-mono font-bold")}>
+                    {grandSignedOff}/{submissions.length}
+                  </td>
+                )}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--ks-ink-700)]">
+          <SquareTag tone="alert">High-impact</SquareTag>
+          <SquareTag tone="attention">Needs review or possible duplicate</SquareTag>
+          <SquareTag tone="info">Consolidated into one {inventoryShort} entry</SquareTag>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <div className="rounded-lg border bg-white p-4">

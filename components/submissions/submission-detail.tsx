@@ -15,11 +15,14 @@ import {
 import {
   getStatus,
   getComments,
+  type SubmissionComment,
   getBusinessUnit,
+  getOffice,
   getAssigneeName,
   businessUnitLabel,
   visibleSubmissions,
   getLifecycleStage,
+  STATUS_LABEL,
 } from "@/lib/reviewWorkflow"
 import { findSimilar } from "@/lib/similarity"
 import { determineReportability, type ReportabilityStatus } from "@/lib/ombReportability"
@@ -86,11 +89,13 @@ import { ReviewProcessRail } from "@/components/submissions/review-process-rail"
 import { ReviewProcessLoading } from "@/components/submissions/review-process-loading"
 import { buildReviewSteps, defaultReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { PlumbMark } from "@/components/branding/plumb-mark"
+import { SectionTitle } from "@/components/cockpit"
+import { DecisionBlock, KeyFacts, RecordBandContent, type KeyFact } from "@/components/submissions/record-cockpit"
 import { cn } from "@/lib/utils"
 import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
-import { timeToDecision } from "@/lib/timeToDecision"
-import { formatKeystoneDate, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
+import { formatDays, timeToDecision } from "@/lib/timeToDecision"
+import { formatKeystoneDate, recordPlaceShortLabel, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
@@ -109,6 +114,10 @@ const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
 // shared default, so the base component itself isn't touched.
 const TABS_LIST_CLASS = "h-auto w-full items-center justify-start gap-1 rounded-none border-b border-border bg-transparent p-0"
 const TAB_TRIGGER_CLASS = "h-auto shrink-0 rounded-none border-b-2 border-transparent px-4 py-2.5 font-heading text-[14px] font-semibold text-muted-foreground shadow-none data-[state=active]:border-keystone-activeBlue data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+
+// NL-6 (#287): ES2 cockpit tabs: square, amber rule under the active tab.
+const COCKPIT_TABS_LIST_CLASS = "h-auto w-full items-center justify-start gap-1 rounded-none border-b border-[var(--ks-limestone-dark)] bg-transparent p-0"
+const COCKPIT_TAB_TRIGGER_CLASS = "h-auto shrink-0 rounded-none border-b-[3px] border-transparent px-4 py-2.5 font-heading text-[14px] font-semibold text-[var(--ks-ink-700)] shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--ks-active-blue)] data-[state=active]:border-[var(--ks-amber)] data-[state=active]:bg-transparent data-[state=active]:text-[var(--ks-ink-900)] data-[state=active]:shadow-none"
 
 function newCommentId() {
   return `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -151,13 +160,17 @@ function RiskRow({ ok, label }: { ok: boolean; label: string }) {
  * reason), so that middle fallback the issue describes never has a source to
  * read from today.
  */
-function decisionReasonText(sub: Submission, decidedAt: string | undefined): string {
+function decisionReasonComment(sub: Submission, decidedAt: string | undefined): SubmissionComment | undefined {
   const reviewerComments = getComments(sub).filter((c) => {
     if (c.authorRole !== "reviewer" && c.authorRole !== "admin") return false
     if (!decidedAt) return true
     return new Date(c.createdAt).getTime() >= new Date(decidedAt).getTime()
   })
-  return reviewerComments[reviewerComments.length - 1]?.body || "No reason was recorded."
+  return reviewerComments[reviewerComments.length - 1]
+}
+
+function decisionReasonText(sub: Submission, decidedAt: string | undefined): string {
+  return decisionReasonComment(sub, decidedAt)?.body || "No reason was recorded."
 }
 
 export function SubmissionDetail({ id }: { id: string }) {
@@ -190,6 +203,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const ranRef = useRef(false)
   const govDraftRanRef = useRef(false)
   const rationalizationRef = useRef<HTMLLIElement>(null)
+  const pinnedStepRef = useRef<ReviewStepKey | null>(null)
 
   const session = typeof window !== "undefined" ? getSession() : null
   const role = session?.role || "submitter"
@@ -393,7 +407,10 @@ export function SubmissionDetail({ id }: { id: string }) {
     governanceSettled: governanceComplete,
     dispositionSettled: status === "needs_info",
   })
-  const currentReviewStepKey = currentStepKey ?? defaultReviewStep(reviewSteps)
+  // NL-12 (#313), ES2 only: the first step is picked once and kept. Elsewhere
+  // the default tracks the first unsettled step as it changes.
+  if (tenant.features.cockpitLook && pinnedStepRef.current === null) pinnedStepRef.current = defaultReviewStep(reviewSteps)
+  const currentReviewStepKey = currentStepKey ?? (tenant.features.cockpitLook ? pinnedStepRef.current : null) ?? defaultReviewStep(reviewSteps)
   const navigateToStep = (key: ReviewStepKey) => {
     setForceShowSteps(true)
     setCurrentStepKey(key)
@@ -540,6 +557,11 @@ export function SubmissionDetail({ id }: { id: string }) {
   const decidedByName = signedOff?.signedOffByName
   const decidedByUnitShort = signedOff ? shortBusinessUnitLabel(signedOff.bureau) : undefined
   const reasonText = decided ? decisionReasonText(sub, decidedAt) : ""
+  // NL-13 (#314), ES2: on a decided record the reason shows once, in the decision
+  // card, so the conversation lists the other messages only.
+  const reasonComment = tenant.features.cockpitLook && decided ? decisionReasonComment(sub, decidedAt) : undefined
+  const conversationComments = reasonComment ? comments.filter((c) => c.id !== reasonComment.id) : comments
+  const noMessagesText = reasonComment ? tenantCopy(tenant).noOtherMessages : "No messages yet."
   const locked = isDecisionLocked({ ...(fd as Record<string, unknown>), reviewStatus: status }, tenantHasBureauTier())
   const reversibilityText = signedOff
     ? `Signed off ${formatKeystoneDate(signedOff.signedOffAt)}; contact the office to reopen.`
@@ -549,6 +571,67 @@ export function SubmissionDetail({ id }: { id: string }) {
   const showDispositionButtons = !locked
   const activity = buildActivity(sub)
 
+  // NL-6 (#287): ES2 only. The same values the page already shows, regrouped.
+  const cockpit = !!tenant.features.cockpitLook
+  const keyFacts: KeyFact[] = [
+    ...(resolvedRmf
+      ? [{
+          label: "Risk level",
+          value: RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall],
+          reason: resolvedRmf.profile.rationale,
+          tag: true,
+          tone: (resolvedRmf.effectiveOverall === "on_track" ? "healthy"
+            : resolvedRmf.effectiveOverall === "attention" ? "attention"
+            : resolvedRmf.effectiveOverall === "at_risk" ? "alert" : "neutral") as KeyFact["tone"],
+        }]
+      : []),
+    { label: "Status", value: STATUS_LABEL[status], tag: true, tone: status === "in_review" ? "attention" : status === "needs_info" ? "alert" : "neutral" },
+    { label: "Office", value: businessUnitLabel(getBusinessUnit(sub)) },
+    { label: "Owner", value: getAssigneeName(sub) || fd.submitterName || "Anonymous" },
+    { label: "Submitted", value: formatKeystoneDate(sub.submittedAt) },
+  ]
+  const cockpitBand = cockpit ? (
+    <>
+      <RecordBandContent
+        placeLabel={recordPlaceShortLabel(getBusinessUnit(sub), getOffice(sub))}
+        status={status}
+        title={fd.useCaseTitle || "Untitled idea"}
+      />
+      <KeyFacts facts={keyFacts} />
+    </>
+  ) : null
+
+  // NL-7 (#288): the decided record on ES2. Same values the ReviewerHeader and
+  // the locked line show today; a fact the record does not have is left out.
+  const copy = tenantCopy(tenant)
+  const daysToDecision = timeToDecision(sub)
+  const decidedFacts: KeyFact[] = decision
+    ? [
+        { label: copy.decisionFactDecision, value: decision === "approved" ? "Approved" : "Rejected", tag: true, tone: decision === "approved" ? "healthy" : "alert" },
+        ...(decidedByName
+          ? [{ label: copy.decisionFactBy, value: `${decidedByName}${decidedByUnitShort ? ` · ${decidedByUnitShort}` : ""}` }]
+          : []),
+        ...(decidedAt ? [{ label: copy.decisionFactDate, value: formatKeystoneDate(decidedAt) }] : []),
+        ...(decidedAt && daysToDecision !== undefined && tenant.features.timeToDecision
+          ? [{ label: copy.decisionFactDays, value: formatDays(daysToDecision) }]
+          : []),
+        locked
+          ? { label: copy.decisionFactLock, value: copy.decisionLockedTag, tag: true, tone: "neutral" as const, reason: reversibilityText }
+          : { label: copy.decisionFactLock, value: reversibilityText },
+      ]
+    : []
+  const decidedBand = cockpit && decided ? (
+    <>
+      <RecordBandContent
+        placeLabel={recordPlaceShortLabel(getBusinessUnit(sub), getOffice(sub))}
+        status={status}
+        statusLabel={copy.decisionEyebrow}
+        title={fd.useCaseTitle || "Untitled idea"}
+      />
+      <DecisionBlock title={copy.decisionBlockTitle} facts={decidedFacts} />
+    </>
+  ) : null
+
   const complianceItems: ComplianceGridItem[] = [
     {
       eyebrow: `${tiers.department} reporting mode`,
@@ -557,7 +640,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         : `Consolidated${consolidation.categoryLabel ? ` · ${consolidation.categoryLabel}` : ""}`,
     },
     {
-      eyebrow: `${tenant.inventoryShortLabel} reportability`,
+      eyebrow: tenantCopy(tenant).inventoryCheckEyebrow,
       value: reportabilityLabels(tenant)[reportability.status],
     },
     ...(resolvedRmf
@@ -566,11 +649,18 @@ export function SubmissionDetail({ id }: { id: string }) {
           value: resolvedRmf.review ? rmfStatusLabel : `${RMF_OVERALL_LABELS[resolvedRmf.effectiveOverall]} · proposed`,
         }]
       : []),
-    {
-      eyebrow: "Similar use cases",
-      value: similarMatches.length > 0 ? `${similarMatches.length} similar on record` : "None on record",
-      onClick: similarMatches.length > 0 ? () => setComplianceOpen(true) : undefined,
-    },
+    // NL-13 (#314), ES2: "N with similar wording" with a hover line, and no line
+    // at all when the record is not in a duplicate cluster.
+    ...(cockpit && !cluster
+      ? []
+      : [{
+          eyebrow: "Similar use cases",
+          value: similarMatches.length > 0
+            ? tenantCopy(tenant).similarWordingLabel.replace("{count}", String(similarMatches.length))
+            : "None on record",
+          onClick: similarMatches.length > 0 ? () => setComplianceOpen(true) : undefined,
+          hint: cockpit ? tenantCopy(tenant).similarWordingHint : undefined,
+        }]),
   ]
 
   return (
@@ -578,8 +668,11 @@ export function SubmissionDetail({ id }: { id: string }) {
       <div className={cn(PRIMARY_COLUMN_CLASS, "min-w-0 flex-1 space-y-[18px]")}>
         <Link href="/home" className="text-sm text-uspto-blue-primary hover:underline"><ArrowLeft className="w-4 h-4 inline mr-1" />Back</Link>
 
+        {cockpit && !decided ? cockpitBand : null}
+        {decidedBand}
+
         {isReviewer && !decided ? (
-          awaitingPlumb ? (
+          awaitingPlumb && !cockpit ? (
             <ReviewProcessLoading
               submissionId={sub.id}
               submittedAt={sub.submittedAt}
@@ -602,6 +695,10 @@ export function SubmissionDetail({ id }: { id: string }) {
               steps={reviewSteps}
               currentStepKey={currentReviewStepKey}
               onNavigateStep={navigateToStep}
+              reading={awaitingPlumb}
+              governanceDone={governanceDraft !== null}
+              recommendationDone={!assisting}
+              onSkipToSteps={() => setForceShowSteps(true)}
               cluster={cluster}
               clusterAllMembers={clusterSubmissionsForPanel}
               rationalizationDecision={rationalizationDecision}
@@ -636,7 +733,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           )
         ) : (
           <>
-        <ReviewerHeader
+        {cockpit ? null : <ReviewerHeader
           slugTail={uniqueSlugTail(sub.id)}
           lifecycleStage={getLifecycleStage(sub)}
           title={fd.useCaseTitle || "Untitled idea"}
@@ -649,7 +746,7 @@ export function SubmissionDetail({ id }: { id: string }) {
           decidedByName={decidedByName}
           decidedByUnitShort={decidedByUnitShort}
           daysToDecision={timeToDecision(sub)}
-        />
+        />}
 
         {showBureauTier && deptTierEnabled && isDeptViewer && bureauSignoff && (
           <div className={cn("rounded-lg border border-l-4 bg-card p-4 space-y-2", departmentApproval ? "border-l-healthy" : "border-l-attention")}>
@@ -685,11 +782,11 @@ export function SubmissionDetail({ id }: { id: string }) {
         )}
 
         <Tabs value={tab} onValueChange={changeTab}>
-          <TabsList className={TABS_LIST_CLASS}>
-            <TabsTrigger value="decision" className={TAB_TRIGGER_CLASS}>{decided ? "The decision" : "Review"}</TabsTrigger>
-            <TabsTrigger value="governance" className={TAB_TRIGGER_CLASS}>Governance record</TabsTrigger>
-            <TabsTrigger value="conversation" className={TAB_TRIGGER_CLASS}>
-              Conversation <span className="ml-1 font-mono text-[11px] text-muted-foreground">({comments.length})</span>
+          <TabsList className={cockpit && !decided ? COCKPIT_TABS_LIST_CLASS : TABS_LIST_CLASS}>
+            <TabsTrigger value="decision" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>{decided ? "The decision" : "Review"}</TabsTrigger>
+            <TabsTrigger value="governance" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>Governance record</TabsTrigger>
+            <TabsTrigger value="conversation" className={cockpit && !decided ? COCKPIT_TAB_TRIGGER_CLASS : TAB_TRIGGER_CLASS}>
+              Conversation <span className="ml-1 font-mono text-[11px] text-muted-foreground">({conversationComments.length})</span>
             </TabsTrigger>
           </TabsList>
 
@@ -725,7 +822,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               <>
                 {/* This branch only ever renders for a submitter viewing their own undecided submission — a reviewer takes the `isReviewer && !decided` branch above (RD-6, issue #207's guided process) instead, so nothing reviewer-only belongs here. */}
                 <div className="rounded-lg border bg-card p-4 space-y-3">
-                  <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>
+                  {cockpit ? <SectionTitle title="Submission" /> : <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Submission</div>}
                   {([
                     [
                       `Affected ${tenant.tierLabels.unitPlural}`,
@@ -753,9 +850,9 @@ export function SubmissionDetail({ id }: { id: string }) {
                 </div>
 
                 <div className="rounded-lg border bg-card p-4 space-y-3">
-                  <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>
-                  {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
-                  {comments.map((c) => (
+                  {cockpit ? <SectionTitle title="Conversation with submitter" /> : <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>}
+                  {conversationComments.length === 0 && <p className="text-sm text-muted-foreground">{noMessagesText}</p>}
+                  {conversationComments.map((c) => (
                     <div key={c.id} className="flex gap-2">
                       <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[13px] font-medium flex-shrink-0">
                         {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}
@@ -818,6 +915,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                   rationale: e.rationale || "",
                 }))}
                   resolvedRmf={resolvedRmf ?? undefined}
+                  cockpit={cockpit}
                   notConfirmedLabel={decision === "approved" ? tenantCopy(tenant).rmfNotConfirmedApproved : tenantCopy(tenant).rmfNotConfirmedRejected}
                 />
                 ) : (
@@ -1032,7 +1130,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               <CollapsibleContent className="space-y-4 border-t p-4">
                 <div className="space-y-2">
                   <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                    <GlossaryTerm term="ombReportability">{tenant.inventoryShortLabel} reportability</GlossaryTerm>
+                    <GlossaryTerm term="ombReportability">{tenantCopy(tenant).inventoryCheckEyebrow}</GlossaryTerm>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className={cn("font-mono text-[10px] uppercase tracking-[0.06em]", REPORTABILITY_CLASSES[reportability.status])}>
@@ -1180,8 +1278,8 @@ export function SubmissionDetail({ id }: { id: string }) {
           <TabsContent value="conversation" className="space-y-[18px] pt-[18px]">
             <div className="rounded-lg border bg-card p-4 space-y-3">
               <div className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Conversation with submitter</div>
-              {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
-              {comments.map((c) => (
+              {conversationComments.length === 0 && <p className="text-sm text-muted-foreground">{noMessagesText}</p>}
+              {conversationComments.map((c) => (
                 <div key={c.id} className="flex gap-2">
                   <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[13px] font-medium flex-shrink-0">
                     {(c.authorName || "?").split(" ").map((p) => p[0]).slice(0, 2).join("")}

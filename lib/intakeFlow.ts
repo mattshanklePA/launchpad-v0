@@ -90,3 +90,21 @@ export function nextIntakeTopic(formData: FormData): IntakeTopic | null {
 export function intakeMinimumMet(formData: FormData): boolean {
   return nextIntakeTopic(formData) === null
 }
+
+/**
+ * NL-10 (#311): the six-step line the form shows, as guided sees it. The
+ * problem, affected-unit and audience topics all sit under step 2 ("The
+ * problem"), the solution topic is step 3, and once every topic is captured
+ * the chat is waiting on "Review and send" (step 6). Steps 4 and 5 have no chat
+ * topic, so they never read as done here. `done` is 0-based by step.
+ */
+export function guidedStepProgress(formData: FormData): { current: number; done: boolean[] } {
+  const topics = activeIntakeTopics(formData.submitterOffice)
+  const captured = (ids: IntakeTopicId[]) =>
+    topics.filter((t) => ids.includes(t.id)).every((t) => isTopicCaptured(t, formData))
+  const problemDone = captured(["problem", "affectedUnits", "audience"])
+  const solutionDone = captured(["solutionBenefits"])
+  const done = [present(formData.submitterName), problemDone, solutionDone, false, false, false]
+  const current = !problemDone ? 2 : !solutionDone ? 3 : 6
+  return { current, done }
+}

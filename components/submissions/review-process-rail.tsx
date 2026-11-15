@@ -25,6 +25,7 @@ import type { ActivityEvent } from "@/lib/activity"
 import { LIFECYCLE_STAGE_LABEL, type LifecycleStage } from "@/lib/reviewWorkflow"
 import type { ReviewStep, ReviewStepKey } from "@/lib/reviewSteps"
 import { formatKeystoneDate } from "@/components/dashboard/command-center-data"
+import { SquareTag } from "@/components/cockpit"
 import { cn } from "@/lib/utils"
 
 type EarlyExitAction = "request_info" | "reject"
@@ -145,10 +146,20 @@ export function ReviewProcessRail({
     <div className="flex flex-col gap-[18px]">
       <div className="flex flex-col gap-2.5 rounded-lg border border-border-subtle bg-card p-5">
         <div className="flex items-center gap-1.5">
-          <KindTag>{LIFECYCLE_STAGE_LABEL[lifecycleStage]}</KindTag>
-          <StatusPill status="attention">In review</StatusPill>
+          {tenant.features.cockpitLook ? (
+            <>
+              <SquareTag>{LIFECYCLE_STAGE_LABEL[lifecycleStage]}</SquareTag>
+              <SquareTag tone="attention">In review</SquareTag>
+            </>
+          ) : (
+            <>
+              <KindTag>{LIFECYCLE_STAGE_LABEL[lifecycleStage]}</KindTag>
+              <StatusPill status="attention">In review</StatusPill>
+            </>
+          )}
         </div>
-        <p className="font-heading text-[16.5px] font-bold leading-[1.25] text-foreground">{title}</p>
+        {/* NL-10 (#311): on ES2 the page band already carries the full title. */}
+        {tenant.features.cockpitLook ? null : <p className="font-heading text-[16.5px] font-bold leading-[1.25] text-foreground">{title}</p>}
         <p className="text-[13px] leading-[1.5] text-muted-foreground">
           {unitLabel} · {submitterName} · submitted {formatKeystoneDate(submittedAt)}
         </p>

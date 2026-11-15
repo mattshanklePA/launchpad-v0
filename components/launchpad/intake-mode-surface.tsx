@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { IntakeModeToggle } from "@/components/launchpad/intake-mode-toggle"
 import { ConversationalIntake } from "@/components/launchpad/conversational-intake"
 import { FormContainer } from "@/components/form-container"
+import { getTenant } from "@/lib/tenant"
 import { useIntakeModePreference, type IntakeMode } from "@/hooks/use-intake-mode-preference"
 
 // Hosts both intake experiences behind one toggle (issue #170). Both
@@ -33,6 +34,18 @@ export function IntakeModeSurface({ forcedInitialMode }: { forcedInitialMode?: I
     setMode(forcedInitialMode)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forcedInitialMode])
+
+  // NL-8 (#289): on ES2 the switch lives on the right of the band, in both modes.
+  const cockpit = getTenant().features.cockpitLook
+  const modeToggle = <IntakeModeToggle mode={mode} onChange={setMode} />
+
+  if (cockpit) {
+    return mode === "guided" ? (
+      <ConversationalIntake modeToggle={modeToggle} />
+    ) : (
+      <FormContainer onSwitchToGuided={() => setMode("guided")} modeToggle={modeToggle} />
+    )
+  }
 
   if (mode === "guided") {
     return (
