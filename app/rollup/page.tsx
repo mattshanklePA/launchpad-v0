@@ -10,6 +10,7 @@
 // bureau's roll-up, never the whole department's.
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { RequireAuth } from "@/components/auth/require-auth"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useDataProvider } from "@/components/data-provider"
@@ -124,7 +125,25 @@ function RollupPageInner() {
   )
 }
 
+// F5-3 (#320): with the portfolio report on (ES2) this page is folded into
+// /report. The roll-up code above stays for the other sites. Inside RequireAuth
+// so a submitter is sent home first, never to /report and back.
+function GoToReport() {
+  const router = useRouter()
+  useEffect(() => {
+    router.replace("/report")
+  }, [router])
+  return null
+}
+
 export default function RollupPage() {
+  if (getTenant().features.portfolioReport) {
+    return (
+      <RequireAuth requireRole={["admin", "reviewer"]}>
+        <GoToReport />
+      </RequireAuth>
+    )
+  }
   return (
     <RequireAuth requireRole={["admin", "reviewer"]}>
       <RollupPageInner />

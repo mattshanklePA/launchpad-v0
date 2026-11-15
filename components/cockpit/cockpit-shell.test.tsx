@@ -96,14 +96,32 @@ describe("DashboardShell switch (NL-2, #283)", () => {
   it("marks the active tab with aria-current and shows all three tabs to an admin", () => {
     const el = renderShell(es2, session("admin"))
     const links = Array.from(el.querySelectorAll("nav a"))
-    expect(links.map((a) => a.textContent)).toEqual(["My work", "Decision Center", "Submit an idea"])
-    expect(links.map((a) => a.getAttribute("aria-current"))).toEqual([null, "page", null])
-    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/home", "/decisions", "/submit"])
+    expect(links.map((a) => a.textContent)).toEqual(["Portfolio", "My work", "Decision Center", "Submit an idea"])
+    expect(links.map((a) => a.getAttribute("aria-current"))).toEqual([null, null, "page", null])
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(["/report", "/home", "/decisions", "/submit"])
   })
 
   it("hides the Decision Center tab from a submitter, as the sidebar does", () => {
     const el = renderShell(es2, session("submitter"))
     expect(Array.from(el.querySelectorAll("nav a")).map((a) => a.textContent)).toEqual(["My work", "Submit an idea"])
+  })
+
+  it("shows the Portfolio tab first to a reviewer too (F5-3, #320)", () => {
+    const el = renderShell(es2, session("reviewer"))
+    expect(Array.from(el.querySelectorAll("nav a")).map((a) => a.textContent)).toEqual(["Portfolio", "My work", "Decision Center", "Submit an idea"])
+  })
+
+  it("with the switch off, the tabs are exactly as before (F5-3, #320)", () => {
+    const off = { ...es2, features: { ...es2.features, portfolioReport: false } }
+    const admin = Array.from(renderShell(off, session("admin")).querySelectorAll("nav a")).map((a) => a.textContent)
+    expect(admin).toEqual(["My work", "Decision Center", "Submit an idea"])
+    const el = renderShell(off, session("admin"))
+    expect(Array.from(el.querySelectorAll("header a")).find((a) => a.textContent === "Status by office")?.getAttribute("href")).toBe("/rollup")
+  })
+
+  it("lights Portfolio on /report and nothing else (F5-3, #320)", () => {
+    mockPath = "/report"
+    expect(Array.from(renderShell(es2, session("admin")).querySelectorAll("nav a[aria-current]")).map((a) => a.textContent)).toEqual(["Portfolio"])
   })
 
   it("uses the optional title for the page title, defaulting to the breadcrumb", () => {
@@ -160,11 +178,11 @@ describe("CockpitShell, one band and one width (NL-10, #311)", () => {
     expect(tabIsLit(null, "/home")).toBe(false)
   })
 
-  it("links Status by office from the band on every page, for every role", () => {
-    for (const role of ["admin", "submitter"] as const) {
+  it("links nothing to /rollup on es2, for every role (F5-3, #320)", () => {
+    for (const role of ["admin", "reviewer", "submitter"] as const) {
       const el = renderShell(es2, session(role))
-      const link = Array.from(el.querySelectorAll("header a")).find((a) => a.textContent === "Status by office")
-      expect(link?.getAttribute("href")).toBe("/rollup")
+      expect(Array.from(el.querySelectorAll("a")).some((a) => a.getAttribute("href") === "/rollup"), role).toBe(false)
+      expect(Array.from(el.querySelectorAll("a")).some((a) => a.textContent === "Status by office"), role).toBe(false)
     }
   })
 

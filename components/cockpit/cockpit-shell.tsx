@@ -76,7 +76,9 @@ export function CockpitShell({
   }
 
   const copy = tenantCopy(tenant)
+  const portfolio = tenant.features.portfolioReport
   const tabs = [
+    ...(portfolio && hasAdminAccess(session) ? [{ href: "/report", label: "Portfolio" }] : []),
     { href: "/home", label: "My work" },
     ...(hasAdminAccess(session) ? [{ href: "/decisions", label: "Decision Center" }] : []),
     { href: "/submit", label: "Submit an idea" },
@@ -106,13 +108,16 @@ export function CockpitShell({
   const actions = (
     <>
       <span ref={setRightSlot} data-cockpit="band-right" className="contents" />
-      <Link
-        href="/rollup"
-        aria-current={pathname === "/rollup" ? "page" : undefined}
-        className={`border border-white/30 px-3 py-1.5 text-sm text-[var(--ks-chalk)] hover:bg-white/10 ${FOCUS}`}
-      >
-        Status by office
-      </Link>
+      {/* F5-3: with the portfolio report on, the Portfolio tab replaces this link. */}
+      {!portfolio && (
+        <Link
+          href="/rollup"
+          aria-current={pathname === "/rollup" ? "page" : undefined}
+          className={`border border-white/30 px-3 py-1.5 text-sm text-[var(--ks-chalk)] hover:bg-white/10 ${FOCUS}`}
+        >
+          Status by office
+        </Link>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger
           className={`inline-flex items-center gap-1.5 border border-white/30 px-3 py-1.5 text-sm text-[var(--ks-chalk)] hover:bg-white/10 ${FOCUS}`}

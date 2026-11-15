@@ -260,7 +260,7 @@ export function CockpitHome({
               ))}
             </MeasureRow>
           ))}
-          <Link href="/rollup" className={cn(LINK, "w-fit")}>
+          <Link href={tenant.features.portfolioReport ? "/report" : "/rollup"} className={cn(LINK, "w-fit")}>
             {rollupLabel} →
           </Link>
         </section>

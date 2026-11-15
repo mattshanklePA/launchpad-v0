@@ -41,6 +41,14 @@ function renderHome(items = [] as Parameters<typeof CockpitHome>[0]["actionItems
   )
 }
 
+describe("CockpitHome roll-up link (F5-3, #320)", () => {
+  it("opens /report on es2 and links nothing to /rollup", () => {
+    const el = renderHome()
+    expect(el.querySelector('a[href="/report"]')?.textContent).toContain("Program roll-up")
+    expect(el.querySelector('a[href="/rollup"]')).toBeNull()
+  })
+})
+
 describe("CockpitHome (NL-3, #284)", () => {
   it("shows the all-clear sentence and no lead or table when there are no items", () => {
     const el = renderHome()

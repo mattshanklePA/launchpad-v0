@@ -170,13 +170,6 @@ function member(id: string, title: string, unit: string): Submission {
 }
 
 describe("cockpit look sweep: roll-up, admin, cluster, record (NL-11)", () => {
-  it("es2 roll-up page: no pill, shadow or sparkle, and the lower half is in the kit", () => {
-    withTenant("es2")
-    const el = render(<RollupPage />)
-    expectNewLook(el.innerHTML)
-    expect(el.querySelector('[data-cockpit="header-band"]')).not.toBeNull()
-  })
-
   it("es2 admin page: one band, no second title or Sign out, no pill, shadow or sparkle", () => {
     withTenant("es2")
     const el = render(<AdminPage />)
