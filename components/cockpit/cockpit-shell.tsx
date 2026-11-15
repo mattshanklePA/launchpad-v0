@@ -36,6 +36,14 @@ export function tabIsLit(pathname: string | null, href: string): boolean {
   return false
 }
 
+/**
+ * NL-14: the picker shows only to someone who can switch views, a
+ * reviewer or admin with more than the one enterprise view to look at.
+ */
+export function showOfficePicker(session: Session | null, hierarchy: OrgHierarchy): boolean {
+  return hasAdminAccess(session) && hierarchy.bureaus.length > 0
+}
+
 export type CockpitShellProps = {
   baseScope: DashboardScope
   hierarchy: OrgHierarchy
@@ -118,6 +126,7 @@ export function CockpitShell({
           Status by office
         </Link>
       )}
+      {showOfficePicker(session, hierarchy) && (
       <DropdownMenu>
         <DropdownMenuTrigger
           className={`inline-flex items-center gap-1.5 border border-white/30 px-3 py-1.5 text-sm text-[var(--ks-chalk)] hover:bg-white/10 ${FOCUS}`}
@@ -147,6 +156,7 @@ export function CockpitShell({
           </SidebarProvider>
         </DropdownMenuContent>
       </DropdownMenu>
+      )}
       {session && (
         <DropdownMenu>
           <DropdownMenuTrigger

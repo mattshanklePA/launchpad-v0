@@ -40,7 +40,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { doc } from "@/lib/tenant/doc"
 import { uspto } from "@/lib/tenant/uspto"
 import { dow } from "@/lib/tenant/dow"
-import { tabIsLit } from "./cockpit-shell"
+import { tabIsLit, showOfficePicker } from "./cockpit-shell"
 import { useCockpitBand } from "./band-context"
 import { es2 } from "@/lib/tenant/es2"
 import type { TenantConfig } from "@/lib/tenant"
@@ -225,5 +225,59 @@ describe("CockpitShell, one band and one width (NL-10, #311)", () => {
       expect(el.querySelector("[data-cockpit]"), tenant.id).toBeNull()
       expect(Array.from(el.querySelectorAll("a")).some((a) => a.textContent === "Status by office"), tenant.id).toBe(false)
     }
+  })
+})
+
+// NL-14 (#332): no dead Program Office button for submitters (ES2).
+describe("CockpitShell office picker (NL-14, #332)", () => {
+  const hierarchy = {
+    bureaus: [
+      { value: "a", label: "Office A", offices: [] },
+      { value: "b", label: "Office B", offices: [] },
+    ],
+  }
+  const picker = (el: HTMLElement) =>
+    Array.from(el.querySelectorAll("header button")).find((b) => b.textContent?.includes("Program Office"))
+  const shell = (tenant: TenantConfig, s: MockSession, h = hierarchy) => {
+    mockSession = s
+    return render(
+      <DashboardShell baseScope={{ level: "department" }} hierarchy={h} selection={null} onSelect={() => {}} breadcrumb="My work" tenant={tenant}>
+        <div>content</div>
+      </DashboardShell>,
+    )
+  }
+
+  it("shows a submitter no picker on es2", () => {
+    expect(picker(shell(es2, session("submitter")))).toBeUndefined()
+  })
+
+  it("shows an enterprise admin the picker with all offices on es2", async () => {
+    const el = shell(es2, session("admin"))
+    const trigger = picker(el)!
+    expect(trigger).toBeDefined()
+    await act(async () => {
+      trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }))
+    })
+    const menu = document.querySelector('[role="menu"]')!
+    expect(menu.textContent).toContain("Office A")
+    expect(menu.textContent).toContain("Office B")
+  })
+
+  it("shows nothing when the picker would hold a single option", () => {
+    expect(picker(shell(es2, session("admin"), { bureaus: [] }))).toBeUndefined()
+  })
+
+  it("showOfficePicker needs a reviewer or admin and more than one place to look", () => {
+    expect(showOfficePicker(session("admin"), hierarchy)).toBe(true)
+    expect(showOfficePicker(session("reviewer"), hierarchy)).toBe(true)
+    expect(showOfficePicker(session("submitter"), hierarchy)).toBe(false)
+    expect(showOfficePicker(null, hierarchy)).toBe(false)
+    expect(showOfficePicker(session("admin"), { bureaus: [] })).toBe(false)
+  })
+
+  it("doc is unchanged: sidebar layout, no band, no cockpit picker", () => {
+    const el = shell(doc, session("submitter"))
+    expect(el.querySelector("[data-cockpit]")).toBeNull()
+    expect(el.textContent).toContain("Workspace")
   })
 })
