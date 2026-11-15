@@ -74,6 +74,18 @@ function render(ui: ReactElement) {
 }
 
 describe("/rollup", () => {
+  // These cases cover the roll-up page itself. On ES2 (features.portfolioReport)
+  // /rollup now sends admins and reviewers to /report (F5-3, covered in the
+  // "by tenant" block below), so pin a tenant that still renders the roll-up.
+  const prevTenant = process.env.NEXT_PUBLIC_TENANT
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_TENANT = "doc"
+  })
+  afterEach(() => {
+    if (prevTenant === undefined) delete process.env.NEXT_PUBLIC_TENANT
+    else process.env.NEXT_PUBLIC_TENANT = prevTenant
+  })
+
   // Was "/login?next=%2Frollup". The login page sends a signed-in person on to
   // `next`, so that bounced a submitter between the two pages forever and
   // crashed the browser (ES2 preview, 14 Nov). Signed in without the role now
