@@ -3,6 +3,8 @@ import fs from "node:fs"
 import path from "node:path"
 import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
 import { es2 } from "@/lib/tenant/es2"
+import { tenantCopy } from "@/lib/tenant/copy"
+import { buildPortfolioReport } from "@/lib/portfolioReport"
 import { similarity } from "@/lib/similarity"
 import { isCrossBureauDuplicatePair, ROLLUP_DUPLICATE_THRESHOLD } from "@/lib/crossBureauDuplicates"
 import { clusterDuplicates } from "@/lib/rationalization"
@@ -754,6 +756,46 @@ describe("F4-5: approved records read as pilots, confirmed by the decider", () =
       expect(signoff?.signedOffByName, s.id).toBeTruthy()
       expect(Number.isNaN(new Date(signoff?.signedOffAt || "").getTime()), s.id).toBe(false)
       expect(getDecidedAt(s), s.id).toBe(signoff!.signedOffAt)
+    }
+  })
+})
+
+// ─── NL-15 (#335): success measures and risk reasons that match the level ───
+describe("NL-15 seed polish (#335)", () => {
+  const es2Copy = tenantCopy(es2)
+  const hasMeasure = (s: Submission) => {
+    const fd = s.formData as unknown as Record<string, unknown>
+    return String(fd.successMetrics ?? "").trim().length > 0 || (Array.isArray(fd.keyMetrics) && fd.keyMetrics.length > 0)
+  }
+
+  it("3. all but at most 3 ideas carry a way to measure success, and the data check agrees", () => {
+    const blank = S.filter((s) => !hasMeasure(s))
+    expect(blank.length).toBeGreaterThanOrEqual(1) // the data check keeps something to show
+    expect(blank.length).toBeLessThanOrEqual(3)
+    const report = buildPortfolioReport(S, es2, Date.now())
+    expect(report.summary.dataCheck.noMeasure).toBe(blank.length)
+    for (const s of S.filter(hasMeasure)) {
+      const m = String((s.formData as unknown as Record<string, unknown>).successMetrics ?? "").trim()
+      if (m) expect(m.length, s.id).toBeGreaterThan(15)
+    }
+  })
+
+  it("3. adding measures leaves the headline counts as they were", () => {
+    const report = buildPortfolioReport(S, es2, Date.now())
+    expect(S).toHaveLength(42)
+    expect(report.summary.risk.high).toBe(6)
+    expect(report.summary.decisions.approved + report.summary.decisions.notApproved).toBe(14)
+    expect(clusterDuplicates(S, es2)).toHaveLength(3)
+  })
+
+  it("4. no Low-risk record carries a reason that reads as high risk", () => {
+    const HIGH_READING = /meaningfully affect|high.impact|high risk|would (decide|issue|hold|start)|no person|no one|with no .* (check|review|confirm)/i
+    const report = buildPortfolioReport(S, es2, Date.now())
+    const low = report.ideas.filter((i) => i.riskLevel === "low")
+    expect(low.length).toBeGreaterThan(5)
+    for (const i of low) {
+      expect(i.reason, i.id).not.toMatch(HIGH_READING)
+      expect(i.reason, i.id).not.toBe(es2Copy.portfolioReasonHigh)
     }
   })
 })

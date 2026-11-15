@@ -1331,6 +1331,52 @@ const PLAIN_REASON: Record<string, string> = {
   "es2-atis-instructor-feedback-themes": "Groups comments for course owners; no decisions about people.",
 }
 
+// ─── NL-15 (#335): a plain way to measure success on every idea ─────────────
+// Added in one place, keyed by record, so the two seed files stay as written.
+// A record that already names its own measure keeps it. Three are left blank on
+// purpose (early, unassessed ideas) so the report's data check has something to show.
+const SUCCESS_MEASURE: Record<string, string> = {
+  "es2-fmsaces-requisition-backlog": "Days a requisition waits for first action; open requisitions older than 30 days.",
+  "es2-adams-career-path-gap-analysis": "Share of reviewed career paths where the gap list matches the counselor's own view.",
+  "es2-digitalmarket-vendor-past-performance": "Hours to pull past-performance history per vendor; number of vendors reviewed per week.",
+  "es2-logfin-supplier-past-performance": "Hours to pull past-performance history per supplier; late-delivery findings caught before award.",
+  "es2-bts-supplier-risk-scoring": "Supplier risk reviews finished per month; reviews that change a buying decision.",
+  "es2-hrfm-meeting-transcription": "Minutes of staff time per meeting write-up; share of notes accepted with few edits.",
+  "es2-logfin-meeting-transcription": "Minutes of staff time per meeting write-up; share of notes accepted with few edits.",
+  "es2-atr-schedule-risk-draft": "Days to produce the first schedule risk draft; share of draft risks the program manager keeps.",
+  "es2-atis-instructor-feedback-themes": "Days from end of course to a revised lesson; share of recurring comments addressed each quarter.",
+  "es2-hrfm-personnel-action-completeness": "Share of packets returned for a missing form or signature; days from filing to action.",
+  "es2-hrfm-reenlistment-eligibility": "Counselor hours spent on routine eligibility checks; end-of-year backlog size.",
+  "es2-hrfm-assignment-matching": "Days to finish an assignment cycle; share of matches the assignment officer accepts.",
+  "es2-hrfm-bonus-eligibility": "Days from eligibility to payment; incentive payment errors found after the fact.",
+  "es2-hrfm-duplicate-payment-check": "Duplicate payments caught before they are paid; dollars recovered after payment.",
+  "es2-hrfm-record-correction-routing": "Days from a correction request to the right specialist; requests re-routed by hand.",
+  "es2-hrfm-hiring-package-status": "Status calls to the hiring office per week; days a package waits unnoticed.",
+  "es2-hrfm-civilian-training-due-dates": "Share of civilian staff with training current; overdue notices sent after the due date.",
+  "es2-logfin-unliquidated-obligations": "Dollars of unneeded funds freed each quarter; days to finish an obligation review.",
+  "es2-logfin-invoice-mismatch-notes": "Time to resolve a mismatched invoice; mismatches that reopen after resolution.",
+  "es2-logfin-automatic-vendor-holds": "Days a questionable payment stays unflagged; vendors held in error.",
+  "es2-logfin-duplicate-payment-check": "Duplicate payments caught before they are paid; dollars recovered after payment.",
+  "es2-logfin-depot-parts-forecast": "Forecast error against actual parts demand; parts shortages at the depot each quarter.",
+  "es2-logfin-fund-balance-variance": "Days to explain a fund balance variance; variances found only at quarter close.",
+  "es2-bts-license-right-sizing": "Software seats released each renewal cycle; dollars saved against last year's licenses.",
+  "es2-bts-policy-chat-front-end": "Policy questions answered without a help desk ticket; hosting cost per answered question.",
+  "es2-bts-support-request-routing": "Minutes from a support request to the right team; requests moved between teams.",
+  "es2-bts-access-review-evidence": "Hours to gather access review evidence; findings from missing evidence.",
+  "es2-bts-legacy-interface-inventory": "Share of legacy interfaces with a named owner; interfaces found after an outage.",
+  "es2-cerp-material-master-cleanup": "Duplicate material records merged; ordering errors caused by bad part descriptions.",
+  "es2-cerp-support-request-routing": "Minutes from a support request to the right team; requests moved between teams.",
+  "es2-cerp-interface-failure-warning": "Minutes from an interface failure to the alert; failed jobs rerun before users notice.",
+}
+
+function withSuccessMeasure(s: Submission): Submission {
+  const fd = s.formData as unknown as Record<string, unknown>
+  const own = String(fd.successMetrics ?? "").trim()
+  const measure = SUCCESS_MEASURE[s.id]
+  if (own || !measure) return s
+  return { ...s, formData: { ...s.formData, successMetrics: measure } as unknown as FormData }
+}
+
 function withPlainReason(s: Submission): Submission {
   const reason = PLAIN_REASON[s.id] ?? NOT_ASSESSED
   return { ...s, formData: { ...s.formData, riskPlainReason: reason } as unknown as FormData }
@@ -1403,3 +1449,4 @@ function withDeciderConfirmations(s: Submission): Submission {
 export const es2SeedSubmissions: Submission[] = [...BASE_SEED.map(reschedule), ...es2CpeSeedSubmissions]
   .map(withDeciderConfirmations)
   .map(withPlainReason)
+  .map(withSuccessMeasure)
