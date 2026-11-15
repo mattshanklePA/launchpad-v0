@@ -192,4 +192,19 @@ describe("ReportView (ES2)", () => {
     expect(c.querySelectorAll("h1")).toHaveLength(0)
     expect(c.querySelectorAll('[role="region"][tabindex="0"]').length).toBeGreaterThanOrEqual(3)
   })
+
+  // NL-15 (#335): no raw record IDs on screen; the program name only.
+  it("prints the program name under each idea and never the record ID", () => {
+    const d = data()
+    const c = render(<ReportView data={d} tenant={es2} />)
+    expect(rows(c).length).toBeGreaterThan(0)
+    for (const row of rows(c)) {
+      const id = row.getAttribute("data-report-idea")!
+      const idea = d.report.ideas.find((i) => i.id === id)!
+      expect(text(row), id).not.toContain(id)
+      expect(text(row), id).not.toMatch(/es2-[a-z0-9-]+/)
+      if (idea.program) expect(text(row), id).toContain(idea.program)
+    }
+  })
 })
+

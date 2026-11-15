@@ -40,8 +40,10 @@ export function tabIsLit(pathname: string | null, href: string): boolean {
  * NL-14: the picker shows only to someone who can switch views, a
  * reviewer or admin with more than the one enterprise view to look at.
  */
-export function showOfficePicker(session: Session | null, hierarchy: OrgHierarchy): boolean {
-  return hasAdminAccess(session) && hierarchy.bureaus.length > 0
+export function showOfficePicker(session: Session | null, hierarchy: OrgHierarchy, pathname: string | null = null): boolean {
+  // NL-15: on /report the report's own office filter is the one control.
+  const onReport = pathname === "/report" || !!pathname?.startsWith("/report/")
+  return hasAdminAccess(session) && hierarchy.bureaus.length > 0 && !onReport
 }
 
 export type CockpitShellProps = {
@@ -126,7 +128,7 @@ export function CockpitShell({
           Status by office
         </Link>
       )}
-      {showOfficePicker(session, hierarchy) && (
+      {showOfficePicker(session, hierarchy, pathname) && (
       <DropdownMenu>
         <DropdownMenuTrigger
           className={`inline-flex items-center gap-1.5 border border-white/30 px-3 py-1.5 text-sm text-[var(--ks-chalk)] hover:bg-white/10 ${FOCUS}`}

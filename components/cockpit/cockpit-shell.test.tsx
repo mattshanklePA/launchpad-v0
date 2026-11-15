@@ -280,4 +280,30 @@ describe("CockpitShell office picker (NL-14, #332)", () => {
     expect(el.querySelector("[data-cockpit]")).toBeNull()
     expect(el.textContent).toContain("Workspace")
   })
+
+  // NL-15 (#335): on /report the report's own office filter is the one control.
+  it("hides the band's picker on /report and keeps it on every other page (es2)", () => {
+    mockPath = "/report"
+    expect(picker(shell(es2, session("admin")))).toBeUndefined()
+    mockPath = "/home"
+    expect(picker(shell(es2, session("admin")))).toBeDefined()
+    mockPath = "/decisions"
+    expect(picker(shell(es2, session("admin")))).toBeDefined()
+  })
+
+  it("showOfficePicker takes the path: off on /report only", () => {
+    expect(showOfficePicker(session("admin"), hierarchy, "/report")).toBe(false)
+    expect(showOfficePicker(session("admin"), hierarchy, "/report/")).toBe(false)
+    expect(showOfficePicker(session("admin"), hierarchy, "/reports-archive")).toBe(true)
+    expect(showOfficePicker(session("admin"), hierarchy, "/home")).toBe(true)
+    expect(showOfficePicker(session("admin"), hierarchy, null)).toBe(true)
+  })
+
+  it("doc on /report: no band, no cockpit picker, sidebar unchanged", () => {
+    mockPath = "/report"
+    const el = shell(doc, session("admin"))
+    expect(el.querySelector("[data-cockpit]")).toBeNull()
+    expect(el.textContent).toContain("Workspace")
+  })
 })
+

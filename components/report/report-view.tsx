@@ -468,7 +468,7 @@ export function ReportView({
                       <Link href={i.href} className={`font-semibold ${LINK}`}>
                         {i.title}
                       </Link>
-                      <div className="mt-[3px] text-xs text-[var(--ks-ink-700)]">{[i.id, i.program].filter(Boolean).join(" · ")}</div>
+                      {i.program && <div className="mt-[3px] text-xs text-[var(--ks-ink-700)]">{i.program}</div>}
                     </th>
                     <td className={TD}>{i.status}</td>
                     <td className={TD}>
