@@ -44,6 +44,10 @@ const csvMock = vi.fn()
 vi.mock("@/lib/portfolioReportPdf", () => ({ generatePortfolioReportPDF: (...a: unknown[]) => pdfMock(...a) }))
 vi.mock("@/lib/portfolioReportCsv", () => ({ downloadPortfolioReportCsv: (...a: unknown[]) => csvMock(...a) }))
 
+// F5-5 (#322): Plumb's note is its own part of the screen; these tests are about the numbers.
+vi.mock("@/app/report-actions", () => ({ writePortfolioNote: async () => ({ status: "unavailable" }) }))
+vi.mock("@/app/admin/compare-actions", () => ({ compareSubmissions: vi.fn() }))
+
 import { ReportScreen } from "./report-screen"
 
 const NOW = Date.parse("2026-12-10T17:00:00Z")

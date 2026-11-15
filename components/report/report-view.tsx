@@ -83,7 +83,19 @@ function Table({ min, children, label }: { min: number; children: ReactNode; lab
   )
 }
 
-export function ReportView({ data, tenant }: { data: ReportResponse; tenant: TenantConfig }) {
+export function ReportView({
+  data,
+  tenant,
+  note,
+  briefing,
+}: {
+  data: ReportResponse
+  tenant: TenantConfig
+  /** Plumb's note section (F5-5). Without one, only the section title is drawn. */
+  note?: ReactNode
+  /** The kept Decision Center briefing section, under the note (F5-5). */
+  briefing?: ReactNode
+}) {
   const copy = tenantCopy(tenant)
   const { report } = data
   const { risk, decisions, overlap, dataCheck } = report.summary
@@ -478,12 +490,12 @@ export function ReportView({ data, tenant }: { data: ReportResponse; tenant: Ten
         ) : null}
       </section>
 
-      <section aria-label={copy.reportNoteTitle} className="flex flex-col gap-3.5">
-        <SectionTitle title={copy.reportNoteTitle} context={copy.reportNoteContext} />
-        <p className="m-0 rounded-lg border border-[var(--ks-limestone-dark)] bg-white px-[22px] py-5 text-[15px] leading-[1.6] text-[var(--ks-ink-900)]">
-          {copy.reportNotePending}
-        </p>
-      </section>
+      {note ?? (
+        <section aria-label={copy.reportNoteTitle} className="flex flex-col gap-3.5">
+          <SectionTitle title={copy.reportNoteTitle} context={copy.reportNoteContext} />
+        </section>
+      )}
+      {briefing}
 
       <footer className="border-t border-[var(--ks-limestone-dark)] pt-4 text-xs text-[var(--ks-ink-700)]">
         {fill(copy.reportFooter, { date: preparedOn })}

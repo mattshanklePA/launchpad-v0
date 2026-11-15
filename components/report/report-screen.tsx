@@ -19,6 +19,8 @@ import { getTenant } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
 import type { ReportResponse } from "@/lib/portfolioReportApi"
 import { ReportView, fill } from "./report-view"
+import { PortfolioNote, ReportBriefing } from "./portfolio-note"
+import { getBriefing, getNote } from "@/lib/portfolioReportSession"
 
 const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
 const BTN = `min-h-[44px] border px-[18px] text-[15px] font-semibold ${FOCUS}`
@@ -36,7 +38,15 @@ function Controls({ data, ready, office, onOffice }: { data: ReportResponse | nu
     try {
       if (kind === "pdf") {
         const { generatePortfolioReportPDF } = await import("@/lib/portfolioReportPdf")
-        generatePortfolioReportPDF(data.report, { now: data.now, demo: data.demo })
+        // What is on the screen right now: Plumb's note for this office view and the kept briefing, when there are any.
+        const note = getNote(office)
+        const briefing = getBriefing()
+        generatePortfolioReportPDF(data.report, {
+          now: data.now,
+          demo: data.demo,
+          ...(note ? { plumbNote: note.note, plumbNoteAt: note.writtenAt } : {}),
+          ...(briefing ? { briefing } : {}),
+        })
       } else {
         const { downloadPortfolioReportCsv } = await import("@/lib/portfolioReportCsv")
         downloadPortfolioReportCsv(data.report, { now: data.now })
@@ -199,7 +209,7 @@ function ReportBody() {
       </div>
     )
   } else {
-    body = <ReportView data={state.data} tenant={tenant} />
+    body = <ReportView data={state.data} tenant={tenant} note={<PortfolioNote office={office} />} briefing={<ReportBriefing />} />
   }
 
   return (

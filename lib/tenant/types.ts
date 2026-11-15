@@ -198,7 +198,23 @@ export type TenantCopy = {
   reportGroupSummary: string
   reportNoteTitle: string
   reportNoteContext: string
-  reportNotePending: string
+  reportNoteLabel: string
+  reportNoteWriting: string
+  reportNoteError: string
+  reportNoteRetry: string
+  reportNoteRewrite: string
+  reportBriefingAdd: string
+  reportBriefingAdded: string
+  reportBriefingTitle: string
+  reportBriefingContext: string
+  reportBriefingRemove: string
+  reportBriefingFundFirst: string
+  reportBriefingGap: string
+  reportBriefingDiffer: string
+  reportBriefingBiggestGap: string
+  reportBriefingFundNow: string
+  reportBriefingFundWithConditions: string
+  reportBriefingHold: string
   reportFooter: string
   reportFooterDemo: string
   reportPdfKicker: string

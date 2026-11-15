@@ -30,6 +30,7 @@ import { es2 } from "@/lib/tenant/es2"
 import { tenantCopy } from "@/lib/tenant/copy"
 import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
 import { buildPortfolioReport, type PortfolioReport, type PortfolioIdea } from "@/lib/portfolioReport"
+import type { SavedBriefing } from "@/lib/portfolioReportSession"
 import { buildPortfolioReportPDF, generatePortfolioReportPDF, layoutIdeaPages, portfolioReportFileName } from "@/lib/portfolioReportPdf"
 
 const NOW = Date.parse("2026-12-10T17:00:00Z")
@@ -136,8 +137,54 @@ describe("generatePortfolioReportPDF", () => {
     expect(pageText(1)).not.toContain("advice, not a decision")
     recorded.length = 0
     buildPortfolioReportPDF(report(), { now: NOW, demo: false, tenant: es2, plumbNote: "Half of the high-risk ideas sit in one office." })
-    expect(pageText(1)).toContain("Plumb's read · advice, not a decision · 10 Dec 2026")
+    expect(pageText(1)).toContain("Plumb's read of the portfolio · advice, not a decision · written 10 Dec 2026, 12:00")
     expect(pageText(1)).toContain("Half of the high-risk ideas sit in one office.")
+  })
+
+  describe("F5-5 (#322): Plumb's note and the kept briefing", () => {
+    const SAVED: SavedBriefing = {
+      titles: ["Vendor Scoring", "Contract Triage"],
+      writtenAt: Date.parse("2026-12-10T18:30:00Z"),
+      briefing: {
+        recommendation: { fundId: "a", headline: "Fund the scoring tool first, it has the clearest owner." },
+        differ: "They serve different offices.",
+        portfolioGap: "None has a measured baseline.",
+        perSubmission: [
+          { id: "a", title: "Vendor Scoring", verdict: "fund_now", oneLine: "Scores past performance.", gap: "No baseline." },
+          { id: "b", title: "Contract Triage", verdict: "hold", oneLine: "Sorts incoming files.", gap: "No named owner." },
+        ],
+      },
+    }
+    const all = () => [...new Set(recorded.map((c) => c.page))].map((n) => `[p${n}] ${pageText(n)}`).join("\n")
+
+    it("with neither a note nor a briefing, neither block is drawn", () => {
+      buildPortfolioReportPDF(report(), { now: NOW, demo: false, tenant: es2 })
+      expect(all()).not.toContain("advice, not a decision")
+      expect(all()).not.toContain("Executive briefing from the Decision Center")
+    })
+
+    it("with a note and a briefing, both appear: the note on page 1, the briefing on its own page before the idea table", () => {
+      const doc = buildPortfolioReportPDF(report(), { now: NOW, demo: false, tenant: es2, plumbNote: "Watch the HR-FM queue.", plumbNoteAt: Date.parse("2026-12-10T17:07:00Z"), briefing: SAVED })
+      expect(pageText(1)).toContain("Plumb's read of the portfolio · advice, not a decision · written 10 Dec 2026, 12:07")
+      expect(pageText(1)).toContain("Watch the HR-FM queue.")
+      expect(pageText(1)).not.toContain("Executive briefing from the Decision Center")
+      const b = pageText(2)
+      expect(b).toContain("Executive briefing from the Decision Center")
+      expect(flat(2)).toContain("Ideas compared: Vendor Scoring, Contract Triage · written 10 Dec 2026, 13:30")
+      expect(flat(2)).toContain("Fund first: Vendor Scoring")
+      expect(flat(2)).toContain("Fund the scoring tool first")
+      expect(flat(2)).toContain("Contract Triage. Hold.")
+      expect(b).toContain("They serve different offices.")
+      expect(b).toContain("None has a measured baseline.")
+      expect(pageText(3)).toContain(copy.reportIdeasTitle)
+      expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(3)
+    })
+
+    it("a briefing alone leaves out the note", () => {
+      buildPortfolioReportPDF(report(), { now: NOW, demo: false, tenant: es2, briefing: SAVED })
+      expect(pageText(1)).not.toContain("advice, not a decision")
+      expect(pageText(2)).toContain("Executive briefing from the Decision Center")
+    })
   })
 
   it("footer on every page: prepared line, Demo data only in demo mode, Page N of M", () => {

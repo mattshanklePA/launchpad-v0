@@ -11,6 +11,8 @@ import { compareSubmissions, type CompareBriefing } from "@/app/admin/compare-ac
 import { computeRiskProfile } from "@/lib/riskProfile"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
 import { getTenant } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
+import { setBriefing as keepBriefing, useSavedBriefing } from "@/lib/portfolioReportSession"
 import { SectionTitle, SquareTag } from "@/components/cockpit"
 import { splitLabelCode } from "@/components/dashboard/command-center-data"
 import {
@@ -126,14 +128,18 @@ const COMPARE_ROWS: Array<{ label: string; render: (s: Submission) => ReactNode 
 
 export function ComparisonView({ submissions, onClose, Heading = "h2" }: ComparisonViewProps) {
   const [briefing, setBriefing] = useState<CompareBriefing | null>(null)
+  const [briefingAt, setBriefingAt] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  // F5-5 (#322), ES2 only: the briefing can be kept in the portfolio report for this session.
+  const kept = useSavedBriefing()
 
   const handleGenerateBrief = async () => {
     setIsLoading(true)
     try {
       const result = await compareSubmissions(submissions)
       setBriefing(result)
+      setBriefingAt(Date.now())
     } catch (error) {
       console.error("Compare submissions failed:", error)
       toast({
@@ -238,7 +244,22 @@ export function ComparisonView({ submissions, onClose, Heading = "h2" }: Compari
                     <p className="mt-1 leading-relaxed">{briefing.portfolioGap}</p>
                   </div>
                 </div>
-                <div className="flex justify-end pt-1">
+                <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
+                  {getTenant().features.portfolioReport ? (
+                    kept?.briefing === briefing ? (
+                      <span role="status" className="text-[13px] text-[var(--ks-ink-700)]">
+                        {tenantCopy(getTenant()).reportBriefingAdded}
+                      </span>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => keepBriefing({ briefing, titles, writtenAt: briefingAt || Date.now() })}
+                      >
+                        {tenantCopy(getTenant()).reportBriefingAdd}
+                      </Button>
+                    )
+                  ) : null}
                   <Button variant="outline" size="sm" onClick={handleGenerateBrief} disabled={isLoading}>
                     Regenerate
                   </Button>
