@@ -182,6 +182,6 @@ describe("F5-2 (#319): portfolio report copy", () => {
     expect(c.reportLeaderEmpty).toBe("Nothing is waiting on a leader today.")
     expect(c.reportNotePending).toBe("Plumb's read is added in the next step.")
     expect(c.reportFooter).toBe("Prepared from Keystone on {date}. Internal. Not an official Army record.")
-    expect(c.reportComingNext).toBe("Coming next")
+    expect(c.reportDownloadCsv).toBe("Download numbers (CSV)")
   })
 })
