@@ -181,10 +181,13 @@ describe("ReportView (ES2)", () => {
     expect(text(c2)).toContain("Nothing is waiting on a leader today.")
   })
 
-  it("holds Plumb's note place and uses th scope on every table heading", () => {
-    const c = render(<ReportView data={data()} tenant={es2} />)
-    expect(text(c)).toContain("Plumb's portfolio note")
-    expect(text(c)).toContain("Plumb's read is added in the next step.")
+  it("holds Plumb's note place, shows what it is given there, and uses th scope on every table heading", () => {
+    const c = render(<ReportView data={data()} tenant={es2} note={<p>THE NOTE</p>} briefing={<p>THE BRIEFING</p>} />)
+    expect(text(c)).toContain("THE NOTE")
+    expect(text(c)).toContain("THE BRIEFING")
+    const bare = render(<ReportView data={data()} tenant={es2} />)
+    expect(text(bare)).toContain("Plumb's portfolio note")
+    expect(text(bare)).not.toContain("added in the next step")
     for (const th of c.querySelectorAll("th")) expect(th.getAttribute("scope")).toMatch(/^(col|row|rowgroup)$/)
     expect(c.querySelectorAll("h1")).toHaveLength(0)
     expect(c.querySelectorAll('[role="region"][tabindex="0"]').length).toBeGreaterThanOrEqual(3)

@@ -24,3 +24,10 @@ export function formatKeystoneDate(iso: string, timeZone: string = DISPLAY_TIME_
   if (Number.isNaN(d.getTime())) return iso
   return new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric" }).format(d)
 }
+
+/** `d Mon yyyy, HH:mm` (24-hour, e.g. "10 Dec 2026, 12:00") in the display zone, for a time written by the system. Returns the input unchanged if it isn't a valid date. */
+export function formatKeystoneDateTime(iso: string, timeZone: string = DISPLAY_TIME_ZONE): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d)
+}

@@ -15,6 +15,7 @@ vi.mock("next/headers", () => ({
 import * as actions from "@/app/actions"
 import { assessCluster } from "@/app/cluster-actions"
 import { compareSubmissions } from "@/app/admin/compare-actions"
+import { writePortfolioNote } from "@/app/report-actions"
 import { sendDashboardActionNotification } from "@/app/dashboard-actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 
@@ -35,6 +36,7 @@ const ACTIONS: Array<[string, () => Promise<unknown>, "any" | "reviewer"]> = [
   ["draftGovernanceFields", () => actions.draftGovernanceFields(fd), "any"],
   ["assessCluster", () => assessCluster([sub, sub]), "reviewer"],
   ["compareSubmissions", () => compareSubmissions([sub, sub]), "reviewer"],
+  ["writePortfolioNote", () => writePortfolioNote(), "reviewer"],
   ["sendDashboardActionNotification", () => sendDashboardActionNotification([]), "reviewer"],
   ["pushApprovedSubmission", () => pushApprovedSubmission(sub), "reviewer"],
 ]

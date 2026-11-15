@@ -57,6 +57,7 @@ const MAX_OUTPUT_TOKENS: Record<string, number> = {
   draftGovernanceFields: 2500,
   assessCluster: 1200,
   compareSubmissions: 3000,
+  writePortfolioNote: 600,
 }
 
 export function maxOutputTokensFor(action: string): number {

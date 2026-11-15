@@ -9,17 +9,20 @@
 //
 // Page 1: title block, the three measure sentences and the data check, what
 // needs a leader, by program office, and Plumb's note only when one is given.
+// The Decision Center briefing, only when one was added, is its own section
+// on its own page before the idea table.
 // Later pages: every idea, header row repeated, no row split across a page.
 // Every page: the footer and "Page N of M". Only black, grays and white, so it
 // reads well printed in black and white; risk is always the printed word.
 
 import { jsPDF } from "jspdf"
-import { formatKeystoneDate } from "@/lib/dateFormat"
+import { formatKeystoneDate, formatKeystoneDateTime } from "@/lib/dateFormat"
 import { formatDays } from "@/lib/timeToDecision"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
 import { tenantCopy } from "@/lib/tenant/copy"
 import type { PortfolioReport } from "@/lib/portfolioReport"
 import { portfolioReportFileName } from "@/lib/portfolioReportCsv"
+import type { SavedBriefing } from "@/lib/portfolioReportSession"
 
 export { portfolioReportFileName }
 
@@ -30,6 +33,10 @@ export type PortfolioPdfOptions = {
   demo: boolean
   /** Plumb's note for this session (F5-5). No note, no block. */
   plumbNote?: string
+  /** Epoch ms Plumb's note was written; the label prints it. Defaults to `now`. */
+  plumbNoteAt?: number
+  /** The Decision Center briefing added to this report in this session (F5-5). No briefing, no section. */
+  briefing?: SavedBriefing
   tenant?: TenantConfig
 }
 
@@ -233,9 +240,51 @@ export function buildPortfolioReportPDF(report: PortfolioReport, options: Portfo
     rule(y)
     y += 8
     font("bold", 8, GRAY)
-    doc.text(fill(copy.reportPdfPlumbNote, { assistant: tenant.assistantName, date: preparedOn }), MARGIN, y + 8)
+    doc.text(fill(copy.reportPdfPlumbNote, { assistant: tenant.assistantName, when: formatKeystoneDateTime(new Date(options.plumbNoteAt ?? options.now).toISOString()) }), MARGIN, y + 8)
     y += 16
     y = paragraph(options.plumbNote.trim(), MARGIN, y, CONTENT_W, 10.5)
+  }
+
+  // ── Executive briefing from the Decision Center: only when one was added ──
+  if (options.briefing) {
+    const { briefing, titles, writtenAt } = options.briefing
+    doc.addPage()
+    y = MARGIN
+    const room = (h: number) => {
+      if (y + h > BOTTOM) {
+        doc.addPage()
+        y = MARGIN
+      }
+    }
+    y = heading(copy.reportBriefingTitle, y)
+    y = paragraph(
+      fill(copy.reportBriefingContext, { ideas: titles.join(", "), when: formatKeystoneDateTime(new Date(writtenAt).toISOString()) }),
+      MARGIN, y, CONTENT_W, 9,
+    ) + 6
+    const fundTitle = briefing.perSubmission.find((p) => p.id === briefing.recommendation.fundId)?.title
+    if (fundTitle) y = paragraph(fill(copy.reportBriefingFundFirst, { title: fundTitle }), MARGIN, y, CONTENT_W, 10.5, "bold")
+    y = paragraph(briefing.recommendation.headline, MARGIN, y, CONTENT_W, 10.5) + 6
+    const verdictWord: Record<string, string> = {
+      fund_now: copy.reportBriefingFundNow,
+      fund_with_conditions: copy.reportBriefingFundWithConditions,
+      hold: copy.reportBriefingHold,
+    }
+    for (const p of briefing.perSubmission) {
+      font("normal", 10)
+      const lines = wrap(`${p.title}. ${verdictWord[p.verdict] ?? copy.reportBriefingHold}. ${p.oneLine} ${copy.reportBriefingGap}: ${p.gap}`, CONTENT_W - 18)
+      room(lines.length * 14 + 6)
+      font("normal", 10)
+      doc.text("•", MARGIN + 4, y + 10)
+      y = paragraph(lines.join(" "), MARGIN + 18, y, CONTENT_W - 18, 10) + 3
+    }
+    y += 6
+    for (const [label, text] of [[copy.reportBriefingDiffer, briefing.differ], [copy.reportBriefingBiggestGap, briefing.portfolioGap]] as const) {
+      font("normal", 10.5)
+      room(wrap(text, CONTENT_W).length * 15 + 20)
+      font("bold", 8, GRAY)
+      doc.text(label.toUpperCase(), MARGIN, y + 8)
+      y = paragraph(text, MARGIN, y + 12, CONTENT_W, 10.5) + 4
+    }
   }
 
   // ── Every idea ──

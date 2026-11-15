@@ -82,7 +82,8 @@ const SWEPT_DIRS = [
   ...walk("app", [".ts", ".tsx"], [/\.test\.tsx?$/]),
   ...walk("components", [".ts", ".tsx"], [/\.test\.tsx?$/]),
 ]
-const SWEPT_FILES = [...SWEPT_DIRS, "lib/pdfGenerator.ts", ...walk("lib/tenant", [".ts"], [/\.test\.ts$/])]
+// lib/portfolioNote.ts holds the instruction sent to the assistant for Plumb's read of the portfolio (F5-5, #322).
+const SWEPT_FILES = [...SWEPT_DIRS, "lib/pdfGenerator.ts", "lib/portfolioNote.ts", "lib/portfolioReportPdf.ts", ...walk("lib/tenant", [".ts"], [/\.test\.ts$/])]
 
 describe("no rendered surface names a model vendor, lab, or model family (#223)", () => {
   it("has none of Anthropic/Claude/OpenAI/Gemini/Llama/Mistral/Cohere/Sonnet/Opus/Haiku/GPT/ChatGPT in the display text of app/, components/, lib/pdfGenerator.ts, or lib/tenant/*.ts", () => {
