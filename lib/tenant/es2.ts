@@ -320,6 +320,11 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     // NL-2 (#283): the strip under the header band.
     sampleDataTag: "SAMPLE DATA",
     sampleDataNotice: "Every idea, office and number on this page is sample data for the demo.",
+    // FIX-3 (#339): Plumb's note on /report is written only when a person presses the button.
+    reportNoteExplainer: "{assistant} can read this report and point out what stands out. Advice only.",
+    reportNoteAsk: "Ask {assistant} for a read",
+    reportNoteReading: "Reading the report",
+    reportNoteAskAgain: "Ask again",
     // NL-3 (#284): My work home.
     homeLeadLabel: "Do this first",
     homeColCount: "Count",

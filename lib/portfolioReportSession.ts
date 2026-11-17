@@ -32,6 +32,13 @@ export function setNote(office: string, value: SavedNote): void {
   changed()
 }
 
+/** Forget every note: a note is about one set of ideas, and the office view changed. */
+export function clearNotes(): void {
+  if (notes.size === 0) return
+  notes = new Map()
+  changed()
+}
+
 export const getBriefing = (): SavedBriefing | undefined => briefing
 export function setBriefing(value: SavedBriefing): void {
   briefing = value

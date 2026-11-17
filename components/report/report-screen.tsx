@@ -6,7 +6,7 @@
 // office and could-not-load states from docs/design/11c Portfolio Report States.
 // The "Since 1 Sep / Last 90 days" switch is left out: the period cannot change.
 
-import { Suspense, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
+import { Suspense, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { RequireAuth } from "@/components/auth/require-auth"
@@ -20,7 +20,7 @@ import { tenantCopy } from "@/lib/tenant/copy"
 import type { ReportResponse } from "@/lib/portfolioReportApi"
 import { ReportView, fill } from "./report-view"
 import { PortfolioNote, ReportBriefing } from "./portfolio-note"
-import { getBriefing, getNote } from "@/lib/portfolioReportSession"
+import { clearNotes, getBriefing, getNote } from "@/lib/portfolioReportSession"
 
 const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ks-active-blue)]"
 const BTN = `min-h-[44px] border px-[18px] text-[15px] font-semibold ${FOCUS}`
@@ -124,6 +124,14 @@ function ReportBody() {
   const [last, setLast] = useState<ReportResponse | null>(null)
   const [attempt, setAttempt] = useState(0)
   const band = useContext(CockpitBandContext)
+
+  // A note is about one set of ideas: changing the office clears it and the button comes back.
+  const shownOffice = useRef(office)
+  useEffect(() => {
+    if (shownOffice.current === office) return
+    shownOffice.current = office
+    clearNotes()
+  }, [office])
 
   useCockpitBand({ eyebrow: copy.reportEyebrow, title: copy.reportTitle })
 

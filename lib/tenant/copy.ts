@@ -177,10 +177,13 @@ export const DEFAULT_COPY: TenantCopy = {
   reportNoteContext: "Advice, not a decision",
   // F5-5 (#322): Plumb's read of the portfolio and the kept briefing. Only ES2 renders /report.
   reportNoteLabel: "{assistant}'s read of the portfolio · advice, not a decision · written {when}",
-  reportNoteWriting: "{assistant} is writing. Every number above is ready and does not depend on {assistant}.",
+  // FIX-3 (#339): the note is written on a button press. Empty here: only ES2 renders /report, and its words are in es2.ts.
+  reportNoteExplainer: "",
+  reportNoteAsk: "",
+  reportNoteReading: "",
+  reportNoteAskAgain: "",
   reportNoteError: "{assistant}'s read is not available right now. The numbers above are complete.",
   reportNoteRetry: "Try again",
-  reportNoteRewrite: "Write it again",
   reportBriefingAdd: "Add to portfolio report",
   reportBriefingAdded: "Added to the portfolio report",
   reportBriefingTitle: "Executive briefing from the Decision Center",
