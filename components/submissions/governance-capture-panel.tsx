@@ -130,6 +130,7 @@ export function GovernanceCapturePanel({
   busy,
   setBusy,
   onSaved,
+  initialDraft,
 }: {
   submission: Submission
   assistantName: string
@@ -138,6 +139,12 @@ export function GovernanceCapturePanel({
   busy: boolean
   setBusy: (b: boolean) => void
   onSaved: () => Promise<void>
+  /**
+   * The page's draft for this open (FIX-2, #338), so the panel does not ask
+   * again. A draft: used as is. `null`: the page is still drafting, so wait for
+   * it. `undefined`: the page did not draft (decided record), so draft here.
+   */
+  initialDraft?: GovernanceFieldDraft | null
 }) {
   const tenant = getTenant()
   const fd = submission.formData
@@ -173,12 +180,20 @@ export function GovernanceCapturePanel({
     }
   }
 
+  // One draft request per open: use the page's draft when it has one (or is
+  // about to), and only ask here when the page did not.
   useEffect(() => {
     if (ranRef.current) return
+    if (initialDraft === null) return
     ranRef.current = true
-    runDraft()
+    if (initialDraft) {
+      setDraft(initialDraft)
+      seedValues(initialDraft)
+    } else {
+      runDraft()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [submission.id])
+  }, [submission.id, initialDraft])
 
   const mergedFd: FormData = { ...fd, ...(values as Partial<FormData>) }
   const applicable = GOVERNANCE_FIELD_KEYS.filter((k) => isFieldVisible(k, mergedFd))

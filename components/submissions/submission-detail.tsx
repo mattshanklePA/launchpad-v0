@@ -234,7 +234,7 @@ export function SubmissionDetail({ id }: { id: string }) {
     if (!sub || ranRef.current || !isReviewer) return
     ranRef.current = true
     setAssisting(true)
-    getPlumbRead(sub.id, sub.formData)
+    getPlumbRead(sub.id)
       .then((r) => {
         setAssist(r.read)
         setAssistSavedAt(r.savedAt)
@@ -246,7 +246,7 @@ export function SubmissionDetail({ id }: { id: string }) {
   const produceRead = () => {
     if (!sub) return
     setAssisting(true)
-    getPlumbRead(sub.id, sub.formData, true)
+    getPlumbRead(sub.id, true)
       .then((r) => {
         setAssist(r.read)
         setAssistSavedAt(r.savedAt)
@@ -255,16 +255,17 @@ export function SubmissionDetail({ id }: { id: string }) {
   }
 
   // RD-6 (issue #207): drives PlumbProgress's "drafting governance fields"
-  // stage on the pre-resolution loading page independently of
-  // GovernanceCapturePanel's own draft call (step 4 hasn't mounted yet while
-  // loading). The panel re-drafts again once the reviewer actually reaches
-  // step 4 (its own inputs are unchanged, issue #218) — this copy is only
-  // read for the "N drafted by Plumb" counts shown before that panel mounts.
+  // stage on the pre-resolution loading page, and (FIX-2, #338) is the one
+  // draft for this open: GovernanceCapturePanel is handed it instead of asking
+  // again. A decided record is not drafted on open (the inventory is settled);
+  // the locked checklist then shows 0 drafted by Plumb.
+  const subStatus = sub ? getStatus(sub) : null
+  const subDecided = subStatus === "approved" || subStatus === "rejected"
   useEffect(() => {
-    if (!sub || govDraftRanRef.current || !isReviewer) return
+    if (!sub || govDraftRanRef.current || !isReviewer || subDecided) return
     govDraftRanRef.current = true
     draftGovernanceFields(sub.formData).then(setGovernanceDraft)
-  }, [sub, isReviewer])
+  }, [sub, isReviewer, subDecided])
 
   // When a reviewer opens a still-"submitted" idea, move it into review.
   const movedRef = useRef(false)
@@ -719,6 +720,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               byName={session?.name || session?.email || "Reviewer"}
               byEmail={session?.email || ""}
               onGovernanceSaved={reload}
+              governanceDraft={governanceDraft}
               blockReason={blockReason}
               onApprove={() => setStatus("approved")}
               onRequestInfo={() => document.getElementById("comment-box")?.focus()}
@@ -990,6 +992,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                           busy={busy}
                           setBusy={setBusy}
                           onSaved={reload}
+                          initialDraft={subDecided ? undefined : governanceDraft}
                         />
                       </div>
                     )}

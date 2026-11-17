@@ -68,10 +68,14 @@ let assistResult = {
   draftRequestInfo: "Can you share more detail?",
 }
 let governanceDraftResult: Record<string, { value: string; rationale: string }> = {}
+const draftGovernanceFieldsSpy = vi.fn()
 vi.mock("@/app/actions", () => ({
   assistReviewer: () => Promise.resolve(assistResult),
   getPlumbRead: () => Promise.resolve({ read: assistResult, savedAt: null, source: "new" }),
-  draftGovernanceFields: () => Promise.resolve(governanceDraftResult),
+  draftGovernanceFields: (...a: unknown[]) => {
+    draftGovernanceFieldsSpy(...a)
+    return Promise.resolve(governanceDraftResult)
+  },
 }))
 
 vi.mock("@/app/systemConnector-actions", () => ({
@@ -122,6 +126,7 @@ beforeEach(() => {
   }
   submissions = []
   governanceDraftResult = {}
+  draftGovernanceFieldsSpy.mockClear()
 })
 
 afterEach(() => {
@@ -251,7 +256,10 @@ describe("/submissions/[id] — decided record", () => {
     const el = await flush(render(<SubmissionDetailPage />))
 
     expect(el.textContent).toContain("Decision checklist")
-    expect(el.textContent).toContain("3 drafted by Plumb")
+    // FIX-2 (#338): a decided record is not drafted on open, so nothing is
+    // "drafted by Plumb" until the reviewer opens the fields (next test).
+    expect(draftGovernanceFieldsSpy).not.toHaveBeenCalled()
+    expect(el.textContent).toContain("0 drafted by Plumb")
     expect(el.textContent).toContain("3 confirmed by the reviewer")
 
     // Compliance 2x2.
@@ -394,6 +402,35 @@ describe("/submissions/[id] — governance field counts (RD-8, issue #218)", () 
     expect(el.textContent).toContain("2 drafted by Plumb, 0 confirmed by the reviewer")
     // The rail's shorter line agrees with the header's count.
     expect(el.textContent).toContain("Inventory fields · 2 drafted by Plumb")
+  })
+})
+
+describe("/submissions/[id] — one governance draft per open (FIX-2, #338)", () => {
+  const DRAFT = {
+    stageOfDevelopment: { value: "pre_deployment", rationale: "Still moving through vetting." },
+    highImpact: { value: "not_high_impact", rationale: "No high-impact factors selected." },
+  }
+
+  it("makes no draftGovernanceFields call when a decided record is opened", async () => {
+    governanceDraftResult = DRAFT
+    submissions = [submission({ id: "s1", status: "rejected", ...REJECTED_DECIDED })]
+    await flush(render(<SubmissionDetailPage />))
+    expect(draftGovernanceFieldsSpy).not.toHaveBeenCalled()
+  })
+
+  it("makes exactly one call for an undecided record, including after the fields panel opens", async () => {
+    governanceDraftResult = DRAFT
+    submissions = [submission({ id: "s1", status: "in_review" })]
+    const el = await flush(render(<SubmissionDetailPage />))
+    expect(draftGovernanceFieldsSpy).toHaveBeenCalledTimes(1)
+
+    const govRow = Array.from(el.querySelectorAll("button")).find((b) => b.textContent?.startsWith("Inventory fields"))!
+    act(() => govRow.dispatchEvent(new MouseEvent("click", { bubbles: true })))
+    await flush(el)
+    expect(el.textContent).toContain("Are the inventory fields right?")
+    expect(draftGovernanceFieldsSpy).toHaveBeenCalledTimes(1)
+    // The panel shows the page's draft, same as before.
+    expect(el.textContent).toContain("Plumb")
   })
 })
 

@@ -3,7 +3,7 @@
 // LaunchPad Co-Pilot server actions for AI vetting + readiness assessment
 import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
-import { requireActionSession } from "@/lib/session/guard"
+import { REVIEWER_UP, requireActionSession } from "@/lib/session/guard"
 import { z } from "zod"
 import { getFormSteps, type FormData } from "@/lib/steps"
 import {
@@ -21,6 +21,9 @@ import { readinessFallback } from "@/lib/readinessFallback"
 import type { ReadinessFinding } from "@/lib/readinessPresentation"
 import { plumbReadInput, resolvePlumbRead, type PlumbRead, type PlumbReadResult } from "@/lib/plumbRead"
 import { loadSavedPlumbRead, savePlumbRead } from "@/lib/savedPlumbRead"
+import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
+import { submissionFromRow } from "@/lib/submissionFromRow"
+import { visibleToSession } from "@/lib/serverAccess"
 
 type Message = {
   role: "user" | "assistant"
@@ -764,21 +767,42 @@ ${HUMANIZATION_GUIDELINES}`,
 export async function assistReviewer(
   formData: FormData,
 ): Promise<PlumbRead> {
-  requireActionSession()
+  // Reviewer or admin only (FIX-2, #338): a submitter must not spend AI calls here.
+  requireActionSession({ role: REVIEWER_UP })
   return (await produceAssistRead(formData)).read
 }
+
+// Nothing about the idea: the same answer for an unknown id and an out-of-scope id.
+const PLUMB_READ_REFUSED: PlumbReadResult = { read: null, savedAt: null, source: "none" }
 
 // Opens the record's Plumb read (issue #272): the saved read when there is one
 // (and, for undecided records, the content has not changed), otherwise a new
 // read that is then saved. Decided records never re-read unless `force`.
+//
+// FIX-2 (#338): reviewer or admin only. The idea is loaded here by its id and
+// must be in the caller's scope; "decided", the fingerprint and the content the
+// read is built from all come from the stored record, never from the browser.
 export async function getPlumbRead(
   submissionId: string,
-  formData: FormData,
   force = false,
 ): Promise<PlumbReadResult> {
-  requireActionSession()
+  const session = requireActionSession({ role: REVIEWER_UP })
+  if (typeof submissionId !== "string" || !submissionId) return PLUMB_READ_REFUSED
+
+  let stored: ReturnType<typeof submissionFromRow> | null = null
+  try {
+    const { data, error } = await getSupabaseAdmin().from("submissions").select("*").eq("id", submissionId).limit(1)
+    if (error) throw error
+    const row = (data || [])[0] as DbSubmissionRow | undefined
+    stored = row ? submissionFromRow(row) : null
+  } catch (error) {
+    console.error("getPlumbRead: could not load the idea:", error)
+    return PLUMB_READ_REFUSED
+  }
+  if (!stored || visibleToSession([stored], session).length === 0) return PLUMB_READ_REFUSED
+
   return resolvePlumbRead(
-    { submissionId, formData: formData as Record<string, unknown>, force },
+    { submissionId: stored.id, formData: stored.formData as Record<string, unknown>, force: force === true },
     { load: loadSavedPlumbRead, save: savePlumbRead, produce: (fd) => produceAssistRead(fd as FormData) },
   )
 }
@@ -885,7 +909,8 @@ function minPracticeNotStarted(practice: string): { value: "in_progress"; ration
 }
 
 export async function draftGovernanceFields(formData: FormData): Promise<GovernanceFieldDraft> {
-  requireActionSession()
+  // Reviewer or admin only (FIX-2, #338): its only callers are on the review record.
+  requireActionSession({ role: REVIEWER_UP })
   const draft: GovernanceFieldDraft = {}
 
   // Tier 1 — reuse the existing deterministic determinations.
