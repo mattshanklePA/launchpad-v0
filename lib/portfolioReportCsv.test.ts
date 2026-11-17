@@ -102,6 +102,20 @@ describe("buildPortfolioReportCsv", () => {
     expect(section(parse(buildPortfolioReportCsv(r, { now: NOW })), "Every idea").body[0][1]).toBe("'=HYPERLINK(\"x\")")
   })
 
+  it.each(["  =1+1", " +1", "\u00a0-2", "   @SUM(A1)"])("keeps a cell with leading spaces then a formula sign as text: %j", (cell) => {
+    const r: PortfolioReport = JSON.parse(JSON.stringify(report()))
+    r.ideas[0].title = cell
+    const out = section(parse(buildPortfolioReportCsv(r, { now: NOW })), "Every idea").body[0][1]
+    expect(out.startsWith("'")).toBe(true)
+    expect(out.slice(1)).toBe(cell)
+  })
+
+  it("leaves an ordinary cell with leading spaces alone", () => {
+    const r: PortfolioReport = JSON.parse(JSON.stringify(report()))
+    r.ideas[0].title = "  Plain title"
+    expect(section(parse(buildPortfolioReportCsv(r, { now: NOW })), "Every idea").body[0][1]).toBe("  Plain title")
+  })
+
   it("uses no banned word over the ES2 seed set", () => {
     const csv = buildPortfolioReportCsv(report(), { now: NOW })
     for (const re of [/\brequires\b/i, /RMF/, /rationalization/i, /reportability/i, /minimum practices/i, /—/, /claude|anthropic|openai|gpt|gemini/i]) {

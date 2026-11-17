@@ -12,9 +12,6 @@
 
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseClient"
-import { seedSubmissions } from "@/lib/seedSubmissions"
-import { docSeedSubmissions } from "@/lib/seedSubmissionsDoc"
-import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
 import { getTenant } from "@/lib/tenant"
 import { errToDetail } from "@/lib/errToDetail"
 import { stampDemoReset } from "@/lib/demoResetStamp"
@@ -22,15 +19,17 @@ import { requireSession } from "@/lib/session/guard"
 import type { Submission } from "@/lib/submissions"
 
 // Pick the seed set for the active tenant. Returns null for tenants whose data
-// is managed outside this route (seeded via SQL).
-function seedForActiveTenant(): Submission[] | null {
+// is managed outside this route (seeded via SQL). Each tenant's file is loaded
+// only when that tenant is active (FIX-4), so an error in one site's demo data
+// cannot break Reset Demo Data on another.
+async function seedForActiveTenant(): Promise<Submission[] | null> {
   switch (getTenant().id) {
     case "uspto":
-      return seedSubmissions
+      return (await import("@/lib/seedSubmissions")).seedSubmissions
     case "doc":
-      return docSeedSubmissions
+      return (await import("@/lib/seedSubmissionsDoc")).docSeedSubmissions
     case "es2":
-      return es2SeedSubmissions
+      return (await import("@/lib/seedSubmissionsEs2")).es2SeedSubmissions
     default:
       return null
   }
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
   const guard = requireSession(req, { role: "admin" })
   if (!guard.ok) return guard.response
   try {
-    const seedSet = seedForActiveTenant()
+    const seedSet = await seedForActiveTenant()
     if (!seedSet) {
       return NextResponse.json({ ok: true, seeded: false, reason: "tenant-managed seed" })
     }
@@ -123,7 +122,7 @@ export async function GET(req: Request) {
       .from("submissions")
       .select("id", { count: "exact", head: true })
     if (error) throw error
-    const seedSet = seedForActiveTenant()
+    const seedSet = await seedForActiveTenant()
     return NextResponse.json({
       tenant: getTenant().id,
       existingCount: count ?? 0,

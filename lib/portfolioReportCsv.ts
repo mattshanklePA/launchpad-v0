@@ -21,9 +21,11 @@ export function portfolioReportFileName(kind: "pdf" | "csv", now: number): strin
   return kind === "pdf" ? `keystone-portfolio-report-${day}.pdf` : `keystone-portfolio-numbers-${day}.csv`
 }
 
-/** Text a spreadsheet would run as a formula is kept as text. Numbers never pass through here. */
+const FORMULA_START = /^[=+\-@\t\r]/
+
+/** Text a spreadsheet would run as a formula is kept as text, also when spaces come first. Numbers never pass through here. */
 function safe(text: string): string {
-  return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text
+  return FORMULA_START.test(text) || FORMULA_START.test(text.trim()) ? `'${text}` : text
 }
 
 const num = (n: number | undefined) => (n === undefined ? "" : String(n))
