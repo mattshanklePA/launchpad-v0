@@ -799,3 +799,16 @@ describe("NL-15 seed polish (#335)", () => {
     }
   })
 })
+
+// FIX-4 item 3: an idea that has risk answers must never print the fallback
+// "Not assessed yet" reason beside it on the portfolio report.
+describe("ES2 demo data: risk reason", () => {
+  it("no idea with risk answers shows the 'Not assessed yet' reason", () => {
+    const fallback = tenantCopy(es2).portfolioReasonUnassessed
+    const report = buildPortfolioReport(es2SeedSubmissions, es2, Date.parse("2026-11-15T12:00:00Z"))
+    const assessed = new Set(es2SeedSubmissions.filter((s) => computeRiskProfile(s.formData).level !== "unknown").map((s) => s.id))
+    expect(assessed.size).toBeGreaterThan(0)
+    const offenders = report.ideas.filter((i) => assessed.has(i.id) && i.reason === fallback).map((i) => i.id)
+    expect(offenders).toEqual([])
+  })
+})
