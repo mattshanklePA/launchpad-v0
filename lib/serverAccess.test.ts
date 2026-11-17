@@ -185,3 +185,118 @@ describe("authorizeWrite: decided records are locked", () => {
     expect(edit(rec("approved"), { reviewStatus: "in_review" }).ok).toBe(true)
   })
 })
+
+describe("authorizeWrite: decisions allowed after sign-off (FIX-1)", () => {
+  const signoff = { bureau: "noaa", decision: "approved", signedOffByName: "R", signedOffByEmail: "r@x.gov", signedOffAt: "t" }
+  const rec = (extra: Record<string, unknown> = {}) =>
+    sub("d", {
+      ownerEmail: "alice@x.gov",
+      businessUnit: "noaa",
+      fd: { reviewStatus: "approved", submitterEmail: "alice@x.gov", comments: [], bureauSignoff: signoff, ...extra },
+    })
+  const reviewer = sess({ role: "reviewer", email: "r@x.gov", name: "R", businessUnit: "noaa" })
+  const otherReviewer = sess({ role: "reviewer", email: "o@x.gov", name: "O", businessUnit: "census" })
+  const deptAdmin = sess({ role: "admin", email: "dept@x.gov", name: "Dept Admin" })
+  const osAdmin = sess({ role: "admin", email: "os@x.gov", name: "OS Admin", businessUnit: "os" })
+  const bureauAdmin = sess({ role: "admin", email: "ba@x.gov", name: "Bureau Admin", businessUnit: "noaa" })
+  const submitter = sess({ role: "submitter", email: "alice@x.gov", name: "Alice" })
+  const DA = { decision: "approved", byName: "browser", byEmail: "browser@x.gov", at: "browser-time" }
+  const RA = { decision: "consolidate", decidedBy: "browser", decidedAt: "browser-time" }
+  const write = (
+    existing: Submission,
+    patch: Record<string, unknown>,
+    session: SessionClaims,
+    opts: { bureauTier?: boolean; departmentFinalApproval?: boolean } = {},
+  ) =>
+    authorizeWrite({
+      session,
+      existing,
+      formData: { ...(existing.formData as object), ...patch },
+      now: NOW,
+      bureauTier: opts.bureauTier ?? true,
+      departmentFinalApproval: opts.departmentFinalApproval ?? true,
+    })
+
+  it("lets the department-level admin set departmentApproval, stamped by the server", () => {
+    const r = write(rec(), { departmentApproval: DA }, deptAdmin)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.formData.departmentApproval).toMatchObject({ byName: "Dept Admin", byEmail: "dept@x.gov", at: NOW })
+  })
+  it("lets an OS admin set departmentApproval", () => {
+    expect(write(rec(), { departmentApproval: DA }, osAdmin).ok).toBe(true)
+  })
+  it("refuses departmentApproval when the tenant has department approval off (ES2)", () => {
+    expect(write(rec(), { departmentApproval: DA }, deptAdmin, { departmentFinalApproval: false })).toMatchObject({ ok: false, status: 409 })
+  })
+  it("refuses departmentApproval from a person who may not give it", () => {
+    expect(write(rec(), { departmentApproval: DA }, reviewer).ok).toBe(false)
+  })
+  it("refuses departmentApproval from an admin who belongs to one bureau", () => {
+    expect(write(rec(), { departmentApproval: DA }, bureauAdmin).ok).toBe(false)
+  })
+  it("lets a reviewer in scope set rationalization, stamped by the server", () => {
+    const r = write(rec(), { rationalization: RA }, reviewer)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.formData.rationalization).toMatchObject({ decidedBy: "R", decidedAt: NOW })
+  })
+  it("refuses rationalization from a reviewer outside the office with 403", () => {
+    expect(write(rec(), { rationalization: RA }, otherReviewer)).toMatchObject({ ok: false, status: 403 })
+  })
+  it("refuses rationalization plus any other changed key with 409", () => {
+    expect(write(rec(), { rationalization: RA, highImpact: "high_impact" }, reviewer)).toMatchObject({ ok: false, status: 409 })
+  })
+  it("refuses departmentApproval plus any other changed key with 409", () => {
+    expect(write(rec(), { departmentApproval: DA, highImpact: "high_impact" }, deptAdmin)).toMatchObject({ ok: false, status: 409 })
+  })
+  it("refuses a submitter changing either key", () => {
+    expect(write(rec(), { rationalization: RA }, submitter).ok).toBe(false)
+    expect(write(rec(), { departmentApproval: DA }, submitter).ok).toBe(false)
+  })
+  it("an admin reopening still works with other changes carried along", () => {
+    expect(write(rec(), { reviewStatus: "in_review", highImpact: "high_impact" }, deptAdmin).ok).toBe(true)
+  })
+  it("no bureau tier (USPTO, DoW): a reviewer in scope may set rationalization on an approved record", () => {
+    const existing = sub("u", { ownerEmail: "alice@x.gov", fd: { reviewStatus: "approved", submitterEmail: "alice@x.gov", comments: [] } })
+    expect(write(existing, { rationalization: RA }, sess({ role: "reviewer", email: "r@x.gov", name: "R" }), { bureauTier: false, departmentFinalApproval: false }).ok).toBe(true)
+  })
+
+  describe("flows under the real tenant setting", () => {
+    const withTenant = (id: string, fn: () => void) => {
+      const prev = process.env.NEXT_PUBLIC_TENANT
+      process.env.NEXT_PUBLIC_TENANT = id
+      try {
+        fn()
+      } finally {
+        if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+        else process.env.NEXT_PUBLIC_TENANT = prev
+      }
+    }
+    const raw = (existing: Submission, patch: Record<string, unknown>, session: SessionClaims) =>
+      authorizeWrite({ session, existing, formData: { ...(existing.formData as object), ...patch }, now: NOW })
+
+    it("Commerce (doc): approve, bureau sign-off, then department approval is stored", () => {
+      withTenant("doc", () => {
+        const open = sub("f", { ownerEmail: "alice@x.gov", businessUnit: "noaa", fd: { reviewStatus: "in_review", submitterEmail: "alice@x.gov", comments: [] } })
+        const step1 = raw(open, { reviewStatus: "approved", bureauSignoff: { bureau: "noaa", decision: "approved" } }, reviewer)
+        expect(step1.ok).toBe(true)
+        if (!step1.ok) return
+        const signed = sub("f", { ownerEmail: "alice@x.gov", businessUnit: "noaa", fd: step1.formData })
+        const step2 = raw(signed, { departmentApproval: DA }, deptAdmin)
+        expect(step2.ok).toBe(true)
+        if (step2.ok) expect(step2.formData.departmentApproval).toMatchObject({ byEmail: "dept@x.gov", at: NOW })
+      })
+    })
+
+    it("ES2: a group decision is saved on a decided, signed-off member and an undecided one", () => {
+      withTenant("es2", () => {
+        const decided = rec()
+        const undecided = sub("g", { ownerEmail: "bob@x.gov", businessUnit: "noaa", fd: { reviewStatus: "in_review", submitterEmail: "bob@x.gov", comments: [] } })
+        for (const m of [decided, undecided]) {
+          const r = raw(m, { rationalization: RA }, reviewer)
+          expect(r.ok).toBe(true)
+          if (r.ok) expect(r.formData.rationalization).toMatchObject({ decidedBy: "R", decidedAt: NOW })
+        }
+      })
+    })
+  })
+})
