@@ -9,7 +9,8 @@
 import type { Submission } from "@/lib/submissions"
 import type { SessionClaims } from "@/lib/session/token"
 import { getOwnerEmail, visibleSubmissions } from "@/lib/reviewWorkflow"
-import { isDecisionLocked } from "@/lib/decisionLock"
+import { isDecisionLocked, lockedWritableKeys } from "@/lib/decisionLock"
+import { departmentFinalApprovalEnabled, hasDepartmentTransparency } from "@/lib/bureauSignoff"
 import { tenantHasBureauTier } from "@/lib/rationalization"
 
 export function viewerFromSession(session: SessionClaims) {
@@ -62,20 +63,29 @@ export function authorizeWrite(args: {
   now: string
   /** Defaults to the active tenant; injectable for tests. */
   bureauTier?: boolean
+  /** Defaults to the active tenant's `departmentFinalApproval`; injectable for tests. */
+  departmentFinalApproval?: boolean
 }): WriteDecision {
   const { session, existing, now } = args
   const incoming: Json = { ...args.formData }
   const prev: Json = existing ? obj(existing.formData) : {}
   const me = session.email.toLowerCase()
 
-  // Decided records are locked (#271): only comments may be added. The one way
+  // Decided records are locked (#271): only comments, plus the two decisions
+  // that come after sign-off (rationalization, department approval), may
+  // change (FIX-1; see lockedWritableKeys). The one way
   // out is an admin reopening on purpose, i.e. moving the status away from the
   // decision; that write may carry other changes with it.
   if (existing && isDecisionLocked(prev, args.bureauTier ?? tenantHasBureauTier())) {
     const reopening = session.role === "admin" && String(incoming.reviewStatus ?? prev.reviewStatus) !== String(prev.reviewStatus)
     if (!reopening) {
+      const writable = lockedWritableKeys({
+        role: session.role,
+        departmentFinalApproval: args.departmentFinalApproval ?? departmentFinalApprovalEnabled(),
+        hasDepartmentTransparency: hasDepartmentTransparency(viewerFromSession(session)),
+      })
       for (const k of new Set([...Object.keys(prev), ...Object.keys(incoming)])) {
-        if (k !== "comments" && !same(incoming[k], prev[k])) return { ok: false, status: 409, error: LOCKED_ERROR }
+        if (!writable.has(k) && !same(incoming[k], prev[k])) return { ok: false, status: 409, error: LOCKED_ERROR }
       }
     }
   }
