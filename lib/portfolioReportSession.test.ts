@@ -3,7 +3,7 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import {
-  getNote, setNote, getBriefing, setBriefing, removeBriefing, subscribe, resetPortfolioReportSession, type SavedBriefing,
+  getNote, setNote, clearNotes, getBriefing, setBriefing, removeBriefing, subscribe, resetPortfolioReportSession, type SavedBriefing,
 } from "@/lib/portfolioReportSession"
 
 const BRIEF: SavedBriefing = {
@@ -63,5 +63,19 @@ describe("portfolio report session memory", () => {
     setBriefing(BRIEF)
     expect(set).not.toHaveBeenCalled()
     set.mockRestore()
+  })
+})
+
+describe("clearNotes", () => {
+  it("forgets every note and tells listeners", () => {
+    setNote("", { note: "all", writtenAt: 1 })
+    setNote("hrfm", { note: "one", writtenAt: 2 })
+    const fn = vi.fn()
+    const off = subscribe(fn)
+    clearNotes()
+    expect(getNote("")).toBeUndefined()
+    expect(getNote("hrfm")).toBeUndefined()
+    expect(fn).toHaveBeenCalledTimes(1)
+    off()
   })
 })

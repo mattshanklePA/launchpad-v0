@@ -199,10 +199,12 @@ export type TenantCopy = {
   reportNoteTitle: string
   reportNoteContext: string
   reportNoteLabel: string
-  reportNoteWriting: string
+  reportNoteExplainer: string
+  reportNoteAsk: string
+  reportNoteReading: string
+  reportNoteAskAgain: string
   reportNoteError: string
   reportNoteRetry: string
-  reportNoteRewrite: string
   reportBriefingAdd: string
   reportBriefingAdded: string
   reportBriefingTitle: string
