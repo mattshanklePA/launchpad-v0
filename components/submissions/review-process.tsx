@@ -9,6 +9,7 @@
 // RMF review logic, or GovernanceCapturePanel's internals — this only
 // reframes the same checklist RD-5 already built as a sequence.
 
+import type { GovernanceFieldDraft } from "@/lib/governanceCapture"
 import { useState } from "react"
 import { AlertTriangle, ArrowLeft, ArrowRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -96,6 +97,8 @@ export type ReviewProcessProps = {
   byName: string
   byEmail: string
   onGovernanceSaved: () => Promise<void>
+  /** The page's one draft for this open (FIX-2, #338); null while it is still being drafted. */
+  governanceDraft?: GovernanceFieldDraft | null
 
   // Step 5 — disposition.
   blockReason?: string
@@ -173,7 +176,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
     cluster, clusterAllMembers, rationalizationDecision, onClusterDecided,
     fd, highImpactRec, onSetHighImpact,
     resolvedRmf, rmfOverriding, setRmfOverriding, rmfOverrideNote, setRmfOverrideNote, onConfirmRmf, onOverrideRmf,
-    governanceApplicableCount, draftedByPlumb, confirmedByReviewer, byName, byEmail, onGovernanceSaved,
+    governanceApplicableCount, draftedByPlumb, confirmedByReviewer, byName, byEmail, onGovernanceSaved, governanceDraft,
     blockReason, onApprove, onRequestInfo, onReject,
     comment, onCommentChange, onSend, sendDisabled, onDraftWithPlumb, draftDisabled,
     reading, governanceDone, recommendationDone, onSkipToSteps,
@@ -278,6 +281,7 @@ export function ReviewProcess(props: ReviewProcessProps) {
               busy={busy}
               setBusy={setBusy}
               onSaved={onGovernanceSaved}
+              initialDraft={governanceDraft}
             />
           </div>
         )}
