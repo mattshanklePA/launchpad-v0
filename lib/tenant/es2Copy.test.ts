@@ -67,6 +67,15 @@ describe("ES2 copy and credibility sweep (#269)", () => {
     expect(hits).toEqual([])
   })
 
+  // F8-1 (#353): the program profile texts are swept with the rest of the tenant.
+  it("includes the program profile texts in the sweep", () => {
+    const swept = new Set(es2Strings())
+    expect(es2.programProfiles?.length).toBeGreaterThan(0)
+    for (const p of es2.programProfiles ?? []) {
+      for (const text of [p.runsOn, p.builtOn, p.mainData, p.owner]) expect(swept.has(text), text).toBe(true)
+    }
+  })
+
   it("uses the plain-word replacements", () => {
     const c = tenantCopy(es2)
     expect(c.rmfAtRiskLabel).toBe("Risk framework needs attention")
