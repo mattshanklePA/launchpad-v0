@@ -35,6 +35,8 @@ import { PLUMB_PROGRESS_MIN_HEIGHT_CLASS, PlumbProgress } from "@/components/lau
 import { spellCount, uniqueSlugTail } from "@/components/dashboard/command-center-data"
 import { SectionTitle } from "@/components/cockpit"
 import { cn } from "@/lib/utils"
+import { reviewerDecidesEnabled } from "@/lib/reviewerDecision"
+import { ReviewStepScreen } from "@/components/submissions/review-step-screen"
 
 export const STEP_TITLE: Record<ReviewStepKey, string> = {
   cluster: "Is this one effort, or {n}?",
@@ -121,6 +123,10 @@ export type ReviewProcessProps = {
   governanceDone?: boolean
   recommendationDone?: boolean
   onSkipToSteps?: () => void
+
+  /** F7-3 (#346), ES2 only: save the answers the step screen collects. Read only where `features.reviewerDecides` is on. */
+  onSaveHighImpactAnswer?: (answer: "high_impact" | "presumed_not_high_impact" | "not_high_impact", reason?: string) => Promise<boolean>
+  onSaveRmfAnswer?: (answer: RmfRiskLevel, reason?: string) => Promise<boolean>
 }
 
 /** NL-6 (#287): on ES2 the band above carries the record; the step is a K3 section title with today's lead line. */
@@ -169,7 +175,7 @@ export function ProcessHeaderCard({
   )
 }
 
-export function ReviewProcess(props: ReviewProcessProps) {
+function ClassicReviewProcess(props: ReviewProcessProps) {
   const {
     submission, tenant, status, reviewerName, busy, setBusy, assistantName,
     steps, currentStepKey, onNavigateStep,
@@ -362,6 +368,17 @@ export function ReviewProcess(props: ReviewProcessProps) {
       )}
     </div>
   )
+}
+
+/**
+ * Where the tenant has "reviewer decides" on (ES2), the F7-3 step screen; every
+ * other tenant keeps the guided process above, unchanged.
+ */
+export function ReviewProcess(props: ReviewProcessProps) {
+  if (reviewerDecidesEnabled(props.tenant) && props.onSaveHighImpactAnswer && props.onSaveRmfAnswer) {
+    return <ReviewStepScreen {...props} onSaveHighImpactAnswer={props.onSaveHighImpactAnswer} onSaveRmfAnswer={props.onSaveRmfAnswer} />
+  }
+  return <ClassicReviewProcess {...props} />
 }
 
 export type { ReviewStep, ReviewStepKey }

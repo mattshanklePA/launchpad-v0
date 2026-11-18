@@ -31,7 +31,9 @@ type DispositionVariant = "default" | "outline"
  * pre-decision look ISS-8 tuned, and it must not change for a submission that
  * has yet to be decided.
  */
-export function dispositionButtonVariant(action: DispositionAction, status: SubmissionStatus): DispositionVariant {
+export function dispositionButtonVariant(action: DispositionAction, status: SubmissionStatus, neutralUntilChosen = false): DispositionVariant {
+  // F7-3 (#346), ES2 only: no button is drawn as the main one until a decision is on the record.
+  if (neutralUntilChosen && status !== "approved" && status !== "rejected") return "outline"
   if (action === "reject") return status === "rejected" ? "default" : "outline"
   return status === "rejected" ? "outline" : "default"
 }
@@ -61,6 +63,7 @@ export function DispositionControls({
   busy,
   blockReason,
   chipStyle,
+  neutralUntilChosen,
   onApprove,
   onRequestInfo,
   onReject,
@@ -70,6 +73,8 @@ export function DispositionControls({
   blockReason?: string
   /** Renders the decided outcome (approved/rejected only) as a filled chip instead of a button. No effect while undecided. */
   chipStyle?: boolean
+  /** F7-3 (#346), ES2 only: draw Approve like the others until a decision is recorded. */
+  neutralUntilChosen?: boolean
   onApprove: () => void
   onRequestInfo: () => void
   onReject: () => void
@@ -94,13 +99,13 @@ export function DispositionControls({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button variant={dispositionButtonVariant("approve", status)} onClick={onApprove} disabled={busy || !!blockReason} title={blockReason}>
+      <Button variant={dispositionButtonVariant("approve", status, neutralUntilChosen)} onClick={onApprove} disabled={busy || !!blockReason} title={blockReason}>
         <Check className="w-4 h-4 mr-1.5" />Approve
       </Button>
       <Button variant="outline" onClick={onRequestInfo} disabled={busy}>
         <MessageSquare className="w-4 h-4 mr-1.5" />Request info
       </Button>
-      <Button variant={dispositionButtonVariant("reject", status)} onClick={onReject} disabled={busy}>
+      <Button variant={dispositionButtonVariant("reject", status, neutralUntilChosen)} onClick={onReject} disabled={busy}>
         <X className="w-4 h-4 mr-1.5" />Reject
       </Button>
     </div>

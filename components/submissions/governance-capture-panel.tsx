@@ -135,6 +135,7 @@ export function GovernanceCapturePanel({
   setBusy,
   onSaved,
   initialDraft,
+  saveRef,
 }: {
   submission: Submission
   assistantName: string
@@ -149,6 +150,11 @@ export function GovernanceCapturePanel({
    * it. `undefined`: the page did not draft (decided record), so draft here.
    */
   initialDraft?: GovernanceFieldDraft | null
+  /**
+   * F7-3 (#346): lets the step screen's "Save and go to step N" save what the
+   * reviewer chose here. Holds the save while something is chosen, null otherwise.
+   */
+  saveRef?: { current: (() => Promise<void>) | null }
 }) {
   const tenant = getTenant()
   const copy = tenantCopy(tenant)
@@ -257,6 +263,14 @@ export function GovernanceCapturePanel({
       setBusy(false)
     }
   }
+
+  useEffect(() => {
+    if (!saveRef) return
+    saveRef.current = decides && chosen.size > 0 ? saveChosen : null
+    return () => {
+      saveRef.current = null
+    }
+  })
 
   const save = async () => {
     if (decides) return saveChosen()

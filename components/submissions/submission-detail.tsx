@@ -85,6 +85,8 @@ import { ComplianceGrid, type ComplianceGridItem } from "@/components/submission
 import { ReviewerHeader } from "@/components/submissions/reviewer-header"
 import { ReviewerRail } from "@/components/submissions/reviewer-rail"
 import { ReviewProcess } from "@/components/submissions/review-process"
+import { ReviewStepList } from "@/components/submissions/review-step-list"
+import { reviewerDecidesEnabled } from "@/lib/reviewerDecision"
 import { ReviewProcessRail } from "@/components/submissions/review-process-rail"
 import { ReviewProcessLoading } from "@/components/submissions/review-process-loading"
 import { buildReviewSteps, defaultReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
@@ -498,6 +500,36 @@ export function SubmissionDetail({ id }: { id: string }) {
     setBusy(false)
   }
 
+  // F7-3 (#346), ES2 only: the step screen saves the answer and, when it differs from Plumb's, the reason.
+  const saveHighImpactAnswer = async (next: "high_impact" | "presumed_not_high_impact" | "not_high_impact", reason?: string): Promise<boolean> => {
+    setBusy(true)
+    try {
+      const ok = await patchSubmissionFormData(sub.id, { highImpact: next, ...(reason ? { highImpactReview: { reason } } : {}) })
+      await reload()
+      return ok
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const saveRmfAnswer = async (level: RmfRiskLevel, reason?: string): Promise<boolean> => {
+    if (!resolvedRmf) return false
+    setBusy(true)
+    try {
+      const who = { byName: session?.name || session?.email || "Reviewer", byEmail: session?.email || "", at: new Date().toISOString() }
+      const ok = await patchSubmissionFormData(
+        sub.id,
+        level === resolvedRmf.profile.overall
+          ? buildRmfProfileReviewPatch("confirmed", resolvedRmf.profile, who)
+          : buildRmfProfileReviewPatch("overridden", resolvedRmf.profile, { ...who, overriddenOverall: level, notes: reason }),
+      )
+      await reload()
+      return ok
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const confirmRmfProfile = async () => {
     if (!resolvedRmf) return
     setBusy(true)
@@ -717,6 +749,8 @@ export function SubmissionDetail({ id }: { id: string }) {
               setRmfOverrideNote={setRmfOverrideNote}
               onConfirmRmf={confirmRmfProfile}
               onOverrideRmf={overrideRmfProfile}
+              onSaveHighImpactAnswer={saveHighImpactAnswer}
+              onSaveRmfAnswer={saveRmfAnswer}
               governanceApplicableCount={governanceDisplayApplicable.length}
               draftedByPlumb={draftedByPlumb}
               confirmedByReviewer={confirmedByReviewer}
@@ -1335,7 +1369,16 @@ export function SubmissionDetail({ id }: { id: string }) {
       </div>
 
       <div className="w-full shrink-0 lg:w-[300px]">
-        {isReviewer && !decided ? (
+        {isReviewer && !decided && reviewerDecidesEnabled(tenant) ? (
+          <ReviewStepList
+            steps={reviewSteps}
+            currentStepKey={currentReviewStepKey}
+            onNavigateStep={navigateToStep}
+            tenant={tenant}
+            submission={sub}
+            status={status}
+          />
+        ) : isReviewer && !decided ? (
           <ReviewProcessRail
             submission={sub}
             tenant={tenant}
