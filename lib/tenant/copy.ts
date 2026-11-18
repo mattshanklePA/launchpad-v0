@@ -218,6 +218,19 @@ export const DEFAULT_COPY: TenantCopy = {
   reportError: "The portfolio did not load. Nothing was changed.",
   reportRetry: "Try again",
   submitStepLabels: "Who you are|The problem|Your solution|Constraints|Name it|Review and send",
+  // F6-2 (#342): empty here; only ES2 (features.readyCheck) renders the ready check, its words are in es2.ts.
+  readyIdeaTitle: "",
+  readyFillTitle: "",
+  readyGuess: "",
+  readyUse: "",
+  readyTypeIt: "",
+  readySave: "",
+  readyBeforeTitle: "",
+  readyDone: "",
+  readyMissing: "",
+  readyFix: "",
+  readySendLabel: "",
+  readySendingLabel: "",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

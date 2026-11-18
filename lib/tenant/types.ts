@@ -240,6 +240,19 @@ export type TenantCopy = {
   submitStepLabels: string              // the six step names on the one step line, "|" between them
   submitSentEyebrow: string             // band eyebrow on the page shown after sending
   overlapColLead: string                // overlap group table: heading over the lead / "Make lead" cell
+  // F6-2 (#342): guided intake ready check. Read only where `features.readyCheck` is on (ES2); empty elsewhere.
+  readyIdeaTitle: string                // top panel heading
+  readyFillTitle: string                // heading of the one card for the first blank
+  readyGuess: string                    // "{guess}" = the assistant's suggested fill
+  readyUse: string                      // button, "{guess}" = the suggested fill
+  readyTypeIt: string
+  readySave: string                     // button that applies what was typed
+  readyBeforeTitle: string              // second panel heading
+  readyDone: string                     // row state word
+  readyMissing: string                  // row state word
+  readyFix: string                      // link on a missing row
+  readySendLabel: string                // send button
+  readySendingLabel: string             // send button while sending
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

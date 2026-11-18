@@ -371,6 +371,19 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     similarWordingHint: "Other use cases whose descriptions use many of the same words. A reviewer decides if they are the same idea.",
     noOtherMessages: "No other messages",
     submitStepLabels: "Who you are|The problem|Your solution|Constraints|Name it|Review and send",
+    // F6-2 (#342): guided intake ready check.
+    readyIdeaTitle: "Your idea so far",
+    readyFillTitle: "Fill this in",
+    readyGuess: "{assistant}'s guess: {guess}.",
+    readyUse: "Use {guess}",
+    readyTypeIt: "Type it",
+    readySave: "Save",
+    readyBeforeTitle: "Before you send",
+    readyDone: "Done",
+    readyMissing: "Missing",
+    readyFix: "Fix",
+    readySendLabel: "Send for review",
+    readySendingLabel: "Sending...",
   },
 
   glossaryOverrides: {
@@ -415,5 +428,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     sampleDataStrip: true,
     // F5-1 (#318): executive portfolio report numbers. ES2 only.
     portfolioReport: true,
+    // F6-2 (#342): "Before you send" panel and "Fill this in" card in guided intake. ES2 only.
+    readyCheck: true,
   },
 }
