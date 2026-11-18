@@ -200,8 +200,12 @@ export function governanceFieldCounts(
 export function governanceFieldCountsSentence(
   counts: { applicableCount: number; draftedByPlumb: number; confirmedByReviewer: number },
   assistantName: string,
+  decided = false,
 ): string {
   const { applicableCount, draftedByPlumb, confirmedByReviewer } = counts
+  // FIX-5 (#352): a decided record is not drafted on open, so "0 drafted by
+  // Plumb" would say something untrue about what the tool did — leave it out.
+  if (decided) return `All ${applicableCount} fields · ${confirmedByReviewer} confirmed by the reviewer.`
   return `All ${applicableCount} fields · ${draftedByPlumb} drafted by ${assistantName}, ${confirmedByReviewer} confirmed by the reviewer.`
 }
 

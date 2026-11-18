@@ -35,7 +35,7 @@ const ACTIONS: Array<[string, () => Promise<unknown>, "any" | "reviewer"]> = [
   ["assistReviewer", () => actions.assistReviewer(fd), "reviewer"],
   ["getPlumbRead", () => actions.getPlumbRead("s1"), "reviewer"],
   ["draftGovernanceFields", () => actions.draftGovernanceFields(fd), "reviewer"],
-  ["assessCluster", () => assessCluster([sub, sub]), "reviewer"],
+  ["assessCluster", () => assessCluster(["s1", "s2"]), "reviewer"],
   ["compareSubmissions", () => compareSubmissions([sub, sub]), "reviewer"],
   ["writePortfolioNote", () => writePortfolioNote(), "reviewer"],
   ["sendDashboardActionNotification", () => sendDashboardActionNotification([]), "reviewer"],

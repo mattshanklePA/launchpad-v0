@@ -9,7 +9,11 @@
 import { generateObjectResilient } from "@/lib/aiResilience"
 import { getModel } from "@/lib/modelProvider"
 import { REVIEWER_UP, requireActionSession } from "@/lib/session/guard"
+import { createHash } from "node:crypto"
 import { z } from "zod"
+import { getSupabaseAdmin, type DbSubmissionRow } from "@/lib/supabaseClient"
+import { submissionFromRow } from "@/lib/submissionFromRow"
+import { visibleToSession } from "@/lib/serverAccess"
 import type { Submission } from "@/lib/submissions"
 import { getTenant } from "@/lib/tenant"
 import { businessUnitLabel } from "@/lib/reviewWorkflow"
@@ -34,24 +38,47 @@ Value to the business: ${fmt(d.businessValue)}
 `
 }
 
-// Cluster id (the smallest member id, per lib/rationalization.ts's
-// RationalizationCluster.id) + member count — "so revisiting is instant"
-// without threading the cluster id through this action's own signature.
+// Answers are kept by every member id plus a fingerprint of the content the
+// prompt is built from (FIX-5, #352) — so revisiting is instant, but a different
+// group, or an idea edited since, never gets another group's answer.
 const cache = new Map<string, ClusterAssessment>()
 
-function cacheKey(members: Submission[]): string {
-  const clusterId = [...members.map((s) => s.id)].sort()[0] || ""
-  return `${clusterId}:${members.length}`
+function cacheKey(members: Submission[], dossier: string): string {
+  const ids = members.map((s) => s.id).sort().join(",")
+  return `${ids}:${createHash("sha256").update(dossier).digest("hex")}`
 }
 
-export async function assessCluster(members: Submission[]): Promise<ClusterAssessment> {
-  requireActionSession({ role: REVIEWER_UP }) // before the cache: a cached result must not leak
-  const key = cacheKey(members)
+// Loads the ideas by id on the server. Returns null unless every id is a known
+// idea in the caller's scope, and there are at least two of them.
+async function loadScopedMembers(ids: unknown, session: Parameters<typeof visibleToSession>[1]): Promise<Submission[] | null> {
+  if (!Array.isArray(ids) || ids.length < 2 || ids.some((id) => typeof id !== "string" || !id)) return null
+  const unique = [...new Set(ids as string[])].sort() // one order, so the prompt and the key do not depend on call order
+  if (unique.length < 2) return null
+  try {
+    const { data, error } = await getSupabaseAdmin().from("submissions").select("*").in("id", unique)
+    if (error) throw error
+    const loaded = ((data || []) as DbSubmissionRow[]).map(submissionFromRow)
+    const inScope = visibleToSession(loaded, session)
+    if (inScope.length !== unique.length) return null
+    const byId = new Map(inScope.map((s) => [s.id, s]))
+    return unique.map((id) => byId.get(id)).filter((s): s is Submission => !!s)
+  } catch (error) {
+    console.error("assessCluster: could not load the ideas:", error)
+    return null
+  }
+}
+
+export async function assessCluster(memberIds: string[]): Promise<ClusterAssessment> {
+  const session = requireActionSession({ role: REVIEWER_UP }) // before the cache: a cached result must not leak
+  const members = await loadScopedMembers(memberIds, session)
+  if (!members) return clusterFallback()
+
+  const dossier = members.map((s, i) => summarizeMember(s, i)).join("\n")
+  const key = cacheKey(members, dossier)
   const cached = cache.get(key)
   if (cached) return cached
 
   const tenant = getTenant()
-  const dossier = members.map((s, i) => summarizeMember(s, i)).join("\n")
 
   let result: ClusterAssessment
   try {
@@ -91,7 +118,7 @@ Weigh: how much of the similarity is really the same problem vs. just a similar 
     }
   } catch (error) {
     console.error("assessCluster: AI Gateway error, falling back to mock:", error)
-    result = clusterFallback()
+    return clusterFallback() // never cached: the next call tries again
   }
 
   cache.set(key, result)

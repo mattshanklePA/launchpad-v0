@@ -66,7 +66,7 @@ export function PlumbClusterRecommendation({
     // assessCluster now rejects without a reviewer/admin session (SEC-1). Show
     // the same deterministic fallback it uses when the model is unavailable
     // rather than leaving the skeleton up forever.
-    assessCluster(members)
+    assessCluster(members.map((m) => m.id))
       .then(setAssessment)
       .catch(() => setAssessment(clusterFallback()))
   }, [membersKey, members])

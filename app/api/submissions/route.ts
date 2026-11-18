@@ -4,7 +4,7 @@
 //            of 5,000 logs a warning and returns truncated: true)
 //   POST   → insert/update one (body: { id, submittedAt, formData }); authorized
 //            and decision-time-stamped on the server (lib/serverAccess.ts)
-//   DELETE → wipe all (used by the admin "Clear All Submissions" button)
+//   DELETE → wipe all, and the saved Plumb reads with them (admin "Clear All Submissions" / Reset Demo Data)
 //
 // All operations use the server-side admin client which bypasses RLS.
 
@@ -158,6 +158,14 @@ export async function DELETE(req: Request) {
     // requires a WHERE clause on DELETE so .neq("id", "") matches all rows.
     const { error } = await supabase.from("submissions").delete().neq("id", "")
     if (error) throw error
+    // FIX-5 (#352): saved Plumb reads go with the ideas they belong to. A site
+    // where the plumb_reads table does not exist yet is not an error.
+    try {
+      const { error: readsErr } = await supabase.from("plumb_reads").delete().neq("submission_id", "")
+      if (readsErr) console.warn("[plumbRead] clear skipped:", readsErr.message)
+    } catch (e) {
+      console.warn("[plumbRead] clear skipped:", e instanceof Error ? e.message : e)
+    }
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error("DELETE /api/submissions failed:", error)
