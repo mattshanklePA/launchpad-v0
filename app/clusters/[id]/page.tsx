@@ -22,6 +22,7 @@ import { ClusterHeader } from "@/components/clusters/cluster-header"
 import { PlumbClusterRecommendation } from "@/components/clusters/plumb-cluster-recommendation"
 import { ClusterSignals } from "@/components/clusters/cluster-signals"
 import { ClusterMembers } from "@/components/clusters/cluster-members"
+import { ClusterProfiles } from "@/components/clusters/cluster-profiles"
 import { ClusterDecision } from "@/components/clusters/cluster-decision"
 
 function ClusterNotFound({ breadcrumb }: { breadcrumb: string }) {
@@ -92,6 +93,8 @@ function ClusterPageInner({ id }: { id: string }) {
           <PlumbClusterRecommendation members={members} />
           <ClusterSignals members={members} maxSimilarity={cluster.maxSimilarity} />
         </div>
+
+        <ClusterProfiles members={members} />
 
         <ClusterMembers
           members={members}

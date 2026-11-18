@@ -58,6 +58,8 @@ vi.mock("@/app/cluster-actions", () => ({
 }))
 
 import ClusterPage from "./page"
+import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
+import { clusterDuplicates } from "@/lib/rationalization"
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -227,5 +229,25 @@ describe("/clusters/[id]", () => {
     expect(assessCluster).toHaveBeenCalled()
     expect(el.textContent).toContain("Plumb recommends")
     expect(el.textContent).toContain("Keep them separate, and link them.")
+  })
+  // F8-2 (#354)
+  it("doc: no profile section", async () => {
+    const el = await flush(render(<ClusterPage />))
+    expect(el.textContent).not.toContain("Could they share one solution?")
+  })
+
+  it("ES2: the supplier group shows the profile section below Why these matched", async () => {
+    process.env.NEXT_PUBLIC_TENANT = "es2"
+    submissions = es2SeedSubmissions.filter((x) => x.id.includes("supplier") || x.id.includes("vendor-past"))
+    const cluster = clusterDuplicates(submissions).find((c) => c.memberIds.length === 3)
+    expect(cluster).toBeTruthy()
+    paramsId = cluster!.id
+    const el = await flush(render(<ClusterPage />))
+    const text = el.textContent!
+    expect(text).toContain("Could they share one solution?")
+    expect(text.indexOf("Why these matched")).toBeLessThan(text.indexOf("Could they share one solution?"))
+    expect(el.querySelectorAll("tbody tr")).toBeTruthy()
+    expect(el.querySelectorAll("[data-profile-scroll] thead th")).toHaveLength(3)
+    expect(text).not.toContain("this one")
   })
 })

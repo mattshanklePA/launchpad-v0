@@ -252,6 +252,18 @@ export type TenantCopy = {
   submitStepLabels: string              // the six step names on the one step line, "|" between them
   submitSentEyebrow: string             // band eyebrow on the page shown after sending
   overlapColLead: string                // overlap group table: heading over the lead / "Make lead" cell
+  // F8-2 (#354): "Could they share one solution?" on the overlap group. Read only where `features.programProfiles` is on (ES2); empty elsewhere.
+  profileTitle: string
+  profileContext: string
+  profileRowRuns: string
+  profileRowBuilt: string
+  profileRowData: string
+  profileRowOwner: string
+  profileSame: string                   // "{office}" = the first column's short office name
+  profileDifferent: string
+  profileNone: string
+  profileThisOne: string
+  decisionClearsHold: string            // decision toast, "{count}" = ideas in the group
   // F6-2 (#342): guided intake ready check. Read only where `features.readyCheck` is on (ES2); empty elsewhere.
   readyIdeaTitle: string                // top panel heading
   readyFillTitle: string                // heading of the one card for the first blank

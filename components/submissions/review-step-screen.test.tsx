@@ -10,6 +10,7 @@ import { doc } from "@/lib/tenant/doc"
 import { dow } from "@/lib/tenant/dow"
 import { uspto } from "@/lib/tenant/uspto"
 import { render } from "@/components/cockpit/test-utils"
+import { es2SeedSubmissions } from "@/lib/seedSubmissionsEs2"
 import { initialFormData } from "@/lib/steps"
 import { buildReviewSteps, type ReviewStep, type ReviewStepKey } from "@/lib/reviewSteps"
 import { computeRmfProfile } from "@/lib/nistRmf"
@@ -124,6 +125,23 @@ describe("ES2 review step screen: the frame", () => {
     expect(el.textContent).toContain("Are these one effort?")
     expect(el.textContent).toContain("Your answer")
     expect(el.textContent).toContain("PLUMB ADVICE")
+  })
+
+  it("F8-2: the overlap step shows the profile comparison for the opened idea, and only on ES2", () => {
+    const ids = ["es2-bts-supplier-risk-scoring", "es2-digitalmarket-vendor-past-performance", "es2-logfin-supplier-past-performance"]
+    const members = ids.map((id) => es2SeedSubmissions.find((s) => s.id === id)!)
+    const cluster = { memberIds: ids, bureaus: ["bts", "atr", "logfin"], maxSimilarity: 0.9 } as never
+    const withIdea = { ...props(es2, "cluster", { steps: steps(true), cluster, clusterAllMembers: members }), submission: members[0] }
+    const el = render(<ReviewProcess {...withIdea} />)
+    expect(el.textContent).toContain("Could they share one solution?")
+    expect(el.textContent).toContain("BTS · this one")
+    // The classic guided process (no step handlers) draws the same section.
+    const classic = render(<ReviewProcess {...{ ...withIdea, onSaveHighImpactAnswer: undefined, onSaveRmfAnswer: undefined }} />)
+    expect(classic.textContent).toContain("Could they share one solution?")
+    for (const t of [doc, dow, uspto]) {
+      const other = render(<ReviewProcess {...{ ...withIdea, tenant: t }} />)
+      expect(other.textContent).not.toContain("Could they share one solution?")
+    }
   })
 
   it("step questions use the plain wording", () => {

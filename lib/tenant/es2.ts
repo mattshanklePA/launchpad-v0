@@ -370,6 +370,18 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     recordColWho: "Who",
     recordColWhen: "When",
     overlapColLead: "Lead",
+    // F8-2 (#354): could they share one solution?
+    profileTitle: "Could they share one solution?",
+    profileContext: "from each program profile",
+    profileRowRuns: "Where it runs",
+    profileRowBuilt: "Built on",
+    profileRowData: "Data it would use",
+    profileRowOwner: "Who owns it",
+    profileSame: "Same as {office}",
+    profileDifferent: "Different",
+    profileNone: "No profile yet.",
+    profileThisOne: "this one",
+    decisionClearsHold: "Clears the hold on all {count} ideas.",
     // NL-8 (#289): submit an idea.
     submitEyebrow: "Submit an idea · Step {step} of {count}",
     submitSentEyebrow: "Submit an idea · Sent",

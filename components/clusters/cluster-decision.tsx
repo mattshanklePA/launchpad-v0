@@ -51,7 +51,7 @@ export function ClusterDecision({
       await onDecided()
       toast({
         title: nextDecision === "consolidated" ? "Consolidated into lead" : "Kept separate and linked",
-        description: `Clears the rationalization block on all ${count} submissions.`,
+        description: tenantCopy(getTenant()).decisionClearsHold.replace("{count}", String(count)),
       })
     } catch (error) {
       toast({

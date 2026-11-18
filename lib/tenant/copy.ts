@@ -62,6 +62,18 @@ export const DEFAULT_COPY: TenantCopy = {
   recordColWho: "Who",
   recordColWhen: "When",
   overlapColLead: "Lead",
+  // F8-2 (#354): read only by the ES2 (programProfiles) overlap screen.
+  profileTitle: "",
+  profileContext: "",
+  profileRowRuns: "",
+  profileRowBuilt: "",
+  profileRowData: "",
+  profileRowOwner: "",
+  profileSame: "",
+  profileDifferent: "",
+  profileNone: "",
+  profileThisOne: "",
+  decisionClearsHold: "Clears the rationalization block on all {count} submissions.",
   // NL-8 (#289): submit an idea.
   submitEyebrow: "Submit an idea · Step {step} of {count}",
   submitSentEyebrow: "Submit an idea · Sent",

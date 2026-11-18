@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { PlumbClusterRecommendation } from "@/components/clusters/plumb-cluster-recommendation"
 import { ClusterMembers } from "@/components/clusters/cluster-members"
+import { ClusterProfiles } from "@/components/clusters/cluster-profiles"
 import { ClusterDecision } from "@/components/clusters/cluster-decision"
 import { GovernanceCapturePanel } from "@/components/submissions/governance-capture-panel"
 import { DispositionControls } from "@/components/submissions/disposition-controls"
@@ -390,6 +391,7 @@ export function ReviewStepScreen(props: ReviewStepScreenProps) {
             onSelectLead={setSelectedLeadId}
             currentSubmissionId={submission.id}
           />
+          <ClusterProfiles members={clusterAllMembers} currentSubmissionId={submission.id} tenant={tenant} />
           <ClusterDecision cluster={cluster} members={clusterAllMembers} decision={rationalizationDecision} leadId={leadId} onDecided={onClusterDecided} />
         </section>
         <StepButtons busy={busy} nextLabel={nextLabel} backLabel={backLabel} onSave={onGo} onBack={onBack} />
