@@ -384,6 +384,18 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     readyFix: "Fix",
     readySendLabel: "Send for review",
     readySendingLabel: "Sending...",
+    // F6-3 (#343): the page after an idea is sent.
+    sentThanks: "Thank you. Your idea is in.",
+    sentTag: "Sent for review",
+    sentOfficeLabel: "Office",
+    sentNextLabel: "Who reviews it next",
+    sentTimeLabel: "Typical time to a decision in your office",
+    sentNowLabel: "What happens now",
+    sentNowBody: "Plumb reads it first and flags what a reviewer would ask. Check My work for anything a reviewer needs from you.",
+    sentSee: "See your idea",
+    sentAnother: "Submit another idea",
+    sentNotEnough: "Not enough decisions yet",
+    sentMissing: "Your idea could not be found.",
   },
 
   glossaryOverrides: {
@@ -430,5 +442,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     portfolioReport: true,
     // F6-2 (#342): "Before you send" panel and "Fill this in" card in guided intake. ES2 only.
     readyCheck: true,
+    // F6-3 (#343): the sent page after an idea is submitted. ES2 only.
+    sentPage: true,
   },
 }

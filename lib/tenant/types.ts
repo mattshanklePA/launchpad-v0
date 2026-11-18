@@ -253,6 +253,18 @@ export type TenantCopy = {
   readyFix: string                      // link on a missing row
   readySendLabel: string                // send button
   readySendingLabel: string             // send button while sending
+  // F6-3 (#343): the page after an idea is sent. Read only where `features.sentPage` is on (ES2); empty elsewhere.
+  sentThanks: string  // band title
+  sentTag: string  // tag
+  sentOfficeLabel: string  // label
+  sentNextLabel: string  // label
+  sentTimeLabel: string  // label
+  sentNowLabel: string  // label
+  sentNowBody: string  // sentence
+  sentSee: string  // button
+  sentAnother: string  // button
+  sentNotEnough: string  // shown when the office has under three decisions in 90 days
+  sentMissing: string  // shown if the saved record is not in the signed-in list
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

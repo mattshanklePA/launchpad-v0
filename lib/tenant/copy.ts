@@ -231,6 +231,18 @@ export const DEFAULT_COPY: TenantCopy = {
   readyFix: "",
   readySendLabel: "",
   readySendingLabel: "",
+  // F6-3 (#343): empty here; only ES2 (features.sentPage) renders the sent page, its words are in es2.ts.
+  sentThanks: "",
+  sentTag: "",
+  sentOfficeLabel: "",
+  sentNextLabel: "",
+  sentTimeLabel: "",
+  sentNowLabel: "",
+  sentNowBody: "",
+  sentSee: "",
+  sentAnother: "",
+  sentNotEnough: "",
+  sentMissing: "",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

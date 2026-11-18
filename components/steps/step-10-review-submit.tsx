@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "@/context/form-context"
 import { getFormSteps, getSubmitterRoleLabels, type FormData } from "@/lib/steps"
 import { saveSubmission } from "@/lib/submissions"
@@ -105,7 +106,8 @@ function recapStatus(
 }
 
 export function Step10ReviewSubmit() {
-  const { formData, setCurrentStep, setFormData } = useForm()
+  const { formData, setCurrentStep, setFormData, resetForm } = useForm()
+  const router = useRouter()
   const [isAssessing, setIsAssessing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
@@ -125,14 +127,17 @@ export function Step10ReviewSubmit() {
     try {
       // Persist to Supabase via the API. Every visitor will see this on
       // their next page load (or on refetch).
-      await saveSubmission({ ...formData, intakeMode: "form" })
+      const saved = await saveSubmission({ ...formData, intakeMode: "form" })
       toast({
         title: "Submitted for vetting",
         description: "Your idea has been saved and routed for review.",
       })
       // Brief delay so the toast registers before the page transitions
       setTimeout(() => {
-        setCurrentStep(7)
+        if (getTenant().features.sentPage) {
+          resetForm()
+          router.push(`/submit/sent/${saved.id}`)
+        } else setCurrentStep(7)
       }, 400)
     } catch (error) {
       console.error("Submission failed:", error)

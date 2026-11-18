@@ -17,6 +17,7 @@ import { assessCluster } from "@/app/cluster-actions"
 import { compareSubmissions } from "@/app/admin/compare-actions"
 import { writePortfolioNote } from "@/app/report-actions"
 import { sendDashboardActionNotification } from "@/app/dashboard-actions"
+import { getOfficeDecisionTime } from "@/app/sent-actions"
 import { pushApprovedSubmission } from "@/app/systemConnector-actions"
 
 const base = { userId: "u1", email: "u@x.gov", name: "U", jobRole: "", businessUnit: "patents", office: "" }
@@ -38,6 +39,7 @@ const ACTIONS: Array<[string, () => Promise<unknown>, "any" | "reviewer"]> = [
   ["compareSubmissions", () => compareSubmissions([sub, sub]), "reviewer"],
   ["writePortfolioNote", () => writePortfolioNote(), "reviewer"],
   ["sendDashboardActionNotification", () => sendDashboardActionNotification([]), "reviewer"],
+  ["getOfficeDecisionTime", () => getOfficeDecisionTime("s1"), "any"],
   ["pushApprovedSubmission", () => pushApprovedSubmission(sub), "reviewer"],
 ]
 
