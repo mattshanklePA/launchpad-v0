@@ -243,6 +243,10 @@ export const DEFAULT_COPY: TenantCopy = {
   sentAnother: "",
   sentNotEnough: "",
   sentMissing: "",
+  // F7-2 (#345): empty here; only ES2 (features.reviewerDecides) renders the suggestion beside each field, its words are in es2.ts.
+  fieldsSuggests: "",
+  fieldsUse: "",
+  fieldsLeftEmpty: "",
 }
 
 /** The tenant's copy: its overrides over the defaults, with `{assistant}` and `{inventory}` filled in. */

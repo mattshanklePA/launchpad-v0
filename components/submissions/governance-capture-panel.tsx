@@ -24,10 +24,14 @@ import { FIELD_REGISTRY_BY_KEY } from "@/lib/fieldRegistry"
 import { isFieldVisible } from "@/lib/formConfig"
 import { formatKeystoneDate } from "@/lib/dateFormat"
 import { getTenant, type TenantConfig } from "@/lib/tenant"
+import { tenantCopy } from "@/lib/tenant/copy"
+import { reviewerDecidesEnabled } from "@/lib/reviewerDecision"
 import {
   GOVERNANCE_FIELD_KEYS,
   getGovernanceCaptureReview,
   buildGovernanceCapturePatch,
+  buildReviewerChosenPatch,
+  countEmptyGovernanceFields,
   governanceCaptureCounts,
   governanceFieldValueLabel,
   type GovernanceFieldDraft,
@@ -147,12 +151,27 @@ export function GovernanceCapturePanel({
   initialDraft?: GovernanceFieldDraft | null
 }) {
   const tenant = getTenant()
+  const copy = tenantCopy(tenant)
   const fd = submission.formData
   const review = getGovernanceCaptureReview(submission)
+  // F7-2 (#345): where the reviewer decides, the draft is only a suggestion
+  // beside each field, and Save writes only what the reviewer set or accepted.
+  const decides = reviewerDecidesEnabled(tenant)
 
   const [draft, setDraft] = useState<GovernanceFieldDraft | null>(null)
   const [drafting, setDrafting] = useState(false)
-  const [values, setValues] = useState<Partial<Record<string, GovernanceFieldValue>>>({})
+  const [values, setValues] = useState<Partial<Record<string, GovernanceFieldValue>>>(() => {
+    if (!decides) return {}
+    // Saved values show at once, without waiting for a draft.
+    const saved: Partial<Record<string, GovernanceFieldValue>> = {}
+    for (const key of GOVERNANCE_FIELD_KEYS) {
+      const existing = fd[key] as GovernanceFieldValue | undefined
+      if (Array.isArray(existing) ? existing.length > 0 : !!existing) saved[key as string] = existing
+    }
+    return saved
+  })
+  // Fields the reviewer set or pressed "Use" on in this session.
+  const [chosen, setChosen] = useState<Set<string>>(new Set())
   const ranRef = useRef(false)
 
   const seedValues = (d: GovernanceFieldDraft) => {
@@ -174,7 +193,11 @@ export function GovernanceCapturePanel({
     try {
       const d = await draftGovernanceFields(fd)
       setDraft(d)
-      seedValues(d)
+      if (!decides) seedValues(d)
+    } catch (e) {
+      // A failed draft leaves the panel usable with no suggestions.
+      if (!decides) throw e
+      setDraft({})
     } finally {
       setDrafting(false)
     }
@@ -183,6 +206,15 @@ export function GovernanceCapturePanel({
   // One draft request per open: use the page's draft when it has one (or is
   // about to), and only ask here when the page did not.
   useEffect(() => {
+    if (decides) {
+      // The panel does not wait for the draft: it takes it when it arrives.
+      if (initialDraft) setDraft(initialDraft)
+      else if (initialDraft === undefined && !ranRef.current) {
+        ranRef.current = true
+        runDraft()
+      }
+      return
+    }
     if (ranRef.current) return
     if (initialDraft === null) return
     ranRef.current = true
@@ -196,13 +228,38 @@ export function GovernanceCapturePanel({
   }, [submission.id, initialDraft])
 
   const mergedFd: FormData = { ...fd, ...(values as Partial<FormData>) }
-  const applicable = GOVERNANCE_FIELD_KEYS.filter((k) => isFieldVisible(k, mergedFd))
+  // highImpact is answered on its own step where the reviewer decides.
+  const applicable = GOVERNANCE_FIELD_KEYS.filter((k) => isFieldVisible(k, mergedFd) && !(decides && k === "highImpact"))
 
   const setValue = (key: keyof FormData, v: GovernanceFieldValue) => {
     setValues((prev) => ({ ...prev, [key]: v }))
+    if (decides) setChosen((prev) => new Set(prev).add(key as string))
+  }
+
+  const emptyCount = countEmptyGovernanceFields(mergedFd)
+
+  const saveChosen = async () => {
+    setBusy(true)
+    try {
+      const picked: Partial<Record<string, GovernanceFieldValue>> = {}
+      for (const key of applicable) {
+        const v = values[key as string]
+        const filled = Array.isArray(v) ? v.length > 0 : !!v
+        if (chosen.has(key as string) && filled) picked[key as string] = v
+      }
+      await patchSubmissionFormData(
+        submission.id,
+        buildReviewerChosenPatch(draft ?? {}, picked, review, { byName, byEmail, at: new Date().toISOString() }),
+      )
+      setChosen(new Set())
+      await onSaved()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const save = async () => {
+    if (decides) return saveChosen()
     if (!draft) return
     setBusy(true)
     const finalValues: Partial<Record<string, GovernanceFieldValue>> = {}
@@ -257,12 +314,12 @@ export function GovernanceCapturePanel({
             const label = def?.label || (spec.key as string)
             const value = values[spec.key as string] ?? emptyValueFor(spec.kind)
             const proposal = draft?.[spec.key as string]
-            const isOverride = proposal !== undefined && JSON.stringify(proposal.value) !== JSON.stringify(value)
+            const isOverride = !decides && proposal !== undefined && JSON.stringify(proposal.value) !== JSON.stringify(value)
             return (
               <div key={spec.key as string} className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`gov-${spec.key}`}>{label}</Label>
-                  {proposal && (
+                  {proposal && !decides && (
                     <StatusPill status={isOverride ? "attention" : "neutral"}>
                       {isOverride ? "overridden" : `${assistantName} proposed`}
                     </StatusPill>
@@ -336,7 +393,23 @@ export function GovernanceCapturePanel({
                   </div>
                 )}
 
-                {proposal && (
+                {proposal && decides && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>
+                      {copy.fieldsSuggests} {governanceFieldValueLabel(spec.key as string, proposal.value)} — {proposal.rationale}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={busy || JSON.stringify(proposal.value) === JSON.stringify(value)}
+                      onClick={() => setValue(spec.key, proposal.value)}
+                    >
+                      {copy.fieldsUse}
+                    </Button>
+                  </div>
+                )}
+                {proposal && !decides && (
                   <p className="text-xs text-muted-foreground">
                     {assistantName} proposes: {governanceFieldValueLabel(spec.key as string, proposal.value)} — {proposal.rationale}
                   </p>
@@ -348,7 +421,10 @@ export function GovernanceCapturePanel({
       ))}
 
       <div className="pt-2 border-t">
-        <Button size="sm" disabled={busy || drafting || !draft} onClick={save}>
+        {decides && (
+          <p className="mb-2 text-xs text-muted-foreground">{copy.fieldsLeftEmpty.replace("{count}", String(emptyCount))}</p>
+        )}
+        <Button size="sm" disabled={busy || (decides ? false : drafting || !draft)} onClick={save}>
           <Check className="w-3.5 h-3.5 mr-1.5" />
           Save governance fields
         </Button>

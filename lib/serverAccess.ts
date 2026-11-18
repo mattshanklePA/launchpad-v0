@@ -53,6 +53,8 @@ const REVIEWER_ONLY_KEYS = [
   "highImpact",
   "highImpactReview",
   "rmfProfileReview",
+  // F7-2 (#345): the fields-save record (who chose which field, and when).
+  "governanceCaptureReview",
 ] as const
 
 function stampComments(incoming: unknown, existing: unknown, session: SessionClaims, now: string, asRole: string) {
@@ -88,6 +90,29 @@ function stampReviewerAnswers(incoming: Json, prev: Json, source: Json, session:
     incoming.highImpactReview = prev.highImpactReview
   } else {
     delete incoming.highImpactReview
+  }
+
+  // F7-2 (#345): the fields save. `highImpact` is answered on its own step, so
+  // it can't ride along with a fields save; the review (name, email, time) is
+  // stamped here, and a field chosen earlier keeps its own name and time.
+  const gr = incoming.governanceCaptureReview
+  if (gr !== undefined && !same(gr, prev.governanceCaptureReview)) {
+    const sent = obj(gr)
+    const sentEntries = Array.isArray(sent.entries) ? (sent.entries as Json[]) : []
+    if (sentEntries.some((e) => obj(e).field === "highImpact") || !sameAnswer(incoming.highImpact, prev.highImpact)) {
+      return deny("The high-impact answer is given on its own step, not with the fields")
+    }
+    const prevEntries = Array.isArray(obj(prev.governanceCaptureReview).entries) ? (obj(prev.governanceCaptureReview).entries as Json[]) : []
+    incoming.governanceCaptureReview = {
+      entries: sentEntries.map((e) => {
+        if (e.decision !== "chosen") return e
+        const old = prevEntries.find((p) => p.field === e.field && p.decision === "chosen" && same(p.finalValue, e.finalValue))
+        return { ...e, byName: old?.byName ?? session.name, at: old?.at ?? now }
+      }),
+      byName: session.name,
+      byEmail: session.email,
+      at: now,
+    }
   }
 
   const rr = incoming.rmfProfileReview

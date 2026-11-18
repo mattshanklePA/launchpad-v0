@@ -265,6 +265,10 @@ export type TenantCopy = {
   sentAnother: string  // button
   sentNotEnough: string  // shown when the office has under three decisions in 90 days
   sentMissing: string  // shown if the saved record is not in the signed-in list
+  // F7-2 (#345): inventory fields where the reviewer decides. Read only where `features.reviewerDecides` is on; empty elsewhere.
+  fieldsSuggests: string  // "{assistant}" suggests: (label before the suggestion)
+  fieldsUse: string  // button that puts the suggestion in the field
+  fieldsLeftEmpty: string  // "{count}" = number of fields still empty
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

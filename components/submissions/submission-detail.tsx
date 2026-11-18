@@ -264,7 +264,10 @@ export function SubmissionDetail({ id }: { id: string }) {
   useEffect(() => {
     if (!sub || govDraftRanRef.current || !isReviewer || subDecided) return
     govDraftRanRef.current = true
-    draftGovernanceFields(sub.formData).then(setGovernanceDraft)
+    draftGovernanceFields(sub.formData)
+      .then(setGovernanceDraft)
+      // A failed draft call hands the panel an empty draft, not an endless wait.
+      .catch(() => setGovernanceDraft({}))
   }, [sub, isReviewer, subDecided])
 
   // When a reviewer opens a still-"submitted" idea, move it into review.
