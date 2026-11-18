@@ -42,6 +42,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { fieldLabel } from "@/components/launchpad/chat-panel"
 import { IntakeRecordPanel } from "@/components/launchpad/intake-record-panel"
+import { IntakeReadyCheckPanel } from "@/components/launchpad/intake-ready-check"
 import { getFormConfig } from "@/lib/formConfig"
 import { getTenant } from "@/lib/tenant"
 import { saveSubmission } from "@/lib/submissions"
@@ -284,6 +285,8 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
   // progress line as the form, built from this flow's own topics (its own
   // count, not the form's six).
   const cockpit = tenant.features.cockpitLook
+  // F6-2 (#342): ES2 only. A missing setting means off.
+  const readyCheck = tenant.features.readyCheck === true
   const guided = guidedStepProgress(formData)
   const stepLabels = submitStepLabels(tenantCopy(tenant).submitStepLabels)
 
@@ -327,6 +330,7 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
 
               <ScrollArea className="flex-1 p-4">
                 <div
+                  {...(readyCheck ? { id: "intake-chat-log", tabIndex: -1 } : {})}
                   className="space-y-4"
                   role="log"
                   aria-live="polite"
@@ -524,13 +528,24 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
           </div>
 
           <div className="lg:col-span-5">
-            <IntakeRecordPanel
-              formData={formData}
-              onFieldChange={handleFieldChange}
-              gate={gate}
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
-            />
+            {readyCheck ? (
+              <IntakeReadyCheckPanel
+                formData={formData}
+                onFieldChange={handleFieldChange}
+                gate={gate}
+                isSubmitting={isSubmitting}
+                onSubmit={handleSubmit}
+                onFixInChat={() => document.getElementById("intake-chat-log")?.focus()}
+              />
+            ) : (
+              <IntakeRecordPanel
+                formData={formData}
+                onFieldChange={handleFieldChange}
+                gate={gate}
+                isSubmitting={isSubmitting}
+                onSubmit={handleSubmit}
+              />
+            )}
           </div>
         </div>
       </TooltipProvider>
