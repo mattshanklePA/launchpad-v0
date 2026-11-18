@@ -226,6 +226,16 @@ describe("governanceFieldCountsSentence", () => {
       "All 6 fields · 3 drafted by Plumb, 1 confirmed by the reviewer.",
     )
   })
+
+  it("leaves out the drafted-by part on a decided record (FIX-5, #352)", () => {
+    const counts = { applicableCount: 6, draftedByPlumb: 0, confirmedByReviewer: 3 }
+    const sentence = governanceFieldCountsSentence(counts, "Plumb", true)
+    expect(sentence).toBe("All 6 fields · 3 confirmed by the reviewer.")
+    expect(sentence).not.toContain("drafted by")
+    // Undecided (the default) reads as before.
+    expect(governanceFieldCountsSentence(counts, "Plumb", false)).toBe("All 6 fields · 0 drafted by Plumb, 3 confirmed by the reviewer.")
+    expect(governanceFieldCountsSentence(counts, "Plumb")).toBe("All 6 fields · 0 drafted by Plumb, 3 confirmed by the reviewer.")
+  })
 })
 
 describe("governanceFieldValueLabel", () => {

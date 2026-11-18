@@ -908,7 +908,7 @@ export function SubmissionDetail({ id }: { id: string }) {
               <LockedGovernanceChecklist
                   decision={decision!}
                   highImpact={fd.highImpact}
-                  fieldsSentence={governanceFieldCountsSentence(governanceCounts, tenant.assistantName)}
+                  fieldsSentence={governanceFieldCountsSentence(governanceCounts, tenant.assistantName, true)}
                 assistantName={tenant.assistantName}
                 examples={governanceExamples.map((e) => ({
                   key: e.field,
@@ -960,7 +960,7 @@ export function SubmissionDetail({ id }: { id: string }) {
                       </button>
                     </div>
                     <p className="text-[13px] text-muted-foreground">
-                      {governanceFieldCountsSentence(governanceCounts, tenant.assistantName)}
+                      {governanceFieldCountsSentence(governanceCounts, tenant.assistantName, true)}
                       {governanceExamples.length > 0 ? " Two examples:" : ""}
                     </p>
                     {governanceExamples.map((entry) => (

@@ -259,8 +259,9 @@ describe("/submissions/[id] — decided record", () => {
     // FIX-2 (#338): a decided record is not drafted on open, so nothing is
     // "drafted by Plumb" until the reviewer opens the fields (next test).
     expect(draftGovernanceFieldsSpy).not.toHaveBeenCalled()
-    expect(el.textContent).toContain("0 drafted by Plumb")
-    expect(el.textContent).toContain("3 confirmed by the reviewer")
+    // FIX-5 (#352): and a decided record's sentence does not say "0 drafted by Plumb".
+    expect(el.textContent).not.toContain("drafted by Plumb")
+    expect(el.textContent).toContain("All 6 fields · 3 confirmed by the reviewer.")
 
     // Compliance 2x2.
     expect(el.textContent).toContain("Compliance")
