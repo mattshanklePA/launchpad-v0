@@ -9,6 +9,7 @@ const setCurrentStep = vi.fn()
 const setFormData = vi.fn()
 const mockUseForm = vi.fn()
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }))
 vi.mock("@/context/form-context", () => ({
   useForm: () => mockUseForm(),
 }))

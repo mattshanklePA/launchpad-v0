@@ -273,7 +273,7 @@ export function ConversationalIntake({ modeToggle }: { modeToggle?: React.ReactN
       setSubmitted(true)
       resetForm()
       toast({ title: "Idea submitted", description: "Your idea was submitted for vetting." })
-      router.push(`/submissions/${saved.id}`)
+      router.push(tenant.features.sentPage ? `/submit/sent/${saved.id}` : `/submissions/${saved.id}`)
     } catch (error) {
       handleError(error)
       setIsSubmitting(false)
