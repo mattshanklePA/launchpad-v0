@@ -269,6 +269,33 @@ export type TenantCopy = {
   fieldsSuggests: string  // "{assistant}" suggests: (label before the suggestion)
   fieldsUse: string  // button that puts the suggestion in the field
   fieldsLeftEmpty: string  // "{count}" = number of fields still empty
+  // F7-3 (#346): the review step screen. Read only where `features.reviewerDecides` is on (ES2); empty elsewhere.
+  stepAdviceTag: string  // tag over the advice box
+  stepSuggests: string  // label before the suggestion
+  stepNotSure: string  // label before the doubt
+  stepNoAdvice: string  // shown when there is no advice
+  stepYourAnswer: string  // box title
+  stepNothingSelected: string  // line under the box title
+  stepReasonLabel: string  // label of the one-line reason
+  stepSaveGo: string  // button, {n} = next step number
+  stepBack: string  // button, {n} = previous step number
+  stepYourReview: string  // title of the one step list
+  stepDone: string  // step state word
+  stepCurrent: string  // step state word
+  stepToDo: string  // step state word
+  stepSubmissionTitle: string  // title of the record summary
+  stepReadFull: string  // link under the record summary
+  stepNeedsAttention: string  // label before what needs attention
+  stepTitleCluster: string  // step question
+  stepTitleHighImpact: string  // step question
+  stepTitleRmf: string  // step question
+  stepTitleFields: string  // step question
+  stepTitleDecide: string  // step question
+  stepWordCluster: string  // short name in the step list
+  stepWordHighImpact: string  // short name in the step list
+  stepWordRmf: string  // short name in the step list
+  stepWordFields: string  // short name in the step list
+  stepWordDecide: string  // short name in the step list
 }
 
 export type HeroPreviewItem = { label: string; status: "needs_work" | "ready" | "early" }

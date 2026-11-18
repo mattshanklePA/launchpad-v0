@@ -186,7 +186,11 @@ describe("review record before a decision (NL-6, #287)", () => {
     expect(facts.textContent).toContain("Office")
     expect(facts.querySelectorAll('[data-cockpit="square-tag"]').length).toBeGreaterThan(0)
     expect(el.querySelector('[data-cockpit="section-title"]')).not.toBeNull()
-    expect(el.textContent).toContain("Your progress")
+    // F7-3 (#346): one step list, "Your review", and no second counter.
+    expect(el.textContent).toContain("Your review")
+    expect(el.textContent).not.toContain("Your progress")
+    expect(el.textContent).not.toMatch(/Step \d+ of \d+/)
+    expect(el.querySelectorAll("ol li").length).toBeGreaterThanOrEqual(4)
   })
 
   it("ES2 submitter keeps the three tabs and the ?tab= deep link", async () => {

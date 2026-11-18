@@ -400,6 +400,33 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     fieldsSuggests: "{assistant} suggests:",
     fieldsUse: "Use",
     fieldsLeftEmpty: "{count} fields left empty",
+    // F7-3 (#346): the review step screen. ES2 only.
+    stepAdviceTag: "PLUMB ADVICE",
+    stepSuggests: "Suggests:",
+    stepNotSure: "Not sure about:",
+    stepNoAdvice: "{assistant} has no advice on this step yet. You can still answer.",
+    stepYourAnswer: "Your answer",
+    stepNothingSelected: "Nothing is selected until you choose.",
+    stepReasonLabel: "Your reason (required if you disagree with {assistant})",
+    stepSaveGo: "Save and go to step {n}",
+    stepBack: "Back to step {n}",
+    stepYourReview: "Your review",
+    stepDone: "Done",
+    stepCurrent: "Current",
+    stepToDo: "To do",
+    stepSubmissionTitle: "The submission",
+    stepReadFull: "Read the full submission",
+    stepNeedsAttention: "Needs attention:",
+    stepTitleCluster: "Are these one effort?",
+    stepTitleHighImpact: "Is this high impact?",
+    stepTitleRmf: "Does the risk profile hold?",
+    stepTitleFields: "Are the inventory fields right?",
+    stepTitleDecide: "Decide",
+    stepWordCluster: "Overlap",
+    stepWordHighImpact: "High impact",
+    stepWordRmf: "Risk framework",
+    stepWordFields: "Inventory fields",
+    stepWordDecide: "Decision",
   },
 
   glossaryOverrides: {
@@ -448,5 +475,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     readyCheck: true,
     // F6-3 (#343): the sent page after an idea is submitted. ES2 only.
     sentPage: true,
+    // F7-1 (#344) / F7-3 (#346): the reviewer decides; the review step screen. ES2 only.
+    reviewerDecides: true,
   },
 }
