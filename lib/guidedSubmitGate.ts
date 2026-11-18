@@ -67,3 +67,105 @@ export function getGuidedSubmitGate(formData: FormData, tenant: TenantConfig = g
 
   return { canSubmit: parts.length === 0, missing, placeholders, message }
 }
+
+// ---------------------------------------------------------------------------
+// "Before you send" list (F6-1, issue #341). Pure; no screen. Built from the
+// gate's `missing` and `placeholders` — the gate itself is not changed.
+// ---------------------------------------------------------------------------
+
+export type BeforeYouSendRowId = "idea" | "who" | "problem" | "audience" | "proposal" | "other" | "readiness"
+
+export type BeforeYouSendRow = {
+  id: BeforeYouSendRowId
+  label: string
+  done: boolean
+  /** Key of the first field to fix (for the "Fix" link); absent when done. */
+  fixField?: string
+}
+
+export type BeforeYouSendBlank = { field: string; label: string; tokens: string[]; row: BeforeYouSendRowId }
+
+export type BeforeYouSend = {
+  rows: BeforeYouSendRow[]
+  blanks: BeforeYouSendBlank[]
+  ready: boolean
+  /** "Ready to send" or "N things left: a, b." */
+  summary: string
+}
+
+const ROW_FIELDS: { id: BeforeYouSendRowId; fields: string[] }[] = [
+  { id: "idea", fields: ["useCaseTitle", "useCaseDescription"] },
+  { id: "who", fields: ["submitterOffice", "submitterRole", "submitterName", "submitterEmail"] },
+  { id: "problem", fields: ["coreProblem", "problemDefinition", "affectedBusinessUnits"] },
+  { id: "audience", fields: ["targetAudience", "impactedUsersCount", "targetUserContext"] },
+  { id: "proposal", fields: ["proposedSolution", "solutionSummary", "userValue", "businessValue", "isWithheld"] },
+]
+
+function rowOf(field: string): BeforeYouSendRowId {
+  return ROW_FIELDS.find((r) => r.fields.includes(field))?.id ?? "other"
+}
+
+export function getBeforeYouSend(formData: FormData, tenant: TenantConfig = getTenant()): BeforeYouSend {
+  const gate = getGuidedSubmitGate(formData, tenant)
+  const aliased = withGuidedAliases(formData)
+
+  // The gate lists a blank once per distinct text. Here every visible field
+  // holding that text is its own blank, so each marks its own row. Only the
+  // required keys are expanded, so a guided draft folded into its form field
+  // still counts once.
+  const blanks: BeforeYouSendBlank[] = []
+  const seenFields = new Set<string>()
+  const addBlank = (field: string, tokens: string[]) => {
+    if (seenFields.has(field)) return
+    seenFields.add(field)
+    blanks.push({ field, label: labelFor(field), tokens, row: rowOf(field) })
+  }
+  for (const p of gate.placeholders) {
+    addBlank(p.field, p.tokens)
+    const value = aliased[p.field as keyof FormData]
+    for (const key of REQUIRED_FIELD_KEYS) {
+      if (key === p.field || !isFieldVisible(key, aliased)) continue
+      if (typeof value === "string" && aliased[key] === value) addBlank(key as string, p.tokens)
+    }
+  }
+
+  const labels: Record<BeforeYouSendRowId, string> = {
+    idea: "Idea title and short description",
+    who: `Your ${tenant.tierLabels.unit.toLowerCase()} and your role`,
+    problem: "The problem in your words",
+    audience: "Who uses it, and how many people",
+    proposal: "What you propose and what it is worth",
+    other: "Other details",
+    readiness: "The readiness rating is Early Stage",
+  }
+
+  const rows: BeforeYouSendRow[] = ROW_FIELDS.map(({ id, fields }) => {
+    const bad = new Set<string>([
+      ...gate.missing.filter((m) => rowOf(m.field) === id).map((m) => m.field),
+      ...blanks.filter((b) => b.row === id).map((b) => b.field),
+    ])
+    const fixField = fields.find((f) => bad.has(f))
+    return { id, label: labels[id], done: bad.size === 0, ...(fixField ? { fixField } : {}) }
+  })
+
+  // Anything the gate flags that fits none of the five rows still shows.
+  const otherBad = [
+    ...gate.missing.filter((m) => rowOf(m.field) === "other").map((m) => m.field),
+    ...blanks.filter((b) => b.row === "other").map((b) => b.field),
+  ]
+  if (otherBad.length) rows.push({ id: "other", label: labels.other, done: false, fixField: otherBad[0] })
+
+  // The gate leaves the readiness rating out (the submit handler checks it
+  // after assessing). If the draft already carries "early stage", the send
+  // will be stopped, so the list must not read "Ready to send".
+  if (formData.readinessScore === "early_stage") {
+    rows.push({ id: "readiness", label: labels.readiness, done: false, fixField: "readinessScore" })
+  }
+
+  const left = rows.filter((r) => !r.done)
+  const ready = left.length === 0 && gate.canSubmit
+  const summary = ready
+    ? "Ready to send"
+    : `${left.length} ${left.length === 1 ? "thing" : "things"} left: ${left.map((r) => r.label.toLowerCase()).join(", ")}.`
+  return { rows, blanks, ready, summary }
+}
