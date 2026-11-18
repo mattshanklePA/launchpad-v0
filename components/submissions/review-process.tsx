@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PlumbMark } from "@/components/branding/plumb-mark"
 import { PlumbClusterRecommendation } from "@/components/clusters/plumb-cluster-recommendation"
 import { ClusterMembers } from "@/components/clusters/cluster-members"
+import { ClusterProfiles } from "@/components/clusters/cluster-profiles"
 import { ClusterDecision } from "@/components/clusters/cluster-decision"
 import { HighImpactPanel } from "@/components/submissions/high-impact-panel"
 import { RmfPanel } from "@/components/submissions/rmf-panel"
@@ -255,6 +256,7 @@ function ClassicReviewProcess(props: ReviewProcessProps) {
               onSelectLead={setSelectedLeadId}
               currentSubmissionId={submission.id}
             />
+            <ClusterProfiles members={clusterAllMembers} currentSubmissionId={submission.id} tenant={tenant} />
             <ClusterDecision cluster={cluster} members={clusterAllMembers} decision={rationalizationDecision} leadId={leadId} onDecided={onClusterDecided} />
           </div>
         )}
