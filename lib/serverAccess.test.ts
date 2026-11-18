@@ -148,7 +148,7 @@ describe("authorizeWrite: decided records are locked", () => {
   const reviewer = sess({ role: "reviewer", email: "r@x.gov", name: "R", businessUnit: "noaa" })
   const admin = sess({ role: "admin", email: "a@x.gov", name: "A" })
   const edit = (existing: Submission, patch: Record<string, unknown>, session = reviewer) =>
-    authorizeWrite({ session, existing, formData: { ...(existing.formData as object), ...patch }, now: NOW, bureauTier: true })
+    authorizeWrite({ session, existing, formData: { ...(existing.formData as object), ...patch }, now: NOW, bureauTier: true, reviewerDecides: false })
 
   for (const status of ["approved", "rejected"]) {
     const locked = rec(status, { bureauSignoff: signoff })
@@ -177,6 +177,18 @@ describe("authorizeWrite: decided records are locked", () => {
 
   it("allows the same governance edit on an in-review record", () => {
     expect(edit(rec("in_review"), { highImpact: "high_impact" }).ok).toBe(true)
+  })
+  it("with reviewerDecides on (ES2), the same in-review high-impact write without a reason is refused (F7-1 rule pinned)", () => {
+    const existing = rec("in_review")
+    const r = authorizeWrite({
+      session: reviewer,
+      existing,
+      formData: { ...(existing.formData as object), highImpact: "high_impact" },
+      now: NOW,
+      bureauTier: true,
+      reviewerDecides: true,
+    })
+    expect(r.ok).toBe(false)
   })
   it("allows the approving write itself (in review -> approved)", () => {
     expect(edit(rec("in_review"), { reviewStatus: "approved", bureauSignoff: signoff }).ok).toBe(true)
@@ -215,6 +227,8 @@ describe("authorizeWrite: decisions allowed after sign-off (FIX-1)", () => {
       now: NOW,
       bureauTier: opts.bureauTier ?? true,
       departmentFinalApproval: opts.departmentFinalApproval ?? true,
+      // These cases test the lock and the reopen, not the F7-1 reason rule; pinned explicitly so they read the same under every tenant.
+      reviewerDecides: false,
     })
 
   it("lets the department-level admin set departmentApproval, stamped by the server", () => {
