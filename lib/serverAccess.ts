@@ -12,6 +12,7 @@ import { getOwnerEmail, visibleSubmissions } from "@/lib/reviewWorkflow"
 import { isDecisionLocked, lockedWritableKeys } from "@/lib/decisionLock"
 import { departmentFinalApprovalEnabled, hasDepartmentTransparency } from "@/lib/bureauSignoff"
 import { tenantHasBureauTier } from "@/lib/rationalization"
+import { hasEnoughWords, readReviewerStep, reviewerDecidesEnabled, REASON_REQUIRED_MESSAGE } from "@/lib/reviewerDecision"
 
 export function viewerFromSession(session: SessionClaims) {
   return {
@@ -28,13 +29,16 @@ export function visibleToSession(all: Submission[], session: SessionClaims): Sub
 
 export type WriteDecision =
   | { ok: true; formData: Record<string, unknown> }
-  | { ok: false; status: 403 | 409; error: string }
+  | { ok: false; status: 403 | 409 | 422; error: string }
 
 type Json = Record<string, unknown>
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 const obj = (v: unknown): Json => (v && typeof v === "object" ? (v as Json) : {})
 const deny = (error: string): WriteDecision => ({ ok: false, status: 403, error })
+const needReason = (): WriteDecision => ({ ok: false, status: 422, error: REASON_REQUIRED_MESSAGE })
+// The new-record form starts `highImpact` as "", so "" and absent are the same answer.
+const sameAnswer = (a: unknown, b: unknown) => same(a === "" ? undefined : a, b === "" ? undefined : b)
 
 // Keys a submitter may never change: review outcome and everything a reviewer records.
 const REVIEWER_ONLY_KEYS = [
@@ -43,6 +47,12 @@ const REVIEWER_ONLY_KEYS = [
   "rationalization",
   "assignedReviewerName",
   "assignedReviewerEmail",
+  // F7-1 (#344): the reviewer's answers. No intake screen writes these (the
+  // intake form only carries the empty `highImpact` default), so an idea's
+  // owner may never set them.
+  "highImpact",
+  "highImpactReview",
+  "rmfProfileReview",
 ] as const
 
 function stampComments(incoming: unknown, existing: unknown, session: SessionClaims, now: string, asRole: string) {
@@ -56,6 +66,50 @@ function stampComments(incoming: unknown, existing: unknown, session: SessionCla
 const LOCKED_ERROR =
   "This record has been decided and signed off, so it is locked. Contact the office to reopen it."
 
+// Reviewer decides (F7-1): where the tenant has it on, a changed high-impact or
+// risk-framework answer is stamped (name, email, time) by the server, and one
+// that differs from Plumb's suggestion must carry a reason. The suggestion is
+// worked out here from the stored record (`source`), never from the browser.
+// Mutates `incoming`; returns a refusal or undefined.
+function stampReviewerAnswers(incoming: Json, prev: Json, source: Json, session: SessionClaims, now: string): WriteDecision | undefined {
+  if (!sameAnswer(incoming.highImpact, prev.highImpact) && incoming.highImpact !== "" && incoming.highImpact !== undefined) {
+    const sent = obj(incoming.highImpactReview)
+    const reason = typeof sent.reason === "string" ? sent.reason.trim() : undefined
+    const read = readReviewerStep("highImpact", { ...source, highImpact: incoming.highImpact, highImpactReview: { reason } })
+    if (read.reasonNeeded && !read.reasonPresent) return needReason()
+    incoming.highImpactReview = {
+      suggested: read.suggestion,
+      ...(read.reasonNeeded ? { reason } : {}),
+      byName: session.name,
+      byEmail: session.email,
+      at: now,
+    }
+  } else if (prev.highImpactReview !== undefined) {
+    incoming.highImpactReview = prev.highImpactReview
+  } else {
+    delete incoming.highImpactReview
+  }
+
+  const rr = incoming.rmfProfileReview
+  if (rr !== undefined && !same(rr, prev.rmfProfileReview)) {
+    const sent = obj(rr)
+    const proposed = readReviewerStep("rmf", source).suggestion
+    const overridden = sent.decision === "overridden" && typeof sent.overriddenOverall === "string" && sent.overriddenOverall !== proposed
+    const notes = typeof sent.notes === "string" ? sent.notes.trim() : undefined
+    if (overridden && !hasEnoughWords(notes)) return needReason()
+    incoming.rmfProfileReview = {
+      decision: overridden ? "overridden" : "confirmed",
+      proposedOverall: proposed,
+      ...(overridden ? { overriddenOverall: sent.overriddenOverall } : {}),
+      ...(notes ? { notes } : {}),
+      byName: session.name,
+      byEmail: session.email,
+      at: now,
+    }
+  }
+  return undefined
+}
+
 export function authorizeWrite(args: {
   session: SessionClaims
   existing: Submission | null
@@ -65,6 +119,8 @@ export function authorizeWrite(args: {
   bureauTier?: boolean
   /** Defaults to the active tenant's `departmentFinalApproval`; injectable for tests. */
   departmentFinalApproval?: boolean
+  /** Defaults to the active tenant's `reviewerDecides`; injectable for tests. */
+  reviewerDecides?: boolean
 }): WriteDecision {
   const { session, existing, now } = args
   const incoming: Json = { ...args.formData }
@@ -93,7 +149,8 @@ export function authorizeWrite(args: {
   if (session.role === "submitter") {
     if (existing && getOwnerEmail(existing) !== me) return deny("You can only change your own submissions")
     for (const k of REVIEWER_ONLY_KEYS) {
-      if (!same(incoming[k], prev[k])) return deny("Only a reviewer can change that")
+      const unchanged = k === "highImpact" ? sameAnswer(incoming[k], prev[k]) : same(incoming[k], prev[k])
+      if (!unchanged) return deny("Only a reviewer can change that")
     }
     const from = String(prev.reviewStatus || (existing ? "submitted" : "draft"))
     const to = String(incoming.reviewStatus || from)
@@ -133,6 +190,10 @@ export function authorizeWrite(args: {
   const ra = incoming.rationalization
   if (ra !== undefined && !same(ra, prev.rationalization)) {
     incoming.rationalization = { ...obj(ra), decidedBy: session.name, decidedAt: now }
+  }
+  if (args.reviewerDecides ?? reviewerDecidesEnabled()) {
+    const refused = stampReviewerAnswers(incoming, prev, existing ? prev : incoming, session, now)
+    if (refused) return refused
   }
   if (incoming.comments !== undefined) {
     incoming.comments = stampComments(incoming.comments, prev.comments, session, now, session.role)

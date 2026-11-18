@@ -300,3 +300,162 @@ describe("authorizeWrite: decisions allowed after sign-off (FIX-1)", () => {
     })
   })
 })
+
+// F7-1 (#344): nothing counts as the reviewer's answer until the reviewer chooses.
+describe("authorizeWrite: reviewer decides (F7-1)", () => {
+  const REFUSAL = "Add a one-line reason when your answer differs from Plumb's."
+  const SNAP = { overall: "attention", functions: {}, rationale: "", flags: [] }
+  // Plumb's rule says high impact (a ticked factor); the saved risk read is "attention".
+  const base = () =>
+    sub("r1", {
+      ownerEmail: "alice@x.gov",
+      businessUnit: "noaa",
+      office: "nws",
+      fd: {
+        reviewStatus: "in_review",
+        submitterEmail: "alice@x.gov",
+        submitterOffice: "noaa",
+        submitterSubOffice: "nws",
+        comments: [],
+        highImpactFactors: ["safety"],
+        highImpact: "",
+        rmfProfileSnapshot: SNAP,
+      },
+    })
+  const reviewer = sess({ role: "reviewer", email: "r@x.gov", name: "Rita Reviewer", businessUnit: "noaa", office: "nws" })
+  const admin = sess({ role: "admin", email: "a@x.gov", name: "Ann Admin" })
+  const otherOffice = sess({ role: "reviewer", email: "o@x.gov", name: "O", businessUnit: "noaa", office: "nos" })
+  const submitter = sess({ role: "submitter", email: "alice@x.gov", name: "Alice" })
+  const write = (patch: Record<string, unknown>, session: SessionClaims, on = true, existing = base()) =>
+    authorizeWrite({
+      session,
+      existing,
+      formData: { ...(existing.formData as object), ...patch },
+      now: NOW,
+      bureauTier: true,
+      departmentFinalApproval: false,
+      reviewerDecides: on,
+    })
+
+  it("same as the suggestion: saved, no reason, stamped by the server (not the browser)", () => {
+    const r = write({ highImpact: "high_impact", highImpactReview: { byName: "browser", byEmail: "b@x.gov", at: "browser-time" } }, reviewer)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.formData.highImpactReview).toMatchObject({ byName: "Rita Reviewer", byEmail: "r@x.gov", at: NOW })
+  })
+  it("different with no reason: refused with the plain message", () => {
+    expect(write({ highImpact: "not_high_impact" }, reviewer)).toMatchObject({ ok: false, error: REFUSAL })
+  })
+  it("different with a too-short reason: refused", () => {
+    expect(write({ highImpact: "not_high_impact", highImpactReview: { reason: "no" } }, reviewer).ok).toBe(false)
+  })
+  it("different with a reason: saved with reason, server name and time", () => {
+    const r = write({ highImpact: "not_high_impact", highImpactReview: { reason: "No decisions about people", at: "browser-time" } }, admin)
+    expect(r.ok).toBe(true)
+    if (r.ok)
+      expect(r.formData.highImpactReview).toMatchObject({
+        reason: "No decisions about people",
+        byName: "Ann Admin",
+        byEmail: "a@x.gov",
+        at: NOW,
+      })
+  })
+  it("a reviewer from another office is refused", () => {
+    expect(write({ highImpact: "high_impact" }, otherOffice).ok).toBe(false)
+  })
+  it("a reason is asked for from the server's own suggestion, even when the browser sends a different one", () => {
+    const r = write(
+      {
+        highImpact: "not_high_impact",
+        highImpactFactors: [],
+        highImpactReview: { suggested: "not_high_impact" },
+        rmfProfileSnapshot: { ...SNAP, overall: "on_track" },
+      },
+      reviewer,
+    )
+    expect(r).toMatchObject({ ok: false, error: REFUSAL })
+  })
+  it("an unchanged saved answer is not re-stamped or re-checked", () => {
+    const stamped = { byName: "Old", byEmail: "old@x.gov", at: "2026-01-01T00:00:00.000Z" }
+    const existing = sub("r2", { ...base(), fd: { ...(base().formData as object), highImpact: "not_high_impact", highImpactReview: stamped } })
+    const r = write({ comments: [] }, reviewer, true, existing)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.formData.highImpactReview).toEqual(stamped)
+  })
+  it("a saved answer with no stamp reads as today and is left alone", () => {
+    const existing = sub("r3", { ...base(), fd: { ...(base().formData as object), highImpact: "not_high_impact" } })
+    const r = write({ comments: [] }, reviewer, true, existing)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.formData.highImpactReview).toBeUndefined()
+  })
+
+  it("risk framework: an override without a reason is refused", () => {
+    const review = { decision: "overridden", proposedOverall: "attention", overriddenOverall: "on_track" }
+    expect(write({ rmfProfileReview: review }, reviewer)).toMatchObject({ ok: false, error: REFUSAL })
+  })
+  it("risk framework: an override with a reason is saved, stamped by the server", () => {
+    const review = { decision: "overridden", proposedOverall: "on_track", overriddenOverall: "on_track", notes: "Controls already in place", byName: "browser", byEmail: "b@x.gov", at: "browser-time" }
+    const r = write({ rmfProfileReview: review }, reviewer)
+    expect(r.ok).toBe(true)
+    if (r.ok)
+      expect(r.formData.rmfProfileReview).toMatchObject({
+        decision: "overridden",
+        proposedOverall: "attention",
+        notes: "Controls already in place",
+        byName: "Rita Reviewer",
+        byEmail: "r@x.gov",
+        at: NOW,
+      })
+  })
+  it("risk framework: a confirm needs no reason and is stamped by the server", () => {
+    const r = write({ rmfProfileReview: { decision: "confirmed", proposedOverall: "attention", byName: "browser", at: "browser-time" } }, reviewer)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.formData.rmfProfileReview).toMatchObject({ byName: "Rita Reviewer", byEmail: "r@x.gov", at: NOW })
+  })
+  it("risk framework: a reviewer from another office is refused", () => {
+    expect(write({ rmfProfileReview: { decision: "confirmed", proposedOverall: "attention" } }, otherOffice).ok).toBe(false)
+  })
+
+  it("setting off: nothing is refused and nothing is stamped (as today)", () => {
+    const r = write({ highImpact: "not_high_impact", rmfProfileReview: { decision: "overridden", proposedOverall: "attention", overriddenOverall: "on_track", byName: "browser", at: "browser-time" } }, reviewer, false)
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.formData.highImpactReview).toBeUndefined()
+      expect(r.formData.rmfProfileReview).toMatchObject({ byName: "browser", at: "browser-time" })
+    }
+  })
+
+  describe("an idea's owner cannot write the reviewer's answers (all four tenants)", () => {
+    const withTenant = (id: string, fn: () => void) => {
+      const prev = process.env.NEXT_PUBLIC_TENANT
+      process.env.NEXT_PUBLIC_TENANT = id
+      try {
+        fn()
+      } finally {
+        if (prev === undefined) delete process.env.NEXT_PUBLIC_TENANT
+        else process.env.NEXT_PUBLIC_TENANT = prev
+      }
+    }
+    const asOwner = (patch: Record<string, unknown>) =>
+      authorizeWrite({ session: submitter, existing: base(), formData: { ...(base().formData as object), ...patch }, now: NOW })
+    for (const t of ["uspto", "doc", "dow", "es2"]) {
+      it(`${t}: highImpact, its stamp and rmfProfileReview are refused`, () => {
+        withTenant(t, () => {
+          expect(asOwner({ highImpact: "not_high_impact" })).toMatchObject({ ok: false, status: 403 })
+          expect(asOwner({ highImpactReview: { reason: "forged here ok" } })).toMatchObject({ ok: false, status: 403 })
+          expect(asOwner({ rmfProfileReview: { decision: "confirmed", proposedOverall: "attention" } })).toMatchObject({ ok: false, status: 403 })
+        })
+      })
+      it(`${t}: a new draft that carries the empty default highImpact is still allowed`, () => {
+        withTenant(t, () => {
+          const r = authorizeWrite({
+            session: submitter,
+            existing: null,
+            formData: { highImpact: "", reviewStatus: "draft" },
+            now: NOW,
+          })
+          expect(r.ok).toBe(true)
+        })
+      })
+    }
+  })
+})
