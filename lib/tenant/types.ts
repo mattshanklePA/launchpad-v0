@@ -18,6 +18,18 @@ export type SelectOption = { value: string; label: string }
 // present, bureau-scoped views and the Strategic Alignment Scout use these
 // instead of the tenant-level `TenantConfig.focusAreas`; absent elsewhere so
 // USPTO/DoW are unaffected.
+// F8-1 (#353): a few sample facts about where an office, or one of its programs,
+// runs and what it is built on. `office` is a `unit.options` value; `program` is
+// an `offices` value under it and is left off for an office with no programs.
+// Sample data in generic words, never a statement about a real program.
+export type ProgramProfile = {
+  office: string
+  program?: string
+  runsOn: string     // where it runs
+  builtOn: string    // what it is built on
+  mainData: string   // its main data
+  owner: string      // who owns it
+}
 export type UnitOption = { value: string; label: string; offices?: OfficeOption[]; focusAreas?: FocusArea[] }
 
 // One illustrative row in the public landing page's Command Center preview.
@@ -472,6 +484,10 @@ export type TenantConfig = {
 
   // Per-tenant wording overrides; see TenantCopy. Unset keys use the defaults.
   copy?: Partial<TenantCopy>
+
+  // F8-1 (#353): sample program profiles for the "could they share?" comparison.
+  // Read only where `features.programProfiles` is on (ES2). Missing means none.
+  programProfiles?: ProgramProfile[]
 
   // Per-tenant feature toggles
   features: Record<string, boolean>

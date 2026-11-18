@@ -229,6 +229,22 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     ],
   },
 
+  // F8-1 (#353): sample profiles for the "could they share?" comparison. Generic
+  // wording only, and sample data, never a statement about a real program. None
+  // for cerp on purpose: the comparison shows it as having no profile.
+  programProfiles: [
+    { office: "hrfm", runsOn: "A commercial cloud environment", builtOn: "A low-code workflow platform",
+      mainData: "Personnel and position records", owner: "The HR-FM program office" },
+    { office: "logfin", runsOn: "An on-premises data center", builtOn: "A packaged ERP suite",
+      mainData: "Financial and supply transactions", owner: "The LOG-FIN program office" },
+    { office: "bts", runsOn: "A commercial cloud environment", builtOn: "A shared enterprise platform",
+      mainData: "Supplier and contract records", owner: "The BTS program office" },
+    { office: "atr", program: "digitalmarket", runsOn: "A commercial cloud environment", builtOn: "A shared enterprise platform",
+      mainData: "Vendor catalog and offer records", owner: "The Digital Market team" },
+    { office: "atr", program: "acws", runsOn: "A government-managed cloud environment", builtOn: "A packaged contract writing suite",
+      mainData: "Contract actions and award records", owner: "The ACWS program team" },
+  ],
+
   submitterRoles: [
     { value: "contracting_officer", label: "Contracting Officer" },
     { value: "contract_specialist", label: "Contract Specialist" },
@@ -488,5 +504,7 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     sentPage: true,
     // F7-1 (#344) / F7-3 (#346): the reviewer decides; the review step screen. ES2 only.
     reviewerDecides: true,
+    // F8-1 (#353): program profiles for the "could they share?" comparison. ES2 only.
+    programProfiles: true,
   },
 }
