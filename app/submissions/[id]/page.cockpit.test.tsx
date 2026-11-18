@@ -79,10 +79,13 @@ let assistResult = {
   draftRequestInfo: "Can you share more detail?",
 }
 let governanceDraftResult: Record<string, { value: string; rationale: string }> = {}
+// F7-4 (#347): a test can hold either call open, or make it fail.
+let plumbReadCall: () => Promise<unknown> = () => Promise.resolve({ read: assistResult, savedAt: null, source: "new" })
+let draftCall: () => Promise<unknown> = () => Promise.resolve(governanceDraftResult)
 vi.mock("@/app/actions", () => ({
   assistReviewer: () => Promise.resolve(assistResult),
-  getPlumbRead: () => Promise.resolve({ read: assistResult, savedAt: null, source: "new" }),
-  draftGovernanceFields: () => Promise.resolve(governanceDraftResult),
+  getPlumbRead: () => plumbReadCall(),
+  draftGovernanceFields: () => draftCall(),
 }))
 
 vi.mock("@/app/systemConnector-actions", () => ({
@@ -161,6 +164,59 @@ async function flush(el: HTMLElement) {
   return el
 }
 
+
+describe("Plumb reads it before you do (F7-4, #347)", () => {
+  beforeEach(() => {
+    plumbReadCall = () => Promise.resolve({ read: assistResult, savedAt: null, source: "new" })
+    draftCall = () => Promise.resolve(governanceDraftResult)
+  })
+  async function open(tenant: string, submittedAt?: string) {
+    process.env.NEXT_PUBLIC_TENANT = tenant
+    window.history.pushState({}, "", "/submissions/s1")
+    submissions = [submission({ id: "s1", status: "in_review", submittedAt })]
+    const el = render(<SubmissionDetailPage />)
+    await flush(el)
+    await flush(el)
+    return el
+  }
+  const radiosIn = (el: Element) => Array.from(el.querySelectorAll<HTMLInputElement>('input[type="radio"]'))
+
+  it("read done, draft still running: the draft line says Working and the waiting state stays", async () => {
+    let finishDraft!: (v: unknown) => void
+    draftCall = () => new Promise((r) => (finishDraft = r))
+    const el = await open("es2")
+    const lines = Array.from(el.querySelectorAll('[data-review="wait-line"]')).map((l) => l.textContent)
+    expect(lines).toEqual(["Draft the inventory fieldsWorking", "Write the adviceDone"])
+    expect(el.textContent).toContain("Plumb is reading this idea. Advice, not a gate.")
+    expect(el.textContent).not.toMatch(/seconds/i)
+    await act(async () => finishDraft({}))
+    await flush(el)
+    expect(el.textContent).not.toContain("Plumb is reading this idea")
+  })
+
+  it("the waiting state does not end when the reviewer picks 'Read the submission'", async () => {
+    draftCall = () => new Promise(() => {})
+    const el = await open("es2")
+    const btn = Array.from(el.querySelectorAll("button")).find((b) => b.textContent === "Read the submission")!
+    await act(async () => btn.click())
+    expect(el.textContent).toContain("Plumb is reading this idea. Advice, not a gate.")
+  })
+
+  it("a failed read shows the plain sentence and the step can still be answered", async () => {
+    plumbReadCall = () => Promise.reject(new Error("down"))
+    const el = await open("es2")
+    expect(el.textContent).toContain("Plumb's read is not available right now. You can still review and decide.")
+    expect(el.textContent).not.toContain("Plumb is reading this idea")
+    expect(radiosIn(el).length).toBeGreaterThan(0)
+  })
+
+  it("'Just submitted' shows on an idea from the last 24 hours and not on an older one", async () => {
+    const recent = await open("es2", new Date(Date.now() - 3600_000).toISOString())
+    expect(recent.querySelector('[data-cockpit="header-band"]')!.textContent).toContain("JUST SUBMITTED")
+    const old = await open("es2", "2026-08-17T09:00:00.000Z")
+    expect(old.querySelector('[data-cockpit="header-band"]')!.textContent).not.toContain("JUST SUBMITTED")
+  })
+})
 
 describe("review record before a decision (NL-6, #287)", () => {
   async function open(tenant: string, query = "") {

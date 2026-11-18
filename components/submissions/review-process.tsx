@@ -122,6 +122,8 @@ export type ReviewProcessProps = {
   reading?: boolean
   governanceDone?: boolean
   recommendationDone?: boolean
+  /** F7-4 (#347), ES2 only: a call failed or took too long. The box says so in one plain sentence. */
+  readFailed?: boolean
   onSkipToSteps?: () => void
 
   /** F7-3 (#346), ES2 only: save the answers the step screen collects. Read only where `features.reviewerDecides` is on. */

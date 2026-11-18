@@ -2,6 +2,7 @@
 
 import { describe, it, expect, vi } from "vitest"
 import { act } from "react"
+import { createRoot } from "react-dom/client"
 import { ReviewProcess, type ReviewProcessProps } from "./review-process"
 import { ReviewStepList } from "./review-step-list"
 import { es2 } from "@/lib/tenant/es2"
@@ -149,14 +150,94 @@ describe("ES2 review step screen: the frame", () => {
 })
 
 describe("ES2 review step screen: while Plumb reads", () => {
-  it("keeps the same title, shows Plumb's progress, and has no step counter", () => {
-    const reading = render(<ReviewProcess {...props(es2, "disposition", { reading: true, onSkipToSteps: () => {} })} />)
+  const waiting = (extra: Partial<ReviewProcessProps> = {}) => ({ reading: true, governanceDone: false, recommendationDone: false, onSkipToSteps: () => {}, ...extra })
+
+  it("keeps the same title and shows the waiting words in the advice box", () => {
+    const reading = render(<ReviewProcess {...props(es2, "disposition", waiting())} />)
     const landed = render(<ReviewProcess {...props(es2, "disposition", { reading: false })} />)
     const title = (el: Element) => el.querySelector('[data-cockpit="section-title"]')!.textContent
     expect(title(reading)).toBe(title(landed))
-    expect(reading.textContent).toContain("reading this submission")
-    expect(landed.textContent).not.toContain("reading this submission")
+    const box = reading.querySelector('[data-review="plumb-advice"]')!
+    expect(box.textContent).toContain("Plumb is reading this idea. Advice, not a gate.")
+    expect(box.textContent).toContain("Draft the inventory fields")
+    expect(box.textContent).toContain("Write the advice")
     expect(reading.textContent).not.toMatch(/Step \d+ of \d+/)
+    expect(landed.textContent).not.toContain("Plumb is reading this idea")
+  })
+
+  it("each line says Working or Done from its own call", () => {
+    const lines = (el: Element) => Array.from(el.querySelectorAll('[data-review="wait-line"]')).map((l) => l.textContent)
+    expect(lines(render(<ReviewProcess {...props(es2, "high_impact", waiting())} />))).toEqual([
+      "Draft the inventory fieldsWorking",
+      "Write the adviceWorking",
+    ])
+    // The read is back, the draft is not: still waiting, the draft line says Working.
+    const half = render(<ReviewProcess {...props(es2, "high_impact", waiting({ recommendationDone: true }))} />)
+    expect(lines(half)).toEqual(["Draft the inventory fieldsWorking", "Write the adviceDone"])
+    expect(half.textContent).toContain("Plumb is reading this idea. Advice, not a gate.")
+  })
+
+  it("has no countdown, no 'seconds', no similar-ideas line", () => {
+    const el = render(<ReviewProcess {...props(es2, "high_impact", waiting())} />)
+    expect(el.textContent).not.toMatch(/seconds?/i)
+    expect(el.textContent).not.toContain("Check for similar ideas")
+  })
+
+  it("shows the 'You don't have to wait' panel with the button, only while waiting", () => {
+    const onSkip = vi.fn()
+    const el = render(<ReviewProcess {...props(es2, "high_impact", waiting({ onSkipToSteps: onSkip }))} />)
+    expect(el.textContent).toContain("You don't have to wait")
+    expect(el.textContent).toContain("The submission is ready to read now, and your answer stays open. Plumb's read arrives as advice.")
+    click(button(el, "Read the submission"))
+    expect(onSkip).toHaveBeenCalled()
+    expect(render(<ReviewProcess {...props(es2, "high_impact", { reading: false })} />).textContent).not.toContain("You don't have to wait")
+  })
+
+  it("the reviewer can choose and save a step while the read is pending", async () => {
+    const save = vi.fn(async () => true)
+    const go = vi.fn()
+    const el = render(<ReviewProcess {...props(es2, "high_impact", waiting({ onSaveHighImpactAnswer: save, onNavigateStep: go }))} />)
+    expect(radios(el)).toHaveLength(3)
+    click(radios(el).find((r) => r.value === "not_high_impact")!)
+    await clickAsync(button(el, "Save and go to step"))
+    expect(save).toHaveBeenCalledWith("not_high_impact", undefined)
+    expect(go).toHaveBeenCalled()
+  })
+
+  it("the read arriving keeps the chosen answer and the typed reason", () => {
+    const base = props(es2, "high_impact", waiting())
+    const c = document.createElement("div")
+    document.body.appendChild(c)
+    const root = createRoot(c)
+    act(() => root.render(<ReviewProcess {...base} />))
+    act(() => radios(c).find((r) => r.value === "high_impact")!.click())
+    const input = c.querySelector<HTMLInputElement>("#high_impact-reason")!
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "Touches benefits decisions")
+      input.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    act(() => root.render(<ReviewProcess {...base} reading={false} governanceDone recommendationDone />))
+    expect(c.textContent).not.toContain("Plumb is reading this idea")
+    expect(radios(c).find((r) => r.value === "high_impact")!.checked).toBe(true)
+    expect(c.querySelector<HTMLInputElement>("#high_impact-reason")!.value).toBe("Touches benefits decisions")
+    act(() => root.unmount())
+    c.remove()
+  })
+
+  it("a failed read shows the plain sentence and the step can still be saved", async () => {
+    const save = vi.fn(async () => true)
+    const el = render(<ReviewProcess {...props(es2, "high_impact", { reading: false, readFailed: true, onSaveHighImpactAnswer: save })} />)
+    expect(el.querySelector('[data-review="plumb-advice"]')!.textContent).toContain("Plumb's read is not available right now. You can still review and decide.")
+    expect(el.textContent).not.toContain("You don't have to wait")
+    click(radios(el).find((r) => r.value === "not_high_impact")!)
+    await clickAsync(button(el, "Save and go to step"))
+    expect(save).toHaveBeenCalled()
+  })
+
+  it("doc ignores the waiting props: the step content shows, as today", () => {
+    const el = render(<ReviewProcess {...props(doc, "high_impact", waiting())} />)
+    expect(el.textContent).not.toContain("Plumb is reading this idea")
+    expect(el.textContent).not.toContain("Draft the inventory fields")
   })
 })
 

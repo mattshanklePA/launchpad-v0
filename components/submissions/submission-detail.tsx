@@ -98,6 +98,7 @@ import { STATUS_BADGE_CLASS } from "@/lib/statusTokens"
 import { PRIMARY_COLUMN_CLASS } from "@/lib/layoutTokens"
 import { formatDays, timeToDecision } from "@/lib/timeToDecision"
 import { formatKeystoneDate, recordPlaceShortLabel, shortBusinessUnitLabel, uniqueSlugTail } from "@/components/dashboard/command-center-data"
+import { isJustSubmitted } from "@/lib/dateFormat"
 import {
   ArrowLeft, ArrowRight, Check, X, ShieldCheck, AlertTriangle, Copy, ChevronDown,
 } from "lucide-react"
@@ -114,6 +115,8 @@ const HIGH_IMPACT_BADGE_LABELS: Record<string, string> = {
 // item 5): overrides components/ui/tabs.tsx's default pill/bg-muted look for
 // this page only — every other Tabs usage (app/admin/page.tsx) keeps the
 // shared default, so the base component itself isn't touched.
+// F7-4 (#347), ES2: how long the waiting state may last before it gives up on a call that has not come back.
+const WAIT_LIMIT_MS = 90_000
 const TABS_LIST_CLASS = "h-auto w-full items-center justify-start gap-1 rounded-none border-b border-border bg-transparent p-0"
 const TAB_TRIGGER_CLASS = "h-auto shrink-0 rounded-none border-b-2 border-transparent px-4 py-2.5 font-heading text-[14px] font-semibold text-muted-foreground shadow-none data-[state=active]:border-keystone-activeBlue data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
 
@@ -186,6 +189,9 @@ export function SubmissionDetail({ id }: { id: string }) {
   const [assist, setAssist] = useState<Assist | null>(null)
   const [assisting, setAssisting] = useState(false)
   const [assistSavedAt, setAssistSavedAt] = useState<string | null>(null)
+  // F7-4 (#347), ES2: the read failed or returned nothing, or a call ran past WAIT_LIMIT_MS.
+  const [readFailed, setReadFailed] = useState(false)
+  const [waitedTooLong, setWaitedTooLong] = useState(false)
   const [comment, setComment] = useState("")
   const [busy, setBusy] = useState(false)
   const [rmfOverrideNote, setRmfOverrideNote] = useState("")
@@ -240,7 +246,9 @@ export function SubmissionDetail({ id }: { id: string }) {
       .then((r) => {
         setAssist(r.read)
         setAssistSavedAt(r.savedAt)
+        if (!r.read) setReadFailed(true)
       })
+      .catch(() => setReadFailed(true))
       .finally(() => setAssisting(false))
   }, [sub, isReviewer])
 
@@ -271,6 +279,15 @@ export function SubmissionDetail({ id }: { id: string }) {
       // A failed draft call hands the panel an empty draft, not an endless wait.
       .catch(() => setGovernanceDraft({}))
   }, [sub, isReviewer, subDecided])
+
+  // F7-4 (#347), ES2: a call that never comes back must not hold the waiting
+  // state for ever. Nothing on screen counts toward this; it only ends the wait.
+  const waitingOnCalls = isReviewer && !subDecided && (assisting || (!!sub && governanceDraft === null))
+  useEffect(() => {
+    if (!waitingOnCalls) return
+    const t = setTimeout(() => setWaitedTooLong(true), WAIT_LIMIT_MS)
+    return () => clearTimeout(t)
+  }, [waitingOnCalls])
 
   // When a reviewer opens a still-"submitted" idea, move it into review.
   const movedRef = useRef(false)
@@ -428,7 +445,13 @@ export function SubmissionDetail({ id }: { id: string }) {
   // hatch (`forceShowSteps`, wired to "Read the submission" in
   // ReviewProcessLoading and to the rail's step rows) lets a reviewer start
   // working the steps immediately, per "you don't have to wait."
-  const awaitingPlumb = isReviewer && !decided && assisting && !forceShowSteps
+  // F7-4 (#347), ES2: the wait ends only when both calls have finished or failed
+  // (or taken too long), and "Read the submission" does not end it: the screen
+  // is already live, so that button takes the reviewer to the submission.
+  const plumbCallsPending = (assisting || governanceDraft === null) && !waitedTooLong
+  const awaitingPlumb = isReviewer && !decided && (tenant.features.cockpitLook ? plumbCallsPending : assisting && !forceShowSteps)
+  const showReadFailed = tenant.features.cockpitLook && !awaitingPlumb && (readFailed || (waitedTooLong && (assisting || governanceDraft === null)))
+  const readSubmission = () => document.getElementById("review-submission")?.scrollIntoView({ behavior: "smooth", block: "start" })
 
   const postComment = async (nextStatus?: Parameters<typeof setSubmissionStatus>[1]) => {
     if (!comment.trim()) return
@@ -632,6 +655,7 @@ export function SubmissionDetail({ id }: { id: string }) {
         placeLabel={recordPlaceShortLabel(getBusinessUnit(sub), getOffice(sub))}
         status={status}
         title={fd.useCaseTitle || "Untitled idea"}
+        justSubmitted={isJustSubmitted(sub.submittedAt)}
       />
       <KeyFacts facts={keyFacts} />
     </>
@@ -734,7 +758,8 @@ export function SubmissionDetail({ id }: { id: string }) {
               reading={awaitingPlumb}
               governanceDone={governanceDraft !== null}
               recommendationDone={!assisting}
-              onSkipToSteps={() => setForceShowSteps(true)}
+              readFailed={showReadFailed}
+              onSkipToSteps={tenant.features.cockpitLook ? readSubmission : () => setForceShowSteps(true)}
               cluster={cluster}
               clusterAllMembers={clusterSubmissionsForPanel}
               rationalizationDecision={rationalizationDecision}

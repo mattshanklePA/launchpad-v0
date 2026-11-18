@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import fs from "node:fs"
 import path from "node:path"
-import { formatKeystoneDate, submittedLabel } from "@/lib/dateFormat"
+import { formatKeystoneDate, isJustSubmitted, submittedLabel } from "@/lib/dateFormat"
 
 // F3-2 (#269): roll-up dates showed "11/1/2026" while every other screen showed
 // "1 Nov 2026". Every screen date goes through the one shared formatter, for
@@ -34,5 +34,13 @@ describe("roll-up and screen dates use the shared formatter", () => {
     const now = Date.parse("2026-11-12T12:00:00Z")
     expect(submittedLabel("2026-11-12T08:00:00Z", now)).toBe("just submitted")
     expect(submittedLabel("2026-11-10T08:00:00Z", now)).toBe("Submitted 10 Nov 2026")
+  })
+
+  it("isJustSubmitted is true only within 24 hours", () => {
+    const now = Date.parse("2026-11-12T12:00:00Z")
+    expect(isJustSubmitted("2026-11-12T08:00:00Z", now)).toBe(true)
+    expect(isJustSubmitted("2026-11-11T12:00:00Z", now)).toBe(true)
+    expect(isJustSubmitted("2026-11-11T11:59:00Z", now)).toBe(false)
+    expect(isJustSubmitted("2026-08-17T09:00:00Z", now)).toBe(false)
   })
 })

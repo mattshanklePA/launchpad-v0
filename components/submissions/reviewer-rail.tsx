@@ -63,7 +63,7 @@ export function ReviewerRail({
 
   return (
     <div className="flex flex-col gap-[18px]">
-      <div className="flex flex-col gap-3">
+      <div id="review-submission" className="flex flex-col gap-3">
         <span className="ks-microlabel">The submission</span>
         <div className="flex flex-col gap-3">
           <RailField eyebrow="Problem" value={problem} />
