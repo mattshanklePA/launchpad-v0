@@ -31,6 +31,7 @@ export function RecordBandContent({
   status,
   title,
   statusLabel,
+  justSubmitted,
 }: {
   /** NL-13: program short name, or the office short name when it has no programs. Never a record ID. */
   placeLabel: string
@@ -38,9 +39,11 @@ export function RecordBandContent({
   title: string
   /** Replaces the status word in the eyebrow (NL-7: "Decided" once the record is final). */
   statusLabel?: string
+  /** F7-4 (#347): adds "Just submitted" to the eyebrow. The caller passes true only within 24 hours of submitting. */
+  justSubmitted?: boolean
 }) {
   useCockpitBand({
-    eyebrow: `${placeLabel} · ${statusLabel ?? STATUS_LABEL[status]}`.toUpperCase(),
+    eyebrow: `${placeLabel} · ${statusLabel ?? STATUS_LABEL[status]}${justSubmitted ? " · Just submitted" : ""}`.toUpperCase(),
     title,
   })
   return null

@@ -277,6 +277,17 @@ export type TenantCopy = {
   stepYourAnswer: string  // box title
   stepNothingSelected: string  // line under the box title
   stepReasonLabel: string  // label of the one-line reason
+  // F7-4 (#347): the waiting state in the advice box. Read only where `features.reviewerDecides` is on (ES2); empty elsewhere.
+  waitTitle: string  // accessible name of the advice box while Plumb reads
+  waitReading: string  // first line of the waiting box
+  waitDraftLine: string  // the inventory-fields call
+  waitAdviceLine: string  // the advice call
+  waitWorking: string
+  waitDone: string
+  waitNoNeedTitle: string  // panel title
+  waitNoNeedBody: string  // panel body, {assistant}
+  waitReadSubmission: string  // panel button
+  waitUnavailable: string  // shown in the box when a call failed or took too long, {assistant}
   stepSaveGo: string  // button, {n} = next step number
   stepBack: string  // button, {n} = previous step number
   stepYourReview: string  // title of the one step list

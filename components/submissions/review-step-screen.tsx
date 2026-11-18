@@ -18,7 +18,6 @@ import { ClusterMembers } from "@/components/clusters/cluster-members"
 import { ClusterDecision } from "@/components/clusters/cluster-decision"
 import { GovernanceCapturePanel } from "@/components/submissions/governance-capture-panel"
 import { DispositionControls } from "@/components/submissions/disposition-controls"
-import { PLUMB_PROGRESS_MIN_HEIGHT_CLASS, PlumbProgress } from "@/components/launchpad/plumb-progress"
 import { SectionTitle, SquareTag } from "@/components/cockpit"
 import type { ReviewProcessProps } from "@/components/submissions/review-process"
 import { tenantCopy } from "@/lib/tenant/copy"
@@ -48,7 +47,12 @@ export type ReviewStepScreenProps = ReviewProcessProps & {
 
 const BOX = "border border-[var(--ks-limestone-dark)] bg-white p-5"
 
+type WaitState = { reading: boolean; failed: boolean; draftDone: boolean; adviceDone: boolean }
+
 function AdviceBox({
+  wait,
+  copy,
+  assistantName,
   tag,
   suggestsLabel,
   notSureLabel,
@@ -56,6 +60,9 @@ function AdviceBox({
   advice,
   children,
 }: {
+  wait?: WaitState
+  copy?: ReturnType<typeof tenantCopy>
+  assistantName?: string
   tag: string
   suggestsLabel: string
   notSureLabel: string
@@ -64,13 +71,32 @@ function AdviceBox({
   children?: ReactNode
 }) {
   const empty = !advice.suggests && !children
+  const say = (t?: string) => (t ?? "").replace("{assistant}", assistantName ?? "")
+  const waiting = !!wait?.reading && !!copy
+  const failed = !waiting && !!wait?.failed && !!copy
+  const line = (label: string, done: boolean) => (
+    <li data-review="wait-line" className="flex items-center justify-between gap-4 text-[14px] text-[var(--ks-ink-900)]">
+      <span>{label}</span>
+      <span className={cn("font-semibold", done ? "text-[var(--ks-ink-700)]" : "text-[var(--ks-ink-900)]")}>{done ? copy!.waitDone : copy!.waitWorking}</span>
+    </li>
+  )
   return (
-    <section aria-label={tag} data-review="plumb-advice" className={cn(BOX, "flex flex-col gap-2.5 border-l-[3px] border-l-[var(--ks-amber)]")}>
+    <section aria-label={waiting ? say(copy!.waitTitle) : tag} data-review="plumb-advice" className={cn(BOX, "flex flex-col gap-2.5 border-l-[3px] border-l-[var(--ks-amber)]")}>
       <div className="flex items-center gap-2">
         <PlumbMark className="h-3.5 w-3.5" />
         <SquareTag tone="info">{tag}</SquareTag>
       </div>
-      {empty ? (
+      {waiting ? (
+        <>
+          <p className="m-0 text-[14.5px] font-semibold text-[var(--ks-ink-900)]">{say(copy!.waitReading)}</p>
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0" aria-live="polite">
+            {line(copy!.waitDraftLine, wait!.draftDone)}
+            {line(copy!.waitAdviceLine, wait!.adviceDone)}
+          </ul>
+        </>
+      ) : failed ? (
+        <p className="m-0 text-[14px] text-[var(--ks-ink-900)]">{say(copy!.waitUnavailable)}</p>
+      ) : empty ? (
         <p className="m-0 text-[14px] text-[var(--ks-ink-700)]">{noAdvice}</p>
       ) : (
         <>
@@ -256,7 +282,7 @@ export function ReviewStepScreen(props: ReviewStepScreenProps) {
     governanceApplicableCount, draftedByPlumb, confirmedByReviewer, byName, byEmail, onGovernanceSaved, governanceDraft,
     blockReason, onApprove, onRequestInfo, onReject,
     comment, onCommentChange, onSend, sendDisabled, onDraftWithPlumb, draftDisabled,
-    reading, governanceDone, recommendationDone, onSkipToSteps,
+    reading, governanceDone, recommendationDone, readFailed, onSkipToSteps,
   } = props
 
   const copy = tenantCopy(tenant)
@@ -282,7 +308,8 @@ export function ReviewStepScreen(props: ReviewStepScreenProps) {
   const backLabel = previous ? copy.stepBack.replace("{n}", String(previous.index)) : null
   const onBack = () => previous && onNavigateStep(previous.key)
   const onGo = () => next && onNavigateStep(next.key)
-  const adviceProps = { tag: copy.stepAdviceTag, suggestsLabel: copy.stepSuggests, notSureLabel: copy.stepNotSure, noAdvice: copy.stepNoAdvice }
+  const wait: WaitState = { reading: !!reading, failed: !!readFailed, draftDone: !!governanceDone, adviceDone: !!recommendationDone }
+  const adviceProps = { wait, copy, assistantName, tag: copy.stepAdviceTag, suggestsLabel: copy.stepSuggests, notSureLabel: copy.stepNotSure, noAdvice: copy.stepNoAdvice }
 
   // What the record says, in plain words.
   const hiRead = readReviewerStep("highImpact", fd, tenant)
@@ -304,18 +331,7 @@ export function ReviewStepScreen(props: ReviewStepScreenProps) {
   const attentionLine = current.key === "rmf" && resolvedRmf ? needsAttentionLine(resolvedRmf.profile, resolvedRmf.effectiveOverall, copy.stepNeedsAttention) : null
 
   let body: ReactNode = null
-  if (reading) {
-    body = (
-      <div className={cn(BOX, PLUMB_PROGRESS_MIN_HEIGHT_CLASS)}>
-        <PlumbProgress
-          assistantName={assistantName}
-          governanceDone={!!governanceDone}
-          recommendationDone={!!recommendationDone}
-          className="min-h-0 rounded-none border-0 bg-transparent p-0 shadow-none"
-        />
-      </div>
-    )
-  } else if (current.key === "high_impact") {
+  if (current.key === "high_impact") {
     body = (
       <>
         <AdviceBox {...adviceProps} advice={stepAdvice("high_impact", { highImpact: { recommendation: hiRead.suggestion === "high_impact" ? "yes" : "no", reasons: highImpactRec.reasons } })} />
@@ -456,12 +472,12 @@ export function ReviewStepScreen(props: ReviewStepScreenProps) {
   return (
     <div className="flex min-w-0 flex-col gap-[18px]">
       <SectionTitle title={title} />
-      {!reading && recordSays[current.key] ? (
+      {recordSays[current.key] ? (
         <p data-review="record-says" className="m-0 text-[14px] leading-[1.55] text-[var(--ks-ink-700)]">
           {recordSays[current.key]}
         </p>
       ) : null}
-      {!reading && attentionLine ? (
+      {attentionLine ? (
         <p data-review="needs-attention" className="m-0 text-[14px] font-semibold leading-[1.55] text-[var(--ks-ink-900)]">
           {attentionLine}
         </p>
@@ -470,13 +486,11 @@ export function ReviewStepScreen(props: ReviewStepScreenProps) {
       {reading && onSkipToSteps ? (
         <div className="flex flex-wrap items-center gap-4 border border-[var(--ks-limestone-dark)] bg-white p-4">
           <div className="min-w-0 flex-1">
-            <p className="m-0 text-[14.5px] font-semibold text-[var(--ks-ink-900)]">You don&apos;t have to wait</p>
-            <p className="m-0 mt-0.5 text-[13px] text-[var(--ks-ink-700)]">
-              The submission is ready to read now, and your decision buttons stay live. {assistantName}&apos;s read arrives as advice, not a gate.
-            </p>
+            <p className="m-0 text-[14.5px] font-semibold text-[var(--ks-ink-900)]">{copy.waitNoNeedTitle}</p>
+            <p className="m-0 mt-0.5 text-[13px] text-[var(--ks-ink-700)]">{copy.waitNoNeedBody.replace("{assistant}", assistantName)}</p>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={onSkipToSteps}>
-            Read the submission
+            {copy.waitReadSubmission}
           </Button>
         </div>
       ) : null}

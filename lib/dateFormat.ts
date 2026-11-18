@@ -11,6 +11,12 @@ export function formatDisplayDate(iso: string, timeZone: string = DISPLAY_TIME_Z
   return new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "numeric", day: "numeric" }).format(d)
 }
 
+/** True only for a valid time within the last 24 hours. */
+export function isJustSubmitted(iso: string, now: number = Date.now()): boolean {
+  const t = new Date(iso).getTime()
+  return !Number.isNaN(t) && now - t <= 24 * 60 * 60 * 1000
+}
+
 /** "just submitted" within 24 hours of `iso`, otherwise "Submitted <date>". An idea submitted days ago is not "just submitted". */
 export function submittedLabel(iso: string, now: number = Date.now()): string {
   const t = new Date(iso).getTime()
