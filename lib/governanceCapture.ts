@@ -53,7 +53,9 @@ export type GovernanceFieldProposal = {
 /** Scout's full draft for one submission — keyed by FormData field name. A field the engine has no defensible proposal for is simply absent. */
 export type GovernanceFieldDraft = Partial<Record<string, GovernanceFieldProposal>>
 
-export type GovernanceFieldDecision = "confirmed" | "overridden"
+// "chosen" (F7-2, #345): where the tenant has "reviewer decides" on, a saved
+// field is one the reviewer set or accepted themselves; nothing is "confirmed".
+export type GovernanceFieldDecision = "confirmed" | "overridden" | "chosen"
 
 export type GovernanceFieldReviewEntry = {
   field: string
@@ -69,6 +71,9 @@ export type GovernanceFieldReviewEntry = {
   // summary (issue #206) show "why Plumb proposed this" for a field without
   // re-running the draft.
   rationale: string
+  // "chosen" entries only: who chose it and when (server time).
+  byName?: string
+  at?: string
 }
 
 export type GovernanceCaptureReview = {
@@ -135,6 +140,51 @@ export function buildGovernanceCapturePatch(
     ...fieldPatch,
     governanceCaptureReview: { entries, ...opts } satisfies GovernanceCaptureReview,
   }
+}
+
+/**
+ * F7-2 (#345): the patch for a fields save where the reviewer decides. Writes
+ * only `chosen` (fields the reviewer set or pressed "Use" on), each recorded as
+ * the reviewer's choice with name and time. Never writes `highImpact` (its own
+ * step). Entries for fields not in this save are kept from `prevReview`.
+ * Pure — the server re-stamps name/email/time.
+ */
+export function buildReviewerChosenPatch(
+  draft: GovernanceFieldDraft,
+  chosen: Partial<Record<string, GovernanceFieldValue>>,
+  prevReview: GovernanceCaptureReview | undefined,
+  opts: { byName: string; byEmail: string; at: string },
+): Record<string, unknown> {
+  const fieldPatch: Record<string, GovernanceFieldValue> = {}
+  const fresh: GovernanceFieldReviewEntry[] = []
+  for (const [field, finalValue] of Object.entries(chosen)) {
+    if (finalValue === undefined || field === "highImpact") continue
+    fieldPatch[field] = finalValue
+    fresh.push({
+      field,
+      decision: "chosen",
+      proposedValue: draft[field]?.value ?? finalValue,
+      finalValue,
+      rationale: draft[field]?.rationale ?? "",
+      byName: opts.byName,
+      at: opts.at,
+    })
+  }
+  const freshFields = new Set(fresh.map((e) => e.field))
+  const kept = (prevReview?.entries ?? []).filter((e) => !freshFields.has(e.field))
+  return {
+    ...fieldPatch,
+    governanceCaptureReview: { entries: [...kept, ...fresh], ...opts } satisfies GovernanceCaptureReview,
+  }
+}
+
+/** F7-2: how many applicable fields (not counting highImpact, which has its own step) hold no value in `fd`. */
+export function countEmptyGovernanceFields(fd: FormData): number {
+  return applicableGovernanceFields(fd).filter((f) => {
+    if (f === "highImpact") return false
+    const v = fd[f] as GovernanceFieldValue | undefined
+    return Array.isArray(v) ? v.length === 0 : !v
+  }).length
 }
 
 /** "{k} drafted by Plumb, {j} confirmed by the reviewer" counts (reviewer-detail issue #206) — "drafted by Plumb" is a field the reviewer kept as proposed, "confirmed by the reviewer" is one they entered or overrode themselves. The single source of truth for this split; callers should read it from here rather than recounting `entries`. */

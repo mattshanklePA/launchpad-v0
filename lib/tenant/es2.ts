@@ -396,6 +396,10 @@ Use the submitter's own words. Never invent facts, figures, program names, or do
     sentAnother: "Submit another idea",
     sentNotEnough: "Not enough decisions yet",
     sentMissing: "Your idea could not be found.",
+    // F7-2 (#345): inventory fields where the reviewer decides.
+    fieldsSuggests: "{assistant} suggests:",
+    fieldsUse: "Use",
+    fieldsLeftEmpty: "{count} fields left empty",
   },
 
   glossaryOverrides: {

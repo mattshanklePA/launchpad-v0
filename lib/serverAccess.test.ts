@@ -362,6 +362,53 @@ describe("authorizeWrite: reviewer decides (F7-1)", () => {
   it("a reviewer from another office is refused", () => {
     expect(write({ highImpact: "high_impact" }, otherOffice).ok).toBe(false)
   })
+
+  // F7-2 (#345): the fields save.
+  const review = (entries: unknown[], extra: Record<string, unknown> = {}) => ({
+    governanceCaptureReview: { entries, byName: "browser", byEmail: "b@x.gov", at: "browser-time", ...extra },
+  })
+  const chosen = (field: string, finalValue: string, extra: Record<string, unknown> = {}) => ({
+    field, decision: "chosen", proposedValue: finalValue, finalValue, rationale: "", ...extra,
+  })
+
+  it("fields save: the server stamps name, email and time on the review, ignoring the browser", () => {
+    const r = write({ topicArea: "other", ...review([chosen("topicArea", "other", { byName: "browser", at: "browser-time" })]) }, reviewer)
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      const rev = r.formData.governanceCaptureReview as any
+      expect(rev).toMatchObject({ byName: "Rita Reviewer", byEmail: "r@x.gov", at: NOW })
+      expect(rev.entries[0]).toMatchObject({ field: "topicArea", decision: "chosen", byName: "Rita Reviewer", at: NOW })
+    }
+  })
+  it("fields save: an earlier chosen entry keeps its own name and time", () => {
+    const old = chosen("topicArea", "other", { byName: "Pat", at: "2026-11-01T00:00:00.000Z" })
+    const existing = base()
+    existing.formData = { ...(existing.formData as object), topicArea: "other", ...review([old]) } as any
+    const r = write({ stageOfDevelopment: "pre_deployment", ...review([old, chosen("stageOfDevelopment", "pre_deployment")]) }, reviewer, true, existing)
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      const entries = (r.formData.governanceCaptureReview as any).entries
+      expect(entries[0]).toMatchObject({ byName: "Pat", at: "2026-11-01T00:00:00.000Z" })
+      expect(entries[1]).toMatchObject({ byName: "Rita Reviewer", at: NOW })
+    }
+  })
+  it("fields save: highImpact cannot be changed through it", () => {
+    const r = write({ highImpact: "high_impact", ...review([chosen("topicArea", "other")]) }, reviewer)
+    expect(r).toMatchObject({ ok: false, status: 403 })
+  })
+  it("fields save: a review entry for highImpact is refused", () => {
+    const r = write({ ...review([chosen("highImpact", "high_impact")]) }, reviewer)
+    expect(r).toMatchObject({ ok: false, status: 403 })
+  })
+  it("fields save, setting off: review is not re-stamped (as today)", () => {
+    const r = write({ ...review([chosen("topicArea", "other")]) }, reviewer, false)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect((r.formData.governanceCaptureReview as any).byName).toBe("browser")
+  })
+  it("a submitter cannot write the fields review", () => {
+    const r = write({ ...review([chosen("topicArea", "other")]) }, submitter)
+    expect(r).toMatchObject({ ok: false, status: 403 })
+  })
   it("a reason is asked for from the server's own suggestion, even when the browser sends a different one", () => {
     const r = write(
       {

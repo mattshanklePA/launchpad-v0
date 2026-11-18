@@ -6,6 +6,8 @@ import {
   applicableGovernanceFields,
   applicableGovernanceFieldsForDisplay,
   buildGovernanceCapturePatch,
+  buildReviewerChosenPatch,
+  countEmptyGovernanceFields,
   governanceCaptureCounts,
   governanceFieldCounts,
   governanceFieldCountsSentence,
@@ -257,5 +259,56 @@ describe("governanceFieldValueLabel", () => {
   it("renders placeholders for empty values instead of blank strings", () => {
     expect(governanceFieldValueLabel("stageOfDevelopment", "")).toBe("(blank)")
     expect(governanceFieldValueLabel("demographicFeatures", [])).toBe("(none)")
+  })
+})
+
+describe("buildReviewerChosenPatch (F7-2)", () => {
+  const draft: GovernanceFieldDraft = {
+    stageOfDevelopment: { value: "pre_deployment", rationale: "Still in vetting." },
+    highImpact: { value: "not_high_impact", rationale: "No factors." },
+    topicArea: { value: "law_justice", rationale: "Case work." },
+  }
+  const opts = { byName: "Dana", byEmail: "dana@doc.gov", at: "2026-02-01T00:00:00.000Z" }
+
+  it("writes exactly the chosen fields, each marked as the reviewer's choice with name and time", () => {
+    const patch = buildReviewerChosenPatch(draft, { stageOfDevelopment: "pre_deployment", topicArea: "other" }, undefined, opts)
+    expect(Object.keys(patch).sort()).toEqual(["governanceCaptureReview", "stageOfDevelopment", "topicArea"])
+    const review = patch.governanceCaptureReview as any
+    expect(review.entries).toEqual([
+      { field: "stageOfDevelopment", decision: "chosen", proposedValue: "pre_deployment", finalValue: "pre_deployment", rationale: "Still in vetting.", byName: "Dana", at: opts.at },
+      { field: "topicArea", decision: "chosen", proposedValue: "law_justice", finalValue: "other", rationale: "Case work.", byName: "Dana", at: opts.at },
+    ])
+  })
+
+  it("with nothing chosen writes no field value and never sets highImpact", () => {
+    const patch = buildReviewerChosenPatch(draft, {}, undefined, opts)
+    expect(Object.keys(patch)).toEqual(["governanceCaptureReview"])
+    expect((patch.governanceCaptureReview as any).entries).toEqual([])
+  })
+
+  it("never writes highImpact, even if handed it", () => {
+    const patch = buildReviewerChosenPatch(draft, { highImpact: "high_impact", topicArea: "other" }, undefined, opts)
+    expect("highImpact" in patch).toBe(false)
+    expect((patch.governanceCaptureReview as any).entries.map((e: any) => e.field)).toEqual(["topicArea"])
+  })
+
+  it("keeps earlier entries for fields not in this save", () => {
+    const prev = buildReviewerChosenPatch(draft, { topicArea: "other" }, undefined, opts).governanceCaptureReview as any
+    const patch = buildReviewerChosenPatch(draft, { stageOfDevelopment: "pre_deployment" }, prev, { ...opts, at: "2026-02-02T00:00:00.000Z" })
+    const fields = (patch.governanceCaptureReview as any).entries.map((e: any) => e.field)
+    expect(fields).toEqual(["topicArea", "stageOfDevelopment"])
+  })
+})
+
+describe("countEmptyGovernanceFields (F7-2)", () => {
+  it("counts applicable fields with no value, excluding highImpact", () => {
+    const n = countEmptyGovernanceFields({ ...initialFormData, stageOfDevelopment: "pre_deployment" } as FormData)
+    const all = applicableGovernanceFields({ ...initialFormData, stageOfDevelopment: "pre_deployment" } as FormData).filter((f) => f !== "highImpact")
+    expect(n).toBe(all.length - 1)
+  })
+  it("counts a field set in the in-progress values as filled", () => {
+    expect(countEmptyGovernanceFields({ ...initialFormData, stageOfDevelopment: "pre_deployment", topicArea: "other" } as FormData)).toBe(
+      countEmptyGovernanceFields({ ...initialFormData, stageOfDevelopment: "pre_deployment" } as FormData) - 1,
+    )
   })
 })
